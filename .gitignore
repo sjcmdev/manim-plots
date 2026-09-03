@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Tooling
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Manim
+media/
+videos/
+images/
+Tex/
+texts/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

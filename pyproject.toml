@@ -1,0 +1,83 @@
+[project]
+name = "manim-plots"
+version = "0.1.0.dev0"
+description = "Correct, extensible plotting primitives for Manim"
+readme = "README.md"
+authors = [
+    { name = "SirJamesClarkMaxwell", email = "fzabier@gmail.com" }
+]
+requires-python = ">=3.11"
+license = "MIT"
+keywords = ["manim", "plotting", "animation", "visualization"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "manim>=0.19",
+    "numpy>=2.1",
+]
+
+[project.urls]
+Repository = "https://github.com/sjcmdev/manim-plots"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.100",
+    "mypy>=1.11",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "UP",       # pyupgrade
+    "B",        # bugbear
+    "SIM",      # simplify
+    "NPY",      # numpy-specific
+    "D",        # pydocstyle
+    "ANN",      # annotations
+    "RUF",
+]
+ignore = [
+    "D105",  # magic method docstring
+    "D107",  # __init__ docstring (documented on the class)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "ANN"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+module = "manim.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers --strict-config"
