@@ -15,6 +15,12 @@ uv run mypy                 # type check
 
 All four checks must pass before a change is merged.
 
+## Branches
+
+`main` holds release-ready code only. `dev` is the integration branch. Work happens on
+`task/xx-short-title` branches, cut from `dev` and merged back into `dev`; `dev` merges
+into `main` when a stage is finished. Task numbers and the full plan live in `TODO.md`.
+
 ## Code style
 
 - **Formatting and linting:** `ruff`, configured in `pyproject.toml`. Do not
@@ -39,6 +45,10 @@ All four checks must pass before a change is merged.
 - Property-based tests are expected wherever a function maps floats to floats: tick
   placement, coordinate transforms and scale inverses are all easier to break at the
   edges than in the middle.
+- Prefer a mathematical property as the oracle over a golden value: `p2c(c2p(x)) == x`,
+  monotonicity, idempotence. A golden value copied from the current output tests that
+  the code still does what it does, which is how the defects this library exists to
+  avoid survived for years.
 
 ## Public API stability
 
