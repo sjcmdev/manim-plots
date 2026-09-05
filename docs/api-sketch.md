@@ -16,9 +16,8 @@ from manim_plots import CartesianAxes
 ax = CartesianAxes(
     x=(0, 10),
     y=(-1, 1),
-    scale={"x": "log"},          # linear | log | symlog
+    scale={"x": "log"},  # linear | log | symlog
 )
-
 ```
 
 Q1.1 — Class name. `CartesianAxes` avoids shadowing Manim's `Axes` on a
@@ -40,17 +39,17 @@ by providing forword and backword transforming functions
 ## 2. Artists
 
 ```python
-curve = ax.plot(lambda t: np.sin(t))     # analytic source, adaptive sampling
-line  = ax.line(xs, ys)                  # array source
-pts   = ax.scatter(data)                 # [(x, y), ...] or (xs, ys)
+curve = ax.plot(lambda t: np.sin(t))  # analytic source, adaptive sampling
+line = ax.line(xs, ys)  # array source
+pts = ax.scatter(data)  # [(x, y), ...] or (xs, ys)
 ```
 
 Standalone and rebindable (D2, D3):
 
 ```python
-free = Scatter(xs, ys)      # unattached: renders in the identity system (scene space)
-free.attach(ax)             # binds data AND parents into the axes' data layer
-free.detach()               # reverses both
+free = Scatter(xs, ys)  # unattached: renders in the identity system (scene space)
+free.attach(ax)  # binds data AND parents into the axes' data layer
+free.detach()  # reverses both
 ```
 
 Q2.1 — **The open fork.** One overloaded verb or separate verbs?
@@ -83,16 +82,16 @@ Encoruaging to different usage is an another thing
 ax.x.set_locator(MaxN(5))
 ax.x.set_formatter(SI(unit="s"))
 
-ax.x.ticks.direction = OUT        # IN | OUT | BOTH
+ax.x.ticks.direction = OUT  # IN | OUT | BOTH
 ax.x.ticks.minor.count = 4
-ax.x.position = "origin"          # "origin" | "bottom" | "top" | a data value
-ax.x.mirror = True                # gnuplot's `set xtics mirror`
+ax.x.position = "origin"  # "origin" | "bottom" | "top" | a data value
+ax.x.mirror = True  # gnuplot's `set xtics mirror`
 
-ax.x.line                         # the axis line
-ax.x.ticks.major                  # the tick lines
-ax.x.labels                       # the tick labels
+ax.x.line  # the axis line
+ax.x.ticks.major  # the tick lines
+ax.x.labels  # the tick labels
 ax.x.grid
-ax.x.labels.at(2.0).set_color(RED)   # keyed identity, survives rebuild (D10)
+ax.x.labels.at(2.0).set_color(RED)  # keyed identity, survives rebuild (D10)
 ```
 
 Q3.1 — `ax.x` / `ax.y`, or `ax.axes["x"]`, or `ax.x_axis` (Manim's name)?
@@ -116,14 +115,14 @@ regeneratio after some trigger with preserving modifiers if applicable
 ## 4. Data channel and animation (D8)
 
 ```python
-ax.set_range(x=(0, 20))                       # jumps
-self.play(ax.animate.set_range(x=(0, 20)))    # interpolates the arguments, rebuilds
+ax.set_range(x=(0, 20))  # jumps
+self.play(ax.animate.set_range(x=(0, 20)))  # interpolates the arguments, rebuilds
 
-ax.bind(x_range=tracker)                      # bind a parameter to a tracker
-ax.param("x_range")                           # get the tracker object back
-ax.param("x_range").set_value((0, 30))        # write through the tracker
+ax.bind(x_range=tracker)  # bind a parameter to a tracker
+ax.param("x_range")  # get the tracker object back
+ax.param("x_range").set_value((0, 30))  # write through the tracker
 
-self.play(Morph(curve, other_curve))          # resample, then interpolate
+self.play(Morph(curve, other_curve))  # resample, then interpolate
 ```
 
 Q4.1 — `bind(...)` / `param(...)` naming. Alternatives: `ax.tracker("x_range")`,
@@ -141,9 +140,9 @@ A4.2: Answerd in previous question, howvether we want to support an intelisens a
 ## 5. Legend
 
 ```python
-legend = Legend(curve, line)      # standalone mobject
+legend = Legend(curve, line)  # standalone mobject
 # or
-legend = ax.legend()              # collects the axes' attached artists
+legend = ax.legend()  # collects the axes' attached artists
 ```
 
 Q5.1 — Which one? Same logic as Q2.2: the free function is explicit and works across
@@ -161,9 +160,9 @@ A5.2: both, but preferable is the first option
 ## 6. Scene integration (D3)
 
 ```python
-self.add(ax)                    # attached artists come along; do NOT also add them
-self.play(Create(curve))        # still an ordinary mobject
-self.play(ax.animate.shift(RIGHT))   # geometric channel: only T changes (D4)
+self.add(ax)  # attached artists come along; do NOT also add them
+self.play(Create(curve))  # still an ordinary mobject
+self.play(ax.animate.shift(RIGHT))  # geometric channel: only T changes (D4)
 ```
 
 Q6.1 — Should adding an attached artist directly to the scene warn, be silently

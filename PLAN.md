@@ -43,10 +43,13 @@ list with tiers).
 - The three stress cases are checked against the 0.1 contracts in writing, each ending
   in "fits" or "would force a redesign of X".
 - The defect audit is re-run against 0.21.0 and written up as `docs/defect-audit-0.21.md`.
-- The version matrix is made consistent in the repository, not only in prose:
-  `pyproject.toml` says `manim>=0.21,<0.22` (currently `manim>=0.19`). `TODO.md` already
-  says 0.21.0 and stays. Supported matrix for 0.1: Manim 0.21.0, Python >=3.11 (the
-  `.venv` runs 3.13), NumPy >=2.1, Cairo renderer.
+  **Done** on `task/01-revalidate-defects`: 12 of 14 reproduce, 1 partially, 1 is gone,
+  and the sweep found six more, one of them severe.
+- The version matrix is made consistent in the repository, not only in prose. **Done**:
+  `pyproject.toml` says `manim>=0.21,<0.22`, `numpy>=2.5`, `requires-python = ">=3.12"`.
+  The Python floor moved from 3.11 because NumPy 2.5 itself requires 3.12, so the old
+  floor described an install that cannot happen. Supported matrix for 0.1: Manim 0.21.0,
+  Python >= 3.12, NumPy >= 2.5, Cairo renderer.
 - Every Manim citation in the design docs names a symbol, and a test imports each cited
   symbol so a rename fails loudly instead of rotting.
 - `docs/scope.md` carries the per-surface invalid-input table (path sampling, locators,
@@ -349,11 +352,25 @@ forces a rebuild.
 
 ### 0.1 contents and the gate
 
-**0.1 contains the whole engine and three artists** — analytic plot, array line, scatter
-— plus a legend and a minimal colour cycle. Ten artists would not test the contracts
-better, only delay finding out a contract is wrong.
+**0.1 contains the whole engine and four artists** — analytic plot, array line, scatter
+and parametric curve — plus a legend and a minimal colour cycle. Ten artists would not
+test the contracts better, only delay finding out a contract is wrong.
 
-The engine ships with a measurable gate, not an adjective. Scenario: three artists on one
+The parametric curve is the fourth on purpose, added once the Manim parity inventory
+made the gap visible. It is the only one of the four whose source maps one parameter to
+*two* coordinates, so it is the only one that exercises the `Source` contract on a
+multi-component output before that contract is frozen. Leaving it out would also make
+`plot_parametric_curve` a straight regression for anyone switching over.
+
+**`input_to_graph_point` is a query against the pipeline, not a lookup in the points.**
+`ax.i2gp(x, curve)` — the workhorse of a dot riding a curve, a tangent line, a label
+pinned to a graph — answers by evaluating the source and the map at `x`, never by
+searching the generated points. So it is exact between samples, it is unaffected by
+adaptive resampling, and it survives a rebuild. That makes it part of the `Source`
+contract rather than a convenience on top of it, which is why it ships in 0.1 even
+though most of its callers, the calculus cluster, are 0.2.
+
+The engine ships with a measurable gate, not an adjective. Scenario: four artists on one
 `CartesianAxes`, 2 000 sample points each, one animated parameter dirtying the pipeline
 every frame, 1080p60, Cairo renderer. Threshold: p95 pipeline rebuild time **<= 4 ms per
 frame** — under a quarter of a 60 fps frame budget, leaving the renderer the rest. CI
