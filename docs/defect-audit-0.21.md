@@ -358,10 +358,12 @@ The consequence is that `p2n(n2p(x))` — the library's own round trip, and the 
 it can make. The seven suppressions in `tests/test_defect_audit_0_21.py` are all this one
 defect.
 
-Note for the toolchain: `mypy` cannot run at all with the configured
-`python_version = "3.11"`, because NumPy's own stubs use `type` statements that mypy
-only parses at 3.12 and above. The checks above were run with `--python-version 3.13`.
-That is a project configuration decision, not an audit finding, and it is left open.
+Note for the toolchain, since running the audit under `mypy --strict` is what exposed
+it: `mypy` could not run at all with the configured `python_version = "3.11"`, because
+NumPy's stubs use `type` statements that mypy only parses at 3.12 and above. Chasing
+that down showed the declared floor was already wrong — NumPy 2.5 requires Python
+**>= 3.12**, so `requires-python = ">=3.11"` described an install that cannot happen.
+Both were raised to 3.12 and all four checks are green.
 
 ---
 
