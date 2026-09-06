@@ -67,11 +67,16 @@ reproduces is dropped with a note.
 Requirements come before architecture. No module layout is decided until this task
 closes.
 
-- [ ] Turn each confirmed defect from task 01 into a functional requirement
-- [ ] Collect the requirements list from collaborators
-- [ ] Parity survey: what matplotlib, gnuplot and OriginPro offer that Manim does not
-- [ ] Split into must-have for 0.1, later, and explicit non-goals
-- [ ] Write up as `docs/scope.md`
+- [x] Turn each confirmed defect from task 01 into a functional requirement
+      — the traceability table in `docs/scope.md` maps all 18 to `F-*`
+- [x] Collect the requirements list from collaborators — answered inline in
+      `docs/api-sketch.md` and placed in D9; traced to `F-*` in `docs/scope.md`
+- [x] Parity survey: what matplotlib, gnuplot and OriginPro offer that Manim does not
+      — `docs/parity-survey.md`, three sections, Manim guarded by a drift test
+- [x] Split into must-have for 0.1, later, and explicit non-goals
+- [x] Write up as `docs/scope.md`
+- [x] Paper-check the 0.1 contracts against date/time axes, the calculus toolkit and
+      region sampling — the third one forced `F-114`
 
 ### task/04-architecture
 
