@@ -59,10 +59,21 @@ def live_surface() -> set[str]:
     return names
 
 
+def manim_section() -> str:
+    """Section 1 of the survey — the only section that inventories Manim.
+
+    Sections 2 and 3 survey matplotlib, gnuplot and Origin, whose method names would
+    otherwise read as stale Manim entries.
+    """
+    text = SURVEY.read_text(encoding="utf-8")
+    start = text.index("\n## 1. Manim")
+    end = text.index("\n## 2. ", start)
+    return text[start:end]
+
+
 def surveyed_names() -> set[str]:
     """Method names in the first column of the survey's verdict tables."""
-    text = SURVEY.read_text(encoding="utf-8")
-    rows = re.findall(r"^\| `(\w+)` \|", text, re.MULTILINE)
+    rows = re.findall(r"^\| `(\w+)` \|", manim_section(), re.MULTILINE)
     return set(rows)
 
 

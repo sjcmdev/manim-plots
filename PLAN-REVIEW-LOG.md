@@ -1,7 +1,9 @@
 # Plan Review Log: manim-plots functional scope and public API (task/03)
 
 Act 1 (grill) complete — plan locked with the maintainer. MAX_ROUNDS=5.
-Act 2 (Codex adversarial review) has not run yet.
+Act 2 (Codex adversarial review) ran twice: rounds 1–9 below reviewed `PLAN.md`, and the
+second part of this log — *Scope review*, rounds 1–6 — reviewed the documents task/03
+actually delivers, `docs/scope.md` and sections 2–3 of `docs/parity-survey.md`.
 
 ## Round 1 — Codex
 
@@ -521,3 +523,131 @@ re-verified against the project's own `.venv` rather than the plan's citations.
 
 Act 2 closed. No unresolved disagreement remains. The plan grew from 125 to roughly 400
 lines, and four of its load-bearing claims were wrong when the review started.
+
+
+---
+
+# Scope review: `docs/scope.md` and `docs/parity-survey.md`
+
+A second Codex session, opened after the two documents existed, reviewing the deliverables
+rather than the plan. Same rules: read-only, one verdict line per round, every finding
+either fixed or argued with. Six rounds, APPROVED on the sixth.
+
+## Scope round 1 — Codex
+
+Eight findings. The invalid-input table omitted whole classes of malformed argument
+(`xs`/`ys` length mismatch, wrong dimensionality, non-finite ranges, malformed `Fixed`
+entries, duplicate explicit keys); "range outside the scale domain" read ambiguously
+across F-311 and F-202; Origin text-from-dataset labels were tiered 0.1 while categorical
+axes were 0.2; the date/time paper check converted only at the `Source` boundary; the
+region paper check declared "fits" over a contract that could not express mesh cells,
+masks or topology; F-405 did not define what happens when an explicit tick collides with a
+generated one; the matplotlib counts rested on no committed evidence; and the OriginPro
+"ten tabs" claim contradicted its own cited page.
+
+VERDICT: REVISE
+
+### Response
+
+All eight accepted. The invalid-input section was split into a construction table and an
+at-use table. F-311 was scoped to range configuration and F-202 to scalar conversion, in
+each other's words. Categorical coordinates went to 0.2 with only explicit labels left in
+0.1. The date/time case was restricted to an explicit float-only contract with the adapter
+named as the later layer. The region case was rewritten to say plainly that it forced a
+redesign — which produced F-114, the payload. F-405 gained a merge key and precedence.
+`tools/mpl_surface.py` plus its snapshot were committed as the evidence for the matplotlib
+counts, and the Origin rows became "ten surveyed control topics" on release-unpinned
+evidence.
+
+## Scope round 2 — Codex
+
+Five findings, all downstream of the new payload: topology left grid ordering, cell arity
+and mask semantics undefined; a kind-changing `Shape` had no defined output payload; the
+tick merge did not say which value survives a key collision, nor what order means on a
+reversed axis; the Origin justification still inferred history the page does not state;
+and `mpl_surface.py` asserted no matplotlib version, so it could regenerate counts from
+any release.
+
+VERDICT: REVISE
+
+### Response
+
+F-114 gained field shapes and an explicit statement that `valid` is per sample, never per
+cell. `Shape` was required to return a payload with every field rebuilt. The explicit tick
+value was declared the survivor, with ordering defined by the range direction. The Origin
+inference was deleted. The script got a version assertion naming expected and actual.
+
+## Scope round 3 — Codex
+
+Five findings. The construction table validated none of the new payload invariants;
+region clipping said "mark the cell invalid", which discards cells that merely intersect
+the viewport; the "same type" rule did not say what a region-to-path `Shape` produces;
+Origin remained release-unpinned while its rows carried tiers; and the reflection script
+matched only counts, so a non-class of the same suffix would pass.
+
+VERDICT: REVISE
+
+### Response
+
+Malformed-payload rows were added to the construction table. Region clipping in 0.1 is
+now named for what it is — conservative whole-cell removal — with geometry-accurate
+trimming stated as a later `Shape` node the payload already permits. Kind-changing
+operations build a fresh payload. Origin was labelled evidence-unpinned in the survey and
+no 0.1 requirement was left resting on it alone. The script moved to snapshot comparison
+of exact name sets with `inspect.isclass` filtering.
+
+## Scope round 4 — Codex
+
+Five findings. An empty source contradicted itself: a default single segment over `n=0` is
+`[0, 0)`, which construction rejects. Segments were not required to be sorted or
+non-overlapping. A grid shape did not define whether cells are quads or triangles, nor
+their corner order. F-705 split a path at a pole without saying what happens to the
+invalid sample. And the snapshot's own recorded version was never checked.
+
+VERDICT: REVISE
+
+### Response
+
+An empty payload is `(0, 2)`. Segments must be sorted, non-overlapping, non-empty and in
+bounds. A grid means quad cells in C order, spelled out corner by corner. The invalid
+sample stays in `coords` and is covered by no segment — indices stay stable across a
+rebuild, which is what keyed identity and in-place animation writes depend on. The
+snapshot's version is now validated before any comparison; adding that check immediately
+caught a stale citation in the citation test.
+
+## Scope round 5 — Codex
+
+Two findings, both on the payload's own consistency. `points` and `region` must carry
+exactly one segment, yet the global rule excluded every invalid sample from all segments —
+so an invalid sample in a point set had no legal representation. And `valid` was optional
+while the text claimed it records *why* a sample was excluded, which nothing defined.
+
+VERDICT: REVISE
+
+### Response
+
+Both accepted; the first is a real contradiction the round-4 fix introduced. Marking and
+drawing are now separate. `valid` is false at every invalid sample on every kind, and is
+the only channel that marks invalidity; `None` is permitted only when every sample is
+valid, so a payload with an invalid sample can no longer hide it. How the exclusion is
+*drawn* is what varies: a `path` additionally leaves the sample covered by no segment
+(the F-705 pole split), while `points` and `region` keep their single segment and are
+excluded by the mask alone — a point is not drawn, a cell is dropped when any corner is
+invalid. The "says why" claim is gone: `valid` records validity and nothing else, and 0.1
+defines no reason vocabulary. Two construction rows enforce the pair — a non-finite sample
+with `valid=None` or with `valid` true at it raises, and for a `path`, segment coverage
+disagreeing with `valid` raises — and the at-use table gained a *Point and region drawing*
+surface so the behaviour is not defined for paths only.
+
+## Scope round 6 — Codex
+
+No contract-level defect remains. The edges left open — minimum grid dimensions, warning
+wording — are implementation choices that neither widen nor break the frozen payload.
+
+VERDICT: APPROVED
+
+### Resolution
+
+Six rounds, twenty-five findings, all fixed rather than argued away. The largest was
+round 1's fifth: the region paper check could not honestly say "fits", and saying so is
+what produced F-114. The payload contract is frozen for 0.1.

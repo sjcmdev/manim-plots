@@ -39,9 +39,13 @@ list with tiers).
 ### Acceptance criteria for this task
 
 - `docs/parity-survey.md` and `docs/scope.md` exist, and every `F-*` carries a tier and
-  the decision it follows from.
+  the decision it follows from. **Done**: three parity sections (Manim 0.21.0, matplotlib
+  3.11.1, gnuplot 6.0 with OriginPro) and 110 `F-*` requirements with a traceability table
+  covering all 18 defects and every collaborator answer.
 - The three stress cases are checked against the 0.1 contracts in writing, each ending
-  in "fits" or "would force a redesign of X".
+  in "fits" or "would force a redesign of X". **Done**, and the third one did not fit:
+  region sampling forced the `Source` return type to become a payload with a declared
+  kind, segments and topology (`F-114`) before the contract could be frozen.
 - The defect audit is re-run against 0.21.0 and written up as `docs/defect-audit-0.21.md`.
   **Done** on `task/01-revalidate-defects`: 12 of 14 reproduce, 1 partially, 1 is gone,
   and the sweep found six more, one of them severe.
@@ -51,9 +55,12 @@ list with tiers).
   floor described an install that cannot happen. Supported matrix for 0.1: Manim 0.21.0,
   Python >= 3.12, NumPy >= 2.5, Cairo renderer.
 - Every Manim citation in the design docs names a symbol, and a test imports each cited
-  symbol so a rename fails loudly instead of rotting.
+  symbol so a rename fails loudly instead of rotting. **Done**:
+  `tests/test_cited_symbols.py` walks every `file.py::Symbol` citation in `PLAN.md`,
+  `docs/scope.md` and `docs/grill-log.md`.
 - `docs/scope.md` carries the per-surface invalid-input table (path sampling, locators,
-  `c2p`, `p2c`) that the rule below decides.
+  `c2p`, `p2c`) that the rule below decides. **Done**, split in two: what raises at
+  construction, and what each surface does at use.
 - The performance gate below is an `F-*` with the numbers stated here, not a promise to
   pick numbers later.
 
@@ -417,9 +424,12 @@ source is verified against it.
   the first design may not meet it.
 - **Adaptive refinement density lags one frame** when the map and the sampling density
   change together. Accepted; the drawn geometry does not lag.
-- **Parity with Manim (D15) was found late** and has not been costed. It may be larger
-  than the matplotlib work.
-- **The defect audit is unverified** against the target 0.21.0.
+- **Parity with Manim (D15) was found late.** Now inventoried: 73 public names, 43 of
+  them 0.1. Still uncosted in time, but no longer unbounded.
+- **The defect audit is verified** against 0.21.0 (`docs/defect-audit-0.21.md`), and
+  every reproducing defect has an `F-*`.
+- **Origin is unpinned evidence.** Its help page names no release, so no 0.1 requirement
+  rests on it alone; see the note opening section 3 of the parity survey.
 - **`self.add(curve)` on an attached artist** cannot be intercepted; it is documented as
   unnecessary rather than prevented.
 
