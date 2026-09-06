@@ -33,22 +33,23 @@ Re-run the ManimCE defect audit against 0.21.0. The original audit ran against
 Each confirmed defect becomes a requirement in task 02; each defect that no longer
 reproduces is dropped with a note.
 
-- [ ] Float accumulation in `NumberLine` tick generation via `np.arange`
-- [ ] `include_tip` alters tick range and coordinate mapping inconsistently
-- [ ] Plot curves escape the axes viewport; no clipping for asymptotic functions
-- [ ] Axes aspect ratio distortion from independent length parameterisation
-- [ ] `unit_size` ignored when passed through `axis_config`
-- [ ] Mutating `x_range` after construction leaves ticks stale
-- [ ] No legend primitive; users assemble legends by hand
-- [ ] `LogBase.inverse_function` ndarray guard broken; negatives become NaN silently
-- [ ] `LogBase` has no minor ticks between decades
-- [ ] `LogBase` naming: `function()` is exponential, not logarithmic
-- [ ] Label overlap: no de-confliction at high label density
-- [ ] Ticks centred on the axis line; cannot be directed outward only
-- [ ] `_origin_shift` clamps to the range minimum when the range excludes zero
-- [ ] Geometric ops on `NumberLine` (inherits `Line`) corrupt coordinate mapping
-- [ ] Sweep the audit notes for any finding not listed above
-- [ ] Write up the result as `docs/defect-audit-0.21.md`
+- [x] Float accumulation in `NumberLine` tick generation via `np.arange`
+- [x] `include_tip` alters tick range and coordinate mapping inconsistently
+- [x] Plot curves escape the axes viewport; no clipping for asymptotic functions
+- [x] Axes aspect ratio distortion from independent length parameterisation
+- [x] `unit_size` ignored when passed through `axis_config`
+- [x] Mutating `x_range` after construction leaves ticks stale
+- [x] No legend primitive; users assemble legends by hand
+- [x] `LogBase.inverse_function` ndarray guard broken; negatives become NaN silently
+- [x] `LogBase` has no minor ticks between decades
+- [x] `LogBase` naming: `function()` is exponential, not logarithmic
+- [x] Label overlap: no de-confliction at high label density
+- [x] Ticks centred on the axis line; cannot be directed outward only
+- [x] `_origin_shift` clamps to the range minimum when the range excludes zero
+- [x] Geometric ops on `NumberLine` (inherits `Line`) corrupt coordinate mapping
+      — no longer reproduces on 0.21.0; dropped with a note
+- [x] Sweep the audit notes for any finding not listed above — six new findings, 15a-15f
+- [x] Write up the result as `docs/defect-audit-0.21.md`
 
 ### task/02-testing-infrastructure
 
