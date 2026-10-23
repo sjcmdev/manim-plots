@@ -10,6 +10,10 @@ The ``type: ignore`` comments below are themselves audit evidence: Manim annotat
 ``isinstance(value, np.ndarray)``, and annotates ``NumberLine.point_to_number`` as
 taking a ``Sequence[float]`` although ``number_to_point`` returns an ``ndarray``. Its
 own round trip does not type-check. See finding 15f in ``docs/defect-audit-0.21.md``.
+
+Manim 0.22.0 fixed 15c and the ``point_to_number`` half of 15f (ManimCommunity/manim
+#5039). Those probes assert whichever behaviour the installed version has, and the
+round-trip ignores also carry ``unused-ignore`` so ``mypy`` passes on both versions.
 """
 
 from __future__ import annotations
@@ -17,7 +21,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from manim import Axes, NumberLine
+from manim import __version__ as MANIM_VERSION
 from manim.mobject.graphing.scale import LogBase
+
+FIXED_IN_0_22 = tuple(int(p) for p in MANIM_VERSION.split(".")[:2]) >= (0, 22)
 
 
 def unit_size(ax: Axes, axis: int) -> float:
@@ -134,7 +141,7 @@ def test_d14_geometric_ops_no_longer_break_the_mapping(operation):
     """Defect 14 is gone: the mapping derives from the live geometry."""
     nl = NumberLine(x_range=[0, 10, 1], length=10)
     operation(nl)
-    assert np.isclose(float(nl.point_to_number(nl.number_to_point(4))), 4.0)  # type: ignore[arg-type]
+    assert np.isclose(float(nl.point_to_number(nl.number_to_point(4))), 4.0)  # type: ignore[arg-type, unused-ignore]
 
 
 def test_d15a_plot_joins_across_a_pole():
@@ -151,10 +158,10 @@ def test_d15b_tick_step_is_also_the_sampling_step():
     assert len(coarse.points) * 5 < len(fine.points)
 
 
-def test_d15c_point_to_number_is_not_the_inverse_under_a_log_scale():
+def test_d15c_point_to_number_inverts_a_log_scale_only_from_0_22():
     nl = NumberLine(x_range=[0, 3, 1], length=6, scaling=LogBase(10))
-    round_trip = float(nl.point_to_number(nl.number_to_point(10.0)))  # type: ignore[arg-type]
-    assert not np.isclose(round_trip, 10.0)
+    round_trip = float(nl.point_to_number(nl.number_to_point(10.0)))  # type: ignore[arg-type, unused-ignore]
+    assert np.isclose(round_trip, 10.0) == FIXED_IN_0_22
     ax = Axes(
         x_range=[0, 3, 1],
         y_range=[0, 10, 1],
@@ -162,14 +169,14 @@ def test_d15c_point_to_number_is_not_the_inverse_under_a_log_scale():
         y_length=6,
         x_axis_config={"scaling": LogBase(10)},
     )
-    assert not np.isclose(ax.p2c(ax.c2p(10.0, 5.0))[0], 10.0)
+    assert np.isclose(ax.p2c(ax.c2p(10.0, 5.0))[0], 10.0) == FIXED_IN_0_22
 
 
 def test_d15c_linear_scale_round_trips_exactly():
     """The control: the asymmetry only shows once a scale is non-trivial."""
     nl = NumberLine(x_range=[0, 10, 1], length=6)
     for value in (0.0, 3.0, 7.0, 10.0):
-        back = float(nl.point_to_number(nl.number_to_point(value)))  # type: ignore[arg-type]
+        back = float(nl.point_to_number(nl.number_to_point(value)))  # type: ignore[arg-type, unused-ignore]
         assert np.isclose(back, value)
 
 

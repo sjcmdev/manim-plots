@@ -593,7 +593,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "manim", specifier = ">=0.21,<0.22" },
+    { name = "manim", specifier = ">=0.21,<0.23" },
     { name = "numpy", specifier = ">=2.5" },
 ]
 
