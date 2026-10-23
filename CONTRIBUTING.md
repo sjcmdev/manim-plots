@@ -11,9 +11,11 @@ uv run pytest tests/x.py::test_name   # a single test
 uv run ruff check . --fix   # lint
 uv run ruff format .        # format
 uv run mypy                 # type check
+uv run python tools/check.py   # all four, across Python 3.12/3.13 x Manim 0.21/0.22
 ```
 
-All four checks must pass before a change is merged.
+All four checks must pass across the matrix before a change is merged. There is no
+hosted CI; `tools/check.py` is the gate.
 
 ## Branches
 

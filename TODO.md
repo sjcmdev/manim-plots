@@ -16,8 +16,8 @@ main          release-ready only; one merge per finished stage
   `task/xx-short-title`, where `xx` is the task number below.
 - `dev` merges into `main` only when a stage is complete and ships a coherent package
   of functionality. That merge is tagged.
-- All four checks (`ruff check`, `ruff format --check`, `mypy`, `pytest`) pass before
-  a task branch merges.
+- All four checks (`ruff check`, `ruff format --check`, `mypy`, `pytest`) pass across
+  the supported matrix before a task branch merges: `uv run python tools/check.py`.
 - Exceptions to the branch rule: a one-line typo fix in a document may go straight to
   `dev`.
 - Commits follow Conventional Commits, as described in `CONTRIBUTING.md`.
@@ -57,11 +57,13 @@ reproduces is dropped with a note.
       on, so the first marked test fails without it)
 - [x] Exclude render tests from the default run; keep them runnable explicitly
       — `pytest -m render` overrides the default `-m 'not render'`
-- [ ] GitHub Actions workflow running the four checks — `.github/workflows/ci.yml`
-      written; tick after the first green run
-- [x] Decide the CI matrix: Python versions and Manim versions — Python 3.12 and 3.13
+- [x] Run the four checks across the matrix — locally, not in hosted CI:
+      `tools/check.py`. A GitHub Actions workflow ran green once and was dropped in
+      favour of a local gate
+- [x] Decide the matrix: Python versions and Manim versions — Python 3.12 and 3.13
       against Manim 0.21.0 and 0.22.0; the pin is `manim>=0.21,<0.23`
-- [ ] Branch protection on `main` and `dev`: pull request plus green CI
+- [x] Branch protection on `main` and `dev` — dropped with hosted CI: there is no
+      status for it to require
 
 ## Stage 1 — scope
 
