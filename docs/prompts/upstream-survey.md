@@ -1,163 +1,327 @@
-# Prompt: upstream survey of ManimCommunity/manim
+# Prompt: audyt upstream issues i PR-ów Manim dotyczących graphingu
 
-Paste the block below into ChatGPT with GitHub access. The result is saved to
-`docs/upstream-survey.md`, and feeds task 01 in `TODO.md`.
+Przeprowadź **audyt źródłowy**, a nie przegląd architektury ani projektowanie
+rozwiązania. Zbadaj issues i pull requesty repozytorium
+[`ManimCommunity/manim`](https://github.com/ManimCommunity/manim), aby ustalić, co
+upstream już zgłosił, naprawił, odrzucił albo uznał za zachowanie zamierzone w
+obszarze mechaniki wykresów i układów współrzędnych.
 
----
+Raport napisz po polsku. Oryginalnych wypowiedzi maintainerów nie tłumacz w polu
+cytatu.
 
-You have GitHub access. Survey the issues and pull requests of
-`ManimCommunity/manim` and report everything that bears on a third-party
-plotting library being written against Manim. Follow every instruction below
-exactly.
+## 1. Cel i kontekst
 
-## What the library is
+Audyt ma ustalić, co upstream wie o defektach znalezionych w ManimCE 0.19.2 i ponownie
+zweryfikowanych eksperymentalnie na 0.21.0, przed pracą nad niezależną biblioteką
+`manim-plots`. Jej wersją docelową jest ManimCE 0.21.0; wspierana jest także 0.22.0.
 
-An independent plotting library for Manim, built on Manim's primitives
-(`Line`, `MathTex`, `VGroup`) but deliberately **not** subclassing Manim's
-`Axes`, `NumberLine`, `NumberPlane` or `ParametricFunction`. It supplies its own
-coordinate systems, scales, tick locators, formatters and data plotting. It
-targets Manim Community Edition 0.21 and declares a floor of 0.19.
+`manim-plots` ma być biblioteką pisaną od zera. Korzysta z podstawowych mobjectów
+Manima, takich jak `Line`, `MathTex` i `VGroup`, ale **nie dziedziczy** po
+`Axes`, `NumberLine` ani `NumberPlane`. Ta informacja służy wyłącznie do oceny
+implikacji i ograniczeń interoperacyjności. Nie projektuj na jej podstawie
+architektury ani rozwiązań.
 
-Two things therefore matter to us, and nothing else does:
+## 2. Zakres upstream
 
-1. **Upstream knowledge about the graphing stack** — known defects, their
-   status, and the reasoning maintainers have applied to them.
-2. **Upstream constraints on us as a downstream consumer** — changes to the
-   primitives we build on, or to the rendering pipeline, that would break a
-   library that does not inherit from Manim's graphing classes.
+Przejrzyj **issues i pull requesty, otwarte i zamknięte, bez ograniczenia daty**,
+które dotyczą kodu lub zachowania związanego z:
 
-Ignore everything unrelated: 3D scenes, video encoding, OpenGL renderer work
-that does not touch mobject geometry, CI, packaging, documentation typos.
+- całym katalogiem `manim/mobject/graphing/`, także jego historycznymi nazwami,
+  lokalizacjami i przeniesionym kodem;
+- `manim/mobject/geometry/line.py`, o ile wątek ma znaczenie dla obiektów z
+  `graphing/`, szczególnie `NumberLine`;
+- `Mobject.apply_points_function_about_point` w
+  `manim/mobject/mobject.py`, o ile wątek ma znaczenie dla transformacji układów
+  współrzędnych, osi albo odwzorowań liczba–punkt;
+- historycznymi odpowiednikami powyższych klas, metod i plików.
 
-## Scope of the sweep
+Włącz w szczególności wątki dotyczące `CoordinateSystem`, `Axes`, `ThreeDAxes`,
+`NumberPlane`, `ComplexPlane`, `NumberLine`, `ParametricFunction`, `FunctionGraph`,
+`ImplicitFunction`, `LinearBase`, `LogBase`, klas z `probability.py` oraz ich metod
+konwersji współrzędnych, tworzenia ticków i etykiet, skalowania, transformacji i
+rysowania funkcji.
 
-Cover **both open and closed** issues and pull requests, with no date floor.
-A closed-as-wontfix issue is often the most valuable result, because it carries
-the maintainers' reasoning.
+Wątek wchodzi do raportu tylko wtedy, gdy jego związek z tym zakresem można wykazać.
+Samo wystąpienie ogólnego słowa, np. `line`, `scale`, `plot` albo `axis`, nie
+wystarcza.
 
-Source files in scope:
+## 3. Priorytet źródeł
 
-- `manim/mobject/graphing/coordinate_systems.py`
-- `manim/mobject/graphing/number_line.py`
-- `manim/mobject/graphing/scale.py`
-- `manim/mobject/graphing/functions.py`
-- `manim/mobject/graphing/probability.py`
-- `manim/mobject/geometry/line.py` — only where it affects `NumberLine`
-- `manim/mobject/mobject.py` — only `apply_points_function_about_point` and the
-  transformation methods that funnel through it
+Najcenniejsze są wątki zamknięte jako **wontfix / not planned / by design / out of
+scope** oraz PR-y zamknięte bez merge'a, ponieważ mogą zawierać uzasadnienie decyzji
+maintainerów. Szukaj zarówno formalnej etykiety lub `state_reason`, jak i wypowiedzi
+o tym znaczeniu w komentarzach lub review.
 
-Run at least these searches, and any others the results suggest:
+Kolejność prezentacji wyników:
 
-- `repo:ManimCommunity/manim is:issue NumberLine`
-- `repo:ManimCommunity/manim is:issue Axes`
-- `repo:ManimCommunity/manim is:issue LogBase OR log scale OR semilog`
-- `repo:ManimCommunity/manim is:issue tick`
-- `repo:ManimCommunity/manim is:issue legend`
-- `repo:ManimCommunity/manim is:issue plot clipping OR asymptote OR discontinuity`
-- `repo:ManimCommunity/manim is:pr coordinate_systems.py`
-- `repo:ManimCommunity/manim is:pr number_line.py`
-- `repo:ManimCommunity/manim is:pr scale.py`
-- Whatever the repository's own labels offer for this area — check the label
-  list rather than guessing label names.
+1. zamknięte jako `not planned`, `wontfix`, „by design” albo równoważne;
+2. zamknięte PR-y bez merge'a;
+3. duplikaty prowadzące do uzasadnionego wątku nadrzędnego;
+4. naprawione lub zmergowane;
+5. nadal otwarte;
+6. niejednoznaczne.
 
-## Our defect list
+Nie ograniczaj jednak wyszukiwania do tych kategorii.
 
-Thirteen defects were found by direct experiment against Manim 0.19.2. They have
-**not** been re-verified against 0.21. For each one, determine what upstream
-knows: is it reported, fixed, rejected, or unknown?
+## 4. Lista kontrolna naszych defektów
 
-1. Float accumulation in `NumberLine` tick generation via `np.arange`
-2. `include_tip` alters tick range and coordinate mapping inconsistently
-3. Plot curves escape the axes viewport; no clipping for asymptotic functions
-4. Axes aspect ratio distortion from independent length parameterisation
-5. `unit_size` ignored when passed through `axis_config`
-6. Mutating `x_range` after construction leaves ticks stale
-7. No legend primitive; users assemble legends by hand
-8. `LogBase.inverse_function` ndarray guard broken; negatives become NaN silently
-9. `LogBase` has no minor ticks between decades
-10. `LogBase` naming: `function()` is exponential, not logarithmic
-11. Label overlap: no de-confliction at high label density
-12. Ticks centred on the axis line; cannot be directed outward only
-13. `_origin_shift` clamps to the range minimum when the range excludes zero
+Lista służy do kontroli pokrycia, **nie jest zamkniętym katalogiem problemów**.
+Aktywnie szukaj także zachowań, defektów, ograniczeń i decyzji upstream, których na
+niej nie ma.
 
-Also report anything in scope that is **not** on this list — an upstream defect,
-feature request or design discussion we have not accounted for. Those are the
-most valuable results, so search for them deliberately rather than only matching
-against the thirteen.
+Identyfikatory odpowiadają numerom sekcji w `docs/defect-audit-0.21.md`. D01–D14
+znaleziono w 0.19.2, a D15a–D15f dopiero podczas weryfikacji na 0.21.0. Wszystkie
+reprodukują się na 0.21.0, z wyjątkiem jawnie oznaczonych; na 0.22.0 wynik jest ten
+sam dla każdego z nich poza D11, którego tam nie sprawdzano.
 
-## Output document
+- **D01 — Float accumulation:** float accumulation w generowaniu ticków
+  `NumberLine` przez `np.arange`.
+- **D02 — Tip removes the last tick:** `include_tip=True` usuwa ostatni tick z zakresu.
+  Reprodukuje się częściowo: pierwotne zgłoszenie obejmowało też mapowanie
+  współrzędnych, które na 0.21.0 jest poprawne.
+- **D03 — No plot clipping:** krzywe wychodzą poza viewport osi; brak clippingu,
+  szczególnie dla funkcji z asymptotami lub nieciągłościami.
+- **D04 — Aspect-ratio distortion:** niezależna parametryzacja długości osi
+  zniekształca proporcje geometryczne wykresu.
+- **D05 — `unit_size` through config:** `unit_size` jest ignorowane, gdy zostanie
+  przekazane przez `axis_config`.
+- **D06 — Stale ticks after range mutation:** zmiana `x_range` po utworzeniu obiektu
+  pozostawia nieaktualne ticki.
+- **D08 — Broken ndarray guard:** guard tablicowy w `LogBase.inverse_function` jest
+  wadliwy; wartości ujemne przechodzą w `NaN` bez jawnego błędu.
+- **D09 — Missing logarithmic minor ticks:** `LogBase` nie udostępnia minor ticks
+  między dekadami.
+- **D10 — Misleading `LogBase` naming:** metoda `LogBase.function()` realizuje
+  funkcję wykładniczą, a nie logarytmiczną.
+- **D11 — Label collisions:** brak mechanizmu unikania kolizji etykiet przy dużej
+  gęstości.
+- **D12 — Tick direction:** ticki są wycentrowane na linii osi i nie można skierować
+  ich wyłącznie na zewnątrz.
+- **D13 — `_origin_shift` outside zero:** `_origin_shift` przy zakresie
+  nieobejmującym zera przycina przesunięcie do minimum zakresu.
+- **D14 — Geometry corrupts coordinate mapping:** operacje geometryczne na
+  `NumberLine`, wynikające m.in. z dziedziczenia po `Line` i użycia
+  `apply_points_function_about_point`, mogą rozspójnić odwzorowanie liczba–punkt.
+  **Nie reprodukuje się na 0.21.0** — ustal, który PR lub commit to zmienił i od
+  której wersji. Na 0.21.0 pozostaje jedno: `p2n` punktu leżącego poza linią rzutuje
+  go na nią bez ostrzeżenia.
+- **D15a — Plot joins across a pole:** `plot()` łączy punkty po obu stronach
+  asymptoty (np. `1/x`) jednym odcinkiem zamiast przerwać ścieżkę; brak parametru
+  `discontinuities`.
+- **D15b — Tick step is the sampling step:** krok ticków z `x_range` jest zarazem
+  krokiem próbkowania krzywej w `plot()`, więc rzadkie etykiety zgrubiają krzywe.
+- **D15c — `p2n` is not the inverse of `n2p` on a non-linear scale:**
+  `point_to_number` interpoluje liniowo i pomija `scaling`, więc na `LogBase`
+  `p2n(n2p(10))` daje 334 zamiast 10. Najpoważniejsze znalezisko audytu.
+- **D15d — Zero tick step:** `x_range=[0, 10, 0]` kończy się błędem alokacji z
+  `np.arange` (`Maximum allowed size exceeded`) zamiast walidacji kroku.
+- **D15e — Out-of-range label:** wartość z `numbers_to_include` spoza zakresu dostaje
+  etykietę daleko poza osią, bez ostrzeżenia.
+- **D15f — Annotations contradict the implementation:** adnotacje typów
+  `LogBase.inverse_function` i `NumberLine.point_to_number` przeczą implementacji,
+  więc `p2n(n2p(x))` nie przechodzi `mypy --strict`.
 
-Produce a single Markdown document, exactly in this shape.
+Numer D07 jest pominięty celowo: w audycie to brak natywnej legendy, czyli brak
+funkcji, a nie defekt. Jeżeli upstream zawiera istotne decyzje lub ograniczenia
+dotyczące legend, można je ująć wyłącznie jako znalezisko spoza listy.
 
-```markdown
-# Upstream survey: ManimCommunity/manim
+## 5. Metoda wyszukiwania
 
-Surveyed on: <date>
-Manim versions referenced: <latest release at time of survey, and the versions
-the findings concern>
+Zastosuj co najmniej trzy niezależne przejścia.
 
-## Coverage
+### A. Wyszukiwanie konwersacji GitHub
 
-| Search | Results | Reviewed | In scope |
-|---|---|---|---|
-| <query> | <n> | <n> | <n> |
+Wyszukuj osobno issues i PR-y, a w każdej grupie osobno stan `open` i `closed`.
+Użyj:
 
-Searches that returned nothing are listed too.
+- nazw klas, metod, parametrów i plików;
+- dawnych nazw i dawnych ścieżek kodu;
+- terminów opisujących obserwowane zachowanie oraz ich synonimów;
+- etykiet i powodów zamknięcia, m.in. `bug`, `wontfix`, `not planned`, `duplicate`;
+- kombinacji pojęć, nie tylko dosłownego brzmienia D01–D15f.
 
-## Findings
+Wyszukiwanie ma obejmować między innymi: tick generation and precision, endpoint
+inclusion, tips, coordinate conversion and round trips, scaling and stretching,
+aspect ratio, stale state/cache, clipping, discontinuities, asymptotes, `NaN`/`Inf`,
+logarithmic scales, minor ticks, labels and overlap, renderer differences,
+transformations, `animate`, `become`, `apply_points_function_about_point`,
+`number_to_point`/`n2p`, `point_to_number`/`p2n`,
+`coords_to_point`/`c2p`, `point_to_coords`/`p2c` oraz konfigurację osi.
 
-### UP-01 — <short title>
+### B. Przejście po historii kodu
 
-- **Type:** bug | feature-request | design-discussion | breaking-change
-- **Upstream:** #<number> — <url> (plus any linked issue or PR)
-- **Status:** open | merged | closed-unmerged | closed-wontfix | stale
-- **Last activity:** <date>
-- **Versions:** reported on <version>; fixed in <version or "not fixed">
-- **Maintainer position:** <shortest decisive quote, verbatim, with who said it;
-  "none" if no maintainer responded>
-- **Our defect:** <number from our list, or "new">
-- **Implication:** adopt-fix | avoid-approach | add-requirement | monitor | no-action
-- **Why:** <two sentences at most>
-- **Confidence:** verified — I opened the thread and read it | inferred — <what
-  the inference rests on>
+Nie polegaj wyłącznie na wyszukiwaniu tekstowym w tytułach i opisach. Przejrzyj
+historię zmian wszystkich plików objętych zakresem. Odszukaj PR-y stojące za
+commitami, które modyfikowały te pliki, i otwórz ich pełne wątki. To przejście ma
+wykryć PR-y o ogólnych tytułach, które nie zawierają nazw klas ani symptomów.
 
-### UP-02 — ...
+### C. Rozwijanie odsyłaczy
 
-## Our defects with no upstream trace
+Jeżeli otwarty wątek odsyła do innego issue, PR-a, review, wcześniejszej implementacji
+albo duplikatu, otwórz również wskazany wątek, jeżeli może należeć do zakresu. Kontynuuj
+aż do wyczerpania istotnych odsyłaczy.
 
-| # | Defect | Searched | Interpretation |
-|---|---|---|---|
+Jeśli narzędzie lub API ogranicza liczbę wyników, dziel zapytania według typu, stanu,
+okresu, klasy lub rodziny problemu i stronicuj do końca. Jeśli mimo tego pełny przegląd
+nie jest możliwy, nie próbuj maskować luki — oznacz audyt jako nieukończony i podaj
+dokładne liczby w tabeli pokrycia.
 
-Interpretation is one of: nobody has reported it; it is reported under wording I
-could not find; it may not reproduce on current `main`.
+## 6. Twarde reguły dowodowe
 
-## Constraints on a downstream library
+1. **Otwórz każdy znaleziony wątek.** „Przejrzany” oznacza przeczytanie opisu,
+   wszystkich komentarzy oraz — dla PR-a — conversation, review i istotnych zmian.
+   Snippet lub lista wyników nie są przeglądem wątku.
+2. **Nie streszczaj wypowiedzi jako cytatu.** W polu „Cytat maintainera” wstaw krótki,
+   dosłowny fragment wypowiedzi (maksymalnie 25 słów), wraz z autorem, datą i
+   permalinkiem bezpośrednio do komentarza lub review.
+3. Osobę nazywaj maintainerem tylko wtedy, gdy potwierdza to rola GitHub
+   (`OWNER`, `MEMBER`, `COLLABORATOR`) albo inne jawne źródło. W przeciwnym razie
+   wpisz `unknown`.
+4. **Brak kanonicznego URL issue lub PR-a oznacza, że wpis nie wchodzi do raportu.**
+   Nie używaj URL strony wyników wyszukiwania jako źródła.
+5. Nie wyprowadzaj wersji z samej daty. Wersję uznaj za ustaloną tylko na podstawie
+   jawnego zgłoszenia, milestone'u, tagu, changelogu, testu reprodukcyjnego albo
+   zmergowanego kodu. W innych przypadkach wpisz `unknown`.
+6. Gdy stan, wersja, rola autora, intencja maintainerów albo związek z defektem nie są
+   ustalone, wpisz **`unknown` zamiast zgadywać**.
+7. Odróżniaj fakt ze źródła od własnej inferencji. Inferencję oznacz jawnie słowem
+   `inference` i obniż odpowiednio poziom pewności.
+8. Nie utożsamiaj automatycznie `closed` z `fixed` ani zamkniętego PR-a z kodem
+   obecnym w wydaniu. Rozróżniaj `closed-completed`, `closed-not-planned`, `duplicate`,
+   `merged` i `closed-unmerged`.
+9. Jeden wątek opisz tylko raz, nawet jeśli pojawił się w wielu zapytaniach. Może on
+   mapować się na kilka defektów.
+10. Nie pomijaj trafienia tylko dlatego, że nie pasuje do D01–D15f. Nadaj mu identyfikator
+    `Nxx` i umieść w sekcji znalezisk spoza listy.
+11. **Nie proponuj żadnych rozwiązań dla `manim-plots`.** Nie podawaj implementacji,
+    architektury, obejść, rekomendacji, planu prac ani „next steps”. Masz raportować
+    stan upstream i jego konsekwencje, a nie projektować bibliotekę.
 
-Anything found that changes what a library outside Manim's class hierarchy can
-rely on: deprecations, renames, signature changes, altered transformation
-semantics, renderer differences between cairo and OpenGL.
+## 7. Sztywny schemat każdego wpisu
 
-## Open questions
+Każde issue lub PR przedstaw w osobnym wpisie. Nagłówek ma postać:
 
-Things the survey could not settle, each with what evidence would settle it.
-```
+`### Uxxx — dokładny tytuł wątku`
 
-## Rules
+Pod nagłówkiem podaj **dokładnie poniższe osiem pól, zawsze w tej kolejności**:
 
-- Open every thread you cite and read it. Do not report from search-result
-  snippets or from memory of the codebase.
-- Quote the shortest decisive line rather than summarising a maintainer's
-  position in your own words.
-- Every finding carries a real URL. If you cannot produce the URL, the finding
-  does not go in the document.
-- Never guess an issue number, a version or a date. Write `unknown` and say what
-  you tried.
-- State result counts honestly. If a search returned more results than you
-  reviewed, say so in the coverage table — an incomplete survey that admits it
-  is useful; one that hides the gap is not.
-- Distinguish what the thread says from what you concluded. The
-  `Confidence` field is not decoration.
-- Absence of evidence is a finding. A defect nobody has reported in six years of
-  the project's history tells us something.
-- Do not propose fixes, designs or code for our library. Report what upstream
-  knows and stop there.
+1. **Typ:** `issue` albo `PR`.
+2. **Link:** kanoniczny URL issue albo PR-a.
+3. **Status:** dla issue użyj `open`, `closed-completed`, `closed-not-planned`,
+   `duplicate` albo `unknown`; dla PR-a użyj `open`, `draft`, `merged`,
+   `closed-unmerged` albo `unknown`. Dopisz jawne etykiety i `state_reason`, jeśli są
+   dostępne.
+4. **Wersje:** `reported: ...; reproduced: ...; fixed/changed: ...; current: ...`.
+   Każdą nieustaloną część oznacz `unknown`.
+5. **Cytat maintainera:** `„...” — @autor, RRRR-MM-DD, permalink`. Jeżeli brak
+   potwierdzonej wypowiedzi maintainera, wpisz
+   `unknown — brak potwierdzonego cytatu maintainera w przejrzanym wątku`.
+6. **Mapowanie na nasz defekt:** `Dxx — direct`, `Dxx — partial`, kilka identyfikatorów
+   albo `Nxx — poza listą`. Nie wymuszaj mapowania do D01–D15f.
+7. **Implikacja:** wyłącznie konsekwencja dla zakresu, kompatybilności lub założeń
+   `manim-plots`; bez propozycji rozwiązania. Oddziel fakt od `inference`.
+8. **Poziom pewności:** `high`, `medium` albo `low` oraz jednozdaniowe uzasadnienie
+   oparte na jakości dowodu.
+
+Nie dodawaj dziewiątego pola. Dodatkowy kontekst umieszczaj tylko w odpowiednim z
+ośmiu pól.
+
+## 8. Obowiązkowa struktura raportu
+
+### 8.1. Stan audytu
+
+Na samym początku napisz jednoznacznie `COMPLETE` albo `INCOMPLETE`, podaj datę
+wykonania, commit/tag upstream użyty do sprawdzania aktualnego kodu oraz wersje
+odniesienia 0.19.2, 0.21.0 i 0.22.0. `COMPLETE` wolno użyć tylko wtedy, gdy wszystkie zwrócone
+wyniki i wszystkie istotne odsyłacze zostały rzeczywiście otwarte i przejrzane.
+
+### 8.2. Wontfix / not planned / closed-unmerged
+
+Najpierw wpisy o najwyższej wartości decyzyjnej, zgodnie z priorytetem z sekcji 3.
+
+### 8.3. Pozostałe znaleziska mapujące się na D01–D15f
+
+Podziel według D01–D15f, ale nie duplikuj tych samych wątków.
+
+### 8.4. Znaleziska spoza listy kontrolnej
+
+Obowiązkowa sekcja, nawet jeśli wynik brzmi `Brak`. Każdy nowy problem oznacz `Nxx`
+i opisz w tym samym ośmiopolowym schemacie.
+
+### 8.5. Tabela pokrycia wyszukiwania
+
+Ta sekcja jest obowiązkowa i nie może być zastąpiona opisem słownym. Podaj co najmniej
+kolumny:
+
+| Rodzina zapytania / przejście | Typ i stan | Wyniki surowe | Unikalne wątki | Wątki otwarte i w pełni przejrzane | Nieprzejrzane | Włączone do raportu | Uwagi / ograniczenie |
+|---|---|---:|---:|---:|---:|---:|---|
+
+Pod tabelą podaj sumy globalne po deduplikacji. Wyjaśnij rozbieżności między liczbą
+wyników a liczbą przejrzanych. Jeśli choć jeden wynik lub istotny odsyłacz pozostał
+nieprzejrzany, stan audytu musi być `INCOMPLETE`.
+
+Dodaj również macierz pokrycia listy kontrolnej:
+
+| Defekt | Bezpośrednie ślady upstream | Częściowe ślady | Liczba przejrzanych powiązanych wątków | Ocena pokrycia |
+|---|---:|---:|---:|---|
+
+### 8.6. Nasze defekty bez śladu upstream
+
+Wymień jawnie każdy z D01–D15f, dla którego nie znaleziono żadnego wiarygodnego śladu.
+Oddziel:
+
+- `brak śladu`;
+- `tylko ślad częściowy lub pośredni`.
+
+Nie interpretuj braku śladu jako dowodu, że problem nie istnieje.
+
+### 8.7. Ograniczenia biblioteki spoza hierarchii klas Manima
+
+Na podstawie **dowodów znalezionych w issues i PR-ach** wypisz ograniczenia i koszty
+kompatybilności wynikające z tego, że `manim-plots` nie dziedziczy po `Axes`,
+`NumberLine` ani `NumberPlane`. Sprawdź zwłaszcza zależności od:
+
+- `isinstance` i kodu oczekującego konkretnych klas Manima;
+- metod lub narzędzi oczekujących `CoordinateSystem`;
+- zachowania `animate`, transformacji, `become`, kopiowania i updaterów;
+- mapowania współrzędnych po transformacjach geometrycznych;
+- kontraktów zwracanych obiektów, typów i integracji rendererów;
+- funkcji pomocniczych, które zakładają istniejącą hierarchię klas.
+
+Dla każdego ograniczenia podaj: fakt upstream, URL źródła, krótki dosłowny cytat
+maintainera albo `unknown`, implikację dla niezależnej biblioteki i poziom pewności.
+Odróżnij twarde ograniczenie od kosztu kompatybilności i od niepotwierdzonej
+inferencji. Jeśli brak dowodów upstream, napisz to wprost; nie wypełniaj sekcji
+spekulacją i nie proponuj rozwiązania.
+
+### 8.8. Ograniczenia samego audytu
+
+Wymień ograniczenia narzędzi, indeksowania, paginacji, niedostępnych komentarzy,
+niejednoznacznych historycznych wersji i innych luk. Nie używaj ogólnego zastrzeżenia,
+jeżeli można podać konkretną liczbę lub zakres luki.
+
+## 9. Kryteria poziomu pewności
+
+- **high:** bezpośrednia wypowiedź potwierdzonego maintainera albo zmergowany PR z
+  jednoznacznym testem/zmianą i ustaloną wersją;
+- **medium:** mocny związek potwierdzony treścią wątku lub kodem, ale niepełna
+  informacja o intencji, roli autora albo wersji;
+- **low:** związek pośredni, niejednoznaczny lub oparty częściowo na jawnie oznaczonej
+  inferencji.
+
+## 10. Kontrola przed oddaniem
+
+Przed oddaniem raportu sprawdź:
+
+- czy każdy wpis ma kanoniczny URL i wszystkie osiem pól;
+- czy każdy cytat jest dosłowny, krótki i ma permalink;
+- czy nie nazwano nikogo maintainerem bez potwierdzenia;
+- czy `unknown` zastępuje wszystkie nieuprawnione domysły;
+- czy przejrzano pełne wątki, a nie tylko wyniki wyszukiwania;
+- czy D01–D15f mają jawny wynik pokrycia;
+- czy aktywnie raportowano znaleziska spoza listy;
+- czy tabela pokazuje wyniki zwrócone **w porównaniu z** faktycznie przejrzanymi;
+- czy nieukończony przegląd jest oznaczony `INCOMPLETE`;
+- czy sekcja o bibliotece spoza hierarchii Manima opiera się na dowodach;
+- czy w całym raporcie nie ma propozycji rozwiązań, architektury, obejść ani planu
+  implementacji dla `manim-plots`.
