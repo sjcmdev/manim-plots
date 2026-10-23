@@ -389,8 +389,11 @@ machine. This is what makes affine collapse a requirement instead of an ornament
 
 **Target Manim is 0.21.0**, `manim>=0.21,<0.23` for 0.1 — the version in the project's own
 `.venv`, which is also what `TODO.md` targets. Everything in this plan that cites Manim
-source is verified against it. 0.22.0 is supported as well: the defect probes, the cited
-symbols and the parity surface are unchanged on it, and CI keeps it that way.
+source is verified against it. 0.22.0 is supported as well: the cited symbols and the
+parity surface are unchanged on it, and so is every defect probe except two. 0.22.0
+fixed 15c and the `point_to_number` half of 15f (ManimCommunity/manim#5039); the probes
+assert whichever behaviour the installed version has. Our own F-201 does not change —
+the library never calls Manim's conversions.
 
 ## Risks / open questions
 

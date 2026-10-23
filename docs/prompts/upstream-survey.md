@@ -71,8 +71,9 @@ niej nie ma.
 
 Identyfikatory odpowiadają numerom sekcji w `docs/defect-audit-0.21.md`. D01–D14
 znaleziono w 0.19.2, a D15a–D15f dopiero podczas weryfikacji na 0.21.0. Wszystkie
-reprodukują się na 0.21.0, z wyjątkiem jawnie oznaczonych; na 0.22.0 wynik jest ten
-sam dla każdego z nich poza D11, którego tam nie sprawdzano.
+reprodukują się na 0.21.0, z wyjątkiem jawnie oznaczonych. Na 0.22.0 wynik jest ten
+sam poza D15c (naprawiony), D15f (naprawiony w połowie) i D11, którego tam nie
+sprawdzano.
 
 - **D01 — Float accumulation:** float accumulation w generowaniu ticków
   `NumberLine` przez `np.arange`.
@@ -113,13 +114,17 @@ sam dla każdego z nich poza D11, którego tam nie sprawdzano.
 - **D15c — `p2n` is not the inverse of `n2p` on a non-linear scale:**
   `point_to_number` interpoluje liniowo i pomija `scaling`, więc na `LogBase`
   `p2n(n2p(10))` daje 334 zamiast 10. Najpoważniejsze znalezisko audytu.
+  **Naprawione w 0.22.0** przez
+  [#5039](https://github.com/ManimCommunity/manim/pull/5039) — dotyczy to też
+  `Axes.p2c`. Przeczytaj ten PR i powiązane wątki.
 - **D15d — Zero tick step:** `x_range=[0, 10, 0]` kończy się błędem alokacji z
   `np.arange` (`Maximum allowed size exceeded`) zamiast walidacji kroku.
 - **D15e — Out-of-range label:** wartość z `numbers_to_include` spoza zakresu dostaje
   etykietę daleko poza osią, bez ostrzeżenia.
 - **D15f — Annotations contradict the implementation:** adnotacje typów
   `LogBase.inverse_function` i `NumberLine.point_to_number` przeczą implementacji,
-  więc `p2n(n2p(x))` nie przechodzi `mypy --strict`.
+  więc `p2n(n2p(x))` nie przechodzi `mypy --strict`. Na 0.22.0 adnotacja
+  `point_to_number` jest już poprawna, a `LogBase.inverse_function` nadal nie.
 
 Numer D07 jest pominięty celowo: w audycie to brak natywnej legendy, czyli brak
 funkcji, a nie defekt. Jeżeli upstream zawiera istotne decyzje lub ograniczenia
