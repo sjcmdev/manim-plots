@@ -85,12 +85,12 @@ implementation (F-1002).
 
 ```python
 class Scale(Protocol):
-    domain: tuple[float, float]   # bounds; +-inf allowed
-    closed: tuple[bool, bool]     # whether each bound belongs to the domain
-    increasing: bool              # declared monotonic direction
+    domain: tuple[float, float]  # bounds; +-inf allowed
+    closed: tuple[bool, bool]  # whether each bound belongs to the domain
+    increasing: bool  # declared monotonic direction
 
-    def forward(self, x: FloatArray) -> FloatArray: ...   # data -> scaled
-    def inverse(self, u: FloatArray) -> FloatArray: ...   # scaled -> data
+    def forward(self, x: FloatArray) -> FloatArray: ...  # data -> scaled
+    def inverse(self, u: FloatArray) -> FloatArray: ...  # scaled -> data
     def limit_range(self, lo: float, hi: float) -> tuple[float, float]: ...
 ```
 
@@ -118,7 +118,9 @@ the *user* supplies, D6 what the *chain* runs.
 
 ```python
 class Locator(Protocol):
-    def values(self, lo: float, hi: float, scale: Scale, max_ticks: int) -> FloatArray: ...
+    def values(
+        self, lo: float, hi: float, scale: Scale, max_ticks: int
+    ) -> FloatArray: ...
     def key(self, value: float) -> Hashable | None: ...
 ```
 
@@ -146,8 +148,9 @@ class Locator(Protocol):
 ```python
 @dataclass(frozen=True)
 class Labels:
-    text: Sequence[str]        # one per tick, same order
+    text: Sequence[str]  # one per tick, same order
     offset: str | None = None  # the shared exponent slot; always None in 0.1 (F-503)
+
 
 class Formatter(Protocol):
     def __call__(self, values: FloatArray) -> Labels: ...
@@ -166,7 +169,7 @@ class Formatter(Protocol):
 ```python
 class Source(Protocol):
     def sample(self, map: CompiledMap, bounds: Bounds) -> Payload: ...
-    def at(self, t: FloatArray) -> FloatArray: ...   # data coords, for i2gp (F-707)
+    def at(self, t: FloatArray) -> FloatArray: ...  # data coords, for i2gp (F-707)
 ```
 
 `map` is read-only: it is the pipeline's one feedback edge (D6), so adaptive sampling

@@ -93,6 +93,11 @@ closes.
       — by reference to `PLAN.md`, ADR 0001 section 4
 - [x] Record as `docs/adr/0001-architecture.md` — accepted with the maintainer's
       answers to its five questions
+- [ ] Proof of concept for the load-bearing hypotheses: the `points` property on a
+      leaf, the transient-mode test under the eight restoring animations, leaf copy,
+      rebuild cost against F-1001, and `MathTex` labels as library leaves — prompt in
+      `docs/prompts/poc-points-property.md`, report in `docs/poc-points-property.md`.
+      Task 04 closes when the report is in and the ADR reflects it
 
 ## Stage 2 onward
 

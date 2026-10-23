@@ -64,6 +64,7 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D", "ANN"]
+"poc/*" = ["D", "ANN"]  # throwaway proof of concept, never shipped
 
 [tool.mypy]
 python_version = "3.12"
