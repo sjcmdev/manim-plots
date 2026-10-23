@@ -194,7 +194,7 @@ without rendering (F-201, F-208).
 | the getter returns the cache object itself (F-902) | Manim | identity, not equality |
 | every public mutator carries `override_animate` (F-908) | Manim | mechanical sweep |
 | the eight restoring animations end on the derived points (F-906) | Manim | one per animation |
-| p95 rebuild <= 4 ms and <= 1.5x baseline (F-1001) | Manim | benchmark, its own CI job |
+| p95 rebuild <= 4 ms and <= 1.5x baseline (F-1001) | Manim | benchmark, run apart from the four checks |
 
 Render tests carry the `render` marker from task 02 and stay out of the default run.
 
