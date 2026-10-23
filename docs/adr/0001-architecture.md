@@ -1,6 +1,7 @@
 # ADR 0001 — Architecture of the 0.1 engine
 
-- **Status:** Proposed — drafted 2026-10-23, awaiting the maintainer's grill.
+- **Status:** Accepted — drafted 2026-10-23; the maintainer answered the five open
+  questions the same day (see the end of this record).
 - **Task:** `task/04-architecture` in `TODO.md`.
 - **Builds on:** `PLAN.md` (the locked design), `docs/scope.md` (the `F-*` list),
   `docs/grill-log.md` (D1-D16).
@@ -18,8 +19,8 @@ Task 04 has four open items, and this record closes them:
 
 Item 3 is already decided in `PLAN.md` (*Integration: the `points` property on
 library-owned leaves*) and is recorded here only by reference. Items 1, 2 and 4 are
-new. Choices the maintainer has not seen yet are marked **proposed**; the questions
-that need an answer before this record is accepted are collected at the end.
+new. The questions that had to be answered before this record was accepted are
+collected at the end, with the maintainer's answers.
 
 ## Decision
 
@@ -39,35 +40,39 @@ This is the answer to item 2. It is also what makes the testing strategy in
 about — scale inverses, tick placement, coordinate conversion — is property-tested with
 Hypothesis in milliseconds, without constructing a mobject.
 
-The rule is enforced, not hoped for: a test imports each core module in a fresh
-interpreter and asserts that `manim` is not in `sys.modules`.
+The rule is enforced, not hoped for: a test parses every module under `core/` and
+asserts that none imports `manim` or anything from `mobjects/`. The check is static
+because a runtime one cannot work: importing `manim_plots.core.scales` first runs
+`manim_plots/__init__.py`, which re-exports the Manim layer. Since core modules import
+only each other, a per-file check also covers the transitive case.
 
-### 2. Module layout (proposed)
+### 2. Module layout
 
 ```
 src/manim_plots/
-    __init__.py       public re-exports; the only import users need
-    # numeric core: NumPy only
-    payload.py        Payload (F-114) and its construction-time validation
-    nodes.py          Node protocol, affine collapse, compiled Map (F-105, F-109)
-    scales.py         Scale protocol; Linear, Log, SymLog, FunctionScale (F-3xx)
-    ticks.py          Locator protocol; MaxN, Multiple, Log, Fixed, Null, MinorCount (F-4xx)
-    formatters.py     Formatter protocol and the 0.1 formatters (F-5xx)
-    sources.py        Source protocol; analytic, array and parametric sources (F-7xx)
-    shape.py          split at invalid samples, clip, dash (F-106, F-705, F-706, F-806)
-    params.py         parameter descriptors and version counters (F-110, F-911)
-    # Manim layer
-    leaves.py         leaf mobjects carrying the `points` property (F-901..F-905)
-    system.py         CoordinateSystem, CartesianAxes; owns Map and placement chain
-    axis.py           Axis decoration (F-6xx)
-    artists.py        the four 0.1 artists (F-701)
-    legend.py         Legend (F-801)
-    animations.py     DrawAxes, TraceCurve, ShowPoints, Morph (F-912)
-    group.py          mp.Group broadcast handle (F-910)
+    __init__.py         public re-exports; the only import users need
+    core/               numeric core: NumPy only
+        payload.py      Payload (F-114) and its construction-time validation
+        nodes.py        Node protocol, affine collapse, compiled Map (F-105, F-109)
+        scales.py       Scale protocol; Linear, Log, SymLog, FunctionScale (F-3xx)
+        ticks.py        Locator protocol; MaxN, Multiple, Log, Fixed, Null, MinorCount (F-4xx)
+        formatters.py   Formatter protocol and the 0.1 formatters (F-5xx)
+        sources.py      Source protocol; analytic, array and parametric sources (F-7xx)
+        shape.py        split at invalid samples, clip, dash (F-106, F-705, F-706, F-806)
+        params.py       parameter descriptors and version counters (F-110, F-911)
+    mobjects/           Manim layer
+        leaves.py       leaf mobjects carrying the `points` property (F-901..F-905)
+        system.py       CoordinateSystem, CartesianAxes; owns Map and placement chain
+        axis.py         Axis decoration (F-6xx)
+        artists.py      the four 0.1 artists (F-701)
+        legend.py       Legend (F-801)
+        animations.py   DrawAxes, TraceCurve, ShowPoints, Morph (F-912)
+        group.py        mp.Group broadcast handle (F-910)
 ```
 
-Sixteen modules for 98 requirements. A module is split when it outgrows one reader, not
-in advance.
+Fifteen modules for 98 requirements, in two subpackages that name the layer, so the
+boundary is visible in every import path and not only in the test. A module is split
+when it outgrows one reader, not in advance.
 
 ### 3. The contracts
 
@@ -80,7 +85,8 @@ implementation (F-1002).
 
 ```python
 class Scale(Protocol):
-    domain: tuple[float, float]   # open interval; +-inf allowed
+    domain: tuple[float, float]   # bounds; +-inf allowed
+    closed: tuple[bool, bool]     # whether each bound belongs to the domain
     increasing: bool              # declared monotonic direction
 
     def forward(self, x: FloatArray) -> FloatArray: ...   # data -> scaled
@@ -90,16 +96,18 @@ class Scale(Protocol):
 
 - `forward` is the scale transform and `inverse` its inverse — never the other way
   round (F-303, defect 10).
-- Both are vectorized over `ndarray`; a value outside `domain` maps to `NaN`, and the
-  *caller* applies the surface rule from `docs/scope.md` (split, drop or raise). The
-  scale itself never decides policy.
+- Both are vectorized over `ndarray`; a value outside `domain` — an open bound itself
+  included — maps to `NaN`, and the *caller* applies the surface rule from
+  `docs/scope.md` (split, drop or raise). The scale itself never decides policy.
+- Bounds are closed per side, so `sqrt` is `domain=(0, inf), closed=(True, False)` and
+  `0` is a valid input, while `Log` stays open at `0`. An infinite bound is always open;
+  a scale that declares it closed is rejected at construction.
 - `limit_range` is F-311: it normalises a configured range that leaves the domain, and
   is called on range configuration only, never on a conversion (F-202).
-- `FunctionScale(forward, inverse, domain, increasing=True)` is how a user supplies a
-  scale (F-302). Its constructor runs the sampled falsification of F-305 and raises
-  naming the failed property.
-- Deliberate ceiling: an open-interval domain cannot include its endpoint, so `sqrt`
-  over `[0, inf)` treats `0` as invalid. A closed bound is additive later.
+- `FunctionScale(forward, inverse, domain, closed=(False, False), increasing=True)` is
+  how a user supplies a scale (F-302). Its constructor runs the sampled falsification of
+  F-305, sampling each closed bound as well as the interior, and raises naming the
+  failed property.
 
 A scale is a value object, not a map node. The coordinate system compiles each scale
 into a one-dimensional `Node`, which is where D6's `apply` / `is_affine` / `matrix` /
@@ -147,9 +155,10 @@ class Formatter(Protocol):
 
 - The formatter receives every tick at once, so context-dependent labelling — shared
   precision, an SI prefix chosen for the whole axis — is possible (F-501).
-- **Proposed:** a label string is LaTeX in math mode, rendered with `MathTex`. That
-  matches Manim's own tick labels and the `r"\pi"` tick list the maintainer approved
-  in Q3.3 of `docs/api-sketch.md`.
+- A label string is LaTeX in math mode, rendered with `MathTex`. That matches Manim's
+  own tick labels and the `r"\pi"` tick list the maintainer approved in Q3.3 of
+  `docs/api-sketch.md`. Plain `Text` is not offered in 0.1, so labels need a TeX
+  install, as Manim's do.
 - A plain callable `float -> str` is accepted and wrapped (F-504).
 
 #### Source and Shape (F-103, F-114, F-707)
@@ -189,7 +198,7 @@ without rendering (F-201, F-208).
 | no float accumulation: `Multiple(0.1)` over `[0, 1]` gives exact multiples (F-402) | core | example + property |
 | one locator never emits two values with one key (F-413) | core | Hypothesis |
 | the payload validation table in `docs/scope.md` raises row by row | core | one test per row |
-| the core imports no Manim | core | subprocess import check |
+| the core imports no Manim | core | static import check over `core/` |
 | every generated leaf is a library type (F-1004) | Manim | structural |
 | the getter returns the cache object itself (F-902) | Manim | identity, not equality |
 | every public mutator carries `override_animate` (F-908) | Manim | mechanical sweep |
@@ -208,15 +217,25 @@ still change without breaking anyone — see question 1.
 
 ## Questions for the maintainer
 
+Answered 2026-10-23.
+
 1. **Is `Node` public in 0.1?** Proposed: no. `Scale` is the public extension point;
    `Node` is internal until polar needs it in 0.2. The cost is that a user cannot
    write a coupled transform in 0.1, which no 0.1 requirement asks for.
+   **Answer: no, as proposed.**
 2. **Label markup.** Proposed: LaTeX math mode via `MathTex`. The alternative is plain
    text via `Text`, which renders without a TeX install but cannot show `\pi`.
+   **Answer: `MathTex`, as proposed.**
 3. **`key()` returning `None` for off-grid values.** Proposed as the single rule behind
    identity, minor-on-major removal and explicit merge. It makes every locator answer
    "would I emit this value?", which `MaxN` can only answer for the range it last saw.
    Acceptable, or should coincidence (F-407) compare values with a tolerance instead?
-4. **Domain as an open interval.** Proposed, with the `sqrt`-at-zero ceiling above.
+   **Answer: `key()` for all three, as proposed.** The `MaxN` limitation is accepted:
+   its key is relative to the current range, and the current range is what is drawn.
+4. **Domain as an open interval.** Proposed, with the `sqrt`-at-zero ceiling.
+   **Answer: no — closed bounds in 0.1.** The Scale contract above gains
+   `closed: tuple[bool, bool]`, and the ceiling is gone.
 5. **Module names.** `system.py` / `axis.py` / `artists.py` and the rest are
    placeholders in the same sense as the API sketch: rename freely.
+   **Answer: keep the names, but split into `core/` and `mobjects/` subpackages.**
+   Section 2 shows the result.

@@ -80,11 +80,14 @@ closes.
 
 ### task/04-architecture
 
-- [ ] Public contracts: scale, locator, formatter — the extension points third
-      parties implement against
-- [ ] Separation between the data model and the Manim geometry it produces
-- [ ] How a coordinate system survives Manim's geometric transformations
-- [ ] Record as `docs/adr/0001-architecture.md`
+- [x] Public contracts: scale, locator, formatter — the extension points third
+      parties implement against — `typing.Protocol`s, ADR 0001 section 3
+- [x] Separation between the data model and the Manim geometry it produces
+      — a NumPy-only `core/` and a `mobjects/` layer, ADR 0001 sections 1-2
+- [x] How a coordinate system survives Manim's geometric transformations
+      — by reference to `PLAN.md`, ADR 0001 section 4
+- [x] Record as `docs/adr/0001-architecture.md` — accepted with the maintainer's
+      answers to its five questions
 
 ## Stage 2 onward
 
