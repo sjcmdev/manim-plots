@@ -30,7 +30,7 @@ Infrastructure and knowledge needed before any design decision is made.
 
 Re-run the ManimCE defect audit against 0.21.0. The original audit ran against
 0.19.2; every finding below is unconfirmed on the version we actually target.
-Each confirmed defect becomes a requirement in task 02; each defect that no longer
+Each confirmed defect becomes a requirement in task 03; each defect that no longer
 reproduces is dropped with a note.
 
 - [x] Float accumulation in `NumberLine` tick generation via `np.arange`
@@ -53,11 +53,14 @@ reproduces is dropped with a note.
 
 ### task/02-testing-infrastructure
 
-- [ ] Register the `render` marker in `pyproject.toml` (`--strict-markers` is already
+- [x] Register the `render` marker in `pyproject.toml` (`--strict-markers` is already
       on, so the first marked test fails without it)
-- [ ] Exclude render tests from the default run; keep them runnable explicitly
-- [ ] GitHub Actions workflow running the four checks
-- [ ] Decide the CI matrix: Python versions and Manim versions
+- [x] Exclude render tests from the default run; keep them runnable explicitly
+      — `pytest -m render` overrides the default `-m 'not render'`
+- [ ] GitHub Actions workflow running the four checks — `.github/workflows/ci.yml`
+      written; tick after the first green run
+- [x] Decide the CI matrix: Python versions and Manim versions — Python 3.12 and 3.13
+      against Manim 0.21.0 and 0.22.0; the pin is `manim>=0.21,<0.23`
 - [ ] Branch protection on `main` and `dev`: pull request plus green CI
 
 ## Stage 1 — scope
