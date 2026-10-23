@@ -219,7 +219,7 @@ choosing it later breaks nothing.
 | F-1004 | Tests assert the **types** of generated leaves, not only rendered output | **0.1** | PLAN risk |
 | F-1005 | The API is IDE-navigable: overloads on `plot`, typed descriptors, no string-keyed registry as the primary access path | **0.1** | A4.2 |
 | F-1006 | The invalid-input table below is implemented and tested on all four surfaces | **0.1** | PLAN |
-| F-1007 | Supported matrix for 0.1: Manim 0.21.x, Python >= 3.12, NumPy >= 2.5, Cairo renderer. OpenGL is out of scope | **0.1** | task/01 |
+| F-1007 | Supported matrix for 0.1: Manim 0.21.x and 0.22.x, Python >= 3.12, NumPy >= 2.5, Cairo renderer. OpenGL is out of scope | **0.1** | task/01, task/02 |
 | F-1008 | The docs state the transient-override contract where users will meet it: next to `Uncreate`, next to the first example that puts a system and an artist in one `VGroup`, and next to `refresh()` | **0.1** | PLAN risk |
 
 ---

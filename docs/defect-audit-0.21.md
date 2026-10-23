@@ -28,6 +28,12 @@ Of the 14 named defects, **12 reproduce, 1 reproduces partially, 1 is gone**. Th
 for unlisted findings turned up **6 more**, one of them more severe than anything on the
 original list.
 
+**Re-checked on 0.22.0 (2026-10-23).** Every probe gives the same verdict except two.
+15c is fixed upstream by ManimCommunity/manim#5039: `point_to_number` and `p2c` now
+apply the scale. 15f is half fixed: the `point_to_number` annotation is correct, the
+`LogBase.inverse_function` one is not. Defect 11 has no probe and was not re-checked.
+The probes assert whichever behaviour the installed version has.
+
 | # | Defect | 0.19.2 | 0.21.0 |
 |---|---|---|---|
 | 1 | Float accumulation in tick generation via `np.arange` | yes | **reproduces** |

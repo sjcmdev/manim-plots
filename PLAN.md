@@ -50,10 +50,11 @@ list with tiers).
   **Done** on `task/01-revalidate-defects`: 12 of 14 reproduce, 1 partially, 1 is gone,
   and the sweep found six more, one of them severe.
 - The version matrix is made consistent in the repository, not only in prose. **Done**:
-  `pyproject.toml` says `manim>=0.21,<0.22`, `numpy>=2.5`, `requires-python = ">=3.12"`.
+  `pyproject.toml` says `manim>=0.21,<0.23`, `numpy>=2.5`, `requires-python = ">=3.12"`.
   The Python floor moved from 3.11 because NumPy 2.5 itself requires 3.12, so the old
-  floor described an install that cannot happen. Supported matrix for 0.1: Manim 0.21.0,
-  Python >= 3.12, NumPy >= 2.5, Cairo renderer.
+  floor described an install that cannot happen. Supported matrix for 0.1: Manim 0.21.0
+  and 0.22.0, Python >= 3.12, NumPy >= 2.5, Cairo renderer. `tools/check.py` runs
+  Python 3.12 and 3.13 against both Manim versions.
 - Every Manim citation in the design docs names a symbol, and a test imports each cited
   symbol so a rename fails loudly instead of rotting. **Done**:
   `tests/test_cited_symbols.py` walks every `file.py::Symbol` citation in `PLAN.md`,
@@ -380,15 +381,19 @@ though most of its callers, the calculus cluster, are 0.2.
 The engine ships with a measurable gate, not an adjective. Scenario: four artists on one
 `CartesianAxes`, 2 000 sample points each, one animated parameter dirtying the pipeline
 every frame, 1080p60, Cairo renderer. Threshold: p95 pipeline rebuild time **<= 4 ms per
-frame** — under a quarter of a 60 fps frame budget, leaving the renderer the rest. CI
-checks **both** `p95 <= 4 ms` and `p95 <= 1.5x` the recorded baseline, and recording a
-baseline fails if the absolute target is missed, so a slow baseline cannot ratify itself.
-The benchmark records the machine it ran on, because CI hardware is not the maintainer's
-machine. This is what makes affine collapse a requirement instead of an ornament.
+frame** — under a quarter of a 60 fps frame budget, leaving the renderer the rest. The
+gate checks **both** `p95 <= 4 ms` and `p95 <= 1.5x` the recorded baseline, and recording
+a baseline fails if the absolute target is missed, so a slow baseline cannot ratify itself.
+The benchmark records the machine it ran on, because the maintainer works on more than
+one machine and a baseline from one says nothing about the other. This is what makes affine collapse a requirement instead of an ornament.
 
-**Target Manim is 0.21.0**, `manim>=0.21,<0.22` for 0.1 — the version in the project's own
+**Target Manim is 0.21.0**, `manim>=0.21,<0.23` for 0.1 — the version in the project's own
 `.venv`, which is also what `TODO.md` targets. Everything in this plan that cites Manim
-source is verified against it.
+source is verified against it. 0.22.0 is supported as well: the cited symbols and the
+parity surface are unchanged on it, and so is every defect probe except two. 0.22.0
+fixed 15c and the `point_to_number` half of 15f (ManimCommunity/manim#5039); the probes
+assert whichever behaviour the installed version has. Our own F-201 does not change —
+the library never calls Manim's conversions.
 
 ## Risks / open questions
 

@@ -17,7 +17,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "manim>=0.21,<0.22",
+    "manim>=0.21,<0.23",
     "numpy>=2.5",
 ]
 
@@ -80,4 +80,7 @@ disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers --strict-config"
+addopts = "--strict-markers --strict-config -m 'not render'"
+markers = [
+    "render: needs a full Manim render; excluded by default, run with `pytest -m render`",
+]
