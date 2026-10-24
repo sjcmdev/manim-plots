@@ -1,0 +1,19 @@
+{
+  "placement_nodes": 0,
+  "placement_version": 0,
+  "transient_flags": [
+    false,
+    false
+  ],
+  "clean_before_refresh": [
+    true,
+    true
+  ],
+  "refresh_changed": [
+    false,
+    false
+  ],
+  "interpolate_calls": 11,
+  "rendered_frames": 9,
+  "suspends": 0
+}

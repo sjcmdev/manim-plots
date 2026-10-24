@@ -1,0 +1,22 @@
+{
+  "placement_unchanged": false,
+  "buffer_equals_derived": false,
+  "raw_buffer_equals_derived": false,
+  "c2p_unchanged": false,
+  "sibling_unchanged": false,
+  "data_applied": false,
+  "data_changes": 1,
+  "data_value": 1.5,
+  "degenerate": false,
+  "in_scene": true,
+  "placement_nodes": 1,
+  "placement_version": 6,
+  "max_c2p_delta": 0.00027765544985980384,
+  "max_sibling_delta": 0.0005172525817114249,
+  "buffer_shadow_max_delta": 0.0004993594662261458,
+  "buffer_derived_max_delta": 0.30010282640631714,
+  "interpolate_calls": 11,
+  "distinct_alphas": 10,
+  "rendered_frames": 9,
+  "leaf_suspend_calls": 1
+}
