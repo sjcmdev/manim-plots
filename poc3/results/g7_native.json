@@ -1,0 +1,45 @@
+{
+  "calls": 0,
+  "frames": [],
+  "exception": "Derived object has no attribute 'owner'",
+  "native_calls": 11,
+  "native_frames": 9,
+  "aligned_family": [
+    "ParameterFrame",
+    "ParameterFrame",
+    "Derived",
+    "Derived",
+    "Derived",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick"
+  ],
+  "target_family": [
+    "ParameterFrame",
+    "Derived",
+    "Derived",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick",
+    "Tick"
+  ],
+  "final_range": [
+    -3.0,
+    3.0
+  ],
+  "bad_tick_frames": 0,
+  "max_artist_error": 0
+}
