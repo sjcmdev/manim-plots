@@ -102,6 +102,9 @@ closes.
       `docs/prompts/poc2-frame-lifecycle.md`, report in `docs/poc2-frame-lifecycle.md`.
       A third reads the missing operation context from the call stack — prompt in
       `docs/prompts/poc3-stack-context.md`, report in `docs/poc3-stack-context.md`.
+      A fourth makes the data channel native under `.animate` through keyed family
+      alignment — prompt in `docs/prompts/poc4-keyed-alignment.md`, report in
+      `docs/poc4-keyed-alignment.md`.
       Task 04 closes when the report is in and the ADR reflects it
 
 ## Stage 2 onward

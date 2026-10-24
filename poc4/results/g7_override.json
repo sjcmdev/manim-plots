@@ -1,0 +1,311 @@
+{
+  "calls": 11,
+  "frames": [
+    {
+      "source_samples": 1,
+      "weight_builds": 13,
+      "compare_ns": 94400,
+      "compare_calls": 51,
+      "rebuild_ns": 734800,
+      "rebuilds": 13,
+      "render_ns": 1523200,
+      "range": [
+        -3.0,
+        3.0
+      ],
+      "tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "source_samples": 1,
+      "weight_builds": 13,
+      "compare_ns": 87200,
+      "compare_calls": 51,
+      "rebuild_ns": 731000,
+      "rebuilds": 13,
+      "render_ns": 1424700,
+      "range": [
+        -2.986453991556167,
+        3.027092016887666
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "source_samples": 1,
+      "weight_builds": 13,
+      "compare_ns": 85400,
+      "compare_calls": 51,
+      "rebuild_ns": 713700,
+      "rebuilds": 13,
+      "render_ns": 1396600,
+      "range": [
+        -2.9474525637351694,
+        3.1050948725296617
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "source_samples": 1,
+      "weight_builds": 13,
+      "compare_ns": 84900,
+      "compare_calls": 51,
+      "rebuild_ns": 702800,
+      "rebuilds": 13,
+      "render_ns": 1398200,
+      "range": [
+        -2.845759123659818,
+        3.3084817526803647
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "source_samples": 1,
+      "weight_builds": 13,
+      "compare_ns": 97500,
+      "compare_calls": 51,
+      "rebuild_ns": 727600,
+      "rebuilds": 13,
+      "render_ns": 1455300,
+      "range": [
+        -2.637260892642745,
+        3.72547821471451
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "compare_ns": 111200,
+      "compare_calls": 56,
+      "weight_builds": 15,
+      "rebuild_ns": 873800,
+      "rebuilds": 15,
+      "source_samples": 1,
+      "render_ns": 1633000,
+      "range": [
+        -2.362739107357255,
+        4.27452178528549
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "source_samples": 1,
+      "weight_builds": 14,
+      "compare_ns": 96400,
+      "compare_calls": 54,
+      "rebuild_ns": 894800,
+      "rebuilds": 14,
+      "render_ns": 1602200,
+      "range": [
+        -2.154240876340182,
+        4.691518247319636
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "source_samples": 1,
+      "weight_builds": 14,
+      "compare_ns": 102200,
+      "compare_calls": 54,
+      "rebuild_ns": 910100,
+      "rebuilds": 14,
+      "render_ns": 1655000,
+      "range": [
+        -2.052547436264831,
+        4.894905127470338
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "source_samples": 1,
+      "weight_builds": 14,
+      "compare_ns": 116100,
+      "compare_calls": 54,
+      "rebuild_ns": 785000,
+      "rebuilds": 14,
+      "render_ns": 1775000,
+      "range": [
+        -2.013546008443833,
+        4.972907983112334
+      ],
+      "tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    }
+  ],
+  "final_range": [
+    -2.0,
+    5.0
+  ],
+  "chain_exceptions": [
+    "Method chaining is currently not supported for overridden animations",
+    "Method chaining is currently not supported for overridden animations"
+  ]
+}

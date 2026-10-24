@@ -1,0 +1,280 @@
+{
+  "suspends": [],
+  "frame_suspends": [],
+  "writer_events": [
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 14100,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11300,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 13400,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11100,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 13500,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 12200,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11700,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 14300,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 12400,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11600,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 15100,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 12600,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 13500,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 12200,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 13300,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 10800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 12900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 12000,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11000,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 13300,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 12100,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11200,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 13700,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 11100,
+      "transient": false,
+      "container_contains_leaf": true
+    }
+  ],
+  "error": 0.0,
+  "placement_nodes": 10,
+  "calls": 11,
+  "frames": 9
+}

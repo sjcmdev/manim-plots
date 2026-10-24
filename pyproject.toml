@@ -67,6 +67,7 @@ convention = "numpy"
 "poc/*" = ["D", "ANN"]  # throwaway proof of concept, never shipped
 "poc2/*" = ["D", "ANN"]  # second proof of concept, same status
 "poc3/*" = ["D", "ANN"]  # third proof of concept, same status
+"poc4/*" = ["D", "ANN"]  # fourth proof of concept, same status
 
 [tool.mypy]
 python_version = "3.12"

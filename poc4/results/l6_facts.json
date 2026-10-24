@@ -1,0 +1,16 @@
+{
+  "lines": {
+    "shift": {
+      "original": 1283,
+      "shifted": 1284
+    },
+    "apply_points_function_about_point": {
+      "original": 1584,
+      "shifted": 1585
+    }
+  },
+  "arbitrary_call_sizes": [
+    36
+  ],
+  "probe_calls": 0
+}

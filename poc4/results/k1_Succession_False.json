@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "animation": "Indicate",
+      "line": 213,
+      "permanent": false,
+      "stack_ns": 3300,
+      "simulation_ns": 5850000,
+      "playback": [
+        2497027138928,
+        0.3333333333333333
+      ],
+      "excluded_artists": 0
+    }
+  ],
+  "max_error": 0.0,
+  "reattach_error": 0.0,
+  "calls": 9,
+  "frames": 9,
+  "remaining_suspensions": 0
+}

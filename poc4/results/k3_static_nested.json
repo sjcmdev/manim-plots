@@ -1,0 +1,27 @@
+{
+  "immediate_error": 0.0,
+  "rebuild_error": 1.3322676295501878e-15,
+  "second_immediate_error": 0,
+  "second_rebuild_error": 0,
+  "placement_nodes": 0,
+  "writer_events": [
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": true,
+      "stack_ns": 9000,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": true,
+      "stack_ns": 9000,
+      "transient": false,
+      "container_contains_leaf": true
+    }
+  ]
+}
