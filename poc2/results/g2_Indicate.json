@@ -1,0 +1,123 @@
+{
+  "calls": 11,
+  "native_calls": 11,
+  "frames": 9,
+  "max_artist_error": 2.220446049250313e-16,
+  "native_final_frame_error": 0.0,
+  "native_point_count_equal": true,
+  "max_artist_motion": 0.6006821170563731,
+  "native_external_artist_motion": 0.0,
+  "finite": true,
+  "point_count_stable": true,
+  "min_area": 24.0,
+  "max_pixel_difference": 0,
+  "singular_p2c": [],
+  "frame_measurements": [
+    {
+      "compare_ns": 74900,
+      "compare_calls": 50,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 88300,
+      "compare_calls": 52,
+      "rebuild_ns": 40900,
+      "rebuilds": 1,
+      "artist_error": 2.7755575615628914e-17,
+      "artist_motion": 0.03199774701266052,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.50710617187806,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 78400,
+      "compare_calls": 52,
+      "rebuild_ns": 32000,
+      "rebuilds": 1,
+      "artist_error": 2.220446049250313e-16,
+      "artist_motion": 0.22088297762652292,
+      "nodes": 328,
+      "finite": true,
+      "area": 27.608611904235733,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 83600,
+      "compare_calls": 52,
+      "rebuild_ns": 33000,
+      "rebuilds": 1,
+      "artist_error": 2.220446049250313e-16,
+      "artist_motion": 0.5150086930240736,
+      "nodes": 328,
+      "finite": true,
+      "area": 32.805983742577915,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 81400,
+      "compare_calls": 52,
+      "rebuild_ns": 53500,
+      "rebuilds": 1,
+      "artist_error": 2.220446049250313e-16,
+      "artist_motion": 0.6006821170563731,
+      "nodes": 328,
+      "finite": true,
+      "area": 34.40412613729801,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 85700,
+      "compare_calls": 50,
+      "artist_error": 2.220446049250313e-16,
+      "artist_motion": 0.6006821170563731,
+      "nodes": 328,
+      "finite": true,
+      "area": 34.40412613729801,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 76300,
+      "compare_calls": 52,
+      "rebuild_ns": 30200,
+      "rebuilds": 1,
+      "artist_error": 2.220446049250313e-16,
+      "artist_motion": 0.5150086930240736,
+      "nodes": 328,
+      "finite": true,
+      "area": 32.805983742577915,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 77300,
+      "compare_calls": 52,
+      "rebuild_ns": 30100,
+      "rebuilds": 1,
+      "artist_error": 2.220446049250313e-16,
+      "artist_motion": 0.22088297762652292,
+      "nodes": 328,
+      "finite": true,
+      "area": 27.608611904235733,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 78600,
+      "compare_calls": 52,
+      "rebuild_ns": 30400,
+      "rebuilds": 1,
+      "artist_error": 2.7755575615628914e-17,
+      "artist_motion": 0.03199774701266052,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.50710617187806,
+      "pixel_difference": 0
+    }
+  ],
+  "artist_removed": false,
+  "axis_removed": false
+}

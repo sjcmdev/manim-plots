@@ -1,0 +1,105 @@
+{
+  "criteria": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "native_end_error": 0.0,
+  "frame_rows": [
+    {
+      "time": 0.0,
+      "curve_error": 8.95090418262362e-16,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 24.0,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.06666666666666667,
+      "curve_error": 9.305364597889227e-16,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 23.675996763416574,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.13333333333333333,
+      "curve_error": 9.155199336221345e-16,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 22.7554289279921,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.2,
+      "curve_error": 1.3506446028928519e-15,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 20.440960455440756,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.26666666666666666,
+      "curve_error": 8.900196549101993e-16,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 16.083739383463907,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.3333333333333333,
+      "curve_error": 1.3322676295501878e-15,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 11.14234724832509,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.4,
+      "curve_error": 6.758924343478424e-16,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 7.993632003687308,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.4666666666666667,
+      "curve_error": 4.577566798522237e-16,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 6.647136633526009,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    },
+    {
+      "time": 0.5333333333333333,
+      "curve_error": 4.660953740672398e-16,
+      "frame_points": 1160,
+      "finite": true,
+      "area": 6.163653067394558,
+      "p2c": "ok",
+      "pixel_difference": 0,
+      "native_frame_error": 0.0
+    }
+  ],
+  "interpolate_calls": 11,
+  "native_interpolate_calls": 11,
+  "rendered_frames": 9,
+  "in_scene": true
+}

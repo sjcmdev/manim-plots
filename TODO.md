@@ -97,6 +97,9 @@ closes.
       leaf, the transient-mode test under the eight restoring animations, leaf copy,
       rebuild cost against F-1001, and `MathTex` labels as library leaves — prompt in
       `docs/prompts/poc-points-property.md`, report in `docs/poc-points-property.md`.
+      It falsified the shadow test, so a second one checks the replacement — a hidden
+      frame grid, an animation lifecycle on the leaves, target adoption — prompt in
+      `docs/prompts/poc2-frame-lifecycle.md`, report in `docs/poc2-frame-lifecycle.md`.
       Task 04 closes when the report is in and the ADR reflects it
 
 ## Stage 2 onward

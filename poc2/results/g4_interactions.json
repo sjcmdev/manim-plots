@@ -1,0 +1,33 @@
+{
+  "tracker_dot_error": 6.938893903907228e-18,
+  "parenting_shift_error": 0.0,
+  "scene_before_create": [
+    "System"
+  ],
+  "scene_after_create": [
+    "System"
+  ],
+  "parent_retained_create": true,
+  "native_parent_retained_create": true,
+  "explicit_add_splices": true,
+  "native_explicit_add_splices": true,
+  "simultaneous_displacement": [
+    -2.0,
+    0.0,
+    0.0
+  ],
+  "axis_suspended_when_artist_starts": [
+    true
+  ],
+  "foreign_curve_displacement": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "native_foreign_displacement": [
+    0.0,
+    1.0,
+    0.0
+  ],
+  "foreign_curve_unchanged_error": 0.0
+}

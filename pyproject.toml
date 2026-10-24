@@ -65,6 +65,7 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D", "ANN"]
 "poc/*" = ["D", "ANN"]  # throwaway proof of concept, never shipped
+"poc2/*" = ["D", "ANN"]  # second proof of concept, same status
 
 [tool.mypy]
 python_version = "3.12"
