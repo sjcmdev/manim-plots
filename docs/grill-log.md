@@ -474,6 +474,125 @@ Kept apart because folding one into the other means nobody reads either.
 
 ---
 
+# Task 04 — decisions after the proofs of concept
+
+Locked with the maintainer on 2026-10-24, after four proofs of concept:
+`docs/poc-points-property.md` (v1), `docs/poc2-frame-lifecycle.md` (v2),
+`docs/poc3-stack-context.md` (v3) and `docs/poc4-keyed-alignment.md` (v4). v1
+falsified the shadow test of D4's integration, and each later one tested the
+replacement. Where a decision below supersedes an earlier one, it says so.
+
+## D17 — Plain Manim is the reference for every user-visible behaviour
+
+**Locked:** the overriding usability goal is that, from the user's side, the library
+behaves and is spelled as close to plain Manim as possible. D15 made Manim one parity
+axis among three. This decision makes it the axis every other one yields to.
+
+- **Manim's spelling wherever the semantics match.** This replaces the rule that a 0.1
+  verdict "promises the capability, not the spelling". The constructor takes
+  `x_range`, `y_range`, `x_length`, `y_length`, `axis_config`, `x_axis_config`,
+  `y_axis_config` and `tips`, with the `NumberLine` keys under `axis_config`.
+  `add_coordinates`, `get_graph_label`, `plot_line_graph`, `get_x_axis` and
+  `x_axis.numbers` exist under those names. Style keywords are `VMobject`'s. The
+  defaults are those of `Axes()`, so swapping the class keeps the picture. New names
+  appear only for capabilities Manim lacks: locators, formatters, the legend, `Morph`
+  and `set_x_range`.
+- **Class name.** `from manim_plots import *` exports `CartesianAxes`; `mp.Axes` is the
+  same class, reachable through the module and kept out of `*`. D12's reason stands —
+  two star-exported `Axes` let import order pick the winner silently — and a user
+  writing `mp.Axes` still writes Manim's name.
+- **`scale` leaves stroke width alone, as Manim does.** Manim's own `scale_stroke=True`
+  opts in. This supersedes D13's "`scale` scales everything".
+
+## D18 — A hidden frame carries the system's placement
+
+**Supersedes** the placement tail of D4 and D5: the system's transform is no longer a
+chain the library keeps, but geometry Manim moves.
+
+- The coordinate system's family holds an invisible grid, `N x N` nodes over the axes'
+  rectangle. Manim moves it as it moves any leaf — methods, containers, animations,
+  `.animate`. Placement is an exact affine solve while the grid is affine, and bilinear
+  interpolation over its cells otherwise. `c2p` and `p2c` read it.
+- The grid ignores partial drawing, stays invisible under every style call, and
+  contributes no boundary anchors, so `Create(ax)` cannot truncate it and it never
+  moves a pivot.
+- Under a non-affine grid, sparse derived leaves (axis lines, ticks) densify by
+  themselves. Manim requires a manual `prepare_for_nonlinear_transform` for the same
+  result.
+- Falls out: the system needs no geometric overrides, `ax.animate.shift(v).scale(s)`
+  chains natively, and `VGroup(ax, curve).shift(v)` moves the curve once and for good.
+  `mp.Group` is withdrawn.
+- Accepted limits, measured in v2 and v4: a non-affine map is approximated, within
+  about a pixel at 1080p for smooth maps at `N = 33`; a discontinuous map becomes a
+  ramp; a map that vanishes on every node aliases; a non-affine `p2c` can pick another
+  branch, and a collapsed grid raises.
+
+## D19 — The leaf lifecycle, with operation context read from the call stack
+
+**Supersedes** D4's shadow test and the setter classification. D11's "an attached
+artist has no geometric channel of its own" is reversed as well.
+
+- **Inside an animation** — from `Animation.begin` suspending the leaf to
+  `Animation.finish` resuming it, and from `Transform.begin`'s `align_data` call when
+  that comes first — a leaf's buffer is transient.
+- **At the end:** the leaf adopts the animation's target if the animation ended on it,
+  as `Transform`, `Rotate`, `MoveToTarget` and `.animate` do. A remover leaves it
+  detached in whatever state it left, exactly as in Manim. An introducer or `refresh()`
+  re-attaches it to its data. `become` adopts the other artist's state.
+- **Outside animations, a write is attributed, not guessed.** The leaf reads the writing
+  frame on the stack: `Mobject.shift` or `Mobject.apply_points_function_about_point`
+  and the container in it. If that container's family holds the system's frame, the
+  write is ignored, because the frame already moved. Otherwise the write becomes the
+  artist's own transform, stored in the system's local space. Exact matrices come from
+  the locals of `rotate`, `scale`, `stretch` and `apply_matrix`; any other function is
+  a non-affine node. A bare NumPy write has no writer and is replaced at the next
+  rebuild.
+- Frames are matched by code object, and Manim is never patched. Every frame and local
+  the mechanism reads is listed and pinned by a source-hash test, so an upgrade that
+  moves them fails loudly.
+- **Rejected:** inferring the transaction from deltas between leaves, and from the order
+  of `get_family` calls. Both were tried on paper and dropped as sources of unexpected
+  behaviour. A fact on the stack is not an inference.
+
+## D20 — Curves follow only permanent changes of their system
+
+- When the frame is suspended it receives the animation, simulates it on a deep copy
+  (begin, finish, cleanup) and compares the end with the start. If the system comes
+  back to where it was, the artists outside that animation read a frozen frame for its
+  duration and stand still, as plain Manim curves would. Otherwise they follow every
+  frame. All animations are simulated, user callbacks included, so a callback with a
+  side effect runs that effect one more time. That cost is accepted.
+- Consequence: `Rotate(ax, TAU)` does not turn the curves, because it is not permanent.
+- `ReplacementTransform(ax, new_ax)` moves the bound artists to `new_ax`.
+- Code ported from Manim that moves both — `self.play(ax.animate.shift(v),
+  curve.animate.shift(v))` — moves the curve twice. That is documented and not
+  detected.
+
+## D21 — The data channel is native under `.animate`
+
+**Supersedes** the requirement that every data mutator carry `override_animate`, and
+the ceiling that chaining one with another must raise.
+
+- When `Transform.begin` calls `align_data` on the system, the system aligns its own
+  family by role and tick key, with a pool covering every key along the parameter
+  path. The frame interpolates its points natively and the data parameters too;
+  derived leaves rebuild from the interpolated parameters instead of interpolating
+  points, and entering or leaving ticks fade. At the end the pool is trimmed, and every
+  surviving tick is the object it was before.
+- Falls out: `ax.animate.shift(v).set_x_range(r)` chains, and a tick's hand-applied
+  style survives an exit and return inside one animation (qualifies D10).
+- **The plot function is a callable binding** in D8's sense, so it is always dirty. It
+  is sampled once per rendered frame, by the synchronisation updater, never once per
+  read; a frozen `wait` samples nothing.
+- **Every library mobject carries an updater without `dt`.** Cairo draws everything
+  before the first animated or updating mobject once, as a static background
+  (`scene.py::Scene.get_moving_mobjects`), which would freeze a bound artist through an
+  animation it is not part of. An updater without `dt` keeps a frozen `wait` frozen.
+- Accepted and documented: a generic callback that keeps transforming an artist outside
+  suspension, such as `PhaseFlow`, adds one placement node per frame.
+
+---
+
 # Next session
 
 1. **Act 2 — Codex review.** `PLAN.md` is written. Check `codex --version` >= 0.130 and

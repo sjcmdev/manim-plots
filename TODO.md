@@ -90,10 +90,10 @@ closes.
 - [x] Separation between the data model and the Manim geometry it produces
       — a NumPy-only `core/` and a `mobjects/` layer, ADR 0001 sections 1-2
 - [x] How a coordinate system survives Manim's geometric transformations
-      — by reference to `PLAN.md`, ADR 0001 section 4
+      — a hidden frame and a leaf lifecycle, ADR 0001 section 4 and D17-D21
 - [x] Record as `docs/adr/0001-architecture.md` — accepted with the maintainer's
       answers to its five questions
-- [ ] Proof of concept for the load-bearing hypotheses: the `points` property on a
+- [x] Proof of concept for the load-bearing hypotheses: the `points` property on a
       leaf, the transient-mode test under the eight restoring animations, leaf copy,
       rebuild cost against F-1001, and `MathTex` labels as library leaves — prompt in
       `docs/prompts/poc-points-property.md`, report in `docs/poc-points-property.md`.
@@ -104,8 +104,8 @@ closes.
       `docs/prompts/poc3-stack-context.md`, report in `docs/poc3-stack-context.md`.
       A fourth makes the data channel native under `.animate` through keyed family
       alignment — prompt in `docs/prompts/poc4-keyed-alignment.md`, report in
-      `docs/poc4-keyed-alignment.md`.
-      Task 04 closes when the report is in and the ADR reflects it
+      `docs/poc4-keyed-alignment.md`. PLAN, scope and ADR 0001 reflect all four
+      (D17-D21)
 
 ## Stage 2 onward
 

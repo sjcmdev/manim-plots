@@ -2,8 +2,11 @@
 
 _Locked via grill — by Claude + the maintainer, 2026-09-04/05._
 _Revised after Codex review rounds 1-8, 2026-09-05._
+_Revised after the four task/04 proofs of concept, 2026-10-24 (D17-D21 in the grill
+log). The shadow test, the placement chain kept by the library, `mp.Group` and the
+data-mutator `override_animate` are gone; the sections below say what replaced them._
 
-Full reasoning and the rejected alternatives are in `docs/grill-log.md` (D1-D16).
+Full reasoning and the rejected alternatives are in `docs/grill-log.md` (D1-D21).
 The annotated API sketch with the maintainer's own comments is `docs/api-sketch.md`.
 The adversarial review, and what was accepted or rejected from it, is
 `PLAN-REVIEW-LOG.md`.
@@ -67,18 +70,36 @@ list with tiers).
 
 ## Key decisions & tradeoffs
 
+**Plain Manim is the reference** (D17). From the user's side the library behaves and is
+spelled as close to plain Manim as possible. Every decision below that diverges says so,
+and why.
+
 **Points are derived, never stored.** `points = Chain(data)`, where the chain runs
 `Source -> Map -> placement` in order. The data channel writes the source and the map's
-data-space nodes; the geometric channel appends and edits the placement nodes at the
-tail. Nothing is lost on rebuild because there is no state to lose.
+data-space nodes. The geometric channel is Manim itself moving the system's frame, plus
+an artist's own transform. Nothing is lost on rebuild, because the only geometric state
+is the frame, and Manim keeps that.
 
-**Placement is an ordered chain, not one matrix.** A single accumulated affine `T` plus a
-replayed list of non-affine callables gets the order wrong: `apply_function(f)` then
-`shift(v)` must compute `shift(f(points))`, and a matrix-plus-side-list computes
-`f(shift(points))`. So the placement tail is the same ordered node chain as the rest of
-`Map`: affine and non-affine nodes interleaved in call order, with adjacent affine runs
-collapsed into one matrix as an optimisation. `T` in the rest of this document names that
-tail, not a single matrix. Non-affine nodes are unbounded in number, deliberately.
+**The system's placement is a hidden frame, not a chain we keep** (D18). The coordinate
+system's family holds an invisible grid of `N x N` nodes over the axes' rectangle.
+Manim moves it as it moves any leaf: methods, containers, animations, `.animate`.
+Placement is an exact affine solve while the grid is affine, and bilinear interpolation
+over its cells otherwise (`N = 33`). `c2p` and `p2c` read it. So the system overrides no
+geometric method at all, and `T` in the rest of this document names the frame's map.
+
+The grid ignores partial drawing, stays invisible under every style call, and gives no
+boundary anchors, so `Create(ax)` cannot truncate it and it never moves a pivot. Under a
+non-affine grid, sparse derived leaves — axis lines, ticks — densify by themselves,
+where Manim needs a manual `NumberPlane.prepare_for_nonlinear_transform`. A non-affine map
+is still an approximation: within about a pixel at 1080p for smooth maps, a ramp across
+one cell for a discontinuous one, and blind to a map that vanishes on every node
+(`docs/poc2-frame-lifecycle.md`, `docs/poc4-keyed-alignment.md`).
+
+**An artist's own transform is the one ordered chain left.** It lives in the system's
+local space, between `Map` and the frame, so it turns with the axes. Order matters for
+the reason it always did: `apply_function(f)` then `shift(v)` must compute
+`shift(f(points))`. Adjacent affine nodes collapse into one matrix; any other function is
+a barrier.
 
 ### Integration: the `points` property on library-owned leaves
 
@@ -107,64 +128,64 @@ The property is not a complete hook either, and the design depends on knowing wh
 leaks. `vectorized_mobject.py::VMobject.pointwise_become_partial` assigns a fresh buffer
 (`:2067`) and then writes **into slices of it** (`:2070`, `:2077`, `:2082`), and
 `indication.py::Wiggle.interpolate_submobject` is a pure in-place write with no assignment
-at all (`:559`). No setter sees either. So four rules, not one:
+at all (`:559`). No setter sees either. So five rules, not one:
 
 1. **The getter returns the cache object itself** while the pipeline is clean — not a
    fresh array, not a copy, not a read-only view. An in-place write therefore lands in
    the buffer that gets drawn and survives until something dirties the pipeline. That is
    precisely what `Create`, `Uncreate`, `Write`, `ShowPassingFlash` and `Wiggle` need, so
    in-place writes need no hook at all.
-2. **A shadow copy of the last derived output is the transient-mode test.** The exposed
-   buffer differing from the shadow means somebody wrote in place, and that single O(n)
-   comparison is what both the getter and the geometric overrides consult before they
-   change any state. No animation registry, no lifecycle, no list of blessed animations.
-3. **`shift` and `apply_points_function_about_point` are overridden** on our classes as
-   an exact fast path — and they run the shadow test first. Buffer clean: a direct call
-   knows its own affine and appends it to the placement chain, so `ax.shift(v)` is exact
-   and permanent. Buffer dirty: the call is part of an in-flight animation, applies to the
-   buffer instead, and warns naming `refresh()`. This is what makes `Wiggle` work, which
-   writes points in place and *then* calls `submobject.scale(...)` and
-   `submobject.rotate(...)` on the same leaf every frame
-   (`indication.py::Wiggle.interpolate_submobject`, `:559-567`); appending those to the
-   chain would distort the plot cumulatively and never restore it.
-   `indication.py::ApplyWave`'s homotopy and anything else built the same way fall out
-   correctly for the same reason.
-4. **The setter classifies whole-array assignments into exactly two cases.** Same shape
-   and a recoverable affine delta against the cache, arriving through our own override:
-   append to the placement chain, permanently. Anything else — a shape change, a
-   non-affine rewrite, a write from a foreign parent: adopt the array as a *transient
-   override buffer*, leaving the pipeline intact, to be replaced at the next rebuild.
-   Nothing detaches, nothing raises. `mobject.py::Mobject.interpolate`'s whole-array write
-   (`:3173`) lands in the second case and works, and so does `indication.py::Indicate`,
-   which is a `Transform` whose `create_target` copies and scales (`:164-168`).
+2. **Inside an animation the buffer is transient** (D19).
+   `animation.py::Animation.begin` suspends the animated family (`:213`) and
+   `animation.py::Animation.finish` resumes it (`:227`); our leaves override both, and
+   between them a write lands in the buffer and nowhere else.
+   `transform.py::Transform.begin` aligns before it suspends (`:211`), so when
+   `Transform.begin` is on the stack the transient section opens at that `align_data`.
+   This is what makes `Wiggle` work. It writes points in place and *then* calls
+   `scale` and `rotate` on the same leaf every frame
+   (`indication.py::Wiggle.interpolate_submobject`, `:559-567`). `ApplyWave`, `Indicate`
+   and every `Transform` work for the same reason. The shadow test that used to decide
+   this could not tell `Wiggle`'s restoring write from a direct call, and is gone
+   (`docs/poc-points-property.md`, H2).
+3. **At the end, the leaf takes the state Manim would leave.** If the animation ended on
+   its target — `Transform`, `Rotate`, `MoveToTarget`, `.animate` — the artist adopts the
+   target's source, parameters, own transform and style. A target that is not an artist
+   detaches it into that shape, kept in system-local coordinates. A remover leaves it
+   detached in whatever state the animation left: degenerate after `Uncreate`, restored
+   after `FadeOut`, whose cleanup interpolates back
+   (`fading.py::FadeOut.clean_up_from_scene`, `:190-192`). An introducer starting on a
+   detached artist, or `refresh()`, re-attaches it. `become` adopts the other artist's
+   state outright, because `mobject.py::Mobject.become` writes points outside any
+   animation (`:3308-3310`).
+4. **Outside animations, a write is attributed from the call stack, never guessed.** The
+   setter finds the writing frame — `mobject.py::Mobject.shift` or
+   `mobject.py::Mobject.apply_points_function_about_point` — and the container in it. If
+   that container's family holds the system's frame, the write is ignored: the frame moved
+   in the same operation, which is how `VGroup(ax, curve).shift(v)` moves the curve once.
+   Otherwise the write is the artist's own transform: the exact vector from `shift`, the
+   exact matrix from the locals of `rotate`, `scale`, `stretch` or `apply_matrix`, and any
+   other function as a non-affine node. A bare NumPy write has no writer and is replaced
+   at the next rebuild.
+5. **The stack is a pinned contract.** Frames are matched by code object, their locals
+   copied and the frames released; Manim is never patched. Every frame and local the
+   mechanism reads is listed with its symbol, and a source-hash test fails on an upgrade
+   that moves one (`docs/poc4-keyed-alignment.md`, *Updated stack and source contract*).
+   Rejected: inferring the operation from deltas between leaves, or from the order of
+   `get_family` calls (D19).
 
-**The transient contract covers a named list, not a category.** The shadow test cannot
-tell an animation's temporary geometry from a user's own mutation, and Manim gives no hook
-to open a context on an animation we do not own. So the contract is scoped to animations
-the library names and tests, and everything else is explicitly the user's responsibility:
+**No named list of supported animations.** The lifecycle depends on
+`Animation.begin`, `Animation.finish` and two writer frames, not on which animation is
+running, so an animation Manim adds later is covered as soon as it goes through them.
+What stays per animation is a regression matrix: for each animation of the proofs of
+concept, the end state is compared with what Manim leaves on a plain `VMobject`, before
+and after the next rebuild. That matrix is a test, not a whitelist. A Manim release that
+moves one of the frames is caught by the contract test of rule 5 on upgrade.
 
-- **Restoring animations** — `Create`, `Write`, `ShowPassingFlash`, `Indicate`, `Wiggle`,
-  `ApplyWave`, `Flash`, `Circumscribe`. Each ends with the buffer equal to the derived
-  points, either by ending at the full shape or by being there-and-back, and each gets a
-  test asserting exactly that. The buffer going clean *is* the clear event, so a rebuild
-  deferred during the animation runs the moment the getter observes `buffer == shadow`
-  with a dirty flag pending. Nothing manual is needed on this path.
-- **Removing animations** — `Uncreate`, and anything else built the same way.
-  `creation.py::Uncreate` (`:180`) is `Create` with `reverse_rate_function=True` and
-  `remover=True` (`:200-208`), so it ends with degenerate geometry and takes the mobject
-  out of the scene. It is supported *as a removal*: the buffer is left degenerate, which
-  costs nothing because the mobject is no longer drawn, and any rebuild dirtied meanwhile
-  stays deferred. Re-adding that artist to a scene requires `artist.refresh()`, which
-  rebuilds from the pipeline — the data was never touched. This is stated in the API docs
-  next to `Uncreate`, and tested.
-- **Everything else, including a user's own in-place write** — not covered. A geometric
-  call on a dirty buffer warns and names `refresh()`, and the docs state that a hand-write
-  to `artist.points` must be followed by `refresh()` before the data channel is used
-  again. The library does not attempt to distinguish an unrestored user edit from a
-  running animation, because it cannot; it says so instead of guessing.
-
-A future Manim release adding a non-restoring animation is caught by the per-animation
-test on upgrade, not by runtime detection.
+**One intentional difference in the lifecycle.** `creation.py::Uncreate` (`:180`) is
+`Create` with `reverse_rate_function=True` and `remover=True` (`:200-208`), so it ends on
+degenerate geometry. In Manim, a later `Create` of that mobject draws nothing, because it
+draws from the degenerate buffer. Ours re-attaches at the introducer and draws the
+current curve. Every other end state, re-adding after `Uncreate` included, is Manim's.
 
 ### The pipeline
 
@@ -172,7 +193,8 @@ test on upgrade, not by runtime detection.
 removes or modifies a node, never the data. `Source` is where analytic and numeric input
 differ and the only place they differ — a range change *resamples* a function and merely
 *filters* an array. `Map` is the point-to-point chain owned by the coordinate system,
-with the placement chain as its tail; adjacent affine nodes collapse into one matrix,
+ending in the system's local space; an artist's own transform follows it, and the frame
+places the result in the scene. Adjacent affine nodes collapse into one matrix,
 non-affine nodes are barriers to that collapse and otherwise ordinary. `Shape` (clipping,
 discontinuity splitting, smoothing, dashing) is owned by the artist and kept out of `Map`
 because it changes the point count. Clipping happens in the system's local space: data
@@ -194,7 +216,9 @@ exactly that.
 invariant, not a convention: `ax2.add(curve)` on a curve already bound to `ax1` raises
 rather than silently rebinding it. Showing one dataset in two systems is two artists over
 one shared immutable source, which costs nothing because sources are immutable. A shared
-view object is deferred past 0.1.
+view object is deferred past 0.1. The one rebinding a Manim idiom implies happens on its
+own: after `ReplacementTransform(ax, new_ax)` the artists bound to `ax` belong to
+`new_ax`, because that is the system left on screen (D20).
 
 **The data channel is animatable by interpolating parameters, never points.** Point
 counts change under clipping, splitting and resampling, so alignment-based interpolation
@@ -211,6 +235,17 @@ compared by type, because sloppy equality here means either a missed frame or a 
 every frame forever: scalars compare NaN-aware, so `NaN` equals `NaN`; arrays compare with
 `np.array_equal(..., equal_nan=True)` against a copy, never against a live view; a
 callable binding is always dirty.
+
+**The plot function is a callable binding** (D21), so it is always dirty. It is sampled
+once per rendered frame, never once per read, which needs a per-frame tick. Cairo needs
+one anyway: `scene.py::Scene.get_moving_mobjects` (`:937-946`) treats everything before
+the first animated or updating mobject as static, and
+`cairo_renderer.py::CairoRenderer.play` (`:110`) draws it once as a background. That
+would freeze a bound artist through any animation it is not part of. So every library
+mobject carries an updater without `dt`. The updater marks callable sources dirty once
+per frame and keeps the artist out of the static background. Because it takes no `dt`, a
+frozen `wait` stays frozen and samples nothing. `ax.plot(lambda x: a.get_value() * x)`
+therefore follows `a` like an `always_redraw` would, and `always_redraw` still works.
 
 **Morphing is per-artist and refuses what it cannot resample.** `Morph(a, b)` asks `a`'s
 source to resample on `b`'s parameterisation before interpolating, along arc length for
@@ -242,70 +277,92 @@ The full table is written into `docs/scope.md`; the rule that decides it lives h
 General predicate domains and disjoint valid regions stay a 0.2 concern, checked on paper
 against the frozen contracts before they are built.
 
-### `.animate` needs `override_animate`, not Manim's default
+### `.animate` is Manim's own, for geometry and data
 
 Manim's `.animate` is a copy-and-transform: `mobject.py::_AnimationBuilder.__init__`
 calls `generate_target()`, a deep copy (`:3418`), `transform.py::_MethodAnimation` is a
 `MoveToTarget` interpolating the original's family leaves toward the copy's, and only
-`_MethodAnimation.finish` calls the real method on the real object (`:448-450`). Applied
-to this design that is wrong twice over: registered artists are not in the system's
-family, so `ax.animate.shift(v)` leaves them standing still and jumps them on the last
-frame; and `ax.animate.set_range(...)` interpolates points between an original and a copy
-that owns a *different* map and registry, which is exactly the point-alignment
-interpolation this plan rejects.
+`_MethodAnimation.finish` calls the real method on the real object (`:448-450`). The
+earlier plan put `override_animate` on every mutator. Manim refuses to chain an
+overridden method with any other (`mobject.py::_AnimationBuilder.__getattr__`,
+`:3443-3445`), so `ax.animate.shift(v).scale(s)` — the most common idiom there is —
+would have raised. Nothing is overridden now (D18, D21):
 
-Manim's supported hook is `mobject.py::override_animate` (`:3495`), consulted by
-`_AnimationBuilder.__getattr__` before the copy path (`:3441`, `:3450`). **Every
-manim-plots method that writes the placement chain, the map, or a bound parameter carries
-it**, and returns an animation that interpolates the value on the *live* object, letting
-the ordinary dirty-and-rebuild path draw each frame. This is the mechanism the
-"interpolate parameters, never points" decision requires; without it that decision does
-not survive contact with `.animate`.
+- **Geometry needs nothing.** The copy's frame moves, the original's frame interpolates
+  toward it, and the artists follow the live frame in every frame.
+- **Data goes the same way.** When `transform.py::Transform.begin` calls `align_data` on
+  the system (`:211`), the system aligns its own family by role and by tick key. Left to
+  `mobject.py::Mobject.add_n_more_submobjects` (`:3079`), the alignment pads by index,
+  which in v2 paired the frame with an axis line. The tick pool covers every key along
+  the parameter path, so a tick that appears mid-animation has its leaf from the start.
+  The frame interpolates its points and the data parameters. Derived leaves rebuild from
+  the interpolated parameters instead of interpolating points, so "interpolate
+  parameters, never points" survives, and ticks entering or leaving fade. At the end
+  the pool is trimmed, and every surviving tick is the object it was before.
+- **Nothing doubles.** `_MethodAnimation.finish` replays the methods before the final
+  interpolation, and that interpolation then sets the prepared target.
 
-Inherited ceiling: an overridden method cannot be chained with another under one
-`.animate` (documented at `mobject.py:3510`), so `ax.animate.shift(v).set_range(...)` is
-two animations in an `AnimationGroup`, not one chain, and attempting the chain must raise
-a clear error rather than produce a confusing frame sequence.
+So `ax.animate.shift(v).set_x_range(r)` is one chained animation, every frame of it is a
+correct plot (`docs/poc4-keyed-alignment.md`, L1), and a tick's hand-applied style
+survives an exit and return inside it. The pool is built from frame-sized samples of the
+parameter path; a locator that changes between samples is the case its schedule contract
+has to cover.
 
 ### Containers and attachment
 
-**A foreign parent's transform is transient, and `mp.Group` is the supported way to make
-it permanent.** Manim gives a child no transaction boundary: `mob.points += v` is a getter
-*followed by* a setter, so a container's loop over leaves cannot be recognised as one
-operation from inside a leaf. Rather than infer a boundary that does not exist,
-`VGroup(ax, curve).shift(v)` is accepted as the transient-override case — visually correct
-at once, and replaced whenever the pipeline next rebuilds.
+**A container moves a bound artist exactly once, and permanently.** Manim gives a child
+no transaction boundary — `mob.points += v` is a getter followed by a setter — but the
+call stack does, and rule 4 of the integration section reads it. A container whose
+family holds the system moves the frame, and the artist follows it:
+`VGroup(ax, curve).shift(v)`, in either order and nested. A container without the
+system moves the artist through its own transform: `VGroup(curve, dot).shift(v)` moves
+both, as in Manim, and the curve keeps responding to its data. Both hold under
+`.animate` and inside animations. The broadcast handle `mp.Group` that used to make the
+first case permanent is withdrawn.
 
-`mp.Group` is the permanent alternative, and it is **not a `Mobject`**. A family traversal
-cannot reach registered artists — they are deliberately not submobjects — and making the
-group a `VGroup` would reintroduce the parenting hazard D11 removed. It is a broadcast
-handle: it holds its members and forwards a geometric call to each member's own method.
-`mp.Group(ax, curve).shift(v)` calls `ax.shift(v)`, which already carries every artist
-registered to `ax`. Its `animate` broadcasts to the members' overridden animations inside
-an `AnimationGroup`.
+**Curves follow only permanent changes of their system** (D20). An artist outside the
+running animation follows the frame every frame — through `Rotate(ax)`,
+`ax.animate.shift(v)` or `Transform(ax, ...)` — unless the animation leaves the system
+where it found it. The frame decides that when it is suspended: it simulates the
+animation on a deep copy (begin, finish, cleanup) and compares the end with the start.
+Through `Indicate(ax)`, `Wiggle(ax)`, `FadeOut(ax, shift=DOWN)` or `GrowFromCenter(ax)`
+the artists read a frozen frame and stand still, as plain Manim curves would. Two
+consequences are accepted. `Rotate(ax, TAU)` does not turn the curves. And every
+animation is simulated, user callbacks included, so a callback with a side effect runs
+it once more.
+
+**Code ported from Manim can move a curve twice.** In Manim a graph is not carried by
+its axes, so a scene moves both: `self.play(ax.animate.shift(v), graph.animate.shift(v))`.
+Here the graph follows `ax` and also takes its own shift. The migration notes say so; the
+library does not try to detect it.
 
 **Attachment is registration, not parenting** (revises an earlier decision). An artist is
 never a submobject of the coordinate system. Visibility is the user's
-(`self.add(ax, curve)`), binding is `ax.add(curve)`, and transformations carry through the
-system's placement chain rather than through the mobject tree. This removes the
+(`self.add(ax, curve)`), binding is `ax.add(curve)` or `ax.plot(...)`, and transformations carry through the
+system's frame rather than through the mobject tree. This removes the
 `Scene.add` hazard entirely — `scene.py::Scene.add` (`:491`) splices a parent out of the
 scene list via `family_ops.py::restructure_list_to_exclude_certain_family_members`
-(`:22`). An attached artist has no geometric channel of its own: a direct geometric
-operation on it is a warned no-op, because the system's chain is what moves it.
-`ax.shift(v)` moves the system and every artist bound to it, exactly and permanently, and
-`ax.animate.shift(v)` does the same per frame through its `override_animate`.
+(`:22`). An attached artist does have a geometric channel of its own, reversing D11:
+`graph.shift(UP)` moves the graph relative to its axes, permanently, as the lesson on
+shifting a function's graph expects. The transform lives in the system's local space,
+so it turns with the axes afterwards. `ax.shift(v)` moves the system and every artist
+bound to it, exactly and permanently, and `ax.animate.shift(v)` does the same frame by
+frame.
 
-**Supported mutation surface for 0.1:** the Cairo renderer on Manim 0.21.0; our own leaf
-types; Manim's geometric methods; the creation animations `Create`, `Uncreate`, `Write`
-and `ShowPassingFlash`; the indication animations `Indicate`, `Wiggle`, `Flash`,
-`Circumscribe` and `ApplyWave`; and in-place writes to the array the getter returns, for
-as long as nothing rebuilds. OpenGL is already out of scope. Anything outside this surface
-is documented as unsupported rather than silently half-working.
+**Supported mutation surface for 0.1:** the Cairo renderer on Manim 0.21 and 0.22; our
+own leaf types; Manim's geometric methods; Manim's animations through the lifecycle
+above, with the proofs-of-concept matrix as their regression test; and in-place writes
+to the array the getter returns, for as long as nothing rebuilds. OpenGL is already out
+of scope.
 
-Deliberate ceilings, documented rather than prevented: a shape-changing external write is
-discarded at the next rebuild — that is what makes `Create` work and what makes a
-hand-edited point array not survive a range change; and geometry may transiently differ
-from the model during an animation, which is what every Manim mobject does mid-`Create`.
+Deliberate ceilings, documented rather than prevented:
+- a bare NumPy write to an artist's points is replaced at the next rebuild, and
+  `refresh()` rebuilds on demand;
+- a non-affine frame is approximate;
+- a generic callback that keeps transforming an artist outside suspension, such as
+  `PhaseFlow`, adds one placement node per frame;
+- geometry may transiently differ from the model during an animation, which is what
+  every Manim mobject does mid-`Create`.
 
 ### Coordinate system and decoration
 
@@ -336,27 +393,37 @@ supplies its own or falls back to a fixed-significant-digit rounding. Two values
 produce one key out of one locator are a defect in that locator and raise. Formatter
 changes do not change keys: a relabelled tick is the same tick, and its mobject is updated
 in place. Rejected: a style-override table, which would need a second language and could
-not express `Indicate(...)` or an updater on a label. Unchanged deliberate ceiling (D10):
-a part that leaves the range and returns gets a fresh mobject and loses hand-applied
-styling.
+not express `Indicate(...)` or an updater on a label. Deliberate ceiling (D10), narrowed
+by D21: a part that leaves the range in one edit and returns in a later one gets a fresh
+mobject and loses hand-applied styling. Inside one animation the tick pool owns it, so
+it returns as the same object.
 
 ### API
 
-Names do not collide with Manim's. `ax.plot(...)` is the familiar front door dispatching
+**Manim's spelling wherever the semantics match** (D17). The constructor takes
+`x_range`, `y_range`, `x_length`, `y_length`, `axis_config`, `x_axis_config`,
+`y_axis_config` and `tips`, with the `NumberLine` keys under `axis_config`. Its defaults
+are those of `Axes()`, so swapping the class keeps the picture. `add_coordinates`,
+`get_graph_label`, `plot_line_graph`, `get_x_axis`, `x_axis.numbers` and the rest of the
+0.1 rows of the parity survey exist under their Manim names, built on the locator,
+formatter and legend machinery rather than replaced by it. New names appear only for
+capabilities Manim lacks. An `axis_config` key with no 0.1 capability raises at
+construction, naming the key, as the invalid-input rule requires. Star exports do not
+collide: `from manim_plots import *` exports `CartesianAxes`, and `mp.Axes` is the same
+class under Manim's name. `ax.plot(...)` is the familiar front door dispatching
 on argument type, with `ax.plot(f)` / `ax.line(xs, ys)` / `ax.scatter(...)` as the
 documented verbs. Parameters are descriptors, not `__setattr__`. `@` means coordinate
 conversion, matching Manim (`number_line.py::NumberLine.__matmul__`, `:674`;
 `coordinate_systems.py::CoordinateSystem.__matmul__`, `:1864`), and is never used for
 parameter binding. Manim's `x_range=(start, stop, step)` triple is accepted, but its third
 element is sugar installing a `Multiple(step)` locator rather than part of the range; a
-later `set_locator()` replaces it, and `set_range()` never touches it. Explicit named style
-parameters and enums, no matplotlib shorthand. Dashes are parameterised by arc length, not
-point index. `scale` scales stroke width too, deliberately diverging from
-`vectorized_mobject.py::VMobject.scale`'s `scale_stroke=False` default (`:487`): the factor
-is `sqrt(|det A|)` of the recovered 2D affine part, which is unambiguous under a nonuniform
-scale, applied wherever the affine is recoverable and skipped with a debug warning where it
-is not. `artist.refresh()` is the public escape hatch that clears a transient override and
-forces a rebuild.
+later `set_locator()` replaces it, and `set_x_range()` never touches it. Style keywords are
+`VMobject`'s, plus enums for line styles and markers, and no matplotlib shorthand. Dashes
+are parameterised by arc length, not point index. `scale` leaves stroke width alone, as
+`vectorized_mobject.py::VMobject.scale` does by default (`scale_stroke=False`, `:487`), and
+Manim's own `scale_stroke=True` opts in; this supersedes D13's rule that `scale` scales
+stroke width. `artist.refresh()` stays public: it re-attaches a detached artist and
+replaces a bare in-place edit with a rebuild.
 
 ### 0.1 contents and the gate
 
@@ -406,27 +473,30 @@ the library never calls Manim's conversions.
 - **Every generated leaf must be a library type.** The property design fails silently the
   day someone drops a plain `Line` or `MathTex` into a decoration, so the test suite has
   to assert leaf types, not only rendered output.
-- **Every mutating public method needs an `override_animate`, and forgetting one fails
-  quietly** — `.animate` silently falls back to copy-and-transform and the artists stop
-  following. The test is mechanical: assert that each public mutator on a coordinate
-  system or artist has `_override_animate` set.
-- **The restore contract is on animations we do not own.** A future Manim release could
-  change one of the eight named animations so it no longer ends on the derived points, and
-  nothing in our code would prevent it — only the per-animation test would catch it, on
-  upgrade. `Uncreate` is already the exception that proves the rule.
-- **An unrestored user write suppresses data rebuilds until `refresh()`.** The library
-  cannot tell that case from a running animation and does not try. It warns on the
-  geometric call and documents the requirement; a user who ignores both gets a plot that
-  stops responding to its own data, which is the cost of supporting in-place animation
-  writes at all.
-- **`VGroup(ax, curve).shift()` is transient, and the reflex is universal.** It looks right
-  and then reverts at the next rebuild. `mp.Group` is the answer, but discoverable only if
-  the docs say so on the first page that shows a plot and a system together.
+- **The mechanism reads Manim's call stack.** Which frames, which locals and which lines
+  is a contract on internals Manim does not promise. It is pinned symbol by symbol with
+  source hashes, so an upgrade that moves a frame fails a test instead of misbehaving,
+  and the per-animation regression matrix is rerun on every supported version. What a
+  hash cannot catch is a change in meaning at an unchanged line; only the matrix can.
+- **Simulating every animation runs user callbacks once more.** A callback with a side
+  effect — a tracker write, a counter, a print — sees it twice. Accepted (D20), and stated
+  next to the rule that curves follow only permanent changes.
+- **Introducers capture geometry in their constructors.** `GrowFromCenter` and its
+  relatives store a point before `begin`. Re-attaching a detached artist at `begin` must
+  refresh those, or re-attach early enough that the constructor reads live geometry. v4
+  handled one class by name; the production fix must not be a list.
+- **The tick pool covers a sampled parameter path.** It is built from frame-sized
+  samples, so a locator whose output changes between two samples needs the pool's
+  schedule contract. It is not written yet.
+- **Code ported from Manim moves a curve twice** when it animates the axes and the curve
+  together. Documented in the migration notes, not detected.
 - **Getter-returns-the-cache is load-bearing.** It is what makes `Create` and `Wiggle`
   work. Any future optimisation that returns a copy or a read-only view silently breaks
   them, so it needs a test that asserts object identity, not just array equality.
-- **Per-frame rebuild cost.** The gate above is a number, but it has not been measured and
-  the first design may not meet it.
+- **Per-frame rebuild cost.** Measured on the proof of concept only: p95 3.1 ms on the
+  affine path and 3.7 ms on the bilinear one against the 4 ms gate
+  (`docs/poc4-keyed-alignment.md`, L7). That is a lower bound — no adaptive sampling,
+  clipping, tick layout or labels — so the margin is thin.
 - **Adaptive refinement density lags one frame** when the map and the sampling density
   change together. Accepted; the drawn geometry does not lag.
 - **Parity with Manim (D15) was found late.** Now inventoried: 73 public names, 43 of
@@ -435,8 +505,8 @@ the library never calls Manim's conversions.
   every reproducing defect has an `F-*`.
 - **Origin is unpinned evidence.** Its help page names no release, so no 0.1 requirement
   rests on it alone; see the note opening section 3 of the parity survey.
-- **`self.add(curve)` on an attached artist** cannot be intercepted; it is documented as
-  unnecessary rather than prevented.
+- **Adding the system does not add its artists** (F-709), as with a Manim graph: a curve
+  is added to the scene on its own.
 
 ## Out of scope
 

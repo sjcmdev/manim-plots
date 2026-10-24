@@ -25,8 +25,9 @@ for every defect cited here.
 | `A<n.n>` | the collaborator's answer *n.n* in `docs/api-sketch.md` |
 | `mpl`, `gnuplot`, `origin`, `manim` | a row of the corresponding parity-survey section |
 
-A 0.1 verdict promises the **capability**, not the spelling. `PLAN.md` explains why most
-Manim names arrive under different ones.
+A 0.1 verdict promises the capability **and, where Manim has one with the same
+semantics, Manim's spelling** (D17, F-1009). This replaces the earlier rule that a verdict
+promised the capability only.
 
 ---
 
@@ -38,15 +39,16 @@ Manim names arrive under different ones.
 | F-102 | Rebuild is lazy and dirt-driven: a setter marks a node dirty, the `points` getter performs the rebuild, and the cascade stops when nothing further is dirtied | **0.1** | D4, D8 |
 | F-103 | A rebuild runs three ordered phases: the system compiles `Map` and publishes bounds; each source samples against those bounds; each artist runs `Shape` | **0.1** | D5 |
 | F-104 | Source data is immutable. A range change resamples an analytic source and filters an array source; neither mutates the data | **0.1** | D5 |
-| F-105 | `Map` is an ordered chain of nodes with the placement chain as its tail. Adjacent affine nodes collapse to one matrix; a non-affine node is a barrier to that collapse | **0.1** | D5, F-1001 |
+| F-105 | `Map` is an ordered chain of nodes ending in the system's local space; an artist's own transform (F-904) follows it, and the system's frame (F-914) places the result. Adjacent affine nodes collapse to one matrix; a non-affine node is a barrier to that collapse | **0.1** | D5, D18, F-1001 |
 | F-106 | `Shape` is artist-owned, may change the point count **and the geometry kind**, dispatches on the payload's declared kind, and returns a payload rather than a bare array (F-114) | **0.1** | D5, stress case 3 |
 | F-107 | Clipping happens in the local space of the coordinate system, not in data space and not in scene space | **0.1** | defect 3, mpl 2.3 |
 | F-108 | Adaptive refinement *density* may lag one frame; the samples themselves never lag. A test asserts that the drawn geometry is a correct plot of the current parameters | **0.1** | D5 |
 | F-109 | Node contract: forward and inverse functions vectorized over `ndarray`, a declared monotonic direction, a declared dimensionality, and a domain | **0.1** | D6 |
 | F-110 | Bound parameters are polled by version counter. A foreign binding is snapshotted immutably and compared NaN-aware (`np.array_equal(..., equal_nan=True)` for arrays); a callable binding is always dirty | **0.1** | D8 |
-| F-111 | `artist.refresh()` clears any transient override and forces a rebuild from the pipeline | **0.1** | D4 |
+| F-111 | `artist.refresh()` re-attaches a detached artist (F-905) and replaces a bare in-place edit of its points with a rebuild from the pipeline | **0.1** | D4, D19 |
 | F-112 | An artist belongs to exactly one coordinate system. Binding an already-bound artist raises rather than silently rebinding | **0.1** | D5 |
-| F-113 | One source shown in two systems is two artists over one immutable source; a shared view object | **0.2** | D5 |
+| F-113 | One source shown in two systems is two artists over one immutable source | **0.1** | D5 |
+| F-115 | A shared view object, so one artist can be shown in two systems | **0.2** | D5 |
 | F-114 | A `Source` returns a **payload**, not a bare array, and so does every stage that transforms one. The fields, their shapes and their invariants are specified below under *The Source payload*; the `region` branch is declared in 0.1 and implemented later, because widening a frozen return type in 0.2 is exactly the breaking change this document exists to prevent | **0.1** | stress case 3 |
 
 ### The Source payload (F-114)
@@ -92,7 +94,7 @@ choosing it later breaks nothing.
 | F-205 | Aspect lock is a `Map` node: locking it constrains the mapping rather than negotiating between two independent lengths | **0.1** | defect 4, mpl 2.2 |
 | F-206 | Axis lengths are constructor parameters (`x_length`, `y_length`), spelled close to Manim's | **0.1** | A1.2 |
 | F-207 | `p2c` of a point off the system's plane has one documented behaviour — projection or refusal — and is not silently a projection presented as an inverse | **0.1** | defect 14 note |
-| F-208 | Geometric operations never corrupt the mapping: they append to the placement chain, and a regression test covers the operation set that broke Manim 0.19 | **0.1** | defect 14, D4 |
+| F-208 | Geometric operations never corrupt the mapping: they move the system's frame (F-914), and a regression test covers the operation set that broke Manim 0.19 | **0.1** | defect 14, D18 |
 | F-209 | A reversed range (start greater than stop) is legal through the mapping, the locators and the formatters | **0.1** | mpl 2.2 |
 
 ## F-3xx — Scales
@@ -172,7 +174,7 @@ choosing it later breaks nothing.
 | F-705 | A `NaN`, an infinity, or an argument outside a node's domain splits the path at that point and warns once per artist per rebuild | **0.1** | defect 15a, D6 |
 | F-706 | Curves are clipped to the viewport | **0.1** | defect 3 |
 | F-707 | `i2gp` / `i2gc` answer by evaluating the source and the map at the requested input, so a `Source` must expose point evaluation as well as range sampling | **0.1** | manim `input_to_graph_point`, stress case 2 |
-| F-708 | `ax.add(artist)` registers; an artist is never a submobject of the coordinate system, and a direct geometric call on a registered artist is a warned no-op | **0.1** | D11, A2.1 |
+| F-708 | `ax.add(artist)` and `ax.plot(...)` register; an artist is never a submobject of the coordinate system. A registered artist follows the system's frame and also has a geometric channel of its own (F-904). After `ReplacementTransform(ax, new_ax)` the artists bound to `ax` belong to `new_ax` | **0.1** | D11, D19, D20, A2.1 |
 | F-709 | Adding the coordinate system to a scene does not add or remove the artists, and adding an artist separately is allowed | **0.1** | A6.1, D11 |
 | F-710 | `Morph(a, b)` resamples `a` on `b`'s parameterisation along arc length, and raises on a topology pair it cannot honestly resample | **0.1** | D8 |
 | F-711 | Step, bars, histograms, error bars, filled regions, drop lines, reference lines, annotations | **0.2** | mpl 2.1, manim drop lines |
@@ -185,10 +187,10 @@ choosing it later breaks nothing.
 | F-801 | `ax.legend()` collects the registered artists; `Legend(*artists)` spans several systems; legends can be merged and split | **0.1** | A5.1, defect 7 |
 | F-802 | A label comes from `ax.plot(f, label="sin")` preferably, and `artist.set_label(...)` is also accepted | **0.1** | A5.2 |
 | F-803 | A minimal colour cycle, so that two curves and a legend are distinguishable without configuration | **0.1** | D15 backlog |
-| F-804 | Explicit named style parameters and enums. No matplotlib shorthand strings | **0.1** | D13, A4.2 |
+| F-804 | Style keywords are `VMobject`'s, plus enums for line styles and markers. No matplotlib shorthand strings | **0.1** | D13, D17, A4.2 |
 | F-805 | A marker may be any `Mobject` | **0.1** | D13 |
 | F-806 | Dashes are parameterised by arc length, not point index, so a pattern is stable across resampling | **0.1** | D13 |
-| F-807 | `scale` scales stroke width, by `sqrt(abs(det A))` of the recovered affine part, with a debug warning where the affine is not recoverable | **0.1** | D13 |
+| F-807 | `scale` leaves stroke width unchanged, as Manim does; Manim's own `scale_stroke=True` opts in | **0.1** | D17 (supersedes D13) |
 | F-808 | Legend layout (columns, ordering, box styling), colour themes, value-mapped colour and colorbars | **0.2** | gnuplot `set key`, D15 backlog |
 
 ## F-9xx — Animation and Manim integration
@@ -197,17 +199,22 @@ choosing it later breaks nothing.
 |---|---|---|---|
 | F-901 | `points` is a property on **every** library-generated leaf — curve segments, ticks, labels, grid lines, legend entries — not only on the artist | **0.1** | D4 |
 | F-902 | The getter returns the cache object itself while the pipeline is clean: not a copy, not a fresh array, not a read-only view. A test asserts object identity | **0.1** | D4 |
-| F-903 | A shadow copy of the last derived output is the transient-mode test, consulted by the getter and by the geometric overrides | **0.1** | D4 |
-| F-904 | `shift` and `apply_points_function_about_point` are overridden as exact fast paths, appending to the placement chain when the buffer is clean and writing to the buffer with a warning when it is dirty | **0.1** | D4 |
-| F-905 | The setter classifies a whole-array assignment into exactly two cases: a recoverable affine delta through our own override appends to the chain; anything else is adopted as a transient override buffer | **0.1** | D4 |
-| F-906 | The restoring animations — `Create`, `Write`, `ShowPassingFlash`, `Indicate`, `Wiggle`, `ApplyWave`, `Flash`, `Circumscribe` — are supported, each with a test asserting the buffer ends equal to the derived points | **0.1** | D4 |
-| F-907 | `Uncreate` is supported as a removal: the buffer is left degenerate, deferred rebuilds stay deferred, and re-adding the artist requires `refresh()`. Documented next to `Uncreate` | **0.1** | D4 |
-| F-908 | Every public mutator of a coordinate system or an artist carries `override_animate`, checked by a mechanical test over the public surface | **0.1** | D4 |
-| F-909 | Chaining two overridden methods under one `.animate` raises a clear error rather than producing a confusing frame sequence | **0.1** | D4 |
-| F-910 | `mp.Group` is a broadcast handle, not a `Mobject`: it forwards a geometric call to each member's own method | **0.1** | D11 |
-| F-911 | Parameters are descriptors, not `__setattr__`: `ax.x.range = (0, 30)`, `.value`, `.tracker`, `.bind(t)`, `.animate_to(...)`. `@` stays coordinate conversion only | **0.1** | D12, A3.2, A4.1 |
+| F-903 | Between `suspend_updating` and `resume_updating` of an animation — and from `Transform.begin`'s `align_data` call when it comes first — a leaf's buffer is transient: writes land in it and nowhere else | **0.1** | D19 |
+| F-904 | Outside animations, a geometric write is attributed by its writer on the call stack: a container whose family holds the system's frame is ignored, because the frame moved; any other container's operation becomes the artist's own transform, in the system's local space, with exact matrices read from `rotate`, `scale`, `stretch` and `apply_matrix`. A bare NumPy write is replaced at the next rebuild | **0.1** | D19 |
+| F-905 | At the end of an animation, an artist adopts the target the animation ended on; a remover leaves it detached in the state it left; an introducer or `refresh()` re-attaches it; `become` adopts the other artist's state | **0.1** | D19 |
+| F-906 | A regression matrix plays Manim's creation, indication, transform, movement and composition animations on systems and artists, and compares every end state with what Manim leaves on a plain `VMobject`, before and after the next rebuild | **0.1** | D19 |
+| F-907 | After `Uncreate` an artist is detached and degenerate, so re-adding it shows what Manim shows. A later introducer draws the current curve, where Manim's draws nothing: the one intentional lifecycle difference, documented next to `Uncreate` | **0.1** | D19 |
+| F-908 | `.animate` is Manim's own for geometry and data: no public method carries `override_animate`. The system aligns its family by role and tick key under `Transform.begin`, with a tick pool over the whole parameter path, and its leaves interpolate parameters, not points | **0.1** | D21 |
+| F-909 | Geometric and data methods chain under one `.animate`: `ax.animate.shift(v).set_x_range(r)` is one animation | **0.1** | D21 |
+| F-910 | `mp.Group`, a broadcast handle for making container transforms permanent. Withdrawn: a container holding the system moves bound artists exactly (F-904, F-914) | **non-goal** | D18 |
+| F-911 | Parameters are descriptors, not `__setattr__`: `ax.x.range = (0, 30)`, `.value`, `.tracker`, `.bind(t)`. Animating one is `self.play(ax.animate.set_x_range(...))` (F-908). `@` stays coordinate conversion only | **0.1** | D12, D21, A3.2, A4.1 |
 | F-912 | Library animations in 0.1: `DrawAxes`, `TraceCurve` (data order, not path order), `ShowPoints`, `Morph`, and the data-channel animation as a public class | **0.1** | D14, A7 |
 | F-913 | `AppendData`, `Rescale`, `HighlightTick` | **0.2** | D14 |
+| F-914 | The system's placement is a hidden grid in its family: exact affine while the grid is affine, bilinear otherwise. It ignores partial drawing, stays invisible under every style call and contributes no boundary anchors. Under a non-affine grid, sparse derived leaves densify | **0.1** | D18 |
+| F-915 | Every library mobject carries an updater without `dt`, so Cairo's static-frame cache never freezes a bound artist and a frozen `wait` stays frozen | **0.1** | D21 |
+| F-916 | Bound artists follow only permanent changes of their system: an animation that leaves the system where it found it, decided by simulating it on a copy, freezes the frame for the artists outside it | **0.1** | D20 |
+| F-917 | Every Manim frame, local and line the mechanism reads from the call stack is listed and pinned by a source-hash test; Manim is never patched | **0.1** | D19 |
+| F-918 | A plot's function is a callable binding (F-110), sampled once per rendered frame, never once per read | **0.1** | D8, D21 |
 
 ## F-10xx — Quality gates
 
@@ -220,7 +227,8 @@ choosing it later breaks nothing.
 | F-1005 | The API is IDE-navigable: overloads on `plot`, typed descriptors, no string-keyed registry as the primary access path | **0.1** | A4.2 |
 | F-1006 | The invalid-input table below is implemented and tested on all four surfaces | **0.1** | PLAN |
 | F-1007 | Supported matrix for 0.1: Manim 0.21.x and 0.22.x, Python >= 3.12, NumPy >= 2.5, Cairo renderer. OpenGL is out of scope | **0.1** | task/01, task/02 |
-| F-1008 | The docs state the transient-override contract where users will meet it: next to `Uncreate`, next to the first example that puts a system and an artist in one `VGroup`, and next to `refresh()` | **0.1** | PLAN risk |
+| F-1008 | The docs state each difference from plain Manim where users will meet it: `Create` after `Uncreate` (F-907), curves following their system and only its permanent changes (F-916), the double move in code ported from Manim that animates both, `refresh()` after a bare point edit, approximate non-affine frames, and `PhaseFlow`-like callbacks growing an artist's transform | **0.1** | PLAN risk, D20 |
+| F-1009 | Every 0.1 capability with a Manim counterpart of the same semantics is reachable under Manim's name, signature and defaults: the `Axes` constructor with `axis_config` and its `NumberLine` keys, and the 0.1 rows of the parity survey. An `axis_config` key with no 0.1 capability raises, naming the key. `from manim_plots import *` exports `CartesianAxes`; `mp.Axes` is the same class | **0.1** | D17 |
 
 ---
 
@@ -426,6 +434,16 @@ layout and subplot management; tick-label tables; copying settings between axes 
 | Requirement list, D9 — dual axes on either side | F-606 (0.1 mirrored), F-610 (0.2 independent) |
 | Requirement list, D9 — date/time ticks | deferred, with stress case 1 as the condition |
 | Requirement list, D9 — time series and scatter from either array shape | F-703 |
+
+### Every task/04 decision has a requirement
+
+| Decision | Requirement |
+|---|---|
+| D17 — plain Manim is the reference: spelling, defaults, `mp.Axes`, `scale` leaves strokes alone | F-804, F-807, F-1009 |
+| D18 — a hidden frame carries the system's placement | F-105, F-208, F-910, F-914 |
+| D19 — the leaf lifecycle, with operation context from the call stack | F-111, F-903, F-904, F-905, F-906, F-907, F-917 |
+| D20 — curves follow only permanent changes of their system | F-708, F-916, F-1008 |
+| D21 — the data channel is native under `.animate` | F-908, F-909, F-911, F-915, F-918 |
 
 ### The parity survey
 
