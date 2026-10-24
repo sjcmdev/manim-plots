@@ -106,10 +106,17 @@ closes.
       alignment — prompt in `docs/prompts/poc4-keyed-alignment.md`, report in
       `docs/poc4-keyed-alignment.md`. PLAN, scope and ADR 0001 reflect all four
       (D17-D21)
+- [x] Architecture review with the arch-crew skills —
+      `docs/architecture-review-2026-10-24.md`
+- [x] Two independent freeze reviews from one prompt (`docs/prompts/review-freeze-mvp1.md`)
+      — `docs/reviews/2026-10-24-codex.md`, `docs/reviews/2026-10-24-claude.md`; their
+      blockers closed by D22-D27
+- [x] Freeze the 0.1 scope and the architecture — ADR 0001 and `docs/scope.md`, status
+      *Frozen*
 
 ## Stage 2 onward
 
-Task numbering continues once task 03 closes. The coarse order is expected to be:
-numeric core (scales, tick location, coordinate transforms) → axis and frame →
-data plotting → annotations and legend → documentation and first release. This is a
-guess until the scope document exists, and is not a commitment.
+With 0.1 and its architecture frozen (ADR 0001), task numbering continues at 05. The
+coarse order: numeric core (scales, tick location, frame numerics, lifecycle transitions)
+→ axis and frame → data plotting → legend → documentation and first release. It is an
+order, not a schedule.

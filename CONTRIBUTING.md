@@ -32,9 +32,10 @@ into `main` when a stage is finished. Task numbers and the full plan live in `TO
 - **Docstrings:** numpydoc convention, matching Manim Community. Every public class
   and function has one. Docstrings describe behaviour and parameters, not
   implementation history.
-- **Naming:** prefer terms already established in the plotting world — `scale`,
-  `locator`, `formatter`, `tick`, `spine`, `frame`, `artist`. Do not invent new names
-  for concepts that matplotlib or gnuplot already named.
+- **Naming:** Manim's name wins wherever Manim has the concept with the same meaning
+  (D17, F-1009). For a concept Manim lacks, prefer terms already established in the
+  plotting world — `scale`, `locator`, `formatter`, `artist`. Do not invent new names for
+  concepts that Manim, matplotlib or gnuplot already named.
 - **Comments:** explain *why*, never *what*. Code that needs a comment to explain what
   it does should be rewritten instead.
 
@@ -54,10 +55,10 @@ into `main` when a stage is finished. Task numbers and the full plan live in `TO
 
 ## Public API stability
 
-Until 1.0 the public API may change in any release. After 1.0 it follows semantic
-versioning. Anything that a third party can implement against — scale, locator and
-formatter contracts in particular — is public API from the moment it ships, so it gets
-reviewed as such.
+Until 1.0 the public API may change in any release, with one exception: the contracts
+frozen in ADR 0001 — scale, locator, formatter, source and payload. Changing one of them
+needs a new ADR, and 0.2 may not break them (`docs/scope.md`, tier 0.2). After 1.0 the
+whole API follows semantic versioning.
 
 ## Commits
 

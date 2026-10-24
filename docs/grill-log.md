@@ -320,7 +320,8 @@ parenting, there is nothing to splice.
 
 `ax.add(artist)` registers; anything that is not an artist falls through to Manim's
 `Mobject.add`. `ax2.add(curve)` re-binds, detaching from `ax1`. `attach` / `detach`
-remain as the underlying contract.
+remain as the underlying contract. *(Later superseded: after the Codex review, binding
+an artist that already belongs to another system raises — F-112.)*
 
 **Closing the double-transform trap:** an attached artist has **no geometric channel
 of its own**. A geometric operation on it is a no-op with a one-time warning. This
@@ -591,9 +592,197 @@ the ceiling that chaining one with another must raise.
 - Accepted and documented: a generic callback that keeps transforming an artist outside
   suspension, such as `PhaseFlow`, adds one placement node per frame.
 
+# Freeze review — decisions after two independent reviews
+
+Locked on 2026-10-24 after `docs/reviews/2026-10-24-codex.md` and
+`docs/reviews/2026-10-24-claude.md`. Both reviewers concluded "freeze after the listed
+blockers". The decisions below close those blockers. Where the maintainer expressed no
+preference, the reviewers' smallest fix was taken and is marked *(default taken)*.
+
+## D22 — A plot function is sampled as Manim samples it; live is explicit
+
+**Revises** D21's third bullet. Sampling a callable on every frame broke ordinary Python
+closures: three `ax.plot(lambda x: k * np.sin(x))` built in a loop measured y-extents
+`[2, 4, 6]` after construction and `[6, 6, 6]` after one `play`. It also cost Cairo its
+static background.
+
+- A function is sampled at construction and again whenever the data channel resamples
+  it, for a range change or a parameter change. That is Manim's behaviour plus the
+  resampling this library exists for.
+- It is sampled every frame only when the user asks for it: a parameter bound to a
+  tracker (`ax.plot(f, a=tracker)`) or `always_redraw`, which already works through
+  `become`.
+- The calling convention is Manim's. `use_vectorized=False` is the default and calls the
+  function once per sample; `use_vectorized=True` calls it once on an array and is the
+  fast path. F-1001 is measured on the fast path and says so.
+- Late binding still applies to every resample. A loop that captures its variable by
+  reference changes after a range change, so the migration notes show `lambda x, n=n:`.
+
+## D23 — Defect fixes are the default; Manim's look is kept everywhere else
+
+**Narrows** D17's "swapping the class keeps the picture". The library exists to fix the
+defects in `docs/defect-audit-0.21.md`, so where Manim's picture *is* a defect, ours
+differs on purpose.
+
+- Fixed by default and listed in F-1008: the end tick stays under a tip (F-411); ticks
+  are integer multiples of the step, not offsets from `x_min` (F-402); curves are clipped
+  to the viewport (F-706); the origin is a parameter, not a clamp (F-203); colliding labels
+  are hidden (F-505); several plots get distinct colours (F-803).
+- Kept from Manim, because they are defaults and not defects: the ranges, lengths and
+  tips of `Axes()`; no tick or label where the axes cross; ticks straddling the line;
+  decimal places following the step; numbers off; an axis at the range edge when the
+  range excludes zero.
+- Same spelling means same meaning. `axis_config={"scaling": LogBase()}` keeps Manim's
+  exponent ranges, and string labels given through `add_labels` render in text mode, as
+  Manim's `Tex` does. The library's own `scale="log"` takes data values.
+- `docs/scope.md` carries the full table, one row per default, which is also the oracle
+  of a parity test against Manim's own `Axes`.
+
+## D24 — The leaf lifecycle, cell by cell
+
+**Completes** D19. ADR 0001 §4 holds the state × event table; the rules behind it are
+these. Each one closes a cell that a reviewer found undefined or measured failing.
+
+- **Owners, not a flag.** A leaf is transient while any animation owns it, keyed by
+  animation identity. An inner finish does not end an outer one. When several owners
+  ended on targets, the last to finish wins, as the last write wins in Manim.
+- **Copies an animation makes stay attached.** The starting copy and the target copy
+  derive from the live frame, so an artist animated while its axes move follows them
+  every frame instead of lagging and jumping. Only the animated subject is transient.
+- **Resume rebuilds from current data.** Adoption replaces only what the target owns:
+  its source, its own transform, its style. Parameter values are always the live ones.
+- **Two kinds of detachment.**
+  - *Removed*, after a remover. The buffer is frozen exactly as Manim leaves it, and the
+    artist is plain geometry: a container moves it once, and it does not follow its axes.
+  - *Shaped*, after a plain target such as `Circle()`, or after a non-Transform animation
+    that ends away from its start, such as a `Homotopy`. The final shape is kept in
+    system-local coordinates and follows the axes but not the data.
+
+  `refresh()` re-attaches either kind.
+- **Introducers stay Manim's at construction** *(default taken)*. An introducer built on
+  a removed artist sees the geometry it has, as in Manim, and re-attaches at begin. So
+  `GrowFromCenter` grows from where the removed curve collapsed. The documented way to
+  grow from the current centre is `refresh()` before constructing the animation. No list
+  of animation classes is kept.
+- **Inside an animation:**
+  - `refresh()` is deferred until the last owner finishes;
+  - `become` applies at once and cancels the pending targets, because it is the later
+    write;
+  - `become` with Manim's `match_*` and `stretch` keywords runs Manim's own
+    preparation on a copy, then adopts it.
+- **Writes without a geometric writer.**
+  - `reverse_points` is recorded as a direction on the artist, read from its writer frame
+    `Mobject.apply_over_attr_arrays`, so `Create` draws backwards as in Manim.
+  - `make_smooth`, `change_anchor_mode`, `insert_n_curves` and `set_points*` are bare
+    writes and last until the next rebuild.
+- **Copies.** `artist.copy()` shares the source and bindings, is bound to the same system,
+  and is *not* registered: it follows the axes, but stays out of the legend and out of a
+  replacement's transfer until `ax.add(copy)`. Copies an animation makes are never
+  registered. A copy of a removed artist is removed too.
+- **Manual `suspend_updating()`**, with no animation on the stack, pauses updaters and
+  changes no buffer ownership. An animation that never suspends — `MoveAlongPath`,
+  `PhaseFlow` — is outside animations for the leaf, so its writes are attributed.
+- **`ReplacementTransform(ax, new_ax)`.** At the system frame's resume, the animation on
+  the stack declares that it replaces its mobject with its target, and the registered
+  artists transfer to `new_ax`. Their own transforms carry over, because they live in
+  local space, and the target's own artists keep theirs. `become` between two systems
+  adopts the other's parameters and frame, and the artists stay bound.
+- **Pool leaves that are inactive**, like the frame, contribute no boundary anchors.
+
+## D25 — Tick identity is stable across ranges; the pool has spare leaves
+
+**Revises** ADR 0001 Q3's acceptance that a `MaxN` key is relative to the current range.
+A pool that is the union of keys along a parameter path needs keys that mean the same
+value on every range.
+
+- `Locator.key(value)` is a pure function of the value and the locator's configuration,
+  never of the range. Membership — "would this locator emit this value on this range?" —
+  is a separate query. Minor-on-major removal and explicit-over-generated merge use
+  membership plus key.
+- The pool is built at `Transform.begin` from the parameter path sampled at four times
+  the frame density of the animation's own alpha. It also allocates spare hidden leaves,
+  as many as the largest active count it saw.
+- A key first seen at render time takes a spare and fades in. When the spares run out,
+  tests raise, and a render warns once and draws that frame without the tick. Measured
+  reason: inside `AnimationGroup(run_time=3)` the earlier schedule took 16 samples for 45
+  frames and left 14 frames short of ticks.
+
+## D26 — The contracts, closed before the freeze *(default taken)*
+
+- **`Source` and `Payload` stay public, with their types defined** (ADR 0001 §3).
+  - `CompiledMap` is a read-only view of the map: forward, inverse, affinity and domain
+    mask.
+  - `Bounds` is the clip region in local space: a box plus a containment predicate, so a
+    disc fits.
+  - `Source.at(t)` evaluates analytic sources exactly. Array sources interpolate linearly
+    in their parameter and raise on a non-monotone `x` query.
+  - `resample_like` is an optional method, required only by `Morph`.
+  - The `region` branch is declared, not complete: adding an optional field to `Payload`
+    later is not a breaking change.
+- **`Map` owns validity.** Each node combines the incoming `valid` mask with its own
+  domain and finite-output mask, and rebuilds path segments before the next stage.
+  Stages exchange validated payloads.
+- **`p2c` is exact where the map is invertible.** That means affine frames and injective
+  scales. Under a non-affine frame it inverts the interpolant: it raises when Newton does
+  not converge, and the branch it picks is documented. An off-plane point within a
+  tolerance is projected; beyond it, `p2c` raises.
+- **One pin set per supported Manim version**, and F-1007 names exact versions, 0.21.0
+  and 0.22.0. At import, an unpinned version warns. The reviewers found every frame the
+  mechanism reads byte-identical in 0.22.0, and all 228 behavioural tests of PoC 4 pass
+  there.
+- **The core may import SciPy.** Manim already depends on it, and the bilinear path's
+  sparse product is 0.14 ms against 1.4-3.8 ms for NumPy gathers.
+- **F-1001 is end to end.** It covers `Scene.update_to_time` plus the camera's lazy
+  rebuilds, with rasterisation excluded. It runs on both frame paths, with labels from a
+  warm glyph cache and an animated range. Setup work is recorded per play, not gated:
+  keyed alignment, simulation and the writer's family test, which must be memoised per
+  operation. A second check compares a static plot under an unrelated animation with
+  plain Manim.
+- **Synchronisation updaters only where something can move.** The system and each
+  artist report updaters to `scene.py::Scene.get_moving_mobjects` only when the play
+  being compiled involves their system or a tracker they are bound to, or when they hold
+  a live function. Otherwise they stay in Cairo's static background, as a Manim graph
+  would. The play's animations are read from that frame, as the other stack facts are.
+
+## D27 — Manim's surface, case by case *(default taken)*
+
+The reviewers walked 48 example scenes from Manim's own docstrings. These are the
+answers D17 and D23 imply, written down so that implementation does not invent them.
+
+- **`plot` keywords.** `use_smoothing` and `use_vectorized` are honoured. A step in
+  `x_range` caps the sample spacing; adaptive sampling may go denser, never sparser.
+  `discontinuities` with `dt` forces splits. `colorscale` is 0.2 and raises by name in
+  0.1. `underlying_function` exists on analytic artists.
+- **Poles between samples.** The sampler splits where adjacent samples change sign while
+  their magnitude grows past the viewport, as well as at `NaN` and infinity. One warning
+  per artist per data change, not per frame.
+- **`NumberPlane` is 0.1** as `mp.NumberPlane`, an `mp.Axes` with the grid on and
+  `background_line_style` mapped. A standalone `NumberLine` and `ComplexPlane` are 0.2.
+  Standalone `FunctionGraph` and `ParametricFunction` stay Manim's own; nothing replaces
+  them.
+- **`ax.x_axis` speaks `NumberLine`.** `ticks` is the major tick group, `numbers` the
+  tick labels, `labels` the custom labels of `add_labels`. The `ax.x.labels` of the API
+  sketch becomes `ax.x.numbers`, minor ticks are `ax.x.minor_ticks`, and `get_tick`,
+  `get_number_mobject`, `add_numbers` and `add_labels` keep their Manim meaning.
+- **Helpers return bound decorations.** `get_graph_label`, `get_axis_labels` and
+  `get_x_axis_label` return mobjects that follow their axes as curves do. A `VGroup`
+  holding both moves them once. Animating them separately in ported code moves them
+  twice, as with curves (D20).
+- **`plot_line_graph`** returns Manim's `VDict` with `line_graph` and `vertex_dots`, and
+  both are bound artists.
+- **`Create(ax)` draws in Manim's order** — the x line, its tip and ticks, then y — and
+  the frame is the last member of the family, so its empty lag slot falls at the end.
+- **`c2p` and `p2c` on arrays** raise for the whole call and name the first invalid
+  index. Raising where Manim returns `NaN` is listed in F-1008.
+- **Infrastructure.** Manim's scene caching stays on and must hash a library mobject by
+  its derived state. Library mobjects keep identity hashing, because 0.22 puts mobjects
+  in a `set`. Constructing one under `--renderer=opengl` raises, naming Cairo.
+
 ---
 
-# Next session
+# Next session (historical, end of task/03 Act 1)
+
+Kept as it was written. Every item below was done in task/01 and task/03.
 
 1. **Act 2 — Codex review.** `PLAN.md` is written. Check `codex --version` >= 0.130 and
    that Codex is authenticated, echo the active model, then run the adversarial review

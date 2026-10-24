@@ -43,8 +43,9 @@ list with tiers).
 
 - `docs/parity-survey.md` and `docs/scope.md` exist, and every `F-*` carries a tier and
   the decision it follows from. **Done**: three parity sections (Manim 0.21.0, matplotlib
-  3.11.1, gnuplot 6.0 with OriginPro) and 110 `F-*` requirements with a traceability table
-  covering all 18 defects and every collaborator answer.
+  3.11.1, gnuplot 6.0 with OriginPro) and, after task/04, 121 `F-*` requirements, 108 of
+  them tier 0.1, with a traceability table covering all 20 rows of the defect audit
+  (defects 1-14 and findings 15a-15f) and every collaborator answer.
 - The three stress cases are checked against the 0.1 contracts in writing, each ending
   in "fits" or "would force a redesign of X". **Done**, and the third one did not fit:
   region sampling forced the `Source` return type to become a payload with a declared
@@ -72,7 +73,9 @@ list with tiers).
 
 **Plain Manim is the reference** (D17). From the user's side the library behaves and is
 spelled as close to plain Manim as possible. Every decision below that diverges says so,
-and why.
+and why. The one standing exception is Manim's defects (D23): where Manim's picture *is*
+a defect of `docs/defect-audit-0.21.md`, the fix is the default. The defaults table in
+`docs/scope.md` lists each default as parity or fix.
 
 **Points are derived, never stored.** `points = Chain(data)`, where the chain runs
 `Source -> Map -> placement` in order. The data channel writes the source and the map's
@@ -146,7 +149,9 @@ at all (`:559`). No setter sees either. So five rules, not one:
    (`indication.py::Wiggle.interpolate_submobject`, `:559-567`). `ApplyWave`, `Indicate`
    and every `Transform` work for the same reason. The shadow test that used to decide
    this could not tell `Wiggle`'s restoring write from a direct call, and is gone
-   (`docs/poc-points-property.md`, H2).
+   (`docs/poc-points-property.md`, H2). Only the animated subject is transient. The
+   starting and target copies an animation makes stay attached to the live frame, so a
+   curve animated while its axes move follows them (D24).
 3. **At the end, the leaf takes the state Manim would leave.** If the animation ended on
    its target — `Transform`, `Rotate`, `MoveToTarget`, `.animate` — the artist adopts the
    target's source, parameters, own transform and style. A target that is not an artist
@@ -181,11 +186,16 @@ concept, the end state is compared with what Manim leaves on a plain `VMobject`,
 and after the next rebuild. That matrix is a test, not a whitelist. A Manim release that
 moves one of the frames is caught by the contract test of rule 5 on upgrade.
 
-**One intentional difference in the lifecycle.** `creation.py::Uncreate` (`:180`) is
-`Create` with `reverse_rate_function=True` and `remover=True` (`:200-208`), so it ends on
-degenerate geometry. In Manim, a later `Create` of that mobject draws nothing, because it
-draws from the degenerate buffer. Ours re-attaches at the introducer and draws the
-current curve. Every other end state, re-adding after `Uncreate` included, is Manim's.
+**The lifecycle, cell by cell.** ADR 0001 §4 holds the state × event table (D24). Its
+four states are attached, transient, *removed* and *shaped*. Removed is the frozen
+buffer a remover leaves, as in Manim. Shaped is a final shape kept in local coordinates,
+which follows the axes and ignores the data. A shaped artist comes from a plain target
+or from a non-Transform animation, such as a `Homotopy`, that ends away from its start.
+Every cell where the table differs from Manim is in F-1008. The best known one:
+`creation.py::Uncreate` (`:180`) is `Create` with `reverse_rate_function=True` and
+`remover=True` (`:200-208`), so it ends on degenerate geometry. In Manim, a later
+`Create` of that mobject draws nothing, because it draws from the degenerate buffer. Ours
+re-attaches at the introducer and draws the current curve.
 
 ### The pipeline
 
@@ -236,16 +246,26 @@ every frame forever: scalars compare NaN-aware, so `NaN` equals `NaN`; arrays co
 `np.array_equal(..., equal_nan=True)` against a copy, never against a live view; a
 callable binding is always dirty.
 
-**The plot function is a callable binding** (D21), so it is always dirty. It is sampled
-once per rendered frame, never once per read, which needs a per-frame tick. Cairo needs
-one anyway: `scene.py::Scene.get_moving_mobjects` (`:937-946`) treats everything before
-the first animated or updating mobject as static, and
-`cairo_renderer.py::CairoRenderer.play` (`:110`) draws it once as a background. That
-would freeze a bound artist through any animation it is not part of. So every library
-mobject carries an updater without `dt`. The updater marks callable sources dirty once
-per frame and keeps the artist out of the static background. Because it takes no `dt`, a
-frozen `wait` stays frozen and samples nothing. `ax.plot(lambda x: a.get_value() * x)`
-therefore follows `a` like an `always_redraw` would, and `always_redraw` still works.
+**A plot function is sampled as Manim samples it, and live only on request** (D22,
+which revises D21). It is sampled at construction, and again whenever the data channel
+resamples it for a range or parameter change. It is sampled every frame only when one of
+its parameters is bound to a tracker, `ax.plot(f, a=tracker)`, or under `always_redraw`.
+Sampling a bare closure every frame broke ordinary Python: plots built in a loop
+collapsed to the loop's last value (`docs/reviews/2026-10-24-claude.md`, blocker 1). A
+resample still exposes late binding, so the migration notes show `lambda x, n=n:`. The
+calling convention is Manim's: `use_vectorized=False`, one call per sample, by default,
+and `use_vectorized=True` as the fast path.
+
+**Cairo's static background must not freeze a bound artist.**
+`scene.py::Scene.get_moving_mobjects` (`:937-946`) treats everything before the first
+animated or updating mobject as static, and `cairo_renderer.py::CairoRenderer.play`
+(`:110`) draws it once as a background. A bound artist added before its axes would freeze
+through `ax.animate.shift(v)`. So the system and each artist report a synchronisation
+updater without `dt` (D26), but only when the play being compiled involves their system
+or a tracker they are bound to, or when they hold a live function. Otherwise they stay
+in the static background as a Manim graph would. An updater on every artist all the time
+cost a static plot under an unrelated animation 2.2 → 12.9 ms per frame. Because the
+updater takes no `dt`, a frozen `wait` stays frozen.
 
 **Morphing is per-artist and refuses what it cannot resample.** `Morph(a, b)` asks `a`'s
 source to resample on `b`'s parameterisation before interpolating, along arc length for
@@ -257,7 +277,7 @@ it cannot honestly resample rather than producing a plausible-looking wrong fram
 duplicate points, which is the source of its jitter, and stays only as an explicitly
 requested fallback.
 
-**One invalid-input rule, four surfaces.** A contract violation raises at construction
+**One invalid-input rule, surface by surface.** A contract violation raises at construction
 time — a non-vectorized scale function, a non-invertible pair, a malformed domain. A
 value that turns out to be invalid *at use* is then handled by what the surface can
 express, which is the only thing that differs:
@@ -403,14 +423,19 @@ it returns as the same object.
 **Manim's spelling wherever the semantics match** (D17). The constructor takes
 `x_range`, `y_range`, `x_length`, `y_length`, `axis_config`, `x_axis_config`,
 `y_axis_config` and `tips`, with the `NumberLine` keys under `axis_config`. Its defaults
-are those of `Axes()`, so swapping the class keeps the picture. `add_coordinates`,
-`get_graph_label`, `plot_line_graph`, `get_x_axis`, `x_axis.numbers` and the rest of the
-0.1 rows of the parity survey exist under their Manim names, built on the locator,
-formatter and legend machinery rather than replaced by it. New names appear only for
-capabilities Manim lacks. An `axis_config` key with no 0.1 capability raises at
-construction, naming the key, as the invalid-input rule requires. Star exports do not
-collide: `from manim_plots import *` exports `CartesianAxes`, and `mp.Axes` is the same
-class under Manim's name. `ax.plot(...)` is the familiar front door dispatching
+are those of `Axes()` except where Manim's picture is a defect (D23): the defaults table
+in `docs/scope.md` decides each one. Same spelling means same meaning, so
+`axis_config={"scaling": LogBase()}` keeps Manim's exponent ranges. `add_coordinates`,
+`get_graph_label`, `plot_line_graph`, `get_x_axis` and the rest of the 0.1 rows of the
+parity survey exist under their Manim names, built on the locator, formatter and legend
+machinery rather than replaced by it (D27). `ax.x_axis` speaks `NumberLine`'s
+vocabulary: `ticks`, `numbers`, `labels`. Helpers return decorations bound to their
+axes, which follow them as curves do. `plot_line_graph` returns Manim's `VDict`, and
+`mp.NumberPlane` is `mp.Axes` with the grid on. New names appear only for capabilities
+Manim lacks. An `axis_config` key with no 0.1 capability raises at construction, naming
+the key, as the invalid-input rule requires. Star exports do not collide:
+`from manim_plots import *` exports `CartesianAxes`, and `mp.Axes` is the same class
+under Manim's name. `ax.plot(...)` is the familiar front door dispatching
 on argument type, with `ax.plot(f)` / `ax.line(xs, ys)` / `ax.scatter(...)` as the
 documented verbs. Parameters are descriptors, not `__setattr__`. `@` means coordinate
 conversion, matching Manim (`number_line.py::NumberLine.__matmul__`, `:674`;
@@ -445,14 +470,18 @@ adaptive resampling, and it survives a rebuild. That makes it part of the `Sourc
 contract rather than a convenience on top of it, which is why it ships in 0.1 even
 though most of its callers, the calculus cluster, are 0.2.
 
-The engine ships with a measurable gate, not an adjective. Scenario: four artists on one
-`CartesianAxes`, 2 000 sample points each, one animated parameter dirtying the pipeline
-every frame, 1080p60, Cairo renderer. Threshold: p95 pipeline rebuild time **<= 4 ms per
-frame** — under a quarter of a 60 fps frame budget, leaving the renderer the rest. The
-gate checks **both** `p95 <= 4 ms` and `p95 <= 1.5x` the recorded baseline, and recording
-a baseline fails if the absolute target is missed, so a slow baseline cannot ratify itself.
-The benchmark records the machine it ran on, because the maintainer works on more than
-one machine and a baseline from one says nothing about the other. This is what makes affine collapse a requirement instead of an ornament.
+The engine ships with a measurable gate, not an adjective (F-1001, as redefined by D26).
+It is measured end to end: `Scene.update_to_time` plus the camera's lazy rebuilds, with
+rasterisation excluded. Scenario: four artists on one `CartesianAxes`, 2 000 samples each
+with `use_vectorized=True`, `MaxN` ticks with labels from a warm glyph cache, an animated
+range, 1080p60, Cairo. It runs on the affine and on the non-affine frame path.
+Threshold: p95 **<= 4 ms per frame** — under a quarter of a 60 fps frame budget, leaving
+the renderer the rest. Setup work per play is recorded but not gated: keyed alignment
+(12.7 ms in PoC 4) and simulation (6.6 ms median). A second check keeps the static
+background honest: a static plot under an unrelated animation renders no slower than 1.5x
+the same scene in plain Manim. The relative baseline gate waits for a first release,
+because no comparable baseline exists yet. The benchmark records the machine it ran on.
+This is what makes affine collapse a requirement instead of an ornament.
 
 **Target Manim is 0.21.0**, `manim>=0.21,<0.23` for 0.1 — the version in the project's own
 `.venv`, which is also what `TODO.md` targets. Everything in this plan that cites Manim
@@ -460,7 +489,10 @@ source is verified against it. 0.22.0 is supported as well: the cited symbols an
 parity surface are unchanged on it, and so is every defect probe except two. 0.22.0
 fixed 15c and the `point_to_number` half of 15f (ManimCommunity/manim#5039); the probes
 assert whichever behaviour the installed version has. Our own F-201 does not change —
-the library never calls Manim's conversions.
+the library never calls Manim's conversions. Because the mechanism reads Manim's call
+stack, the supported versions are exactly 0.21.0 and 0.22.0, each with its own pin set
+(F-917). The dependency range stays `<0.23` so a patch release installs, but it warns at
+import until it is reviewed and pinned.
 
 ## Risks / open questions
 
@@ -481,13 +513,18 @@ the library never calls Manim's conversions.
 - **Simulating every animation runs user callbacks once more.** A callback with a side
   effect — a tracker write, a counter, a print — sees it twice. Accepted (D20), and stated
   next to the rule that curves follow only permanent changes.
-- **Introducers capture geometry in their constructors.** `GrowFromCenter` and its
-  relatives store a point before `begin`. Re-attaching a detached artist at `begin` must
-  refresh those, or re-attach early enough that the constructor reads live geometry. v4
-  handled one class by name; the production fix must not be a list.
-- **The tick pool covers a sampled parameter path.** It is built from frame-sized
-  samples, so a locator whose output changes between two samples needs the pool's
-  schedule contract. It is not written yet.
+- **Introducers capture geometry in their constructors.** `GrowFromCenter` built on a
+  removed curve grows from where the curve collapsed, because its constructor read that
+  geometry, exactly as in Manim. `refresh()` before constructing it grows from the
+  current centre. Documented rather than repaired, so no list of animation classes is
+  kept (D24).
+- **The tick pool samples the parameter path.** At four times the animation's frame
+  density, with spare hidden leaves for keys first seen at render time (D25). A locator
+  that emits more new keys in one animation than the spares hold drops ticks for some
+  frames. Tests raise on it, and a render warns once.
+- **Manim's internals are read per version.** The seventeen frames read in 0.22.0 are
+  byte-identical to 0.21.0, but their lines move, so each supported version has its own
+  pin set (F-917).
 - **Code ported from Manim moves a curve twice** when it animates the axes and the curve
   together. Documented in the migration notes, not detected.
 - **Getter-returns-the-cache is load-bearing.** It is what makes `Create` and `Wiggle`
@@ -496,7 +533,9 @@ the library never calls Manim's conversions.
 - **Per-frame rebuild cost.** Measured on the proof of concept only: p95 3.1 ms on the
   affine path and 3.7 ms on the bilinear one against the 4 ms gate
   (`docs/poc4-keyed-alignment.md`, L7). That is a lower bound — no adaptive sampling,
-  clipping, tick layout or labels — so the margin is thin.
+  clipping, tick layout or labels — so the margin is thin. The PoC also tested each
+  container write against the system's family, which grew quadratically (914 ms for 603
+  leaves). Production memoises that test per operation.
 - **Adaptive refinement density lags one frame** when the map and the sampling density
   change together. Accepted; the drawn geometry does not lag.
 - **Parity with Manim (D15) was found late.** Now inventoried: 73 public names, 43 of

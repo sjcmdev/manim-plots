@@ -1,0 +1,194 @@
+# Architecture review — 2026-10-24
+
+Made with the arch-crew skills by Adam Krysztopa (`decide-architecture`, `design-patterns`,
+`test-patterns`, plugin 0.7.0), applied to a design that is still mostly on paper:
+`src/` is empty, and the architecture lives in `PLAN.md`, `docs/scope.md`,
+`docs/adr/0001-architecture.md`, D1-D21 of `docs/grill-log.md`, and four proofs of concept
+(`poc/` to `poc4/`, reports `docs/poc*-*.md`). Every claim below rests on those documents and
+on the proof-of-concept code. None rests on production code, because none exists yet.
+
+The skills' through-line is the **least architecture that meets the requirement**, with the
+cost of every pick named. The requirement here is unusual and outranks the rest (D17): from
+the user's side, behave and be spelled like plain Manim.
+
+## The architecture stack
+
+| Axis | Pick | Why it fits | Cost to accept |
+|---|---|---|---|
+| Structure | **Hexagonal, two rings** — a NumPy-only core (scales, ticks, formatters, sources, shape, payload, nodes, params) and a Manim adapter layer (`mobjects/`) | The rules worth isolating — scale inverses, tick location, coordinate conversion, payload validation — are pure functions of numbers. Isolating them is what makes Hypothesis testing in milliseconds possible (ADR 0001 §1). | One boundary to keep. Style crosses it as plain values, not Manim types. |
+| Extension | **Strategy through `typing.Protocol`**, plain callables accepted and wrapped — not a plugin microkernel | Third parties supply a scale, a locator or a formatter (F-109, F-401, F-501). They implement a protocol; nothing needs discovery, loading or versioned plugin isolation. | The protocols are a public contract: freezing them in 0.1 is what F-114 and the paper checks pay for. |
+| Topology | n/a — one Python package, two subpackages (`core/`, `mobjects/`) | A library has no deployables. | — |
+| Data | **Pipe-and-Filter, in process** — `Source -> Map -> Shape`, three ordered phases, pulled lazily by the `points` getter | Each stage has one job and is replaceable; clipping and splitting stay out of the map (D5). | A pull pipeline makes the getter load-bearing (F-902) and puts rebuild cost on the read path. |
+| Change propagation | **Polling with version counters**, not Observer | D8 measured it: reading an `int` costs what reading a `float` costs, and subscriptions buy nothing. | Something must poll once per frame — the synchronisation updater (F-915). |
+| Volatile seam | **One port at Manim's internals** — `mobjects/context.py` reads the call stack; everything else uses public Mobject methods | Manim is the one dependency that will change under us, and the mechanism relies on frames, locals and call order it does not promise (D19). | A pinned contract per supported version, and every upgrade is a review step (ADR 0001, *What else becomes harder*). |
+| Presentation, events, background work, concurrency | none | Manim owns rendering and the frame loop; the library adds no process, no queue and no thread. | — |
+
+**Least-architecture check.** Every row is forced by a stated requirement, with one
+exception that could be deferred. The **non-affine frame path** — bilinear placement, sparse
+leaf densification and a Newton `p2c` — exists so that a non-linear transform of the axes,
+applied by a container or an animation, is not lost (D18). That is rare in plotting. The
+maintainer has rejected leaving it as a limitation, so it stays, but it is the first thing to
+cut if 0.1 slips: an affine-only frame of three points would keep everything else. The
+reopening signal for cutting it is a 0.1 schedule slip on the frame, not a design reason.
+
+## Architecture review
+
+**Current shape:** Structure: two rings, core inward-only · Topology: n/a · Data: in-process
+pipeline, lazy pull · Volatile seam: Manim internals behind `context.py` (PoC 4) · UI,
+events, background work: n/a.
+
+### Findings
+
+1. **The rule "only one module reads Manim's internals" exists in the proof of concept, not
+   in the architecture.** In `poc4/` every `sys._getframe` / `f_locals` / `f_code` read is in
+   `poc4/context.py` (18 sites, none elsewhere). ADR 0001 §2 lists `context.py`, but nothing
+   says that no other module may read frames or Manim's private attributes.
+   - **Impact:** the core rule is enforced by a static test (§1), while the seam that will
+     actually break on a Manim upgrade is enforced by nothing. A frame read creeping into
+     `system.py` or `leaves.py` would turn a one-module upgrade into a hunt.
+   - **Move:** a port at the volatile seam (`catalog`, `#p-rings`, Q10).
+   - **First step:** state the rule in ADR 0001 §1 next to the core rule. Extend the same AST
+     test so that `sys._getframe`, `f_locals`, `f_code`, `inspect.currentframe` and access to
+     underscore attributes of Manim objects appear only in `mobjects/context.py`.
+   - **Cost:** one more assertion in an existing test.
+2. **The leaf lifecycle is a state machine described in prose and implemented with five
+   flags.** PLAN's five integration rules and F-903 to F-907 describe states (attached,
+   transient per animation, detached) and the events that move between them (suspend,
+   resume, `align_data` under `Transform.begin`, attributed write, introducer begin,
+   `refresh()`, `become`). `poc4/model.py` keeps them in `_transient`, `detached`,
+   `_frozen_frame`, `_suspensions` and `_candidate`, read and written at about thirty-five
+   sites.
+   - **Impact:** the proofs of concept found three lifecycle bugs by playing animations —
+     `FadeOut(shift)` cleanup, a larger `Transform` target, `GrowFromCenter`'s stored
+     point — because no table said which event was legal in which state.
+   - **Move:** State — in Python, an `Enum` of states plus one transition function, not a
+     class per state (`design-patterns`, *State*).
+   - **First step:** a state × event table in ADR 0001 §4. Every cell names the outcome or
+     the error, and the regression matrix of F-906 then derives one test per non-empty cell.
+   - **Cost:** a page of ADR. This is the most useful thing to write before freezing.
+3. **The frame's numerics have no named home in the core.** ADR 0001 §4 says the frame's
+   map is computed by core functions from the grid's node array, so `c2p` and `p2c` stay
+   property-testable. The module layout in §2 does not say where those functions live:
+   `nodes.py` (Map nodes) is the natural home. The affine solve, the bilinear weights, the
+   cached sample weights (`poc3`, K4) and the inverse are pure functions.
+   - **Impact:** without a named home they gravitate to `system.py`, the Manim side, where
+     Hypothesis cannot reach them without a mobject.
+   - **Move:** none from the catalog — GRASP *Information Expert*: the module that owns
+     nodes owns the map.
+   - **First step:** one line in §2 (`nodes.py` — "… and the frame map: affine solve,
+     bilinear interpolation, inverse").
+   - **Cost:** none.
+4. **The tick pool's schedule is load-bearing and unspecified.** Keyed alignment (D21)
+   builds the pool from frame-sized samples of the parameter path. A locator whose output
+   changes between two samples, a changed run time, or a custom rate function changes
+   which keys exist. ADR 0001 lists it as open.
+   - **Impact:** a tick that appears between samples has no leaf. That shows up as a missing
+     tick for one frame, not as an error, which is the hardest kind of failure to notice.
+   - **Move:** a contract, not a pattern.
+   - **First step:** decide before the freeze whether the pool samples the actual render
+     schedule (`run_time × frame_rate`, read from the animation on the stack), and what
+     happens to a key first seen at render time (raise in tests, fade in late in
+     production).
+   - **Cost:** a paragraph and one test.
+
+### Leave alone
+
+- The two-ring split and its static import test (ADR 0001 §1).
+- Protocol-based extension with callables wrapped (§3) — Strategy in its Pythonic form.
+- `Payload` as a validated value object (F-114) — make illegal payloads unrepresentable once.
+- Polling over Observer (D8).
+- Registration rather than parenting (D11, F-708). The frame made it sound; it no longer
+  needs `mp.Group`.
+- Fifteen modules. Split one only when it outgrows one reader, as §2 already says.
+
+## Pattern review
+
+### Findings
+
+1. **Lifecycle flags** — finding 2 above. Fix: **State**; in Python an `Enum` plus a
+   transition function. Effort: small in code, and it removes a bug class.
+2. **Wrapping a plain callable as a locator or formatter** (F-406, F-504) — Fix:
+   **Adapter**; in Python a function returning an object that satisfies the Protocol, or a
+   `functools.singledispatch` on the argument's type in `set_locator`. Effort: small.
+   Avoid a wrapper class hierarchy.
+3. **Parameter descriptors** (F-911) — **Descriptor** is the right Pythonic form for "an
+   attribute that dirties a node". Leave as is. Do not add getter/setter pairs alongside it.
+
+**Leave as-is:** the frozen `Payload` dataclass; Protocols over ABCs; the weak registry
+(`weakref.WeakSet`); `override_animate` already removed (D21).
+
+**Consider simplifying away:** `TraceCurve` (F-912). D14 justified it by `Create` drawing a
+split curve's pieces in arbitrary order. A curve is now one `VMobject` whose subpaths are in
+data order (PoC 2, G4), so `Create` already draws in data order. Keep it only if it adds
+something else, such as a pen tip.
+
+## Evidence portfolio
+
+**System context:** a library under user scenes. A defect shows up as a wrong frame in
+someone's video, usually noticed by the viewer, and is reversible by re-rendering. The
+blast radius is a user's trust in the plot.
+**Assumptions:** no production code exists. The portfolio below is a decision for 0.1, not
+a measurement of a suite.
+**Critical failure surfaces:** wrong numbers (scales, inverses, ticks); a Manim animation
+ending somewhere plain Manim would not; a Manim upgrade moving an internal the mechanism
+reads; invisible state (the frame) becoming visible or moving a pivot; a frame freezing or
+lagging; rebuild cost.
+
+| Risk or claim | Selected evidence | Why it belongs | Cost accepted | Evidence deliberately omitted | Reopen when |
+|---|---|---|---|---|---|
+| Code review and static analysis | review of every change; ruff, mypy `--strict` (F-1002) | always on | latency per change | multi-approver gates | defects trace to intent nobody wrote down |
+| Scale, tick and conversion maths is wrong | **unit + property-based** tests in `core/` (round trip, monotonicity, no accumulation, key uniqueness; ADR 0001 *Consequences*) | pure functions with real invariants: the invariants are an independent oracle | milliseconds; writing good strategies | example-only tests for these | an escaped numeric defect |
+| An animation ends where plain Manim would not | **differential tests**: the same animation on our artist and on a plain `VMobject` with the same points, compared at every rendered frame and after the next rebuild (F-906) | plain Manim is an oracle independent of our code — the metamorphic oracle `test-patterns` asks for | seconds per animation; one Cairo scene each | snapshot or golden images of our own output | a user reports a difference not in the matrix |
+| A Manim upgrade moves an internal | **contract test**: symbol, first line and source hash of every frame and local `context.py` reads (F-917), plus the differential matrix on every supported version (`tools/check.py`) | the hash catches a moved frame; only the matrix catches a changed meaning at an unchanged line | the matrix runs four times; a hash refresh is a reviewed step | runtime detection of Manim versions | Manim releases a version we have not pinned |
+| The frame becomes visible, moves a pivot or a bound artist freezes | **render tests** under the `render` marker: pixel comparison against a frame-free scene; middle-frame captures (F-914, F-915) | only a real Cairo frame shows a static-cache freeze (PoC 2, G5) | seconds; kept out of the default run | a full rendered-video E2E suite | a rendering defect escapes the marked tests |
+| Rebuild is too slow | **benchmark gate** F-1001, run apart from the four checks | a number, not an adjective | one machine-specific baseline per machine | per-commit performance CI | p95 within 10 % of 4 ms |
+| Design documents cite Manim symbols that vanished | the citation test (F-1003) | cheap; it already caught a wrong interpreter once | none | — | — |
+
+**Generated-test oracle assessment.** The proofs of concept were written by a model, and
+their tests compare against independently computed references (dense analytic samples,
+independent affine solves, plain-Manim controls). Ported into the production suite, the
+rule stays: no expected value computed by the code under test, and no unreviewed
+snapshot of our own output.
+
+**Primary recommendation:** make the differential oracle — the same animation on plain
+Manim — the backbone of the Manim-layer suite, one test per non-empty cell of the
+lifecycle table (pattern finding 1).
+
+**The smallest-portfolio check:** no broad E2E, no mutation testing and no independent QA
+phase. A user journey ("write a scene, render a video") is covered by the render-marked
+tests, because the failure only a full render shows is the static-frame freeze, and those
+tests already render it.
+
+## Corrections from the freeze reviews
+
+Both independent reviews (`docs/reviews/`) tested this report too. What they corrected
+is decided in D22-D27; the report itself is left as written, except for this list.
+
+- **The seam claim was too strong.** "Everything else uses public Mobject methods" is
+  wrong. The proofs of concept override Manim methods, assign animation attributes and
+  depend on Manim's call order outside `context.py`. ADR 0001 §1 now separates the static
+  rule (only `context.py` reads the stack) from the pinned inventory of everything else
+  (F-917).
+- **A flat `Enum` is not enough for the lifecycle.** Animation owners, the frozen frame
+  and the two kinds of detachment are partly independent of one another. The state ×
+  event table in ADR 0001 §4 replaces finding 2's first step.
+- **Finding 4's fix reproduces a measured bug.** Sampling `run_time × frame_rate` missed
+  ticks inside `AnimationGroup`. D25 samples four times denser and adds spare leaves.
+- **The oracle assessment overstated independence.** Some PoC tests compare against
+  the locator under test or the model's own helpers. ADR 0001 now labels each test as a
+  correctness oracle or a decision regression.
+- **Plain Manim is an oracle only where behaviour should match it.** Deliberate
+  differences need their own assertions, and parity of the system needs Manim's own
+  `Axes`, not a frame-free copy of ours.
+- **Polling was reasoned in D8, not measured there.** The measured costs are in the PoC
+  reports.
+- **Missed altogether:** when plot functions are evaluated, Manim's defaults, one pin set
+  per version, the `Source` types, Cairo's static background, and the semantics of
+  copies.
+
+## Recording
+
+This review is the `decide-architecture` refactoring report. The decisions it leads to
+belong in ADR 0001 (findings 1-4 and the freeze), which stays the project's single record.
+The arch-crew constitution and `docs/architecture/decisions/` are not introduced alongside
+it: two records of the same decisions would drift.

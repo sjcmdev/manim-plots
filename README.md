@@ -18,8 +18,8 @@ existing Manim graphing module.
 
 ## Requirements
 
-- Python >= 3.11
-- Manim Community Edition >= 0.19
+- Python >= 3.12
+- Manim Community Edition 0.21.0 or 0.22.0, Cairo renderer
 
 ## Development
 
