@@ -1,0 +1,201 @@
+{
+  "frames": [
+    {
+      "error": 0.0,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 2.220446049250313e-16,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 2.220446049250313e-16,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 1.3348671786163112e-15,
+      "range_error": 4.440892098500626e-16,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 5.23691153334427e-16,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 1.1102230246251565e-16,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -4,
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "partial_opacities": 2.0
+    },
+    {
+      "error": 1.1322097734007351e-15,
+      "range_error": 8.881784197001252e-16,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -4,
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 4.577566798522237e-16,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -4,
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 4.965068306494546e-16,
+      "range_error": 8.881784197001252e-16,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 11,
+      "pixel_channels": 0,
+      "keys": [
+        -4,
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "partial_opacities": 0.0
+    }
+  ],
+  "calls": 11,
+  "final_error": 0.0,
+  "final_range": [
+    -5.0,
+    5.0
+  ],
+  "pool": [
+    {
+      "samples": 10,
+      "keys": [
+        -5,
+        -4,
+        -3,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "align_ns": 1935800
+    }
+  ],
+  "starting_inherited_pool": true,
+  "final_leaves": 17
+}

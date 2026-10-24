@@ -1,0 +1,27 @@
+{
+  "events": [
+    {
+      "animation": "AnimationGroup",
+      "line": 94,
+      "permanent": false,
+      "stack_ns": 7000,
+      "simulation_ns": 5332500,
+      "playback": null,
+      "excluded_artists": 0
+    },
+    {
+      "animation": "Indicate",
+      "line": 213,
+      "permanent": false,
+      "stack_ns": 4000,
+      "simulation_ns": 30837700,
+      "playback": null,
+      "excluded_artists": 0
+    }
+  ],
+  "max_error": 0.0,
+  "reattach_error": 0.0,
+  "calls": 9,
+  "frames": 9,
+  "remaining_suspensions": 0
+}

@@ -1,0 +1,109 @@
+{
+  "calls": 11,
+  "native_calls": 11,
+  "frames": 9,
+  "max_artist_error": 0.0,
+  "native_final_frame_error": 0.0,
+  "native_point_count_equal": true,
+  "max_artist_motion": 0.0,
+  "native_external_artist_motion": 0.0,
+  "finite": true,
+  "point_count_stable": true,
+  "min_area": 24.0,
+  "max_pixel_difference": 0,
+  "singular_p2c": [],
+  "frame_measurements": [
+    {
+      "compare_ns": 95400,
+      "compare_calls": 38,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 60900,
+      "compare_calls": 38,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 58000,
+      "compare_calls": 37,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 54100,
+      "compare_calls": 35,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 51000,
+      "compare_calls": 34,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 47400,
+      "compare_calls": 32,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 47600,
+      "compare_calls": 31,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 44100,
+      "compare_calls": 29,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    },
+    {
+      "compare_ns": 41900,
+      "compare_calls": 28,
+      "artist_error": 0.0,
+      "artist_motion": 0.0,
+      "nodes": 328,
+      "finite": true,
+      "area": 24.0,
+      "pixel_difference": 0
+    }
+  ],
+  "artist_removed": false,
+  "axis_removed": false
+}

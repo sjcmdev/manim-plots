@@ -1,0 +1,67 @@
+{
+  "permanent": true,
+  "max_frame_error": 8.95090418262362e-16,
+  "max_motion": 2.467117037846624,
+  "reattach_error": 0.0,
+  "simulation_untouched": true,
+  "pixel_channel_difference": 1527,
+  "calls": 11,
+  "frames": 9,
+  "axis_error": 0.0,
+  "poc_mid_axis": [
+    [
+      -2.0931522316068625,
+      0.0,
+      0.0
+    ],
+    [
+      -0.4558913389641175,
+      0.0,
+      0.0
+    ],
+    [
+      1.1813695536786275,
+      0.0,
+      0.0
+    ],
+    [
+      2.8186304463213725,
+      0.0,
+      0.0
+    ]
+  ],
+  "native_mid_axis": [
+    [
+      -2.0931522316068625,
+      0.0,
+      0.0
+    ],
+    [
+      -0.4558913389641175,
+      0.0,
+      0.0
+    ],
+    [
+      1.1813695536786275,
+      0.0,
+      0.0
+    ],
+    [
+      2.8186304463213725,
+      0.0,
+      0.0
+    ]
+  ],
+  "context_events": [
+    {
+      "animation": "_MethodAnimation",
+      "line": 213,
+      "permanent": true,
+      "stack_ns": 2900,
+      "simulation_ns": 9150000,
+      "playback": null,
+      "excluded_artists": 0
+    }
+  ],
+  "source_initial_motion": 0.0
+}

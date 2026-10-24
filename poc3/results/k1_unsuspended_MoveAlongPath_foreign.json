@@ -1,0 +1,208 @@
+{
+  "suspends": [],
+  "frame_suspends": [],
+  "writer_events": [
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 13400,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4700,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 8700,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 8100,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 5000,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 7200,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 6800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 6900,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4600,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 6800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 6700,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 10500,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4700,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 7400,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 4800,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1282,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 7000,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "shift",
+      "line": 1283,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 10700,
+      "transient": false,
+      "container_contains_leaf": true
+    }
+  ],
+  "error": 6.661338147750939e-16,
+  "placement_nodes": 1,
+  "calls": 11,
+  "frames": 9
+}

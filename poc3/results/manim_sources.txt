@@ -1,0 +1,1310 @@
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.shift
+:1262     def shift(self, *vectors: Vector3DLike) -> Self:
+:1263         """Shift by the given vectors.
+:1264 
+:1265         Parameters
+:1266         ----------
+:1267         vectors
+:1268             Vectors to shift by. If multiple vectors are given, they are added
+:1269             together.
+:1270 
+:1271         Returns
+:1272         -------
+:1273         :class:`Mobject`
+:1274             ``self``
+:1275 
+:1276         See also
+:1277         --------
+:1278         :meth:`move_to`
+:1279         """
+:1280         total_vector = reduce(op.add, vectors)
+:1281         for mob in self.family_members_with_points():
+:1282             mob.points = mob.points.astype("float")
+:1283             mob.points += total_vector
+:1284 
+:1285         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.apply_points_function_about_point
+:1569     def apply_points_function_about_point(
+:1570         self,
+:1571         func: MultiMappingFunction,
+:1572         about_point: Point3DLike | None = None,
+:1573         about_edge: Vector3DLike | None = None,
+:1574     ) -> Self:
+:1575         if about_point is None:
+:1576             if about_edge is None:
+:1577                 about_edge = ORIGIN
+:1578             about_point = self.get_critical_point(about_edge)
+:1579         # Make a copy to prevent mutation of the original array if about_point is a view
+:1580         about_point = np.array(about_point, copy=True)
+:1581         for mob in self.family_members_with_points():
+:1582             mob.points -= about_point
+:1583             mob.points = func(mob.points)
+:1584             mob.points += about_point
+:1585         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\types\vectorized_mobject.py::VMobject.apply_function
+:1218     def apply_function(
+:1219         self,
+:1220         function: MappingFunction,
+:1221         *,
+:1222         about_point: Point3DLike | None = None,
+:1223         about_edge: Vector3DLike | None = None,
+:1224     ) -> Self:
+:1225         factor = self.pre_function_handle_to_anchor_scale_factor
+:1226         self.scale_handle_to_anchor_distances(factor)
+:1227         super().apply_function(function)
+:1228         self.scale_handle_to_anchor_distances(1.0 / factor)
+:1229         if self.make_smooth_after_applying_functions:
+:1230             self.make_smooth()
+:1231         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\types\vectorized_mobject.py::VMobject.scale_handle_to_anchor_distances
+:1245     def scale_handle_to_anchor_distances(self, factor: float) -> Self:
+:1246         """If the distance between a given handle point H and its associated
+:1247         anchor point A is d, then it changes H to be a distances factor*d
+:1248         away from A, but so that the line from A to H doesn't change.
+:1249         This is mostly useful in the context of applying a (differentiable)
+:1250         function, to preserve tangency properties.  One would pull all the
+:1251         handles closer to their anchors, apply the function then push them out
+:1252         again.
+:1253 
+:1254         Parameters
+:1255         ----------
+:1256         factor
+:1257             The factor used for scaling.
+:1258 
+:1259         Returns
+:1260         -------
+:1261         :class:`VMobject`
+:1262             ``self``
+:1263         """
+:1264         for submob in self.family_members_with_points():
+:1265             if len(submob.points) < self.n_points_per_cubic_curve:
+:1266                 # The case that a bezier quad is not complete (there is no bezier curve as there is not enough control points.)
+:1267                 continue
+:1268             a1, h1, h2, a2 = submob.get_anchors_and_handles()
+:1269             a1_to_h1 = h1 - a1
+:1270             a2_to_h2 = h2 - a2
+:1271             new_h1 = a1 + factor * a1_to_h1
+:1272             new_h2 = a2 + factor * a2_to_h2
+:1273             submob.set_anchors_and_handles(a1, new_h1, new_h2, a2)
+:1274         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\types\vectorized_mobject.py::VMobject.get_anchors
+:1778     def get_anchors(self) -> list[Point3D]:
+:1779         """Returns the anchors of the curves forming the VMobject.
+:1780 
+:1781         Returns
+:1782         -------
+:1783         Point3D_Array
+:1784             The anchors.
+:1785         """
+:1786         if self.points.shape[0] == 1:
+:1787             return self.points
+:1788 
+:1789         s = self.get_start_anchors()
+:1790         e = self.get_end_anchors()
+:1791         return list(it.chain.from_iterable(zip(s, e, strict=True)))
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\types\vectorized_mobject.py::VMobject.get_points_defining_boundary
+:1793     def get_points_defining_boundary(self) -> Point3D_Array:
+:1794         # Probably returns all anchors, but this is weird regarding  the name of the method.
+:1795         return np.array(
+:1796             tuple(it.chain(*(sm.get_anchors() for sm in self.get_family())))
+:1797         )
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\types\vectorized_mobject.py::VMobject.set_anchors_and_handles
+:821     def set_anchors_and_handles(
+:822         self,
+:823         anchors1: Point3DLike_Array,
+:824         handles1: Point3DLike_Array,
+:825         handles2: Point3DLike_Array,
+:826         anchors2: Point3DLike_Array,
+:827     ) -> Self:
+:828         """Given two sets of anchors and handles, process them to set them as anchors
+:829         and handles of the VMobject.
+:830 
+:831         anchors1[i], handles1[i], handles2[i] and anchors2[i] define the i-th bezier
+:832         curve of the vmobject. There are four hardcoded parameters and this is a
+:833         problem as it makes the number of points per cubic curve unchangeable from 4
+:834         (two anchors and two handles).
+:835 
+:836         Returns
+:837         -------
+:838         :class:`VMobject`
+:839             ``self``
+:840         """
+:841         assert len(anchors1) == len(handles1) == len(handles2) == len(anchors2)
+:842         nppcc = self.n_points_per_cubic_curve  # 4
+:843         total_len = nppcc * len(anchors1)
+:844         self.points = np.empty((total_len, self.dim))
+:845         # the following will, from the four sets, dispatch them in points such that
+:846         # self.points = [
+:847         #     anchors1[0], handles1[0], handles2[0], anchors1[0], anchors1[1],
+:848         #     handles1[1], ...
+:849         # ]
+:850         arrays = [anchors1, handles1, handles2, anchors2]
+:851         for index, array in enumerate(arrays):
+:852             self.points[index::nppcc] = array
+:853         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.__deepcopy__
+:444     def __deepcopy__(self, clone_from_id: dict[int, Mobject]) -> Self:
+:445         cls = self.__class__
+:446         result = cls.__new__(cls)
+:447         clone_from_id[id(self)] = result
+:448         for k, v in self.__dict__.items():
+:449             setattr(result, k, copy.deepcopy(v, clone_from_id))
+:450         result.original_id = str(id(self))
+:451         return result
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.copy
+:895     def copy(self) -> Self:
+:896         """Create and return an identical copy of the :class:`Mobject` including all
+:897         :attr:`submobjects`.
+:898 
+:899         Returns
+:900         -------
+:901         :class:`Mobject`
+:902             The copy.
+:903 
+:904         Note
+:905         ----
+:906         The clone is initially not visible in the Scene, even if the original was.
+:907         """
+:908         return copy.deepcopy(self)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.suspend_updating
+:1184     def suspend_updating(self, recursive: bool = True) -> Self:
+:1185         """Disable updating from updaters and animations.
+:1186 
+:1187 
+:1188         Parameters
+:1189         ----------
+:1190         recursive
+:1191             Whether to recursively suspend updating on all submobjects.
+:1192 
+:1193         Returns
+:1194         -------
+:1195         :class:`Mobject`
+:1196             ``self``
+:1197 
+:1198         See also
+:1199         --------
+:1200         :meth:`resume_updating`
+:1201         :meth:`add_updater`
+:1202 
+:1203         """
+:1204         self.updating_suspended = True
+:1205         if recursive:
+:1206             for submob in self.submobjects:
+:1207                 submob.suspend_updating(recursive)
+:1208         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.resume_updating
+:1210     def resume_updating(self, recursive: bool = True) -> Self:
+:1211         """Enable updating from updaters and animations.
+:1212 
+:1213         Parameters
+:1214         ----------
+:1215         recursive
+:1216             Whether to recursively enable updating on all submobjects.
+:1217 
+:1218         Returns
+:1219         -------
+:1220         :class:`Mobject`
+:1221             ``self``
+:1222 
+:1223         See also
+:1224         --------
+:1225         :meth:`suspend_updating`
+:1226         :meth:`add_updater`
+:1227 
+:1228         """
+:1229         self.updating_suspended = False
+:1230         if recursive:
+:1231             for submob in self.submobjects:
+:1232                 submob.resume_updating(recursive)
+:1233         self.update(dt=0, recursive=recursive)
+:1234         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.become
+:3182     def become(
+:3183         self,
+:3184         mobject: Mobject,
+:3185         match_height: bool = False,
+:3186         match_width: bool = False,
+:3187         match_depth: bool = False,
+:3188         match_center: bool = False,
+:3189         stretch: bool = False,
+:3190     ) -> Self:
+:3191         """Edit points, colors and submobjects to be identical
+:3192         to another :class:`~.Mobject`
+:3193 
+:3194         .. note::
+:3195 
+:3196             If both match_height and match_width are ``True`` then the transformed :class:`~.Mobject`
+:3197             will match the height first and then the width.
+:3198 
+:3199         Parameters
+:3200         ----------
+:3201         match_height
+:3202             Whether or not to preserve the height of the original
+:3203             :class:`~.Mobject`.
+:3204         match_width
+:3205             Whether or not to preserve the width of the original
+:3206             :class:`~.Mobject`.
+:3207         match_depth
+:3208             Whether or not to preserve the depth of the original
+:3209             :class:`~.Mobject`.
+:3210         match_center
+:3211             Whether or not to preserve the center of the original
+:3212             :class:`~.Mobject`.
+:3213         stretch
+:3214             Whether or not to stretch the target mobject to match the
+:3215             the proportions of the original :class:`~.Mobject`.
+:3216 
+:3217         Examples
+:3218         --------
+:3219         .. manim:: BecomeScene
+:3220 
+:3221             class BecomeScene(Scene):
+:3222                 def construct(self):
+:3223                     circ = Circle(fill_color=RED, fill_opacity=0.8)
+:3224                     square = Square(fill_color=BLUE, fill_opacity=0.2)
+:3225                     self.add(circ)
+:3226                     self.wait(0.5)
+:3227                     circ.become(square)
+:3228                     self.wait(0.5)
+:3229 
+:3230 
+:3231         The following examples illustrate how mobject measurements
+:3232         change when using the ``match_...`` and ``stretch`` arguments.
+:3233         We start with a rectangle that is 2 units high and 4 units wide,
+:3234         which we want to turn into a circle of radius 3::
+:3235 
+:3236             >>> from manim import Rectangle, Circle
+:3237             >>> import numpy as np
+:3238             >>> rect = Rectangle(height=2, width=4)
+:3239             >>> circ = Circle(radius=3)
+:3240 
+:3241         With ``stretch=True``, the target circle is deformed to match
+:3242         the proportions of the rectangle, which results in the target
+:3243         mobject being an ellipse with height 2 and width 4. We can
+:3244         check that the resulting points satisfy the ellipse equation
+:3245         :math:`x^2/a^2 + y^2/b^2 = 1` with :math:`a = 4/2` and :math:`b = 2/2`
+:3246         being the semi-axes::
+:3247 
+:3248             >>> result = rect.copy().become(circ, stretch=True)
+:3249             >>> result.height, result.width
+:3250             (np.float64(2.0), np.float64(4.0))
+:3251             >>> ellipse_points = np.array(result.get_anchors())
+:3252             >>> ellipse_eq = np.sum(ellipse_points**2 * [1/4, 1, 0], axis=1)
+:3253             >>> np.allclose(ellipse_eq, 1)
+:3254             True
+:3255 
+:3256         With ``match_height=True`` and ``match_width=True`` the circle is
+:3257         scaled such that the height or the width of the rectangle will
+:3258         be preserved, respectively.
+:3259         The points of the resulting mobject satisfy the circle equation
+:3260         :math:`x^2 + y^2 = r^2` for the corresponding radius :math:`r`::
+:3261 
+:3262             >>> result = rect.copy().become(circ, match_height=True)
+:3263             >>> result.height, result.width
+:3264             (np.float64(2.0), np.float64(2.0))
+:3265             >>> circle_points = np.array(result.get_anchors())
+:3266             >>> circle_eq = np.sum(circle_points**2, axis=1)
+:3267             >>> np.allclose(circle_eq, 1)
+:3268             True
+:3269             >>> result = rect.copy().become(circ, match_width=True)
+:3270             >>> result.height, result.width
+:3271             (np.float64(4.0), np.float64(4.0))
+:3272             >>> circle_points = np.array(result.get_anchors())
+:3273             >>> circle_eq = np.sum(circle_points**2, axis=1)
+:3274             >>> np.allclose(circle_eq, 2**2)
+:3275             True
+:3276 
+:3277         With ``match_center=True``, the resulting mobject is moved such that
+:3278         its center is the same as the center of the original mobject::
+:3279 
+:3280             >>> rect = rect.shift(np.array([0, 1, 0]))
+:3281             >>> np.allclose(rect.get_center(), circ.get_center())
+:3282             False
+:3283             >>> result = rect.copy().become(circ, match_center=True)
+:3284             >>> np.allclose(rect.get_center(), result.get_center())
+:3285             True
+:3286 
+:3287         See also
+:3288         --------
+:3289         :meth:`~.Mobject.align_data`, :meth:`~.VMobject.interpolate_color`
+:3290         """
+:3291         if stretch or match_height or match_width or match_depth or match_center:
+:3292             mobject = mobject.copy()
+:3293             if stretch:
+:3294                 mobject.stretch_to_fit_height(self.height)
+:3295                 mobject.stretch_to_fit_width(self.width)
+:3296                 mobject.stretch_to_fit_depth(self.depth)
+:3297             else:
+:3298                 if match_height:
+:3299                     mobject.match_height(self)
+:3300                 if match_width:
+:3301                     mobject.match_width(self)
+:3302                 if match_depth:
+:3303                     mobject.match_depth(self)
+:3304 
+:3305             if match_center:
+:3306                 mobject.move_to(self.get_center())
+:3307 
+:3308         self.align_data(mobject, skip_point_alignment=True)
+:3309         for sm1, sm2 in zip(self.get_family(), mobject.get_family(), strict=True):
+:3310             sm1.points = np.array(sm2.points)
+:3311             sm1.interpolate_color(sm1, sm2, 1)
+:3312         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.align_data
+:2977     def align_data(self, mobject: Mobject, skip_point_alignment: bool = False) -> Self:
+:2978         """Aligns the family structure and data of this mobject with another mobject.
+:2979 
+:2980         Afterwards, the two mobjects will have the same number of submobjects
+:2981         (see :meth:`.align_submobjects`) and the same parent structure (see
+:2982         :meth:`.null_point_align`). If ``skip_point_alignment`` is ``False``,
+:2983         they will also have the same number of points (see :meth:`.align_points`).
+:2984 
+:2985         Parameters
+:2986         ----------
+:2987         mobject
+:2988             The other mobject this mobject should be aligned to.
+:2989         skip_point_alignment
+:2990             Controls whether or not the computationally expensive
+:2991             point alignment is skipped (default: ``False``).
+:2992 
+:2993 
+:2994         .. note::
+:2995 
+:2996             This method is primarily used internally by :meth:`.become` and the
+:2997             :class:`~.Transform` animation to ensure that mobjects are structurally
+:2998             compatible before transformation.
+:2999 
+:3000         Examples
+:3001         --------
+:3002         ::
+:3003 
+:3004             >>> from manim import Rectangle, Line, ORIGIN, RIGHT
+:3005             >>> rect = Rectangle(width=4.0, height=2.0, grid_xstep=1.0, grid_ystep=0.5)
+:3006             >>> line = Line(start=ORIGIN,end=RIGHT)
+:3007             >>> line.align_data(rect)
+:3008             Line
+:3009             >>> len(line.get_family()) == len(rect.get_family())
+:3010             True
+:3011             >>> line.get_num_points() == rect.get_num_points()
+:3012             True
+:3013 
+:3014         See also
+:3015         --------
+:3016         :class:`~.Transform`, :meth:`~.Mobject.become`, :meth:`~.VMobject.align_points`, :meth:`~.Mobject.get_family`
+:3017 
+:3018         """
+:3019         self.null_point_align(mobject)
+:3020         self.align_submobjects(mobject)
+:3021         if not skip_point_alignment:
+:3022             self.align_points(mobject)
+:3023         # Recurse
+:3024         for m1, m2 in zip(self.submobjects, mobject.submobjects, strict=True):
+:3025             m1.align_data(m2)
+:3026         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.align_submobjects
+:3047     def align_submobjects(self, mobject: Mobject) -> Self:
+:3048         mob1 = self
+:3049         mob2 = mobject
+:3050         n1 = len(mob1.submobjects)
+:3051         n2 = len(mob2.submobjects)
+:3052         mob1.add_n_more_submobjects(max(0, n2 - n1))
+:3053         mob2.add_n_more_submobjects(max(0, n1 - n2))
+:3054         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.add_n_more_submobjects
+:3079     def add_n_more_submobjects(self, n: int) -> Self | None:
+:3080         if n == 0:
+:3081             return None
+:3082 
+:3083         curr = len(self.submobjects)
+:3084         if curr == 0:
+:3085             # If empty, simply add n point mobjects
+:3086             self.submobjects = [self.get_point_mobject() for k in range(n)]
+:3087             return None
+:3088 
+:3089         target = curr + n
+:3090         # TODO, factor this out to utils so as to reuse
+:3091         # with VMobject.insert_n_curves
+:3092         repeat_indices = (np.arange(target) * curr) // target
+:3093         split_factors = [sum(repeat_indices == i) for i in range(curr)]
+:3094         new_submobs = []
+:3095         for submob, sf in zip(self.submobjects, split_factors, strict=True):
+:3096             new_submobs.append(submob)
+:3097             new_submobs.extend(submob.copy().fade(1) for _ in range(1, sf))
+:3098         self.submobjects = new_submobs
+:3099         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::Mobject.interpolate
+:3104     def interpolate(
+:3105         self,
+:3106         mobject1: Mobject,
+:3107         mobject2: Mobject,
+:3108         alpha: float,
+:3109         path_func: PathFuncType = straight_path(),
+:3110     ) -> Self:
+:3111         """Turns this :class:`~.Mobject` into an interpolation between ``mobject1``
+:3112         and ``mobject2``.
+:3113 
+:3114         The interpolation is applied to the points and color of the mobject.
+:3115 
+:3116         Parameters
+:3117         ----------
+:3118         mobject1
+:3119             The starting Mobject.
+:3120         mobject2
+:3121             The target Mobject.
+:3122         alpha
+:3123             Interpolation factor between 0 (at ``mobject1``) and 1 (at ``mobject2``).
+:3124         path_func
+:3125             The function defining the interpolation path. Defaults to a straight path.
+:3126 
+:3127         Returns
+:3128         -------
+:3129         :class:`Mobject`
+:3130             ``self``
+:3131 
+:3132 
+:3133         .. note::
+:3134 
+:3135             - Both mobjects must have the same number of points. If not, this will raise an error.
+:3136               Use :meth:`~.VMobject.align_points` to match point counts beforehand if needed.
+:3137             - This method is used internally by the :class:`~.Transform` animation
+:3138               to interpolate between two mobjects during a transformation.
+:3139 
+:3140         Examples
+:3141         --------
+:3142 
+:3143         .. manim:: InterpolateExample
+:3144             :save_last_frame:
+:3145 
+:3146             class InterpolateExample(Scene):
+:3147                 def construct(self):
+:3148                     # No need for point alignment:
+:3149                     dotL = Dot(color=DARK_GREY).to_edge(LEFT)
+:3150                     dotR = Dot(color=YELLOW).scale(10).to_edge(RIGHT)
+:3151                     dotMid1 = VMobject().interpolate(dotL, dotR, alpha=0.1)
+:3152                     dotMid2 = VMobject().interpolate(dotL, dotR, alpha=0.25)
+:3153                     dotMid3 = VMobject().interpolate(dotL, dotR, alpha=0.5)
+:3154                     dotMid4 = VMobject().interpolate(dotL, dotR, alpha=0.75)
+:3155                     dots = VGroup(dotL, dotR, dotMid1, dotMid2, dotMid3, dotMid4)
+:3156 
+:3157                     # Needs point alignment:
+:3158                     line = Line(ORIGIN, UP).to_edge(LEFT)
+:3159                     sq = Square(color=RED, fill_opacity=1, stroke_color=BLUE).to_edge(RIGHT)
+:3160                     line.align_points(sq)
+:3161                     mid1 = VMobject().interpolate(line, sq, alpha=0.1)
+:3162                     mid2 = VMobject().interpolate(line, sq, alpha=0.25)
+:3163                     mid3 = VMobject().interpolate(line, sq, alpha=0.5)
+:3164                     mid4 = VMobject().interpolate(line, sq, alpha=0.75)
+:3165                     linesquares = VGroup(line, sq, mid1, mid2, mid3, mid4)
+:3166 
+:3167                     self.add(VGroup(dots, linesquares).arrange(DOWN, buff=1))
+:3168         See also
+:3169         --------
+:3170         :class:`~.Transform`, :meth:`~.VMobject.align_points`, :meth:`~.VMobject.interpolate_color`
+:3171 
+:3172         """
+:3173         self.points = path_func(mobject1.points, mobject2.points, alpha)
+:3174         self.interpolate_color(mobject1, mobject2, alpha)
+:3175         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\types\vectorized_mobject.py::VMobject.align_points
+:1820     def align_points(self, vmobject: VMobject) -> Self:
+:1821         """Adds points to self and vmobject so that they both have the same number of subpaths, with
+:1822         corresponding subpaths each containing the same number of points.
+:1823 
+:1824         Points are added either by subdividing curves evenly along the subpath, or by creating new subpaths consisting
+:1825         of a single point repeated.
+:1826 
+:1827         Parameters
+:1828         ----------
+:1829         vmobject
+:1830             The object to align points with.
+:1831 
+:1832         Returns
+:1833         -------
+:1834         :class:`VMobject`
+:1835            ``self``
+:1836 
+:1837         See also
+:1838         --------
+:1839         :meth:`~.Mobject.interpolate`, :meth:`~.Mobject.align_data`
+:1840         """
+:1841         self.align_rgbas(vmobject)
+:1842         # TODO: This shortcut can be a bit over eager. What if they have the same length, but different subpath lengths?
+:1843         if self.get_num_points() == vmobject.get_num_points():
+:1844             return self
+:1845 
+:1846         for mob in self, vmobject:
+:1847             # If there are no points, add one to
+:1848             # wherever the "center" is
+:1849             if mob.has_no_points():
+:1850                 mob.start_new_path(mob.get_center())
+:1851             # If there's only one point, turn it into
+:1852             # a null curve
+:1853             if mob.has_new_path_started():
+:1854                 mob.add_line_to(mob.get_last_point())
+:1855 
+:1856         # Figure out what the subpaths are
+:1857         subpaths1 = self.get_subpaths()
+:1858         subpaths2 = vmobject.get_subpaths()
+:1859         n_subpaths = max(len(subpaths1), len(subpaths2))
+:1860         # Start building new ones
+:1861         new_path1 = np.zeros((0, self.dim))
+:1862         new_path2 = np.zeros((0, self.dim))
+:1863 
+:1864         nppcc = self.n_points_per_cubic_curve
+:1865 
+:1866         def get_nth_subpath(path_list, n):
+:1867             if n >= len(path_list):
+:1868                 # Create a null path at the very end
+:1869                 if len(path_list) == 0:
+:1870                     return np.tile(np.zeros(3), (nppcc, 1))
+:1871                 return np.tile(path_list[-1][-1], (nppcc, 1))
+:1872             path = path_list[n]
+:1873             # Check for useless points at the end of the path and remove them
+:1874             # https://github.com/ManimCommunity/manim/issues/1959
+:1875             while len(path) > nppcc:
+:1876                 # If the last nppc points are all equal to the preceding point
+:1877                 if self.consider_points_equals(path[-nppcc:], path[-nppcc - 1]):
+:1878                     path = path[:-nppcc]
+:1879                 else:
+:1880                     break
+:1881             return path
+:1882 
+:1883         for n in range(n_subpaths):
+:1884             # For each pair of subpaths, add points until they are the same length
+:1885             sp1 = get_nth_subpath(subpaths1, n)
+:1886             sp2 = get_nth_subpath(subpaths2, n)
+:1887             diff1 = max(0, (len(sp2) - len(sp1)) // nppcc)
+:1888             diff2 = max(0, (len(sp1) - len(sp2)) // nppcc)
+:1889             sp1 = self.insert_n_curves_to_point_list(diff1, sp1)
+:1890             sp2 = self.insert_n_curves_to_point_list(diff2, sp2)
+:1891             new_path1 = np.append(new_path1, sp1, axis=0)
+:1892             new_path2 = np.append(new_path2, sp2, axis=0)
+:1893         self.set_points(new_path1)
+:1894         vmobject.set_points(new_path2)
+:1895         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\animation.py::Animation.begin
+:197     def begin(self) -> None:
+:198         """Begin the animation.
+:199 
+:200         This method is called right as an animation is being played. As much
+:201         initialization as possible, especially any mobject copying, should live in this
+:202         method.
+:203 
+:204         """
+:205         self.starting_mobject = self.create_starting_mobject()
+:206         if self.suspend_mobject_updating:
+:207             # All calls to self.mobject's internal updaters
+:208             # during the animation, either from this Animation
+:209             # or from the surrounding scene, should do nothing.
+:210             # It is, however, okay and desirable to call
+:211             # the internal updaters of self.starting_mobject,
+:212             # or any others among self.get_all_mobjects()
+:213             self.mobject.suspend_updating()
+:214         self.interpolate(0)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\animation.py::Animation.finish
+:216     def finish(self) -> None:
+:217         # TODO: begin and finish should require a scene as parameter.
+:218         # That way Animation.clean_up_from_screen and Scene.add_mobjects_from_animations
+:219         # could be removed as they fulfill basically the same purpose.
+:220         """Finish the animation.
+:221 
+:222         This method gets called when the animation is over.
+:223 
+:224         """
+:225         self.interpolate(1)
+:226         if self.suspend_mobject_updating and self.mobject is not None:
+:227             self.mobject.resume_updating()
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\animation.py::Animation.get_all_families_zipped
+:279     def get_all_families_zipped(self) -> Iterable[tuple]:
+:280         if config["renderer"] == RendererType.OPENGL:
+:281             return zip(
+:282                 *(mob.get_family() for mob in self.get_all_mobjects()), strict=False
+:283             )
+:284         return zip(
+:285             *(mob.family_members_with_points() for mob in self.get_all_mobjects()),
+:286             strict=False,
+:287         )
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\animation.py::Animation.get_sub_alpha
+:364     def get_sub_alpha(self, alpha: float, index: int, num_submobjects: int) -> float:
+:365         """Get the animation progress of any submobjects subanimation.
+:366 
+:367         Parameters
+:368         ----------
+:369         alpha
+:370             The overall animation progress
+:371         index
+:372             The index of the subanimation.
+:373         num_submobjects
+:374             The total count of subanimations.
+:375 
+:376         Returns
+:377         -------
+:378         float
+:379             The progress of the subanimation.
+:380         """
+:381         # TODO, make this more understandable, and/or combine
+:382         # its functionality with AnimationGroup's method
+:383         # build_animations_with_timings
+:384         lag_ratio = self.lag_ratio
+:385         full_length = (num_submobjects - 1) * lag_ratio + 1
+:386         value = alpha * full_length
+:387         lower = index * lag_ratio
+:388         if self.reverse_rate_function:
+:389             return self.rate_func(1 - (value - lower))
+:390         else:
+:391             return self.rate_func(value - lower)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\composition.py::AnimationGroup.begin
+:86     def begin(self) -> None:
+:87         if not self.animations:
+:88             raise ValueError(
+:89                 f"Trying to play {self} without animations, this is not supported. "
+:90                 "Please add at least one subanimation."
+:91             )
+:92         self.anim_group_time = 0.0
+:93         if self.suspend_mobject_updating:
+:94             self.group.suspend_updating()
+:95         for anim in self.animations:
+:96             anim.begin()
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\composition.py::AnimationGroup.finish
+:102     def finish(self) -> None:
+:103         for anim in self.animations:
+:104             anim.finish()
+:105         self.anims_begun[:] = True
+:106         self.anims_finished[:] = True
+:107         if self.suspend_mobject_updating:
+:108             self.group.resume_updating()
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\composition.py::AnimationGroup.clean_up_from_scene
+:110     def clean_up_from_scene(self, scene: Scene) -> None:
+:111         self._on_finish(scene)
+:112         for anim in self.animations:
+:113             if self.remover:
+:114                 anim.remover = self.remover
+:115             anim.clean_up_from_scene(scene)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\composition.py::Succession.begin
+:238     def begin(self) -> None:
+:239         if not self.animations:
+:240             raise ValueError(
+:241                 f"Trying to play {self} without animations, this is not supported. "
+:242                 "Please add at least one subanimation."
+:243             )
+:244         self.update_active_animation(0)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\composition.py::Succession.finish
+:246     def finish(self) -> None:
+:247         while self.active_animation is not None:
+:248             self.next_animation()
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\composition.py::Succession.update_active_animation
+:264     def update_active_animation(self, index: int) -> None:
+:265         self.active_index = index
+:266         if index >= len(self.animations):
+:267             self.active_animation: Animation | None = None
+:268             self.active_start_time: float | None = None
+:269             self.active_end_time: float | None = None
+:270         else:
+:271             self.active_animation = self.animations[index]
+:272             self.active_animation._setup_scene(self.scene)
+:273             self.active_animation.begin()
+:274             self.active_start_time = self.anims_with_timings[index]["start"]
+:275             self.active_end_time = self.anims_with_timings[index]["end"]
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\creation.py::ShowPartial.interpolate_submobject
+:126     def interpolate_submobject(
+:127         self,
+:128         submobject: Mobject,
+:129         starting_submobject: Mobject,
+:130         alpha: float,
+:131     ) -> None:
+:132         submobject.pointwise_become_partial(
+:133             starting_submobject, *self._get_bounds(alpha)
+:134         )
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\creation.py::DrawBorderThenFill.interpolate_submobject
+:274     def interpolate_submobject(
+:275         self,
+:276         submobject: Mobject,
+:277         starting_submobject: Mobject,
+:278         outline,
+:279         alpha: float,
+:280     ) -> None:  # Fixme: not matching the parent class? What is outline doing here?
+:281         index: int
+:282         subalpha: float
+:283         index, subalpha = integer_interpolate(0, 2, alpha)
+:284         if index == 0:
+:285             submobject.pointwise_become_partial(outline, 0, subalpha)
+:286             submobject.match_style(outline)
+:287         else:
+:288             submobject.interpolate(outline, starting_submobject, subalpha)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\indication.py::Wiggle.interpolate_submobject
+:553     def interpolate_submobject(
+:554         self,
+:555         submobject: Mobject,
+:556         starting_submobject: Mobject,
+:557         alpha: float,
+:558     ) -> Self:
+:559         submobject.points[:, :] = starting_submobject.points
+:560         submobject.scale(
+:561             interpolate(1, self.scale_value, there_and_back(alpha)),
+:562             about_point=self.get_scale_about_point(),
+:563         )
+:564         submobject.rotate(
+:565             wiggle(alpha, self.n_wiggles) * self.rotation_angle,
+:566             about_point=self.get_rotate_about_point(),
+:567         )
+:568         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\transform.py::Transform.begin
+:200     def begin(self) -> None:
+:201         # Use a copy of target_mobject for the align_data
+:202         # call so that the actual target_mobject stays
+:203         # preserved.
+:204         self.target_mobject = self.create_target()
+:205         self.target_copy = self.target_mobject.copy()
+:206         # Note, this potentially changes the structure
+:207         # of both mobject and target_mobject
+:208         if config.renderer == RendererType.OPENGL:
+:209             self.mobject.align_data_and_family(self.target_copy)
+:210         else:
+:211             self.mobject.align_data(self.target_copy)
+:212         super().begin()
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\transform.py::Transform.clean_up_from_scene
+:219     def clean_up_from_scene(self, scene: Scene) -> None:
+:220         super().clean_up_from_scene(scene)
+:221         if self.replace_mobject_with_target_in_scene:
+:222             scene.replace(self.mobject, self.target_mobject)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\transform.py::TransformFromCopy.__init__
+:310     def __init__(self, mobject: Mobject, target_mobject: Mobject, **kwargs) -> None:
+:311         super().__init__(target_mobject, mobject, **kwargs)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\transform.py::TransformFromCopy.interpolate
+:313     def interpolate(self, alpha: float) -> None:
+:314         super().interpolate(1 - alpha)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\transform.py::_MethodAnimation.finish
+:448     def finish(self) -> None:
+:449         for item in self.methods:
+:450             item.method.__func__(self.mobject, *item.args, **item.kwargs)
+:451         super().finish()
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\fading.py::FadeOut.clean_up_from_scene
+:190     def clean_up_from_scene(self, scene: Scene) -> None:
+:191         super().clean_up_from_scene(scene)
+:192         self.interpolate(0)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\indication.py::ShowPassingFlash.clean_up_from_scene
+:322     def clean_up_from_scene(self, scene: Scene) -> None:
+:323         super().clean_up_from_scene(scene)
+:324         for submob, start in self.get_all_families_zipped():
+:325             submob.pointwise_become_partial(start, 0, 1)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\movement.py::MoveAlongPath.__init__
+:188     def __init__(
+:189         self,
+:190         mobject: Mobject,
+:191         path: VMobject,
+:192         suspend_mobject_updating: bool = False,
+:193         **kwargs: Any,
+:194     ):
+:195         self.path = path
+:196         super().__init__(
+:197             mobject, suspend_mobject_updating=suspend_mobject_updating, **kwargs
+:198         )
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\movement.py::MoveAlongPath.interpolate_mobject
+:200     def interpolate_mobject(self, alpha: float) -> None:
+:201         point = self.path.point_from_proportion(self.rate_func(alpha))
+:202         self.mobject.move_to(point)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\movement.py::PhaseFlow.__init__
+:146     def __init__(
+:147         self,
+:148         function: Callable[[np.ndarray], np.ndarray],
+:149         mobject: Mobject,
+:150         virtual_time: float = 1,
+:151         suspend_mobject_updating: bool = False,
+:152         rate_func: RateFunction = linear,
+:153         **kwargs: Any,
+:154     ):
+:155         self.virtual_time = virtual_time
+:156         self.function = function
+:157         super().__init__(
+:158             mobject,
+:159             suspend_mobject_updating=suspend_mobject_updating,
+:160             rate_func=rate_func,
+:161             **kwargs,
+:162         )
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\movement.py::PhaseFlow.interpolate_mobject
+:164     def interpolate_mobject(self, alpha: float) -> None:
+:165         if hasattr(self, "last_alpha"):
+:166             dt = self.virtual_time * (
+:167                 self.rate_func(alpha) - self.rate_func(self.last_alpha)
+:168             )
+:169             self.mobject.apply_function(lambda p: p + dt * self.function(p))
+:170         self.last_alpha: float = alpha
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\creation.py::ShowIncreasingSubsets.__init__
+:508     def __init__(
+:509         self,
+:510         group: Mobject,
+:511         suspend_mobject_updating: bool = False,
+:512         int_func: Callable[[np.ndarray], np.ndarray] = np.floor,
+:513         reverse_rate_function=False,
+:514         **kwargs,
+:515     ) -> None:
+:516         self.all_submobs = list(group.submobjects)
+:517         self.int_func = int_func
+:518         for mobj in self.all_submobs:
+:519             mobj.set_opacity(0)
+:520         super().__init__(
+:521             group,
+:522             suspend_mobject_updating=suspend_mobject_updating,
+:523             reverse_rate_function=reverse_rate_function,
+:524             **kwargs,
+:525         )
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\creation.py::ShowIncreasingSubsets.interpolate_mobject
+:527     def interpolate_mobject(self, alpha: float) -> None:
+:528         n_submobs = len(self.all_submobs)
+:529         value = (
+:530             1 - self.rate_func(alpha)
+:531             if self.reverse_rate_function
+:532             else self.rate_func(alpha)
+:533         )
+:534         index = int(self.int_func(value * n_submobs))
+:535         self.update_submobject_list(index)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::_AnimationBuilder.__init__
+:3416     def __init__(self, mobject: Mobject) -> None:
+:3417         self.mobject = mobject
+:3418         self.mobject.generate_target()
+:3419 
+:3420         self.overridden_animation: Animation | None = None
+:3421         self.is_chaining = False
+:3422         self.methods: list[MethodWithArgs] = []
+:3423 
+:3424         # Whether animation args can be passed
+:3425         self.cannot_pass_args = False
+:3426         self.anim_args: dict[str, Any] = {}
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\mobject\mobject.py::_AnimationBuilder.__getattr__
+:3439     def __getattr__(self, method_name: str) -> Callable[..., _AnimationBuilder]:
+:3440         method = getattr(self.mobject.target, method_name)
+:3441         has_overridden_animation = hasattr(method, "_override_animate")
+:3442 
+:3443         if (self.is_chaining and has_overridden_animation) or self.overridden_animation:
+:3444             raise NotImplementedError(
+:3445                 "Method chaining is currently not supported for overridden animations",
+:3446             )
+:3447 
+:3448         def update_target(*method_args: Any, **method_kwargs: Any) -> _AnimationBuilder:
+:3449             if has_overridden_animation:
+:3450                 self.overridden_animation = method._override_animate(
+:3451                     self.mobject,
+:3452                     *method_args,
+:3453                     anim_args=self.anim_args,
+:3454                     **method_kwargs,
+:3455                 )
+:3456             else:
+:3457                 self.methods.append(MethodWithArgs(method, method_args, method_kwargs))
+:3458                 method(*method_args, **method_kwargs)
+:3459             return self
+:3460 
+:3461         self.is_chaining = True
+:3462         self.cannot_pass_args = True
+:3463 
+:3464         return update_target
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\animation\updaters\mobject_update_utils.py::always_redraw
+:67 def always_redraw(func: Callable[[], M]) -> M:
+:68     """Redraw the mobject constructed by a function every frame.
+:69 
+:70     This function returns a mobject with an attached updater that
+:71     continuously regenerates the mobject according to the
+:72     specified function.
+:73 
+:74     Parameters
+:75     ----------
+:76     func
+:77         A function without (required) input arguments that returns
+:78         a mobject.
+:79 
+:80     Examples
+:81     --------
+:82 
+:83     .. manim:: TangentAnimation
+:84 
+:85         class TangentAnimation(Scene):
+:86             def construct(self):
+:87                 ax = Axes()
+:88                 sine = ax.plot(np.sin, color=RED)
+:89                 alpha = ValueTracker(0)
+:90                 point = always_redraw(
+:91                     lambda: Dot(
+:92                         sine.point_from_proportion(alpha.get_value()),
+:93                         color=BLUE
+:94                     )
+:95                 )
+:96                 tangent = always_redraw(
+:97                     lambda: TangentLine(
+:98                         sine,
+:99                         alpha=alpha.get_value(),
+:100                         color=YELLOW,
+:101                         length=4
+:102                     )
+:103                 )
+:104                 self.add(ax, sine, point, tangent)
+:105                 self.play(alpha.animate.set_value(1), rate_func=linear, run_time=2)
+:106     """
+:107     mob = func()
+:108     mob.add_updater(lambda _: mob.become(func()))
+:109     return mob
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\scene\scene.py::Scene.get_moving_mobjects
+:899     def get_moving_mobjects(self, *animations: Animation) -> list[Mobject]:
+:900         """
+:901         Gets all moving mobjects in the passed animation(s).
+:902 
+:903         Parameters
+:904         ----------
+:905         *animations
+:906             The animations to check for moving mobjects.
+:907 
+:908         Returns
+:909         ------
+:910         list
+:911             The list of mobjects that could be moving in
+:912             the Animation(s)
+:913         """
+:914         # Go through mobjects from start to end, and
+:915         # as soon as there's one that needs updating of
+:916         # some kind per frame, return the list from that
+:917         # point forward.
+:918         # Imported inside the method to avoid cyclic import.
+:919         from ..animation.composition import AnimationGroup
+:920 
+:921         def _collect_animation_mobjects(
+:922             nested_animations: Iterable[Animation],
+:923         ) -> list[Mobject | OpenGLMobject]:
+:924             animation_mobjects: list[Mobject | OpenGLMobject] = []
+:925             for anim in nested_animations:
+:926                 # Keep composition wrappers as conservative boundaries for the
+:927                 # static frame cache, in addition to their nested animations.
+:928                 animation_mobjects.extend(anim.mobject.get_family())
+:929                 if isinstance(anim, AnimationGroup):
+:930                     animation_mobjects.extend(
+:931                         _collect_animation_mobjects(anim.animations),
+:932                     )
+:933             return animation_mobjects
+:934 
+:935         animation_mobjects = _collect_animation_mobjects(animations)
+:936 
+:937         mobjects = self.get_mobject_family_members()
+:938         for i, mob in enumerate(mobjects):
+:939             update_possibilities = [
+:940                 mob in animation_mobjects,
+:941                 len(mob.get_family_updaters()) > 0,
+:942                 mob in self.foreground_mobjects,
+:943             ]
+:944             if any(update_possibilities):
+:945                 return mobjects[i:]
+:946         return []
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\scene\scene.py::Scene.should_update_mobjects
+:419     def should_update_mobjects(self) -> bool:
+:420         """
+:421         Returns True if the mobjects of this scene should be updated.
+:422 
+:423         In particular, this checks whether
+:424 
+:425         - the :attr:`always_update_mobjects` attribute of :class:`.Scene`
+:426           is set to ``True``,
+:427         - the :class:`.Scene` itself has time-based updaters attached,
+:428         - any mobject in this :class:`.Scene` has time-based updaters attached.
+:429 
+:430         This is only called when a single Wait animation is played.
+:431         """
+:432         assert self.animations is not None
+:433         wait_animation = self.animations[0]
+:434         assert isinstance(wait_animation, Wait)
+:435         if wait_animation.is_static_wait is None:
+:436             should_update = (
+:437                 self.always_update_mobjects
+:438                 or self.updaters
+:439                 or wait_animation.stop_condition is not None
+:440                 or any(
+:441                     mob.has_time_based_updater()
+:442                     for mob in self.get_mobject_family_members()
+:443                 )
+:444             )
+:445             wait_animation.is_static_wait = not should_update
+:446         return not wait_animation.is_static_wait
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\scene\scene.py::Scene.update_to_time
+:1700     def update_to_time(self, t: float) -> None:
+:1701         dt = t - self.last_t
+:1702         self.last_t = t
+:1703         assert self.animations is not None
+:1704         for animation in self.animations:
+:1705             animation.update_mobjects(dt)
+:1706             alpha = t / animation.run_time
+:1707             animation.interpolate(alpha)
+:1708         self.update_mobjects(dt)
+:1709         self.update_meshes(dt)
+:1710         self.update_self(dt)
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\scene\scene.py::Scene.play_internal
+:1364     def play_internal(self, skip_rendering: bool = False) -> None:
+:1365         """
+:1366         This method is used to prep the animations for rendering,
+:1367         apply the arguments and parameters required to them,
+:1368         render them, and write them to the video file.
+:1369 
+:1370         Parameters
+:1371         ----------
+:1372         skip_rendering
+:1373             Whether the rendering should be skipped, by default False
+:1374         """
+:1375         assert self.animations is not None
+:1376         self.duration = self.get_run_time(self.animations)
+:1377         self.time_progression = self._get_animation_time_progression(
+:1378             self.animations,
+:1379             self.duration,
+:1380         )
+:1381         for t in self.time_progression:
+:1382             self.update_to_time(t)
+:1383             if not skip_rendering and not self.skip_animation_preview:
+:1384                 self.renderer.render(self, t, self.moving_mobjects)
+:1385             if self.stop_condition is not None and self.stop_condition():
+:1386                 self.time_progression.close()
+:1387                 break
+:1388 
+:1389         for animation in self.animations:
+:1390             animation.finish()
+:1391             animation.clean_up_from_scene(self)
+:1392         if not self.renderer.skip_animations:
+:1393             self.update_mobjects(0)
+:1394         # TODO: The OpenGLRenderer does not have the property static.image.
+:1395         self.renderer.static_image = None  # type: ignore[union-attr]
+:1396         # Closing the progress bar at the end of the play.
+:1397         self.time_progression.close()
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\scene\scene.py::Scene.add
+:491     def add(self, *mobjects: Mobject | OpenGLMobject) -> Self:
+:492         """
+:493         Mobjects will be displayed, from background to
+:494         foreground in the order with which they are added.
+:495 
+:496         Parameters
+:497         ---------
+:498         *mobjects
+:499             Mobjects to add.
+:500 
+:501         Returns
+:502         -------
+:503         Scene
+:504             The same scene after adding the Mobjects in.
+:505 
+:506         """
+:507         if config.renderer == RendererType.OPENGL:
+:508             new_mobjects = []
+:509             new_meshes: list[Object3D] = []
+:510             for mobject_or_mesh in mobjects:
+:511                 if isinstance(mobject_or_mesh, Object3D):
+:512                     new_meshes.append(mobject_or_mesh)
+:513                 else:
+:514                     new_mobjects.append(mobject_or_mesh)
+:515             self.remove(*new_mobjects)  # type: ignore[arg-type]
+:516             self.mobjects += new_mobjects  # type: ignore[arg-type]
+:517             self.remove(*new_meshes)  # type: ignore[arg-type]
+:518             self.meshes += new_meshes
+:519         else:
+:520             assert config.renderer == RendererType.CAIRO
+:521             new_and_foreground_mobjects: list[Mobject] = [
+:522                 *mobjects,  # type: ignore[list-item]
+:523                 *self.foreground_mobjects,
+:524             ]
+:525             self.restructure_mobjects(to_remove=new_and_foreground_mobjects)
+:526             self.mobjects += new_and_foreground_mobjects
+:527             if self.moving_mobjects:
+:528                 self.restructure_mobjects(
+:529                     to_remove=new_and_foreground_mobjects,
+:530                     mobject_list_name="moving_mobjects",
+:531                 )
+:532                 self.moving_mobjects += new_and_foreground_mobjects
+:533         return self
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\scene\scene.py::Scene.add_mobjects_from_animations
+:535     def add_mobjects_from_animations(self, animations: list[Animation]) -> None:
+:536         curr_mobjects = self.get_mobject_family_members()
+:537         for animation in animations:
+:538             if animation.is_introducer():
+:539                 continue
+:540             # Anything animated that's not already in the
+:541             # scene gets added to the scene
+:542             mob = animation.mobject
+:543             if mob is not None and mob not in curr_mobjects:
+:544                 self.add(mob)
+:545                 curr_mobjects += mob.get_family()  # type: ignore[arg-type]
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\renderer\cairo_renderer.py::CairoRenderer.play
+:62     def play(
+:63         self,
+:64         scene: Scene,
+:65         *args: Animation | Mobject | _AnimationBuilder,
+:66         **kwargs: Any,
+:67     ) -> None:
+:68         # Reset skip_animations to the original state.
+:69         # Needed when rendering only some animations, and skipping others.
+:70         self.skip_animations = self._original_skipping_status
+:71         self.update_skipping_status()
+:72 
+:73         scene.compile_animation_data(*args, **kwargs)
+:74 
+:75         if self.skip_animations:
+:76             logger.debug(f"Skipping animation {self.num_plays}")
+:77             hash_current_animation = None
+:78             self.time += scene.duration
+:79         else:
+:80             if config["disable_caching"]:
+:81                 logger.info("Caching disabled.")
+:82                 hash_current_animation = f"uncached_{self.num_plays:05}"
+:83             else:
+:84                 assert scene.animations is not None
+:85                 hash_current_animation = get_hash_from_play_call(
+:86                     scene,
+:87                     self.camera,
+:88                     scene.animations,
+:89                     scene.mobjects,
+:90                 )
+:91                 if self.file_writer.is_already_cached(hash_current_animation):
+:92                     logger.info(
+:93                         f"Animation {self.num_plays} : Using cached data (hash : %(hash_current_animation)s)",
+:94                         {"hash_current_animation": hash_current_animation},
+:95                     )
+:96                     self.skip_animations = True
+:97                     self.time += scene.duration
+:98         # adding None as a partial movie file will make file_writer ignore the latter.
+:99         self.file_writer.add_partial_movie_file(hash_current_animation)
+:100         self.animations_hashes.append(hash_current_animation)
+:101         logger.debug(
+:102             "List of the first few animation hashes of the scene: %(h)s",
+:103             {"h": str(self.animations_hashes[:5])},
+:104         )
+:105 
+:106         self.file_writer.begin_animation(not self.skip_animations)
+:107         scene.begin_animations()
+:108 
+:109         # Save a static image, to avoid rendering non moving objects.
+:110         self.save_static_frame_data(scene, scene.static_mobjects)
+:111 
+:112         if scene.is_current_animation_frozen_frame():
+:113             self.update_frame(scene, mobjects=scene.moving_mobjects)
+:114             # self.duration stands for the total run time of all the animations.
+:115             # In this case, as there is only a wait, it will be the length of the wait.
+:116             self.freeze_current_frame(scene.duration)
+:117         else:
+:118             scene.play_internal()
+:119         self.file_writer.end_animation(not self.skip_animations)
+:120 
+:121         self.num_plays += 1
+
+D:\Programming\Python\manim\manim-plots\.venv\Lib\site-packages\manim\camera\camera.py::Camera.set_cairo_context_path
+:698     def set_cairo_context_path(self, ctx: cairo.Context, vmobject: VMobject) -> Self:
+:699         """Sets a path for the cairo context with the vmobject passed
+:700 
+:701         Parameters
+:702         ----------
+:703         ctx
+:704             The cairo context
+:705         vmobject
+:706             The VMobject
+:707 
+:708         Returns
+:709         -------
+:710         Camera
+:711             Camera object after setting cairo_context_path
+:712         """
+:713         points = self.transform_points_pre_display(vmobject, vmobject.points)
+:714         if len(points) == 0:
+:715             return self
+:716 
+:717         nppcc = vmobject.n_points_per_cubic_curve  # 4 for cubic bezier
+:718 
+:719         ctx.new_path()
+:720 
+:721         # Subpath boundaries are computed by VMobject; a split occurs wherever
+:722         # one curve's end anchor is not close to the next curve's start anchor.
+:723         split_indices = vmobject.get_subpath_split_indices_from_points(points, n_dims=2)
+:724         if len(split_indices) == 0:
+:725             return self
+:726 
+:727         # Precompute flat xy array for fast indexing
+:728         pts_xy = points[:, :2].ravel()  # [x0, y0, x1, y1, ...]
+:729 
+:730         # Local references for speed (avoid attribute lookups in loop)
+:731         _move_to = ctx.move_to
+:732         _curve_to = ctx.curve_to
+:733         _new_sub_path = ctx.new_sub_path
+:734         _close_path = ctx.close_path
+:735 
+:736         for start_idx, end_idx in split_indices:
+:737             start_idx = int(start_idx)
+:738             end_idx = int(end_idx)
+:739             if end_idx - start_idx < nppcc:
+:740                 continue
+:741 
+:742             _new_sub_path()
+:743             # move_to first point
+:744             base = start_idx * 2
+:745             _move_to(pts_xy[base], pts_xy[base + 1])
+:746 
+:747             # Emit all cubic curves in this subpath.
+:748             # Points are: [anchor, handle1, handle2, anchor, handle1, handle2, anchor, ...]
+:749             # Each curve uses indices 1,2,3 relative to the start of each group of 4.
+:750             for i in range(start_idx, end_idx - nppcc + 1, nppcc):
+:751                 b = (i + 1) * 2  # handle1
+:752                 _curve_to(
+:753                     pts_xy[b],
+:754                     pts_xy[b + 1],
+:755                     pts_xy[b + 2],
+:756                     pts_xy[b + 3],
+:757                     pts_xy[b + 4],
+:758                     pts_xy[b + 5],
+:759                 )
+:760 
+:761             # Close if first and last points are equal.
+:762             if vmobject.consider_points_equals_2d(
+:763                 points[start_idx], points[end_idx - 1]
+:764             ):
+:765                 _close_path()
+:766 
+:767         return self

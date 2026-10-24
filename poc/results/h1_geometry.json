@@ -1,0 +1,38 @@
+{
+  "shift": {
+    "nodes": 1,
+    "survives": true,
+    "data_automatically_applied": true,
+    "max_error": 0.0,
+    "initial_change": 1.0000000000000002
+  },
+  "rotate": {
+    "nodes": 1,
+    "survives": true,
+    "data_automatically_applied": true,
+    "max_error": 0.0,
+    "initial_change": 0.9279200976432308
+  },
+  "scale": {
+    "nodes": 1,
+    "survives": true,
+    "data_automatically_applied": true,
+    "max_error": 0.0,
+    "initial_change": 0.7200000000000002
+  },
+  "apply_function": {
+    "nodes": 0,
+    "survives": false,
+    "data_automatically_applied": false,
+    "max_error": 0.8640000000000002,
+    "initial_change": 0.8640000000000002
+  },
+  "mobject_apply_function_control": {
+    "nodes": 1,
+    "survives": true,
+    "data_automatically_applied": true,
+    "max_error": 0.0,
+    "initial_change": 0.8640000000000002
+  },
+  "nonlinear_then_shift_max_error": 0.0
+}

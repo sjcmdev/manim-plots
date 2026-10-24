@@ -1,0 +1,10 @@
+{
+  "writer_context": {
+    "median_ns": 4067.6,
+    "p95_ns": 4642.275000000001
+  },
+  "animation_context": {
+    "median_ns": 17480.6,
+    "p95_ns": 18636.455
+  }
+}

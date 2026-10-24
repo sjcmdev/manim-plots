@@ -23,8 +23,11 @@ DOCS = (
 # The Manim module each cited file name lives in. A citation names the file, because
 # that is what a reader greps for; the import needs the package path.
 MODULE_OF_FILE = {
+    "animation.py": "manim.animation.animation",
+    "cairo_renderer.py": "manim.renderer.cairo_renderer",
     "coordinate_systems.py": "manim.mobject.graphing.coordinate_systems",
     "creation.py": "manim.animation.creation",
+    "fading.py": "manim.animation.fading",
     "family_ops.py": "manim.utils.family_ops",
     "functions.py": "manim.mobject.graphing.functions",
     "indication.py": "manim.animation.indication",

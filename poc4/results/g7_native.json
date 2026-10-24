@@ -1,0 +1,374 @@
+{
+  "calls": 11,
+  "frames": [
+    {
+      "compare_ns": 88800,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 112300,
+      "rebuilds": 1,
+      "render_ns": 812500,
+      "range": [
+        -3.0,
+        3.0
+      ],
+      "tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "compare_ns": 87100,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 115300,
+      "rebuilds": 1,
+      "render_ns": 746200,
+      "range": [
+        -3.027092016887666,
+        3.027092016887666
+      ],
+      "tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 4.440892098500626e-16
+    },
+    {
+      "compare_ns": 101200,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 116000,
+      "rebuilds": 1,
+      "render_ns": 802900,
+      "range": [
+        -3.1050948725296617,
+        3.1050948725296617
+      ],
+      "tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 4.440892098500626e-16
+    },
+    {
+      "compare_ns": 87300,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 105200,
+      "rebuilds": 1,
+      "render_ns": 736300,
+      "range": [
+        -3.3084817526803647,
+        3.3084817526803647
+      ],
+      "tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 4.440892098500626e-16
+    },
+    {
+      "compare_ns": 99300,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 106900,
+      "rebuilds": 1,
+      "render_ns": 850100,
+      "range": [
+        -3.72547821471451,
+        3.72547821471451
+      ],
+      "tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "expected_tick_values": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 4.440892098500626e-16
+    },
+    {
+      "compare_ns": 87300,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 107800,
+      "rebuilds": 1,
+      "render_ns": 749500,
+      "range": [
+        -4.27452178528549,
+        4.27452178528549
+      ],
+      "tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 4.440892098500626e-16
+    },
+    {
+      "compare_ns": 86200,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 108100,
+      "rebuilds": 1,
+      "render_ns": 757600,
+      "range": [
+        -4.691518247319636,
+        4.691518247319636
+      ],
+      "tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "compare_ns": 87500,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 104000,
+      "rebuilds": 1,
+      "render_ns": 739300,
+      "range": [
+        -4.894905127470338,
+        4.894905127470338
+      ],
+      "tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 0.0
+    },
+    {
+      "compare_ns": 88000,
+      "compare_calls": 51,
+      "weight_builds": 17,
+      "source_samples": 1,
+      "rebuild_ns": 106800,
+      "rebuilds": 1,
+      "render_ns": 772500,
+      "range": [
+        -4.972907983112334,
+        4.972907983112334
+      ],
+      "tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "expected_tick_values": [
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "tick_set_correct": true,
+      "tick_error": 0.0,
+      "artist_error": 2.220446049250313e-16
+    }
+  ],
+  "exception": null,
+  "native_calls": 11,
+  "native_frames": 9,
+  "aligned_family": [
+    "Frame",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration"
+  ],
+  "target_family": [
+    "Frame",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration",
+    "Decoration"
+  ],
+  "final_range": [
+    -5.0,
+    5.0
+  ],
+  "bad_tick_frames": 0,
+  "max_artist_error": 4.440892098500626e-16
+}

@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "animation": "Rotate",
+      "line": 213,
+      "permanent": true,
+      "stack_ns": 3700,
+      "simulation_ns": 9551800,
+      "playback": [
+        2497051507408,
+        0.3333333333333333
+      ],
+      "excluded_artists": 0
+    }
+  ],
+  "max_error": 4.965068306494546e-16,
+  "reattach_error": 0.0,
+  "calls": 9,
+  "frames": 9,
+  "remaining_suspensions": 0
+}

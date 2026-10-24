@@ -1,0 +1,58 @@
+{
+  "frames": [
+    {
+      "curve_error": 0.0,
+      "tick_error": 0,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 5.551115123125783e-17,
+      "tick_error": 5.551115123125783e-17,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 4.440892098500626e-16,
+      "tick_error": 2.220446049250313e-16,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 8.881784197001252e-16,
+      "tick_error": 1.3322676295501878e-15,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 0.0,
+      "tick_error": 0,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 4.440892098500626e-16,
+      "tick_error": 4.440892098500626e-16,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 8.881784197001252e-16,
+      "tick_error": 4.440892098500626e-16,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 4.440892098500626e-16,
+      "tick_error": 4.440892098500626e-16,
+      "keys_correct": true
+    },
+    {
+      "curve_error": 4.440892098500626e-16,
+      "tick_error": 0,
+      "keys_correct": true
+    }
+  ],
+  "calls": 11,
+  "artist_owned_by_old": true,
+  "final_system_error": 0.0,
+  "old_in_scene": false,
+  "target_in_scene": true,
+  "native_old_in_scene": false,
+  "native_target_in_scene": true,
+  "motion_after_target_shift": 0.0,
+  "error_after_old_shift": 0.0
+}

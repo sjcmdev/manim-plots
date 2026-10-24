@@ -1,0 +1,218 @@
+{
+  "Mobject.shift": {
+    "first": 1262,
+    "sha256": "97ca5b9d0d14d3af137ba3b5a1a200df62b18b3ed1858bbd15e154745aaeb6bb"
+  },
+  "Mobject.apply_points_function_about_point": {
+    "first": 1569,
+    "sha256": "f2b6e32d3786c133abd3bfe2aede34deef497b751fec09a3486e95ec9852aea9"
+  },
+  "VMobject.apply_function": {
+    "first": 1218,
+    "sha256": "5d9a613d12cb0f4f5d42fe457cda427a1b6a667904894a2c42b80992e58fa211"
+  },
+  "VMobject.scale_handle_to_anchor_distances": {
+    "first": 1245,
+    "sha256": "b688e7c2b3c6f2b6657ddc4584cf055f89301d1ece78cf7c2927b50ba35bc5eb"
+  },
+  "VMobject.get_anchors": {
+    "first": 1778,
+    "sha256": "570aac67257a511caf8e9a34e11a649bd4de323f0e5cd1264cbe5fc3ea1a9083"
+  },
+  "VMobject.get_points_defining_boundary": {
+    "first": 1793,
+    "sha256": "13057979b204e9b663c283c3d37e857b9db75500b0d4db15b8335acb55dae0ad"
+  },
+  "VMobject.set_anchors_and_handles": {
+    "first": 821,
+    "sha256": "9f613d1c80c2b15d6b05de012d4e54318aa92e2bbe0f9a2fa3abe56d2065c91d"
+  },
+  "Mobject.__deepcopy__": {
+    "first": 444,
+    "sha256": "8a1349b6fc8ab459e17e26106fb1c7595853e3369231f936624170f283ea8ab1"
+  },
+  "Mobject.copy": {
+    "first": 895,
+    "sha256": "a22dc312aed0c05826bb8075283239e1be2bc7932f4f9089dbfebf46a1dafef0"
+  },
+  "Mobject.suspend_updating": {
+    "first": 1184,
+    "sha256": "7b3bd9c5a1074658788a96e5a1bd87be7d7b2595d2cdf36dd911d8ba3e23c707"
+  },
+  "Mobject.resume_updating": {
+    "first": 1210,
+    "sha256": "19c067227bfac76acdd307a0a6a534e36a2dd7a6cda754a137af2033a437bb27"
+  },
+  "Mobject.become": {
+    "first": 3182,
+    "sha256": "c3f4317909fdc29b4606604409498fdc9100aef5c71cab2b3166a15e8685af9a"
+  },
+  "Mobject.align_data": {
+    "first": 2977,
+    "sha256": "2cd75be4af9373f3675f5b65a99cb2099c8f7abf7f871770fda8c9f737e81ae9"
+  },
+  "Mobject.align_submobjects": {
+    "first": 3047,
+    "sha256": "9fbf260aba9889e49b55bde0143a81bdb620ee82d926f8f712814f0f618f1662"
+  },
+  "Mobject.add_n_more_submobjects": {
+    "first": 3079,
+    "sha256": "24032de9fc777929e32fa9216077b21f493ed395e3e689605840cb59a850848c"
+  },
+  "Mobject.interpolate": {
+    "first": 3104,
+    "sha256": "398eaf3ece840bb3cd5b6f4edbd30457a6a5113498428b7013002b044b88338e"
+  },
+  "VMobject.align_points": {
+    "first": 1820,
+    "sha256": "a89a89c591626d9bff406d393490b335440c03680280711b7ba448d37751dbce"
+  },
+  "Animation.begin": {
+    "first": 197,
+    "sha256": "fbc294d3275d1b3d00ca4124de1cb8c61449c0fb09968b1fbf5b5b853a47537e"
+  },
+  "Animation.finish": {
+    "first": 216,
+    "sha256": "d2cb9ad54830c1d4e55cebc699e92d01b61ff78ba3e243246c8bdaedffa6bbf5"
+  },
+  "Animation.get_all_families_zipped": {
+    "first": 279,
+    "sha256": "dbbf81642ac72debb5e3f9f85cb7ca102c4970bbe374060d8d994254aa8ec67d"
+  },
+  "Animation.get_sub_alpha": {
+    "first": 364,
+    "sha256": "0e40f96921a785d4543640f55db12b0a1022222e6b4dfd1444fc1a03bf008ecb"
+  },
+  "AnimationGroup.begin": {
+    "first": 86,
+    "sha256": "10edfa32b8d2f3cdf154b03e7557f3de9377c8940c3194a4f68c8eb7bfd0f101"
+  },
+  "AnimationGroup.finish": {
+    "first": 102,
+    "sha256": "8066d4d0dcc90d1c20e48043acd08ba59f3fb1dad0964738637667ded27e6885"
+  },
+  "AnimationGroup.clean_up_from_scene": {
+    "first": 110,
+    "sha256": "84ffb0311bb261733d8cc04c8d1c30955620ef5f8a5a2cbc57525773249b67cc"
+  },
+  "Succession.begin": {
+    "first": 238,
+    "sha256": "bfd139ca7f5f5cf638caedd34a03fea95a20182d515f69c361040bbf61d9139b"
+  },
+  "Succession.finish": {
+    "first": 246,
+    "sha256": "78ee18e9ad1f6fe34bd241e6861caf612e5855490769980ca0a6893dafd04e30"
+  },
+  "Succession.update_active_animation": {
+    "first": 264,
+    "sha256": "dbc7d5bf8ce748044ce7ce7bb99d2054cd74de5a21cc495988795eab78ae869c"
+  },
+  "ShowPartial.interpolate_submobject": {
+    "first": 126,
+    "sha256": "3417be750ae2aa25996ed01eb325ecc343503124fbdb46b5899e9daeb371b0e5"
+  },
+  "DrawBorderThenFill.interpolate_submobject": {
+    "first": 274,
+    "sha256": "00247978857bbd07703afcb2fb42119463cba177d07bae8ec18c347c75b84444"
+  },
+  "Wiggle.interpolate_submobject": {
+    "first": 553,
+    "sha256": "288d509867cc4f263f070c757c23cf112d39f0bf79835df649739fc34fc903af"
+  },
+  "Transform.begin": {
+    "first": 200,
+    "sha256": "b9563496ce8c5e8b1641008f4952fc8ccfa36cb184f4bb8e5d89d3c001713ede"
+  },
+  "Transform.clean_up_from_scene": {
+    "first": 219,
+    "sha256": "9c000453019af523c2c179666b51f83732bfe085616b0f46e6e1a0c036aea4e1"
+  },
+  "TransformFromCopy.__init__": {
+    "first": 310,
+    "sha256": "1e896249051c4f3de525f228c9a79be8df2be1aa5abb6c0a03a67e148cf7ae3c"
+  },
+  "TransformFromCopy.interpolate": {
+    "first": 313,
+    "sha256": "5ffff83ca927ff6bcf07bdb331f08903d62b3135ec13e11839e54da67ece6cb4"
+  },
+  "_MethodAnimation.finish": {
+    "first": 448,
+    "sha256": "f72a27b80c7a9f252827ba1ca0a9eff70d132e019d648625eddb0a7e4423dcc1"
+  },
+  "FadeOut.clean_up_from_scene": {
+    "first": 190,
+    "sha256": "f4e88d8794e885384b0b18b259c715a37c53e440017ba405eb7225b573d1d709"
+  },
+  "ShowPassingFlash.clean_up_from_scene": {
+    "first": 322,
+    "sha256": "eceffc730400765bbb9e56e46b00ff1955a5fb28f21997786f9e1dd484172e9f"
+  },
+  "MoveAlongPath.__init__": {
+    "first": 188,
+    "sha256": "c0f57d41170cce6475933edf1c316f49c69be56461710564b98b402d4aa2a602"
+  },
+  "MoveAlongPath.interpolate_mobject": {
+    "first": 200,
+    "sha256": "1284e87007a053ddb9ff46d22f5e80780b2bbb2816f11e777762c286422f280f"
+  },
+  "PhaseFlow.__init__": {
+    "first": 146,
+    "sha256": "550a9d92bd1e1ebbfa4ef514b528465b302a3bf93ab52090b076c8fc7f1c0fac"
+  },
+  "PhaseFlow.interpolate_mobject": {
+    "first": 164,
+    "sha256": "4ffc3cb74f4e4056f45330adb4a1c80740e54f5b067320ed4594b952bb0c6a2c"
+  },
+  "ShowIncreasingSubsets.__init__": {
+    "first": 508,
+    "sha256": "bcdfc0aa8ec20603f35a37b3012d8ce77370da1c078bece81aef0ecc32af68f3"
+  },
+  "ShowIncreasingSubsets.interpolate_mobject": {
+    "first": 527,
+    "sha256": "a45a8d8693f0e09d464eac40962a5b17d0fb5cbbcb924084d6b05cf62a9593fe"
+  },
+  "_AnimationBuilder.__init__": {
+    "first": 3416,
+    "sha256": "66e570764c551d4b7f2b70ab21ca397df8a931071c50977c2cd77288a4204966"
+  },
+  "_AnimationBuilder.__getattr__": {
+    "first": 3439,
+    "sha256": "6b7caeec3a7b73f27b49e5f2576ae99809d7b956468ed1947d0dace317510e03"
+  },
+  "always_redraw": {
+    "first": 67,
+    "sha256": "f725d6d9c3fbbe1ec63f06926d17055b8946d171e7e71b6bf9e7cc069a7317cf"
+  },
+  "Scene.get_moving_mobjects": {
+    "first": 899,
+    "sha256": "26646c79589a5fe64a66bb69a6fbe5437d367490f871ae156a7a651ca0a194c9"
+  },
+  "Scene.should_update_mobjects": {
+    "first": 419,
+    "sha256": "28c43743dc124aaaf3008b756eca0e42c64efcfa4faaba29ecf00afad9f74d4c"
+  },
+  "Scene.update_to_time": {
+    "first": 1700,
+    "sha256": "c554748b52bb38f61efaa8b973568bcfc69069b8c51a065e8ce24745af118836"
+  },
+  "Scene.play_internal": {
+    "first": 1364,
+    "sha256": "c83eff575fd7732171dbc37a99b443b03f577361efe2f528375da418783639c5"
+  },
+  "Scene.add": {
+    "first": 491,
+    "sha256": "5b1b4b7970420ce937cb5e6117f510314cf35275a249051ec9e33fadc5cdd923"
+  },
+  "Scene.add_mobjects_from_animations": {
+    "first": 535,
+    "sha256": "a236f35c5ee7b1231fd9d70d04fd4c4e4150022068f7ae92d48db565af37c4e7"
+  },
+  "CairoRenderer.play": {
+    "first": 62,
+    "sha256": "4cad6da1e0bcec34dacad1b8c35388d3df6a8e787e5a27544e6a0fa6deb4a4b3"
+  },
+  "Camera.set_cairo_context_path": {
+    "first": 698,
+    "sha256": "0e53e5837e78857d20178931c265487d10db6d8eb57c6784b6dee9feb4375dbf"
+  }
+}

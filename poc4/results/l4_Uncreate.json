@@ -1,0 +1,8 @@
+{
+  "endpoint_error": 0.0,
+  "readd_pixel_channels": 0,
+  "motion_after_data_and_frame": 0.0,
+  "refresh_error": 0.0,
+  "removed": true,
+  "degenerate": true
+}

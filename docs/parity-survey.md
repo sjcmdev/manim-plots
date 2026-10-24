@@ -30,11 +30,11 @@ listed 18 from memory; all 18 exist, and the real surface is nearly double the e
 | **later** | 4 |
 | **non-goal** | 5 |
 
-A verdict of 0.1 does not mean the same spelling. Most of these arrive under the names
-the plotting world already uses — a tick comes from a locator, a label from a formatter,
-an axis is a decoration that does not own the mapping — and `PLAN.md` gives the reasoning.
-What the verdict promises is that the *capability* is there in 0.1, so a scene using it
-has somewhere to go.
+A verdict of 0.1 promises the capability **and Manim's spelling** wherever the
+semantics match (D17, F-1009). This replaces the survey's first reading, under which a
+verdict promised the capability only. The notes say how each name is built: a tick
+comes from a locator, a label from a formatter, an axis is a decoration that does not
+own the mapping — and the Manim name stays on top of that machinery.
 
 Classes surveyed: `CoordinateSystem`, `Axes`, `ThreeDAxes`, `NumberPlane`, `PolarPlane`,
 `ComplexPlane`, `NumberLine`, `ParametricFunction`, `FunctionGraph`, `ImplicitFunction`,
@@ -57,31 +57,31 @@ Classes surveyed: `CoordinateSystem`, `Axes`, `ThreeDAxes`, `NumberPlane`, `Pola
 | `p2n` | `ComplexPlane`, `NumberLine` | **0.1** | **fixed**; also stops projecting off-axis points silently (defect 14 note) |
 | `point_to_coords` | `CoordinateSystem`, `Axes` | **0.1** | same fix |
 | `point_to_number` | `ComplexPlane`, `NumberLine` | **0.1** | same |
-| `rotate_about_number` | `NumberLine` | **0.1** | falls out of the placement chain: `rotate(about_point=n2p(v))` |
+| `rotate_about_number` | `NumberLine` | **0.1** | falls out of the frame: `rotate(about_point=n2p(v))` moves it natively (D18) |
 | `rotate_about_zero` | `NumberLine` | **0.1** | same |
 
 ### Artists (8)
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `get_graph_label` | `CoordinateSystem` | **0.1** | subsumed by the legend, which is 0.1 |
+| `get_graph_label` | `CoordinateSystem` | **0.1** | kept: a positional label and optional dot bound to the graph, not a legend entry (D27) |
 | `i2gc` | `CoordinateSystem` | **0.1** | same |
 | `i2gp` | `CoordinateSystem` | **0.1** | a query against the source and the map, not a search in the points |
 | `input_to_graph_coords` | `CoordinateSystem` | **0.1** | same |
 | `input_to_graph_point` | `CoordinateSystem` | **0.1** | same |
 | `plot` | `CoordinateSystem` | **0.1** | analytic artist; `ax.plot(f)` |
-| `plot_line_graph` | `Axes` | **0.1** | splits into `ax.line(xs, ys)` and `ax.scatter(...)` |
+| `plot_line_graph` | `Axes` | **0.1** | kept, returning Manim's `VDict` of `line_graph` and `vertex_dots`, built on `ax.line` and `ax.scatter` (D27) |
 | `plot_parametric_curve` | `CoordinateSystem` | **0.1** | fourth artist; the only 0.1 source mapping one parameter to two coordinates |
 
 ### Decoration (17)
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `add_coordinates` | `CoordinateSystem`, `PolarPlane`, `ComplexPlane` | **0.1** | replaced by locator plus formatter |
+| `add_coordinates` | `CoordinateSystem`, `PolarPlane`, `ComplexPlane` | **0.1** | kept, implemented by a locator plus a formatter |
 | `add_labels` | `NumberLine` | **0.1** | same |
 | `add_numbers` | `NumberLine` | **0.1** | same |
-| `add_ticks` | `NumberLine` | **0.1** | replaced by the locator protocol |
-| `get_axes` | `CoordinateSystem`, `Axes`, `PolarPlane` | **0.1** | as `ax.x` / `ax.y`, which are decorations and do not own the mapping |
+| `add_ticks` | `NumberLine` | **0.1** | kept, implemented by the locator protocol |
+| `get_axes` | `CoordinateSystem`, `Axes`, `PolarPlane` | **0.1** | kept; also `ax.x` / `ax.y`. Both are decorations and do not own the mapping |
 | `get_axis` | `CoordinateSystem` | **0.1** | same |
 | `get_axis_labels` | `CoordinateSystem`, `Axes`, `ThreeDAxes` | **0.1** |  |
 | `get_labels` | `NumberLine` | **0.1** | same |
@@ -99,9 +99,9 @@ Classes surveyed: `CoordinateSystem`, `Axes`, `ThreeDAxes`, `NumberPlane`, `Pola
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `function` | `_ScaleBase`, `LinearBase`, `LogBase` | **0.1** | renamed; `LogBase.function` being the exponential is defect 10 |
-| `get_custom_labels` | `_ScaleBase`, `LogBase` | **0.1** | becomes the formatter, separate from the scale |
-| `inverse_function` | `_ScaleBase`, `LinearBase`, `LogBase` | **0.1** | renamed; the broken ndarray guard is defect 8 |
+| `function` | `_ScaleBase`, `LinearBase`, `LogBase` | **0.1** | our `Scale` names it `forward`; Manim's `LogBase` passed in `axis_config` keeps its meaning (D23). `LogBase.function` being the exponential is defect 10 |
+| `get_custom_labels` | `_ScaleBase`, `LogBase` | **0.1** | the formatter, separate from the scale; `LogBase(custom_labels=True)` keeps working |
+| `inverse_function` | `_ScaleBase`, `LinearBase`, `LogBase` | **0.1** | our `Scale` names it `inverse`; the broken ndarray guard is defect 8 |
 
 ### Calculus (8)
 
@@ -181,7 +181,7 @@ Two decisions came out of building it, both now in `PLAN.md`:
 
 Four smaller calls were made without a redesign: drop lines go to 0.2 as ordinary
 decoration artists; `rotate_about_number` and `rotate_about_zero` fall out of the
-placement chain for free and stay in 0.1; `prepare_for_nonlinear_transform` is a non-goal
+frame for free and stay in 0.1; `prepare_for_nonlinear_transform` is a non-goal
 because our pipeline resamples rather than subdividing; and `ParametricFunction`'s
 construction hooks are non-goals because the rebuild replaces them.
 
@@ -240,7 +240,7 @@ and Manim never attempted.
 
 | Capability | matplotlib | Verdict | Note |
 |---|---|---|---|
-| Set and read the range | `set_xlim`, `get_xlim`, `set_xbound`, `get_xbound`, `set_ylim` | **0.1** | one `set_range(x=..., y=...)`, animatable through `override_animate` |
+| Set and read the range | `set_xlim`, `get_xlim`, `set_xbound`, `get_xbound`, `set_ylim` | **0.1** | `set_x_range` / `set_y_range`, animatable natively under `.animate` (D21) |
 | Reversed axis | `invert_xaxis`, `set_xinverted`, `xaxis_inverted` | **0.1** | a range whose start exceeds its stop is legal, and every locator must survive it — cheap now, a redesign later |
 | Aspect lock | `set_aspect`, `get_aspect`, `set_box_aspect`, `apply_aspect`, `get_data_ratio`, `set_adjustable`, `set_anchor` | **0.1** | a `Map` node, not a negotiation (defect 4) |
 | Axis on/off, tight, equal | `axis`, `set_axis_off`, `set_axis_on` | **0.1** | as decoration visibility and the aspect node |
@@ -311,7 +311,7 @@ missing. All twelve concrete locators:
 |---|---|---|---|
 | Grid | `grid`, `get_xgridlines`, `set_axisbelow` | **0.1** | |
 | Mirrored decoration | `secondary_xaxis(functions=(f, g))` | **0.1** | same `Map`, second decoration — the first half of the collaborator dual-axis request |
-| Independent second scale | `twinx`, `twiny` | **0.2** | a second `Map` chain sharing the placement tail |
+| Independent second scale | `twinx`, `twiny` | **0.2** | a second `Map` sharing the system's frame |
 | Linked axes | `sharex`, `sharey`, `get_shared_x_axes` | **0.2** | backlog |
 | Interaction | `can_pan`, `can_zoom`, `start_pan`, `drag_pan`, `end_pan`, `format_coord`, `pick`, `set_navigate`, `set_mouseover` | **non-goal** | there is no cursor in a rendered animation |
 | Renderer plumbing | `draw`, `draw_artist`, `redraw_in_frame`, `get_tightbbox`, `set_rasterized`, `set_agg_filter`, `set_clip_box`, `set_zorder`, `set_snap`, `set_url`, `set_gid`, `set_animated` | **non-goal** | Manim owns rendering |
