@@ -3,12 +3,13 @@
 The matrix is F-1007's: Python 3.12 and 3.13 against Manim 0.21.0 and 0.22.0. There is
 no hosted CI; this script is the gate a task branch passes before it merges into `dev`.
 
-    uv run python tools/check.py
-    uv run python tools/check.py --render   # before a release and on a Manim upgrade
+    uv run python tools/check.py           # the merge gate, render tests included
+    uv run python tools/check.py --fast    # a quick local run without them
 
-``--render`` adds the render-marked tests, the visual baselines among them, to every
-cell (ADR 0001, *Consequences*). Benchmarks never run here: they need one quiet
-machine, not a matrix (ADR 0002).
+The render-marked tests, the visual baselines among them, run in every cell: they are
+the only check of the frame staying invisible (F-914) and of a bound artist not
+freezing (F-915), so a merge must not skip them (ADR 0002). Benchmarks never run here:
+they need one quiet machine, not a matrix.
 
 mypy and pytest run as ``python -m ...`` on purpose. ``uv run --with`` overlays the
 requested Manim only on the interpreter it starts, and a console script such as
@@ -38,7 +39,7 @@ def main() -> int:
         ("ruff check", ("uv", "run", "ruff", "check", ".")),
         ("ruff format", ("uv", "run", "ruff", "format", "--check", ".")),
     ]
-    pytest_args = ("-m", "not benchmark") if "--render" in sys.argv[1:] else ()
+    pytest_args = () if "--fast" in sys.argv[1:] else ("-m", "not benchmark")
     for python, manim in itertools.product(PYTHONS, MANIMS):
         env = (
             "uv",

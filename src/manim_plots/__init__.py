@@ -3,8 +3,9 @@
 import logging
 import os
 from collections.abc import Mapping
+from importlib.metadata import version
 
-__version__ = "0.1.0.dev0"
+__version__ = version("manim-plots")
 
 __all__ = ["__version__"]
 
@@ -14,22 +15,22 @@ def _configure_logging(log: logging.Logger, environ: Mapping[str, str]) -> None:
 
     ``MANIM_PLOTS_LOG`` names a level and turns on the console sink.
     ``MANIM_PLOTS_LOG_FILE`` names a file and turns on the file sink, at that level or
-    at ``DEBUG``. With neither set nothing is attached, and a disabled call costs one
-    level check.
+    at ``DEBUG``; the file opens here, so a bad path fails at import, not mid-render.
+    With neither set nothing is attached, and a disabled call costs one level check.
     """
     level = environ.get("MANIM_PLOTS_LOG", "")
     path = environ.get("MANIM_PLOTS_LOG_FILE", "")
     if not (level or path):
         return
     log.setLevel(level.upper() or logging.DEBUG)
-    # Manim puts its console handler on the root logger; propagating would print
+    # Manim may put its console handler on the root logger; propagating would print
     # every record twice.
     log.propagate = False
     sinks: list[logging.Handler] = []
     if level:
         sinks.append(logging.StreamHandler())
     if path:
-        sinks.append(logging.FileHandler(path, encoding="utf-8", delay=True))
+        sinks.append(logging.FileHandler(path, encoding="utf-8"))
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
     for sink in sinks:
         sink.setFormatter(formatter)

@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["manim", "plotting", "animation", "visualization"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -29,7 +30,6 @@ dev = [
     "hypothesis>=6.167",
     "mypy>=2.3",
     "pytest>=9.1",
-    "pytest-cov>=7.1",
     "ruff>=0.16",
 ]
 
@@ -40,6 +40,8 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 88
 src = ["src", "tests"]
+# The four proofs of concept are frozen evidence: a ruff upgrade must not touch them.
+extend-exclude = ["poc"]
 
 [tool.ruff.lint]
 select = [
@@ -56,6 +58,9 @@ select = [
     "G",        # logging-format: lazy %-style arguments, never an f-string
     "LOG",      # flake8-logging
 ]
+# Off under the numpy convention; it catches a Parameters section left stale by a
+# rename to Manim's spelling (D17).
+extend-select = ["D417"]
 ignore = [
     "D105",  # magic method docstring
     "D107",  # __init__ docstring (documented on the class)
@@ -66,16 +71,11 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D", "ANN"]
-"poc/**" = ["D", "ANN"]  # the four proofs of concept: frozen evidence, never shipped
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 files = ["src", "tests"]
-
-[[tool.mypy.overrides]]
-module = "manim.*"
-ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"

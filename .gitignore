@@ -17,12 +17,8 @@ htmlcov/
 .benchmarks/
 tests/visual/_out/
 
-# Manim
+# Manim, which writes videos, images, Tex and texts only under its media directory
 media/
-videos/
-images/
-Tex/
-texts/
 
 # Editors / OS
 .vscode/
