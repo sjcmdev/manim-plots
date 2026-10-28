@@ -5,11 +5,11 @@ Cairo, Windows 11 build 26200, Intel64 Family 6 Model 183 Stepping 1,
 24 logical CPUs. This is a disposable experiment, not a production implementation
 or an API proposal.
 
-The starting directory was a copy of `poc2/`. The implementation and all experiment
-code live in [`poc3/`](../poc3/). There are no imports from `poc2` or `poc`.
+The starting directory was a copy of `poc/poc2/`. The implementation and all experiment
+code live in [`poc/poc3/`](../../poc/poc3/). There are no imports from `poc2` or `poc`.
 Only this report was added outside that directory. Production code, existing tests,
 PLAN, ADRs and configuration were not edited. The working tree already contained
-the `poc3/*` Ruff exemption and the v3 prompt before this work. No installation,
+the `poc/poc3/*` Ruff exemption and the v3 prompt before this work. No installation,
 network access, TeX, movie encoding or commit was used.
 
 | Hypothesis | Verdict | Evidence |
@@ -23,11 +23,11 @@ network access, TeX, movie encoding or commit was used.
 
 Passing tests include assertions of measured incompatibilities. They do **not**
 mean that every behavior is compatible with Manim. Results are JSON files under
-[`poc3/results/`](../poc3/results/); `python -m poc3.summary` prints the report inputs.
+[`poc/poc3/results/`](../../poc/poc3/results/); `python -m poc3.summary` prints the report inputs.
 
 ## Measurement boundaries and implementation
 
-[`model.py`](../poc3/model.py) retains the v2 VGroup system, derived VMobject leaves,
+[`model.py`](../../poc/poc3/model.py) retains the v2 VGroup system, derived VMobject leaves,
 weak artist registry, native animation interpolation, and protected invisible grid.
 An artist remains one VMobject with its own control points. The grid now contains
 only planar nodes: **4*N*N** points, hence **324** at N=9 and **4356** at N=33.
@@ -37,7 +37,7 @@ off-plane scaling. Planar affine geometry, including a plane rotated in 3D, rema
 exact. The frame returns no boundary anchors, so its rectangle cannot alter visible
 pivots during a nonlinear deformation or during Wiggle's successive leaf updates.
 
-[`context.py`](../poc3/context.py) walks `sys._getframe()` and compares **code objects**,
+[`context.py`](../../poc/poc3/context.py) walks `sys._getframe()` and compares **code objects**,
 not guessed function names or family traversal order. It copies the relevant local
 objects/values and releases the Python frame references. No Manim class is patched.
 The interpolation counter changes individual animation instances for instrumentation,
@@ -285,7 +285,7 @@ parenting remain distinct; no family-traversal-order transaction is needed.
 
 ## K4 — six pre-fix failures and their measured fixes
 
-[`baseline_model.py`](../poc3/baseline_model.py) is the independent, frozen copy of
+[`baseline_model.py`](../../poc/poc3/baseline_model.py) is the independent, frozen copy of
 the v2 model. `python -m poc3.baseline` runs the six new regression tests against
 it, catches their **six expected failures**, and records the original cost workload.
 It substitutes only this experiment's module references, never Manim classes.
@@ -496,12 +496,12 @@ writer, handle and polling contexts. No frame named get_family is inspected.
 Ordinary get_family is used only for actual object membership.
 
 `test_k1_cited_manim_symbol` guards **54 cited/dependent symbols** against
-[`manim_contract.json`](../poc3/manim_contract.json), checking Manim's version,
+[`manim_contract.json`](../../poc/poc3/manim_contract.json), checking Manim's version,
 each symbol's first source line, and SHA-256 of its complete inspected source.
 It covers the table and the creation, cleanup, family, renderer and updater symbols
-cited throughout this report. [`evidence.py`](../poc3/evidence.py) writes the exact
+cited throughout this report. [`evidence.py`](../../poc/poc3/evidence.py) writes the exact
 installed source with symbol headings before numbered lines to
-[`manim_sources.txt`](../poc3/results/manim_sources.txt).
+[`manim_sources.txt`](../../poc/poc3/results/manim_sources.txt).
 
 Updating the frozen contract is an explicit review step (`--freeze`), never part
 of pytest. A version update must also rerun the behavioral tests: an unchanged
@@ -510,7 +510,7 @@ signature or stack frame alone does not establish unchanged semantics.
 ## Review notes
 
 Maintainer rerun outside the Codex sandbox: **257 passed in 35.86 s**, both Ruff checks
-pass. Found by reading `poc3/context.py` and `poc3/model.py`:
+pass. Found by reading `poc/poc3/context.py` and `poc/poc3/model.py`:
 
 - **The last-write test hard-codes line numbers.** `writer_context` treats a write as
   the end of an operation when `f_lineno == 1283` or `== 1584`. The contract test
@@ -544,27 +544,27 @@ run, print the summary rather than mixing result directories from different runs
 
 ```powershell
 # All experiments, including all 132 copied regression cases and source guards.
-.venv\Scripts\python.exe -m pytest poc3 -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc3 -p no:cacheprovider
 
 # Six failures before fixes, plus the original 606-frame bilinear workload.
 .venv\Scripts\python.exe -m poc3.baseline
 
 # K1: both complete animation tables, compositions, unsuspended cases, stack costs.
-.venv\Scripts\python.exe -m pytest poc3/test_context.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc3/test_context.py -p no:cacheprovider
 # K2: every-frame detachment, native full-scene pixels, isolation and reattachment.
-.venv\Scripts\python.exe -m pytest poc3/test_detachment.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc3/test_detachment.py -p no:cacheprovider
 # K3: every foreign-container case, new data/range, animated groups and raw fallback.
-.venv\Scripts\python.exe -m pytest poc3/test_containers.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc3/test_containers.py -p no:cacheprovider
 # K4: functional fixes, nonlinear conjugation, cached weights and actual 1080p60 cost.
-.venv\Scripts\python.exe -m pytest poc3/test_fixes.py poc3/test_cost.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc3/test_fixes.py poc/poc3/test_cost.py -p no:cacheprovider
 # K5: callable sampling, repeated reads and frozen wait.
-.venv\Scripts\python.exe -m pytest poc3/test_callable.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc3/test_callable.py -p no:cacheprovider
 # K6: exactly the copied v2 regression files (132 cases).
-.venv\Scripts\python.exe -m pytest poc3/test_geometry.py poc3/test_animations.py poc3/test_idioms.py poc3/test_cost.py poc3/test_data_channel.py -p no:cacheprovider -k "not corner_buffer"
+.venv\Scripts\python.exe -m pytest poc/poc3/test_geometry.py poc/poc3/test_animations.py poc/poc3/test_idioms.py poc/poc3/test_cost.py poc/poc3/test_data_channel.py -p no:cacheprovider -k "not corner_buffer"
 
 # Installed implementation and upgrade guard; do not freeze automatically on upgrade.
 .venv\Scripts\python.exe -m poc3.evidence
-.venv\Scripts\python.exe -m pytest poc3/test_manim_contract.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc3/test_manim_contract.py -p no:cacheprovider
 .venv\Scripts\python.exe -m poc3.summary
 .venv\Scripts\python.exe -m ruff check .
 .venv\Scripts\python.exe -m ruff format --check .

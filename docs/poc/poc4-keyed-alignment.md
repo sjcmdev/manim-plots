@@ -3,10 +3,10 @@
 Measured on 2026-10-24 with **Manim 0.21.0**, Python 3.13.2, NumPy 2.5.2,
 Cairo, Windows 11 build 26200, Intel64 Family 6 Model 183 Stepping 1,
 24 logical CPUs. This is a disposable experiment, not package implementation or
-an API proposal. The starting directory was a copy of `poc3/`; all imports were
+an API proposal. The starting directory was a copy of `poc/poc3/`; all imports were
 changed to `poc4`. There are no imports from `poc3`, `poc2` or `poc`.
 
-Implementation, tests, media and measurements are under [`poc4/`](../poc4/).
+Implementation, tests, media and measurements are under [`poc/poc4/`](../../poc/poc4/).
 This report is the only file added outside it. The existing `pyproject.toml`
 modification and v4 prompt predated the experiment. Production source, existing
 tests, previous PoCs, PLAN, TODO and ADRs were not edited. No installation,
@@ -28,7 +28,7 @@ frame cost exceeds a 60 fps budget. Passing tests include negative experiments.
 
 ## Boundaries and measurement
 
-[`model.py`](../poc4/model.py) retains v3's derived points, invisible frame, weak
+[`model.py`](../../poc/poc4/model.py) retains v3's derived points, invisible frame, weak
 registry, local placement, polling and simulation. The original default System
 with ten fixed tick leaves remains the unchanged F-1001/regression fixture.
 New structural experiments explicitly use `System(locator=Multiple())` or MaxN.
@@ -77,7 +77,7 @@ is compared with fresh ordinary VMobjects at those expected positions. This is a
 correct current-graph reference; ordinary VMobjects do not have a data-range setter.
 L3 also plays native Transform/ReplacementTransform controls for scene identity.
 L4 compares real native animation/cleanup and re-add pixels. JSON evidence is under
-[`results/`](../poc4/results/); `python -m poc4.summary` prints report inputs.
+[`results/`](../../poc/poc4/results/); `python -m poc4.summary` prints report inputs.
 
 ## L1 — native data plus geometry
 
@@ -292,7 +292,7 @@ error/extrapolation limits. Do not promise equality to prepared NumberPlane. The
 
 ## L6 — exact facts and a changed K4 result
 
-[`context.py`](../poc4/context.py) derives final points-write lines at import using
+[`context.py`](../../poc/poc4/context.py) derives final points-write lines at import using
 inspect and AST assignments, including augmented assignments. Active native caller
 code objects/locals supply exact rotation, scale, stretch and matrix facts. Shift
 supplies its exact vector. Other functions remain nonlinear nodes, even if
@@ -342,7 +342,7 @@ A broader bounded-storage guarantee requires another justified mechanism.
 The exact requested command passes **296 tests in 49.84 s**. Both repository-wide
 Ruff checks pass. This includes all **257 original v3 cases**, **14 additional source
 guards**, and **25 L cases**. No tests were deleted, skipped or xfailed.
-[`full-final.log`](../poc4/full-final.log) records the run. Source guards check **68
+[`full-final.log`](../../poc/poc4/full-final.log) records the run. Source guards check **68
 symbols**: version, first source line and SHA-256 of complete inspected source.
 
 F-1001 keeps four 2,000-sample artists, ten ticks, two axes, **606** rendered dirty
@@ -455,9 +455,9 @@ cleanup ordering, remover/introducer flags, Write outline creation, GrowFromCent
 stored point and curve insertion. GrowFromCenter is identified by its actual class:
 a specific lifecycle dependency, not inferred affinity or a permanence whitelist.
 
-[`manim_contract.json`](../poc4/manim_contract.json) guards **68 symbols**.
-[`evidence.py`](../poc4/evidence.py) writes symbol headings before numbered installed
-source to [`manim_sources.txt`](../poc4/results/manim_sources.txt). All 54 copied
+[`manim_contract.json`](../../poc/poc4/manim_contract.json) guards **68 symbols**.
+[`evidence.py`](../../poc/poc4/evidence.py) writes symbol headings before numbered installed
+source to [`manim_sources.txt`](../../poc/poc4/results/manim_sources.txt). All 54 copied
 contracts remain, with 14 added dependencies. Freezing is an explicit evidence
 command, never part of pytest. A frozen hash only rejects changed source; the
 shifted-source test separately proves the final-write calculation follows it.
@@ -465,8 +465,8 @@ shifted-source test separately proves the final-write calculation follows it.
 ## Review notes
 
 Maintainer rerun outside the Codex sandbox: **296 passed in 49.93 s**, both Ruff checks
-pass, and no Manim class attribute is assigned anywhere in `poc4/`. Found by reading
-`poc4/model.py`:
+pass, and no Manim class attribute is assigned anywhere in `poc/poc4/`. Found by reading
+`poc/poc4/model.py`:
 
 - **Reattachment rewrites the animation object.** `Derived.suspend_updating` (around
   `:626-635`) rebuilds `animation.starting_mobject` and `animation.outline`, and for
@@ -484,32 +484,32 @@ pass, and no Manim class attribute is assigned anywhere in `poc4/`. Found by rea
 ## Reproduction
 
 Run in repository-root PowerShell with the existing venv. Tests overwrite their
-named JSON files in poc4/results. Media directories use ordinary Path.mkdir.
+named JSON files in poc/poc4/results. Media directories use ordinary Path.mkdir.
 
 ```powershell
 # Complete suite: copied v3 cases, new experiments and all 68 source guards.
-.venv\Scripts\python.exe -m pytest poc4 -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc4 -p no:cacheprovider
 
 # L1 and updated G7, including the separate override-chain control.
-.venv\Scripts\python.exe -m pytest poc4/test_keyed.py poc4/test_data_channel.py -p no:cacheprovider -k "l1 or g7"
+.venv\Scripts\python.exe -m pytest poc/poc4/test_keyed.py poc/poc4/test_data_channel.py -p no:cacheprovider -k "l1 or g7"
 # L2: object/label identity, style and both kinds of exit/return.
-.venv\Scripts\python.exe -m pytest poc4/test_keyed.py -p no:cacheprovider -k l2
+.venv\Scripts\python.exe -m pytest poc/poc4/test_keyed.py -p no:cacheprovider -k l2
 # L3: both transform classes, independent ticks and later ownership/motion.
-.venv\Scripts\python.exe -m pytest poc4/test_keyed.py -p no:cacheprovider -k l3
+.venv\Scripts\python.exe -m pytest poc/poc4/test_keyed.py -p no:cacheprovider -k l3
 # L4: cleanup/re-add pixels, refresh, default Shrink and eight introducer cases.
-.venv\Scripts\python.exe -m pytest poc4/test_keyed.py -p no:cacheprovider -k l4
+.venv\Scripts\python.exe -m pytest poc/poc4/test_keyed.py -p no:cacheprovider -k l4
 # L5: analytic errors, ordinary prepared controls and rebuild cost.
-.venv\Scripts\python.exe -m pytest poc4/test_keyed.py -p no:cacheprovider -k l5
+.venv\Scripts\python.exe -m pytest poc/poc4/test_keyed.py -p no:cacheprovider -k l5
 # L6: facts, shifted source, callbacks and K3/K4 comparison.
-.venv\Scripts\python.exe -m pytest poc4/test_keyed.py poc4/test_containers.py poc4/test_fixes.py -p no:cacheprovider -k "l6 or k3 or k4"
+.venv\Scripts\python.exe -m pytest poc/poc4/test_keyed.py poc/poc4/test_containers.py poc/poc4/test_fixes.py -p no:cacheprovider -k "l6 or k3 or k4"
 # L7: original F-1001 and 600-frame parameter scene.
-.venv\Scripts\python.exe -m pytest poc4/test_cost.py poc4/test_keyed.py -p no:cacheprovider -k "g6 or l7"
+.venv\Scripts\python.exe -m pytest poc/poc4/test_cost.py poc/poc4/test_keyed.py -p no:cacheprovider -k "g6 or l7"
 # Original 203 behavioral cases plus expanded source guards: 271 cases.
-.venv\Scripts\python.exe -m pytest poc4 -p no:cacheprovider --ignore=poc4/test_keyed.py
+.venv\Scripts\python.exe -m pytest poc/poc4 -p no:cacheprovider --ignore=poc/poc4/test_keyed.py
 
 # Installed source and guarded contracts. Do not freeze automatically on upgrade.
 .venv\Scripts\python.exe -m poc4.evidence
-.venv\Scripts\python.exe -m pytest poc4/test_manim_contract.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc4/test_manim_contract.py -p no:cacheprovider
 .venv\Scripts\python.exe -m poc4.summary
 .venv\Scripts\python.exe -m ruff check .
 .venv\Scripts\python.exe -m ruff format --check .

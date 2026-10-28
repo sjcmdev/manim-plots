@@ -167,7 +167,7 @@ Classes surveyed: `CoordinateSystem`, `Axes`, `ThreeDAxes`, `NumberPlane`, `Pola
 
 ### What the inventory changed
 
-Two decisions came out of building it, both now in `PLAN.md`:
+Two decisions came out of building it, both now in `docs/plan.md`:
 
 - **The parametric curve became the fourth 0.1 artist.** `plot_parametric_curve` was
   otherwise a straight regression, and more importantly it is the only source among the
@@ -207,7 +207,7 @@ quietly come from a different release.
 
 Unlike the Manim section this one has **no drift test in the suite**: a test may only
 import what the project depends on, and matplotlib parity is an explicit non-goal in
-`PLAN.md`. The script is the manual substitute. The
+`docs/plan.md`. The script is the manual substitute. The
 section exists for two reasons — to name the capabilities a user arrives already
 expecting, and to borrow the *shape* of the extension points, which matplotlib got right
 and Manim never attempted.
@@ -231,7 +231,7 @@ and Manim never attempted.
 | Colour cycle | `set_prop_cycle` | **0.1** | minimal cycle only; theming is later |
 | Fields | `quiver`, `quiverkey`, `streamplot` | **later** | one `FieldSource`, five artists (D15) |
 | 2D scalar data | `imshow`, `matshow`, `pcolor`, `pcolormesh`, `pcolorfast`, `contour`, `contourf`, `spy` | **later** | the same pipeline head |
-| Statistical | `boxplot`, `bxp`, `violinplot`, `violin`, `pie`, `pie_label`, `ecdf`, `hexbin` | **non-goal** | already named in `PLAN.md`; `ecdf` and `hexbin` are transforms of data, so a user computes them and plots the result |
+| Statistical | `boxplot`, `bxp`, `violinplot`, `violin`, `pie`, `pie_label`, `ecdf`, `hexbin` | **non-goal** | already named in `docs/plan.md`; `ecdf` and `hexbin` are transforms of data, so a user computes them and plots the result |
 | Spectral | `acorr`, `xcorr`, `cohere`, `csd`, `psd`, `specgram`, `magnitude_spectrum`, `angle_spectrum`, `phase_spectrum` | **non-goal** | NumPy and SciPy do the transform; we plot its output |
 | Unstructured meshes | `tricontour`, `tricontourf`, `tripcolor`, `triplot` | **non-goal** | |
 | Artist adders | `add_line`, `add_patch`, `add_collection`, `add_artist`, `add_image`, `add_table`, `add_container`, `add_child_axes` | **non-goal** | the Manim scene graph is the container; `ax.add(artist)` is registration (D11) |
@@ -257,7 +257,7 @@ Registered names: `linear`, `log`, `symlog`, `logit`, `asinh`, `function`, `func
 | Linear, log, symlog | `linear`, `log`, `symlog` | **0.1** | log carries minor ticks between decades (defect 9) and a correct inverse (defect 8) |
 | User-supplied pair | `FuncScale` (`function`), `FuncScaleLog` (`functionlog`) | **0.1** | the collaborator A1.3: forward and inverse supplied by the user. matplotlib validates neither monotonicity nor invertibility; we falsify both by sampling at construction, and assert tick order at generation |
 | Logit, asinh | `logit`, `asinh` | **0.2** | ordinary library scales once the contract exists |
-| Clamp a range to the scale domain | `ScaleBase.limit_range_for_scale(vmin, vmax, minpos)` | **0.1** | **found here.** Neither `PLAN.md` nor the defect list had it: a scale must be able to correct a range that leaves its domain (`x=(0, 10)` under log) rather than let a `-inf` propagate through the pipeline. Becomes `F-311` |
+| Clamp a range to the scale domain | `ScaleBase.limit_range_for_scale(vmin, vmax, minpos)` | **0.1** | **found here.** Neither `docs/plan.md` nor the defect list had it: a scale must be able to correct a range that leaves its domain (`x=(0, 10)` under log) rather than let a `-inf` propagate through the pipeline. Becomes `F-311` |
 | Per-node inverse | `Transform.inverted()`, `transform_non_affine` | **0.1** | our node contract already requires it; matplotlib is the precedent |
 | Transform tree | `transData = transScale + transLimits + transAxes` | **0.1** | independent confirmation of `Source -> Map -> placement`, and of clipping in the local space of the system rather than in data or scene space |
 

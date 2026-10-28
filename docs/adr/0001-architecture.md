@@ -5,9 +5,9 @@
   after two independent freeze reviews (D22-D27). From here on, a change to a contract
   in this record needs a new ADR.
 - **Task:** `task/04-architecture` in `TODO.md`.
-- **Builds on:** `PLAN.md`, `docs/scope.md` (the `F-*` list), `docs/grill-log.md`
-  (D1-D27), the proof-of-concept reports `docs/poc*-*.md`, the arch-crew review
-  `docs/architecture-review-2026-10-24.md` and the freeze reviews `docs/reviews/`.
+- **Builds on:** `docs/plan.md`, `docs/scope.md` (the `F-*` list), `docs/grill-log.md`
+  (D1-D27), the proof-of-concept reports `docs/poc/`, the arch-crew review
+  `docs/reviews/2026-10-24-arch-crew.md` and the freeze reviews `docs/reviews/`.
 
 ## Context
 
@@ -21,7 +21,7 @@ items, and this record closes them:
 3. how a coordinate system survives Manim's geometric transformations and animations;
 4. a module layout.
 
-Item 3 was first taken from `PLAN.md` by reference. The proofs of concept replaced that
+Item 3 was first taken from `docs/plan.md` by reference. The proofs of concept replaced that
 design, and section 4 records what replaced it. The questions that had to be answered
 before this record was accepted are collected at the end, with the maintainer's answers.
 
@@ -235,13 +235,13 @@ class Source(Protocol):
 
 ### 4. Surviving Manim's geometric transformations and animations
 
-The first draft of this record took this item from `PLAN.md` as decided: a shadow copy
+The first draft of this record took this item from `docs/plan.md` as decided: a shadow copy
 telling an animation from a direct call, overrides appending to a placement chain, and
 a setter classifying whole-array writes. The first proof of concept falsified it
-(`docs/poc-points-property.md`), three more tested the replacement
-(`docs/poc2-frame-lifecycle.md`, `docs/poc3-stack-context.md`,
-`docs/poc4-keyed-alignment.md`), and two reviews tested the result against 48 of Manim's
-own example scenes and against Manim 0.22.0 (`docs/reviews/`). `PLAN.md` and D17-D27 of
+(`docs/poc/poc1-points-property.md`), three more tested the replacement
+(`docs/poc/poc2-frame-lifecycle.md`, `docs/poc/poc3-stack-context.md`,
+`docs/poc/poc4-keyed-alignment.md`), and two reviews tested the result against 48 of Manim's
+own example scenes and against Manim 0.22.0 (`docs/reviews/`). `docs/plan.md` and D17-D27 of
 the grill log hold the reasoning; in short:
 
 - **Every library-generated leaf carries a `points` property** whose getter is the

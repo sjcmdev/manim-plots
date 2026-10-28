@@ -5,7 +5,7 @@ a 0.1 requirement now needs a new ADR; 0.2 and later rows may still move.
 
 The decision document for task/03, completed in task/04. Every requirement is an `F-*`
 with a tier and the decision it follows from. `docs/parity-survey.md` is the source
-material; `PLAN.md` and `docs/grill-log.md` hold the reasoning;
+material; `docs/plan.md` and `docs/grill-log.md` hold the reasoning;
 `docs/defect-audit-0.21.md` holds the evidence for every defect cited here.
 
 ## How to read this
@@ -315,7 +315,7 @@ F-311; a conversion inside that frame still raises on a value the scale cannot m
 
 ## Paper-check of the 0.1 contracts
 
-`PLAN.md` makes this an acceptance criterion: the contracts freeze in 0.1 and are
+`docs/plan.md` makes this an acceptance criterion: the contracts freeze in 0.1 and are
 stressed in 0.2, so each of the three cases that could force a redesign is checked here
 in writing. Each ends in *fits* or *would force a redesign of X*.
 

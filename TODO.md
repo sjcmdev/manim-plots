@@ -95,28 +95,39 @@ closes.
       answers to its five questions
 - [x] Proof of concept for the load-bearing hypotheses: the `points` property on a
       leaf, the transient-mode test under the eight restoring animations, leaf copy,
-      rebuild cost against F-1001, and `MathTex` labels as library leaves — prompt in
-      `docs/prompts/poc-points-property.md`, report in `docs/poc-points-property.md`.
-      It falsified the shadow test, so a second one checks the replacement — a hidden
-      frame grid, an animation lifecycle on the leaves, target adoption — prompt in
-      `docs/prompts/poc2-frame-lifecycle.md`, report in `docs/poc2-frame-lifecycle.md`.
-      A third reads the missing operation context from the call stack — prompt in
-      `docs/prompts/poc3-stack-context.md`, report in `docs/poc3-stack-context.md`.
-      A fourth makes the data channel native under `.animate` through keyed family
-      alignment — prompt in `docs/prompts/poc4-keyed-alignment.md`, report in
-      `docs/poc4-keyed-alignment.md`. PLAN, scope and ADR 0001 reflect all four
-      (D17-D21)
+      rebuild cost against F-1001, and `MathTex` labels as library leaves — report in
+      `docs/poc/poc1-points-property.md`. It falsified the shadow test, so a second one
+      checks the replacement — a hidden frame grid, an animation lifecycle on the
+      leaves, target adoption — report in `docs/poc/poc2-frame-lifecycle.md`. A third
+      reads the missing operation context from the call stack — report in
+      `docs/poc/poc3-stack-context.md`. A fourth makes the data channel native under
+      `.animate` through keyed family alignment — report in
+      `docs/poc/poc4-keyed-alignment.md`. The code is in `poc/poc1/` to `poc/poc4/`.
+      `docs/plan.md`, scope and ADR 0001 reflect all four (D17-D21)
 - [x] Architecture review with the arch-crew skills —
-      `docs/architecture-review-2026-10-24.md`
-- [x] Two independent freeze reviews from one prompt (`docs/prompts/review-freeze-mvp1.md`)
-      — `docs/reviews/2026-10-24-codex.md`, `docs/reviews/2026-10-24-claude.md`; their
-      blockers closed by D22-D27
+      `docs/reviews/2026-10-24-arch-crew.md`
+- [x] Two independent freeze reviews from one brief — `docs/reviews/2026-10-24-codex.md`,
+      `docs/reviews/2026-10-24-claude.md`; their blockers closed by D22-D27
 - [x] Freeze the 0.1 scope and the architecture — ADR 0001 and `docs/scope.md`, status
       *Frozen*
 
+### task/05-final-review
+
+One last review of the whole project before any library code, so implementation starts
+from a repository with nothing ambiguous in it.
+
+- [x] Relayout: the four proofs of concept under `poc/`, their reports under
+      `docs/poc/`, every review under `docs/reviews/`, the plan as `docs/plan.md`, a
+      document index in `docs/README.md`, a `LICENSE` file; internal prompts kept out of
+      the repository
+- [ ] Two independent final reviews from one brief, by Codex and by Claude —
+      `docs/reviews/<date>-final-codex.md`, `docs/reviews/<date>-final-claude.md`
+- [ ] Every finding closed or recorded as a decision in `docs/grill-log.md`; a change to
+      a frozen contract goes through a new ADR
+
 ## Stage 2 onward
 
-With 0.1 and its architecture frozen (ADR 0001), task numbering continues at 05. The
-coarse order: numeric core (scales, tick location, frame numerics, lifecycle transitions)
-→ axis and frame → data plotting → legend → documentation and first release. It is an
-order, not a schedule.
+With 0.1 and its architecture frozen (ADR 0001) and reviewed once more, task numbering
+continues at 06. The coarse order: numeric core (scales, tick location, frame numerics,
+lifecycle transitions) → axis and frame → data plotting → legend → documentation and
+first release. It is an order, not a schedule.

@@ -64,10 +64,7 @@ convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D", "ANN"]
-"poc/*" = ["D", "ANN"]  # throwaway proof of concept, never shipped
-"poc2/*" = ["D", "ANN"]  # second proof of concept, same status
-"poc3/*" = ["D", "ANN"]  # third proof of concept, same status
-"poc4/*" = ["D", "ANN"]  # fourth proof of concept, same status
+"poc/**" = ["D", "ANN"]  # the four proofs of concept: frozen evidence, never shipped
 
 [tool.mypy]
 python_version = "3.12"

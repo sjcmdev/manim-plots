@@ -153,7 +153,7 @@ the tick mobjects are still the original 6
 
 `x_range` is a plain attribute with no setter and no invalidation. The computed range and
 the drawn geometry disagree from the moment it is assigned, and nothing tells the user.
-This is the defect that the whole dirty-and-rebuild design in `PLAN.md` exists to remove.
+This is the defect that the whole dirty-and-rebuild design in `docs/plan.md` exists to remove.
 
 ## 7. No legend primitive
 
@@ -267,7 +267,7 @@ scale(2), tick mobject position vs n2p, max drift 0.00e+00
 
 `number_to_point` and `point_to_number` both derive from `get_start_and_end()` live
 (`number_line.py:426`), so the mapping is a function of the current geometry rather than
-of stored state. That is the same principle `PLAN.md` adopts — points derived, never
+of stored state. That is the same principle `docs/plan.md` adopts — points derived, never
 stored — and it is why the mapping cannot drift out of sync with the drawing.
 
 Dropped from the requirement list, with one caveat kept as a note: a point off the line

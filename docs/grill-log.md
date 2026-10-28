@@ -1,7 +1,7 @@
-# Grill log — task/03 functional scope and API
+# Grill log — design decisions D1-D27
 
 Running record of decisions locked during the Act 1 interview (`/grill-me-codex`).
-Not the deliverable. Feeds `PLAN.md`, which feeds `docs/scope.md` and the
+Not the deliverable. Feeds `docs/plan.md`, which feeds `docs/scope.md` and the
 architecture ADR. Nothing here is implemented yet.
 
 ## D1 — Scope filter
@@ -478,8 +478,8 @@ Kept apart because folding one into the other means nobody reads either.
 # Task 04 — decisions after the proofs of concept
 
 Locked with the maintainer on 2026-10-24, after four proofs of concept:
-`docs/poc-points-property.md` (v1), `docs/poc2-frame-lifecycle.md` (v2),
-`docs/poc3-stack-context.md` (v3) and `docs/poc4-keyed-alignment.md` (v4). v1
+`docs/poc/poc1-points-property.md` (v1), `docs/poc/poc2-frame-lifecycle.md` (v2),
+`docs/poc/poc3-stack-context.md` (v3) and `docs/poc/poc4-keyed-alignment.md` (v4). v1
 falsified the shadow test of D4's integration, and each later one tested the
 replacement. Where a decision below supersedes an earlier one, it says so.
 
@@ -784,9 +784,9 @@ answers D17 and D23 imply, written down so that implementation does not invent t
 
 Kept as it was written. Every item below was done in task/01 and task/03.
 
-1. **Act 2 — Codex review.** `PLAN.md` is written. Check `codex --version` >= 0.130 and
+1. **Act 2 — Codex review.** `docs/plan.md` is written. Check `codex --version` >= 0.130 and
    that Codex is authenticated, echo the active model, then run the adversarial review
-   loop into `PLAN-REVIEW-LOG.md`, max 5 rounds. Codex attacks the *decisions*, not the
+   loop into `docs/reviews/2026-09-05-plan-review-log.md`, max 5 rounds. Codex attacks the *decisions*, not the
    parity tables.
 2. **Parity survey** with context7 for matplotlib and Manim, gnuplot 6.0 docs for tick
    control -> `docs/parity-survey.md`.

@@ -3,7 +3,7 @@
 Measured on 2026-10-24 against the project's **Manim 0.21.0**, using
 `.venv/Scripts/python.exe` directly. This is a disposable experiment, not an
 implementation of `manim-plots`. All experiment code and generated evidence are in
-[`poc/`](../poc/). No library modules or architecture decisions were changed.
+[`poc/poc1/`](../../poc/poc1/). No library modules or architecture decisions were changed.
 
 | Hypothesis | Verdict | Evidence |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ implementation of `manim-plots`. All experiment code and generated evidence are 
 
 ## Experiment boundaries
 
-[`poc/points.py`](../poc/points.py) contains one array source, a diagonal linear map,
+[`poc/poc1/points.py`](../../poc/poc1/points.py) contains one array source, a diagonal linear map,
 an ordered placement list, and one `VMobject` leaf. Adjacent affines compose; a
 callable node separates affine runs. The cache and its shadow are separate arrays.
 The setter tolerates initialization before the pipeline exists, records an affine
@@ -47,7 +47,7 @@ construction, survives a subsequent `reset_points`, and asserts
 `leaf.points is leaf.points`. A foreign whole-array translation remains transient;
 `refresh()` discards it. Cairo renders the leaf and an ordinary `VMobject` made from
 the same points at 320 × 180: **zero differing pixel channels**, with **786 nonblack
-RGB channels**. The frames are `poc/media/property.png` and `poc/media/plain.png`.
+RGB channels**. The frames are `poc/poc1/media/property.png` and `poc/poc1/media/plain.png`.
 
 Relevant installed code:
 
@@ -318,7 +318,7 @@ queries, animation setup, or a different scene composition.
 reads in each mode. The median clean getter is **4,291.5 ns** with shadow, versus
 **215 ns** when the comparison is bypassed, a difference of **4,076.5 ns** per read.
 Timings include measurement overhead; they are not a CPU-instruction-level profile.
-Per-frame raw counters are saved in `poc/results/h4_frames.json`.
+Per-frame raw counters are saved in `poc/poc1/results/h4_frames.json`.
 
 **This minimal pipeline is a lower bound on rebuild cost**, with no adaptive
 sampling, clipping, discontinuity splitting, general scale compilation, tick
@@ -367,7 +367,7 @@ on disk are reused but nothing held in memory by the first run is.
 
 Per update, the medians sit at about 0.3 ms because most frames introduce no new label.
 The cost is concentrated in the frames that do (`new_labels_per_update` in
-`poc/results/h5_cost_*.json`: 6, 3, 1, 2, 0, 1, …).
+`poc/poc1/results/h5_cost_*.json`: 6, 3, 1, 2, 0, 1, …).
 
 What this means:
 
@@ -411,29 +411,29 @@ cache as a precondition, and first-time TeX compilation excluded explicitly.
 Run from the repository root in PowerShell. Nothing needs installing for H1–H4.
 For H5, the existing TeX installation must already be able to compile Manim's
 default template, which it cannot inside Codex's Windows sandbox. All media stays under
-`poc/media`; tests have no `render` marker.
+`poc/poc1/media`; tests have no `render` marker.
 
 ```powershell
 # Full PoC suite: 41 passed outside the sandbox; 38 passed, 3 TeX skips inside it.
-.venv\Scripts\python.exe -m pytest poc
+.venv\Scripts\python.exe -m pytest poc/poc1
 
 # H1 and H3, including pixel parity and 50-copy measurements.
-.venv\Scripts\python.exe -m pytest poc/test_points.py -v
+.venv\Scripts\python.exe -m pytest poc/poc1/test_points.py -v
 
 # H2: complete natural-playback matrix and unsuspended cases.
-.venv\Scripts\python.exe -m pytest poc/test_animations.py -v
+.venv\Scripts\python.exe -m pytest poc/poc1/test_animations.py -v
 
 # H2: deterministic legal allocator contents, and permanent animation channels.
-.venv\Scripts\python.exe -m pytest poc/test_animations.py -k 'legal_empty or persistent' -v
+.venv\Scripts\python.exe -m pytest poc/poc1/test_animations.py -k 'legal_empty or persistent' -v
 
 # H4: 605 dirty frames and the separate shadow microbenchmark.
-.venv\Scripts\python.exe -m pytest poc/test_cost.py -v
+.venv\Scripts\python.exe -m pytest poc/poc1/test_cost.py -v
 
 # H5: actual glyph conversion, workload counts, cold/warm strategies.
-.venv\Scripts\python.exe -m pytest poc/test_labels.py -v -rs
+.venv\Scripts\python.exe -m pytest poc/poc1/test_labels.py -v -rs
 
 # Installed source for the principal quotations, symbol followed by numbered lines.
-.venv\Scripts\python.exe -m poc.evidence
+.venv\Scripts\python.exe -m poc1.evidence
 
 .venv\Scripts\python.exe -m ruff check .
 .venv\Scripts\python.exe -m ruff format --check .
@@ -445,7 +445,7 @@ warning, append `-o cache_dir=poc/.pytest_cache`; this does not change test sele
 or rendering. The final measurements above used that option. Geometry warnings
 naming `refresh()` are expected observations. Ruff check and format check pass.
 
-Machine-readable evidence is in [`poc/results/`](../poc/results/): `h1_*`,
+Machine-readable evidence is in [`poc/poc1/results/`](../../poc/poc1/results/): `h1_*`,
 `h2_<variant>_<animation>`, `h2_no_suspend_*`, `h2_shift_*`, `h3_copy`, `h4_*`, and
 `h5_*`. Results are overwritten when their tests rerun; the seeded-allocation cases
 have separate filenames. The committed JSON is from the rerun outside the sandbox, so
@@ -453,7 +453,8 @@ the H1-H4 figures in it differ slightly from the text above, which reports Codex
 run: for example rebuild p95 is 0.347 ms there against 0.316 ms here, and copy p95
 0.79 ms against 0.67 ms. No verdict changes.
 
-Directories that `tempfile.mkdtemp` creates under `poc/media` from inside Codex's
-elevated Windows sandbox are owned by the sandbox user and unreadable to the
-maintainer's account, which breaks pytest collection. Delete them from an elevated
+Directories that `tempfile.mkdtemp` creates under the PoC's `media` directory from
+inside Codex's elevated Windows sandbox are owned by the sandbox user and unreadable to
+the maintainer's account, which breaks pytest collection. This run left them in
+`poc/media`, where PoC 1 lived before the 2026-10-25 relayout. Delete them from an elevated
 shell, or run with `-o "norecursedirs=media .pytest_cache results __pycache__"`.

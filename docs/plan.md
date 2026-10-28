@@ -1,4 +1,4 @@
-# Plan: manim-plots functional scope and public API (task/03)
+# Plan: manim-plots scope, public API and mechanism
 
 _Locked via grill — by Claude + the maintainer, 2026-09-04/05._
 _Revised after Codex review rounds 1-8, 2026-09-05._
@@ -6,10 +6,10 @@ _Revised after the four task/04 proofs of concept, 2026-10-24 (D17-D21 in the gr
 log). The shadow test, the placement chain kept by the library, `mp.Group` and the
 data-mutator `override_animate` are gone; the sections below say what replaced them._
 
-Full reasoning and the rejected alternatives are in `docs/grill-log.md` (D1-D21).
+Full reasoning and the rejected alternatives are in `docs/grill-log.md` (D1-D27).
 The annotated API sketch with the maintainer's own comments is `docs/api-sketch.md`.
 The adversarial review, and what was accepted or rejected from it, is
-`PLAN-REVIEW-LOG.md`.
+`docs/reviews/2026-09-05-plan-review-log.md`.
 
 **Citations in this document name a symbol first and a line second.** Everything cited is
 verified against the Manim in the project's own `.venv` — **0.21.0** — with line numbers
@@ -29,7 +29,7 @@ list with tiers).
 
 ## Approach
 
-1. Codex adversarially reviews this plan (read-only), into `PLAN-REVIEW-LOG.md`.
+1. Codex adversarially reviews this plan (read-only), into `docs/reviews/2026-09-05-plan-review-log.md`.
 2. Parity survey across three axes: matplotlib's `Axes`, gnuplot 6.0 `set xtics` /
    OriginPro, and Manim's own `CoordinateSystem` / `Axes` / `NumberLine`.
 3. `docs/scope.md`: every requirement as `F-*` with a tier (0.1 / later / non-goal), a
@@ -61,7 +61,7 @@ list with tiers).
   Python 3.12 and 3.13 against both Manim versions.
 - Every Manim citation in the design docs names a symbol, and a test imports each cited
   symbol so a rename fails loudly instead of rotting. **Done**:
-  `tests/test_cited_symbols.py` walks every `file.py::Symbol` citation in `PLAN.md`,
+  `tests/test_cited_symbols.py` walks every `file.py::Symbol` citation in `docs/plan.md`,
   `docs/scope.md` and `docs/grill-log.md`.
 - `docs/scope.md` carries the per-surface invalid-input table (path sampling, locators,
   `c2p`, `p2c`) that the rule below decides. **Done**, split in two: what raises at
@@ -96,7 +96,7 @@ non-affine grid, sparse derived leaves — axis lines, ticks — densify by them
 where Manim needs a manual `NumberPlane.prepare_for_nonlinear_transform`. A non-affine map
 is still an approximation: within about a pixel at 1080p for smooth maps, a ramp across
 one cell for a discontinuous one, and blind to a map that vanishes on every node
-(`docs/poc2-frame-lifecycle.md`, `docs/poc4-keyed-alignment.md`).
+(`docs/poc/poc2-frame-lifecycle.md`, `docs/poc/poc4-keyed-alignment.md`).
 
 **An artist's own transform is the one ordered chain left.** It lives in the system's
 local space, between `Map` and the frame, so it turns with the axes. Order matters for
@@ -149,7 +149,7 @@ at all (`:559`). No setter sees either. So five rules, not one:
    (`indication.py::Wiggle.interpolate_submobject`, `:559-567`). `ApplyWave`, `Indicate`
    and every `Transform` work for the same reason. The shadow test that used to decide
    this could not tell `Wiggle`'s restoring write from a direct call, and is gone
-   (`docs/poc-points-property.md`, H2). Only the animated subject is transient. The
+   (`docs/poc/poc1-points-property.md`, H2). Only the animated subject is transient. The
    starting and target copies an animation makes stay attached to the live frame, so a
    curve animated while its axes move follows them (D24).
 3. **At the end, the leaf takes the state Manim would leave.** If the animation ended on
@@ -174,7 +174,7 @@ at all (`:559`). No setter sees either. So five rules, not one:
 5. **The stack is a pinned contract.** Frames are matched by code object, their locals
    copied and the frames released; Manim is never patched. Every frame and local the
    mechanism reads is listed with its symbol, and a source-hash test fails on an upgrade
-   that moves one (`docs/poc4-keyed-alignment.md`, *Updated stack and source contract*).
+   that moves one (`docs/poc/poc4-keyed-alignment.md`, *Updated stack and source contract*).
    Rejected: inferring the operation from deltas between leaves, or from the order of
    `get_family` calls (D19).
 
@@ -323,7 +323,7 @@ would have raised. Nothing is overridden now (D18, D21):
   interpolation, and that interpolation then sets the prepared target.
 
 So `ax.animate.shift(v).set_x_range(r)` is one chained animation, every frame of it is a
-correct plot (`docs/poc4-keyed-alignment.md`, L1), and a tick's hand-applied style
+correct plot (`docs/poc/poc4-keyed-alignment.md`, L1), and a tick's hand-applied style
 survives an exit and return inside it. The pool is built from frame-sized samples of the
 parameter path; a locator that changes between samples is the case its schedule contract
 has to cover.
@@ -532,7 +532,7 @@ import until it is reviewed and pinned.
   them, so it needs a test that asserts object identity, not just array equality.
 - **Per-frame rebuild cost.** Measured on the proof of concept only: p95 3.1 ms on the
   affine path and 3.7 ms on the bilinear one against the 4 ms gate
-  (`docs/poc4-keyed-alignment.md`, L7). That is a lower bound — no adaptive sampling,
+  (`docs/poc/poc4-keyed-alignment.md`, L7). That is a lower bound — no adaptive sampling,
   clipping, tick layout or labels — so the margin is thin. The PoC also tested each
   container write against the system's family, which grew quadratically (914 ms for 603
   leaves). Production memoises that test per operation.

@@ -1,9 +1,9 @@
 """Every Manim symbol the design documents cite must still exist.
 
-`PLAN.md` cites Manim source by ``module.py::Symbol`` and gives a line number only as a
-hint. Symbols survive a version bump, line numbers do not — so this test imports each
-cited symbol and fails by name when upstream renames or removes one. It is the
-acceptance criterion in `PLAN.md`, not a behavioural test.
+`docs/plan.md` cites Manim source by ``module.py::Symbol`` and gives a line number only
+as a hint. Symbols survive a version bump, line numbers do not — so this test imports
+each cited symbol and fails by name when upstream renames or removes one. It is the
+acceptance criterion in `docs/plan.md`, not a behavioural test.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 DOCS = (
-    Path(__file__).parents[1] / "PLAN.md",
+    Path(__file__).parents[1] / "docs/plan.md",
     Path(__file__).parents[1] / "docs" / "scope.md",
     Path(__file__).parents[1] / "docs" / "grill-log.md",
 )

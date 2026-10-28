@@ -1,6 +1,7 @@
 from manim import Scene
 from manim.renderer.cairo_renderer import CairoRenderer
-from poc.points import METRICS
+
+from poc1.points import METRICS
 
 
 class CountingRenderer(CairoRenderer):
