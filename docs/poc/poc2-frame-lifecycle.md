@@ -5,13 +5,13 @@ Windows 11 build 26200, Intel64 Family 6 Model 183 Stepping 1, 24 logical CPUs.
 This is a disposable experiment, not a library implementation or API proposal.
 No network, installation, TeX, or movie encoding was used; nothing was committed.
 
-This report evaluates [`poc2/model.py`](../poc2/model.py), with
-[`scene.py`](../poc2/scene.py), `test_geometry.py`, `test_animations.py`,
+This report evaluates [`poc/poc2/model.py`](../../poc/poc2/model.py), with
+[`scene.py`](../../poc/poc2/scene.py), `test_geometry.py`, `test_animations.py`,
 `test_idioms.py`, `test_cost.py`, and `test_data_channel.py`. Each artist is **one
 VMobject with its own points**, including multiple subpaths for a split curve.
 
 A superseded run of the same task, started from an earlier draft of the prompt with a
-point-free `Artist(VGroup)`, wrote into `poc2/` at the same time. Its files were moved
+point-free `Artist(VGroup)`, wrote into `poc/poc2/` at the same time. Its files were moved
 out of the repository after both runs finished; nothing below depends on them.
 
 | Hypothesis | Verdict | Evidence |
@@ -66,7 +66,7 @@ Errors are maximum Euclidean scene distances between corresponding control point
 or independent dense samples. Unequal point counts use a symmetric maximum
 nearest-control-point distance and record the count mismatch separately; this is
 not a continuous curve Hausdorff certificate. Pixel differences count array
-**channels**. Results are under [`poc2/results/`](../poc2/results/).
+**channels**. Results are under [`poc/poc2/results/`](../../poc/poc2/results/).
 
 ## G1 — named operations succeed; finite-grid aliasing disproves universality
 
@@ -418,7 +418,7 @@ run forces the bilinear path.
 | Forced bilinear | 3.8920 | 4.2447 | 0.2713 | FAIL |
 
 These are the maintainer's rerun with nothing else running, and they match
-`poc2/results/g6_*.json`. The Codex run measured 1.73 ms and 6.86 ms p95 while the
+`poc/poc2/results/g6_*.json`. The Codex run measured 1.73 ms and 6.86 ms p95 while the
 superseded run was executing in parallel, so those numbers carried CPU contention. The
 bilinear path in `Frame.forward` recomputes cell indices and weights on every call and
 gathers four corner arrays per point. With the frame stationary between data changes,
@@ -557,21 +557,21 @@ no tempfile helpers or render markers. Results/timings are overwritten on rerun.
 
 ```powershell
 # Full run.
-.venv\Scripts\python.exe -m pytest poc2 -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2 -p no:cacheprovider
 # G1: operation/wrapper, dense table/inverse/cost, styles, smooth aliasing.
-.venv\Scripts\python.exe -m pytest poc2/test_geometry.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2/test_geometry.py -p no:cacheprovider
 # G2: 26 system animations, real frames and hidden-frame pixels.
-.venv\Scripts\python.exe -m pytest poc2/test_animations.py -k g2 -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2/test_animations.py -k g2 -p no:cacheprovider
 # G3: 18 artist animations with/without data, larger target failure/control.
-.venv\Scripts\python.exe -m pytest poc2/test_animations.py -k g3 -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2/test_animations.py -k g3 -p no:cacheprovider
 # G4: redraw/copies/weak registry/paths/dot/containers/marker bounds.
-.venv\Scripts\python.exe -m pytest poc2/test_idioms.py -k g4 -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2/test_idioms.py -k g4 -p no:cacheprovider
 # G5: actual renderer/full Cairo arrays and no-dt/with-dt wait costs.
-.venv\Scripts\python.exe -m pytest poc2/test_idioms.py -k g5 -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2/test_idioms.py -k g5 -p no:cacheprovider
 # G6: two 606-frame 1080p60 scenes, copies/comparisons/updater microbenchmarks.
-.venv\Scripts\python.exe -m pytest poc2/test_cost.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2/test_cost.py -p no:cacheprovider
 # G7: live range, chain errors, native tick/family failures.
-.venv\Scripts\python.exe -m pytest poc2/test_data_channel.py -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest poc/poc2/test_data_channel.py -p no:cacheprovider
 # Installed symbols and actual numbered lines, symbol first.
 .venv\Scripts\python.exe -m poc2.evidence
 .venv\Scripts\python.exe -m ruff check .
@@ -580,13 +580,13 @@ no tempfile helpers or render markers. Results/timings are overwritten on rerun.
 
 Validation, maintainer rerun outside the Codex sandbox after the superseded files were
 removed: **132 passed in 22.87 s**; both Ruff checks pass. The JSON under
-`poc2/results/` is from that rerun. Timings quoted in sections other than G6 are from
+`poc/poc2/results/` is from that rerun. Timings quoted in sections other than G6 are from
 the Codex run and differ from the JSON by run-to-run noise and the contention noted
 under G6; every non-timing number is deterministic and matches.
 
 ## Review notes
 
-Found by reading `poc2/model.py`, not by the tests:
+Found by reading `poc/poc2/model.py`, not by the tests:
 
 - **The artist's own placement runs in scene space.** `Derived.derived` applies
   `self.placement` after `system.c2p`, so after `curve.shift(UP)` followed by

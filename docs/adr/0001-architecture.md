@@ -3,11 +3,13 @@
 - **Status:** Frozen, 2026-10-24. Accepted on 2026-10-23 with the maintainer's answers
   to its five questions, amended the next day after four proofs of concept (D17-D21) and
   after two independent freeze reviews (D22-D27). From here on, a change to a contract
-  in this record needs a new ADR.
+  in this record needs a new ADR. ADR 0002 superseded two sentences of *Consequences*;
+  ADR 0003 amended §3, §4 and *Consequences* after the final reviews, and every
+  amended passage carries *(ADR 0003)*.
 - **Task:** `task/04-architecture` in `TODO.md`.
-- **Builds on:** `PLAN.md`, `docs/scope.md` (the `F-*` list), `docs/grill-log.md`
-  (D1-D27), the proof-of-concept reports `docs/poc*-*.md`, the arch-crew review
-  `docs/architecture-review-2026-10-24.md` and the freeze reviews `docs/reviews/`.
+- **Builds on:** `docs/plan.md`, `docs/scope.md` (the `F-*` list), `docs/grill-log.md`
+  (D1-D27), the proof-of-concept reports `docs/poc/`, the arch-crew review
+  `docs/reviews/2026-10-24-arch-crew.md` and the freeze reviews `docs/reviews/`.
 
 ## Context
 
@@ -21,7 +23,7 @@ items, and this record closes them:
 3. how a coordinate system survives Manim's geometric transformations and animations;
 4. a module layout.
 
-Item 3 was first taken from `PLAN.md` by reference. The proofs of concept replaced that
+Item 3 was first taken from `docs/plan.md` by reference. The proofs of concept replaced that
 design, and section 4 records what replaced it. The questions that had to be answered
 before this record was accepted are collected at the end, with the maintainer's answers.
 
@@ -92,21 +94,26 @@ module is split when it outgrows one reader, not in advance.
 ### 3. The contracts
 
 Signatures below are the contract; names are proposed. `FloatArray` is
-`numpy.typing.NDArray[np.float64]` and `BoolArray` its boolean counterpart. Every
+`numpy.typing.NDArray[np.float64]`, `BoolArray` its boolean and `IntArray` its integer counterpart. Every
 contract is a `typing.Protocol`, so a third party implements it without inheriting from
 us, and `mypy --strict` checks the implementation (F-1002).
 
 #### Scale — one dimension, monotonic (F-109, F-301..F-311)
 
 ```python
-class Scale(Protocol):
-    domain: tuple[float, float]  # bounds; +-inf allowed
-    closed: tuple[bool, bool]  # whether each bound belongs to the domain
-    increasing: bool  # declared monotonic direction
+class Scale(Protocol):  # read-only members and minpos: ADR 0003
+    @property
+    def domain(self) -> tuple[float, float]: ...  # bounds; +-inf allowed
+    @property
+    def closed(self) -> tuple[bool, bool]: ...  # whether each bound is in the domain
+    @property
+    def increasing(self) -> bool: ...  # declared monotonic direction
 
     def forward(self, x: FloatArray) -> FloatArray: ...  # data -> scaled
     def inverse(self, u: FloatArray) -> FloatArray: ...  # scaled -> data
-    def limit_range(self, lo: float, hi: float) -> tuple[float, float]: ...
+    def limit_range(
+        self, lo: float, hi: float, minpos: float
+    ) -> tuple[float, float]: ...
 ```
 
 - `forward` is the scale transform and `inverse` its inverse — never the other way
@@ -118,7 +125,9 @@ class Scale(Protocol):
   `0` is a valid input, while `Log` stays open at `0`. An infinite bound is always open;
   a scale that declares it closed is rejected at construction.
 - `limit_range` is F-311: it normalises a configured range that leaves the domain, and
-  is called on range configuration only, never on a conversion (F-202).
+  is called on range configuration only, never on a conversion (F-202). `minpos`, the
+  smallest positive value known, replaces a bound the domain excludes, as matplotlib's
+  `limit_range_for_scale` does; 0.2's autoscale passes the data's *(ADR 0003)*.
 - `FunctionScale(forward, inverse, domain, closed=(False, False), increasing=True)` is
   how a user supplies a scale (F-302). Its constructor runs the sampled falsification of
   F-305, sampling each closed bound as well as the interior, and raises naming the
@@ -140,7 +149,9 @@ class Locator(Protocol):
         self, lo: float, hi: float, scale: Scale, max_ticks: int
     ) -> FloatArray: ...
     def key(self, value: float) -> Hashable: ...
-    def contains(self, value: float, lo: float, hi: float, scale: Scale) -> bool: ...
+    def contains(
+        self, value: float, lo: float, hi: float, scale: Scale, max_ticks: int
+    ) -> bool: ...  # max_ticks: ADR 0003
 ```
 
 - `values` returns tick positions in data space, in axis order: ascending, or
@@ -153,8 +164,9 @@ class Locator(Protocol):
   every range an animation passes through. `Multiple` keys by the integer multiple,
   `Log` by `(decade, mantissa index)`, `MaxN` and wrapped callables by a canonical
   rounding of the value to a fixed number of significant digits.
-- `contains(value, lo, hi, scale)` answers "would this locator emit this value on this
-  range?". Membership and identity are separate, and the two mechanisms that need both
+- `contains(value, lo, hi, scale, max_ticks)` answers "would this locator emit this
+  value on this range at this density?", with the arguments of `values`, so a
+  density-aware locator answers consistently *(ADR 0003)*. Membership and identity are separate, and the two mechanisms that need both
   use both:
   - **minor-on-major removal** (F-407) — a minor value is dropped when the major locator
     contains it;
@@ -176,8 +188,8 @@ class Labels:
     offset: str | None = None  # the shared exponent slot; always None in 0.1 (F-503)
 
 
-class Formatter(Protocol):
-    def __call__(self, values: FloatArray) -> Labels: ...
+class Formatter(Protocol):  # a named method: ADR 0003
+    def format_ticks(self, values: FloatArray) -> Labels: ...
 ```
 
 - The formatter receives every tick at once, so context-dependent labelling — shared
@@ -189,13 +201,15 @@ class Formatter(Protocol):
   configuration, such as `r"\pi"`. In PoC 1 (H5), compiling each new string during an
   animated range cost a p95 of 1.3 s cold; the cache bounds compilation to the
   alphabet. F-1001 is measured with a warm cache.
-- A plain callable `float -> str` is accepted and wrapped (F-504).
+- A plain callable `float -> str` is accepted and wrapped (F-504): anything callable
+  without `format_ticks` is a per-value function *(ADR 0003)*.
 
 #### Source, Payload and Shape (F-103, F-114, F-707)
 
 ```python
 class CompiledMap(Protocol):  # a read-only view handed to a source
-    is_affine: bool
+    @property
+    def is_affine(self) -> bool: ...  # read-only: ADR 0003
 
     def forward(self, data: FloatArray) -> FloatArray: ...  # (n, d) data -> local
     def inverse(self, local: FloatArray) -> FloatArray: ...
@@ -204,8 +218,10 @@ class CompiledMap(Protocol):  # a read-only view handed to a source
 
 
 class Bounds(Protocol):  # the clip region, in local space
-    lower: FloatArray
-    upper: FloatArray  # the bounding box
+    @property
+    def lower(self) -> FloatArray: ...  # read-only views: ADR 0003
+    @property
+    def upper(self) -> FloatArray: ...  # the bounding box
 
     def contains(self, local: FloatArray) -> BoolArray: ...  # a disc fits
 
@@ -213,6 +229,18 @@ class Bounds(Protocol):  # the clip region, in local space
 class Source(Protocol):
     def sample(self, map: CompiledMap, bounds: Bounds) -> Payload: ...
     def at(self, t: FloatArray) -> FloatArray: ...  # data coords, for i2gp (F-707)
+
+
+@dataclass(frozen=True)  # ADR 0003
+class Payload:  # fields and invariants: docs/scope.md, The Source payload
+    kind: Literal["path", "points", "region"]
+    coords: FloatArray  # (n, d)
+    segments: IntArray  # (s, 2), half-open [start, stop); (0, 2) when empty
+    topology: IntArray | tuple[int, int] | None = None  # region only
+    valid: BoolArray | None = None  # (n,); None only when every sample is valid
+
+
+Shape = Callable[[Payload, Bounds], Payload]  # ADR 0003
 ```
 
 - `map` is read-only: it is the pipeline's one feedback edge (D6). Adaptive sampling
@@ -225,23 +253,24 @@ class Source(Protocol):
   supports (F-710); a source without it is refused by `Morph`.
 - **`Map` owns validity.** Each node combines the incoming `valid` mask with its own
   domain and finite-output mask, and rebuilds path segments, before the next stage sees
-  the payload. Stages exchange validated payloads.
+  the payload. Stages exchange validated payloads. Arrays in a payload and in `Bounds`
+  are views with `writeable=False`; a stage that changes one builds a new array *(ADR 0003)*.
 - The `region` branch of `Payload` is declared, not complete. Adding an optional field
   with a default — field values for contours and vector fields — is not a breaking
   change, and is how the later `FieldSource` extends it.
-- `Shape` operations are plain functions `Payload -> Payload` owned by the artist
-  (F-106). They take the clip `Bounds` explicitly, and live in `shape.py`, so they are
+- `Shape` operations are plain functions `(Payload, Bounds) -> Payload` owned by the
+  artist (F-106) *(ADR 0003)*. They take the clip `Bounds` explicitly, and live in `shape.py`, so they are
   core and testable without a mobject.
 
 ### 4. Surviving Manim's geometric transformations and animations
 
-The first draft of this record took this item from `PLAN.md` as decided: a shadow copy
+The first draft of this record took this item from `docs/plan.md` as decided: a shadow copy
 telling an animation from a direct call, overrides appending to a placement chain, and
 a setter classifying whole-array writes. The first proof of concept falsified it
-(`docs/poc-points-property.md`), three more tested the replacement
-(`docs/poc2-frame-lifecycle.md`, `docs/poc3-stack-context.md`,
-`docs/poc4-keyed-alignment.md`), and two reviews tested the result against 48 of Manim's
-own example scenes and against Manim 0.22.0 (`docs/reviews/`). `PLAN.md` and D17-D27 of
+(`docs/poc/poc1-points-property.md`), three more tested the replacement
+(`docs/poc/poc2-frame-lifecycle.md`, `docs/poc/poc3-stack-context.md`,
+`docs/poc/poc4-keyed-alignment.md`), and two reviews tested the result against 48 of Manim's
+own example scenes and against Manim 0.22.0 (`docs/reviews/`). `docs/plan.md` and D17-D27 of
 the grill log hold the reasoning; in short:
 
 - **Every library-generated leaf carries a `points` property** whose getter is the
@@ -309,6 +338,18 @@ attached, unregistered and follow the live frame. Only the animated subject ente
 
 Notes on the table:
 
+- **Precedence when the last owner finishes** *(ADR 0003)*. The finishing rows can apply
+  together, so the first match wins: (1) the owner was a remover: **R** — a remover
+  never adopts its target, so `FadeOut` leaves no artist at opacity 0; (2) a pending
+  target cancelled by `become` is ignored; (3) ended on an artist target: **A**; (4)
+  ended on a plain target: **S**; (5) ended on its start: the origin state, rebuilt;
+  (6) otherwise: **S** with the final shape. Deferred `refresh()` calls and data
+  changes then apply in the order they were made.
+- **An introducer re-takes its start** *(ADR 0003)*. `Animation.begin` copies
+  `starting_mobject` before it suspends, so re-attaching an **R** artist at an
+  introducer's begin rebuilds it and then re-takes `starting_mobject`, and `outline`
+  for `Write` and `DrawBorderThenFill`. Both are assigned attributes in F-917's
+  inventory.
 - An introducer constructed on an **R** artist reads the geometry the artist has at
   construction, as in Manim; `GrowFromCenter` therefore grows from where the removed
   curve collapsed. `refresh()` before constructing it grows from the current centre.
@@ -348,8 +389,9 @@ Notes on the table:
 Oracles are labelled: a test is either a **correctness oracle** — analytic, an
 invariant, or plain Manim — or a **decision regression** asserting a recorded choice.
 No expected value is computed by the code under test (`docs/reviews/2026-10-24-claude.md`,
-E2). Render tests carry the `render` marker from task 02 and stay out of the default run.
-They run with the per-version matrix before a release and on every Manim upgrade.
+E2) — except a visual baseline, ADR 0002's reviewed change detector, which closes no
+requirement. Render tests carry the `render` marker from task 02 and stay out of the
+default `pytest`; since ADR 0002 they run in every cell of the merge gate.
 
 **What becomes harder.** A third party reading NumPy arrays instead of mobjects is the
 point of the core, but it also means the core cannot use Manim's colour or config
@@ -357,8 +399,10 @@ types; style crosses the boundary as plain values.
 
 **What else becomes harder.** The Manim layer depends on Manim internals it does not
 own: which frames call our setters, their locals, the methods we override and the order
-in which Manim calls them. Both reviewers found all seventeen frames the mechanism reads
-byte-identical in 0.22.0, and 228 of 228 behavioural tests of PoC 4 pass there. Still,
+in which Manim calls them. Both reviewers found PoC 4's seventeen frames byte-identical
+in 0.22.0, and 228 of 228 behavioural tests of PoC 4 pass there. The frame F-915 reads,
+`Scene.get_moving_mobjects`, is not: its moving-object query changed in 0.22.0, and it
+is pinned with both *(ADR 0003)*. Still,
 each supported version needs its own pin set, and supporting a new one is a review step,
 not a version-range bump.
 

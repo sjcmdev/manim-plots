@@ -1,8 +1,9 @@
-# Grill log — task/03 functional scope and API
+# Grill log — design decisions D1-D27
 
-Running record of decisions locked during the Act 1 interview (`/grill-me-codex`).
-Not the deliverable. Feeds `PLAN.md`, which feeds `docs/scope.md` and the
-architecture ADR. Nothing here is implemented yet.
+The record of every design decision, D1 onwards, with its reasoning and the alternatives
+it rejected. It began as the task/03 interview (`/grill-me-codex`) and stays current: a
+later decision says which earlier one it revises. Where it disagrees with `docs/scope.md`
+or an ADR, those win (`docs/README.md`).
 
 ## D1 — Scope filter
 
@@ -123,7 +124,9 @@ outside it. Deliberate: an animation explaining the construction of the logarith
 must be able to show what happens for negative arguments, including drawing the
 wrong-but-intuitive curve. Undefined points produce a break in the path and a warning
 once per artist, never a silent NaN and never a refusal. Policy is selectable per
-artist (`warn` default, `raise`, `ignore`).
+artist (`warn` default, `raise`, `ignore`). *Superseded for 0.1 by the invalid-input
+table of `docs/scope.md`, which fixes one behaviour per surface and has no per-artist
+policy.*
 
 Source holds a read-only reference to the compiled Map, so sampling can adapt to
 curvature *after* mapping. This is the pipeline's only feedback edge, taken
@@ -401,6 +404,7 @@ Recorded as a decision, not an oversight.
 discontinuities draws the pieces in path order, which is arbitrary), `ShowPoints`
 (scatter revealed in data order, composable with `TraceCurve` through an
 `AnimationGroup`), `Morph` (D8), and the data-channel animation as a public class.
+*The class is dropped by ADR 0003: since D21 the native `.animate` is the data channel.*
 
 Later: `AppendData` (points arriving over time in a time series), `Rescale` as a
 shorthand, `HighlightTick`.
@@ -478,8 +482,8 @@ Kept apart because folding one into the other means nobody reads either.
 # Task 04 — decisions after the proofs of concept
 
 Locked with the maintainer on 2026-10-24, after four proofs of concept:
-`docs/poc-points-property.md` (v1), `docs/poc2-frame-lifecycle.md` (v2),
-`docs/poc3-stack-context.md` (v3) and `docs/poc4-keyed-alignment.md` (v4). v1
+`docs/poc/poc1-points-property.md` (v1), `docs/poc/poc2-frame-lifecycle.md` (v2),
+`docs/poc/poc3-stack-context.md` (v3) and `docs/poc/poc4-keyed-alignment.md` (v4). v1
 falsified the shadow test of D4's integration, and each later one tested the
 replacement. Where a decision below supersedes an earlier one, it says so.
 
@@ -584,7 +588,8 @@ the ceiling that chaining one with another must raise.
   style survives an exit and return inside one animation (qualifies D10).
 - **The plot function is a callable binding** in D8's sense, so it is always dirty. It
   is sampled once per rendered frame, by the synchronisation updater, never once per
-  read; a frozen `wait` samples nothing.
+  read; a frozen `wait` samples nothing. *Revised by D22, which samples a plot function
+  as Manim does; ADR 0003 keeps "once per frame, never per read" for callable bindings.*
 - **Every library mobject carries an updater without `dt`.** Cairo draws everything
   before the first animated or updating mobject once, as a static background
   (`scene.py::Scene.get_moving_mobjects`), which would freeze a bound artist through an
@@ -743,6 +748,7 @@ value on every range.
   being compiled involves their system or a tracker they are bound to, or when they hold
   a live function. Otherwise they stay in Cairo's static background, as a Manim graph
   would. The play's animations are read from that frame, as the other stack facts are.
+  *Revises D21's "every library mobject carries an updater without `dt`".*
 
 ## D27 — Manim's surface, case by case *(default taken)*
 
@@ -784,9 +790,9 @@ answers D17 and D23 imply, written down so that implementation does not invent t
 
 Kept as it was written. Every item below was done in task/01 and task/03.
 
-1. **Act 2 — Codex review.** `PLAN.md` is written. Check `codex --version` >= 0.130 and
+1. **Act 2 — Codex review.** `docs/plan.md` is written. Check `codex --version` >= 0.130 and
    that Codex is authenticated, echo the active model, then run the adversarial review
-   loop into `PLAN-REVIEW-LOG.md`, max 5 rounds. Codex attacks the *decisions*, not the
+   loop into `docs/reviews/2026-09-05-plan-review-log.md`, max 5 rounds. Codex attacks the *decisions*, not the
    parity tables.
 2. **Parity survey** with context7 for matplotlib and Manim, gnuplot 6.0 docs for tick
    control -> `docs/parity-survey.md`.

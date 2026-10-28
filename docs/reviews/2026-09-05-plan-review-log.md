@@ -1,21 +1,21 @@
 # Plan Review Log: manim-plots functional scope and public API (task/03)
 
 Act 1 (grill) complete — plan locked with the maintainer. MAX_ROUNDS=5.
-Act 2 (Codex adversarial review) ran twice: rounds 1–9 below reviewed `PLAN.md`, and the
+Act 2 (Codex adversarial review) ran twice: rounds 1–9 below reviewed `docs/plan.md`, and the
 second part of this log — *Scope review*, rounds 1–6 — reviewed the documents task/03
 actually delivers, `docs/scope.md` and sections 2–3 of `docs/parity-survey.md`.
 
 ## Round 1 — Codex
 
-- `PLAN.md:33-39` claims every geometric operation funnels through `apply_points_function_about_point`, but installed Manim 0.20’s `Mobject.shift()` mutates `points` directly; `VGroup.shift()` therefore bypasses the proposed `T` channel. Fix: integrate at every mutation path or explicitly forbid/group-wrap operations that bypass the hook.
+- `docs/plan.md:33-39` claims every geometric operation funnels through `apply_points_function_about_point`, but installed Manim 0.20’s `Mobject.shift()` mutates `points` directly; `VGroup.shift()` therefore bypasses the proposed `T` channel. Fix: integrate at every mutation path or explicitly forbid/group-wrap operations that bypass the hook.
 
-- `PLAN.md:72-79` says attached-artist geometry is a warned no-op, but `VGroup(ax, curve).shift()` operates on family members directly and cannot invoke `curve.shift()`. Fix: define a supported group/container mechanism or make rebuild detect and reject externally mutated derived points.
+- `docs/plan.md:72-79` says attached-artist geometry is a warned no-op, but `VGroup(ax, curve).shift()` operates on family members directly and cannot invoke `curve.shift()`. Fix: define a supported group/container mechanism or make rebuild detect and reject externally mutated derived points.
 
-- `PLAN.md:41-50` makes `Shape` artist-owned while `Map` owns clipping feedback, but adaptive sampling needs the mapped viewport and clipping needs the artist’s shape semantics; invalidation order and ownership are circular. Fix: specify an explicit two-phase compile contract: map bounds first, source sampling second, shape generation third.
+- `docs/plan.md:41-50` makes `Shape` artist-owned while `Map` owns clipping feedback, but adaptive sampling needs the mapped viewport and clipping needs the artist’s shape semantics; invalidation order and ownership are circular. Fix: specify an explicit two-phase compile contract: map bounds first, source sampling second, shape generation third.
 
-- `PLAN.md:58-65` assumes lazy rebuild occurs “just before the camera reads points,” but Manim has no guaranteed camera-read callback; `get_center`, bounding-box queries, animations, scene family extraction, and updaters can read stale points earlier. Fix: define a concrete Manim lifecycle hook/updater contract and test every point-read path.
+- `docs/plan.md:58-65` assumes lazy rebuild occurs “just before the camera reads points,” but Manim has no guaranteed camera-read callback; `get_center`, bounding-box queries, animations, scene family extraction, and updaters can read stale points earlier. Fix: define a concrete Manim lifecycle hook/updater contract and test every point-read path.
 
-- `PLAN.md:67-70` overstates `Morph` correctness: resampling by arc length does not preserve semantic correspondence for discontinuities, scatter points, repeated/degenerate points, clipped paths, or different analytic domains. Fix: define per-artist morph semantics and reject unsupported topology changes instead of promising a universal `Morph`.
+- `docs/plan.md:67-70` overstates `Morph` correctness: resampling by arc length does not preserve semantic correspondence for discontinuities, scatter points, repeated/degenerate points, clipped paths, or different analytic domains. Fix: define per-artist morph semantics and reject unsupported topology changes instead of promising a universal `Morph`.
 
 - `docs/grill-log.md:106-124` only gives `domain` as an interval, which cannot represent coupled 2D domains, disjoint valid regions, or custom scales with holes; the “warn/break” policy is also undefined for infinities and NaNs. Fix: make domain a general predicate/region with an explicit finite-output and segment-breaking policy.
 
@@ -25,11 +25,11 @@ actually delivers, `docs/scope.md` and sections 2–3 of `docs/parity-survey.md`
 
 - `docs/grill-log.md:279-297` keys generated parts by raw floating-point values, which is unstable for locator recomputation and cannot distinguish duplicate ticks or equivalent values produced by different generators. Fix: define canonicalized keys plus duplicate/order handling and decide whether user-modified parts survive temporary disappearance.
 
-- `PLAN.md:94-95` requires coordinate scaling to scale stroke widths, but Manim’s point transformation hook does not scale style attributes; nonuniform aspect changes make “scale stroke width” ambiguous. Fix: specify a separate style-scaling policy and implement/test it independently of point transforms.
+- `docs/plan.md:94-95` requires coordinate scaling to scale stroke widths, but Manim’s point transformation hook does not scale style attributes; nonuniform aspect changes make “scale stroke width” ambiguous. Fix: specify a separate style-scaling policy and implement/test it independently of point transforms.
 
 - `TODO.md:31-51` targets Manim 0.21.0, while the plan validates only installed 0.20.0 and `pyproject.toml:20` allows every version from 0.19 onward. Fix: choose and enforce a supported Manim version/matrix before using defect findings to define requirements.
 
-- `PLAN.md:97-113` scopes a complete engine with adaptive sampling, multiple scales, tick systems, overlap resolution, clipping, trackers, morphing, animations, and three artists without performance budgets or acceptance thresholds. Fix: add measurable acceptance criteria, benchmarks, and a reduced 0.1 gate before freezing the architecture.
+- `docs/plan.md:97-113` scopes a complete engine with adaptive sampling, multiple scales, tick systems, overlap resolution, clipping, trackers, morphing, animations, and three artists without performance budgets or acceptance thresholds. Fix: add measurable acceptance criteria, benchmarks, and a reduced 0.1 gate before freezing the architecture.
 
 VERDICT: REVISE
 ### Claude's response
@@ -106,25 +106,25 @@ and everything else degrades loudly instead of silently.
 
 Several prior findings are addressed: the plan now defines a three-phase rebuild, per-artist morph rules, custom-scale validation, canonical keys, stroke scaling, and a 0.20 pin. Material issues remain:
 
-- `PLAN.md:44-71` claims the `points` property catches every external write, but Manim and user code can mutate array views directly (`points[:]`, `points[:, :]`, slice operations), bypassing the property setter entirely. Fix: make derived point buffers immutable/read-only and expose controlled mutation APIs, or explicitly audit and wrap every supported mutation path.
+- `docs/plan.md:44-71` claims the `points` property catches every external write, but Manim and user code can mutate array views directly (`points[:]`, `points[:, :]`, slice operations), bypassing the property setter entirely. Fix: make derived point buffers immutable/read-only and expose controlled mutation APIs, or explicitly audit and wrap every supported mutation path.
 
-- `PLAN.md:51-59` only audits `Mobject` methods, but Manim animations such as partial creation and indication directly mutate submobject point arrays; `Create(curve)` from `docs/api-sketch.md:163-166` could therefore detach or corrupt an attached artist. Fix: define and test compatibility for `Create`, `Transform`, `Write`, and partial-path animations, or provide only library-owned animation adapters.
+- `docs/plan.md:51-59` only audits `Mobject` methods, but Manim animations such as partial creation and indication directly mutate submobject point arrays; `Create(curve)` from `docs/api-sketch.md:163-166` could therefore detach or corrupt an attached artist. Fix: define and test compatibility for `Create`, `Transform`, `Write`, and partial-path animations, or provide only library-owned animation adapters.
 
-- `PLAN.md:66-71,128-138` says external translations fold into shared `T` once, but a parent operation iterates multiple leaves; each leaf setter may independently infer and apply the same translation. Fix: add a transaction/generation token so one parent operation is coalesced into one transform update.
+- `docs/plan.md:66-71,128-138` says external translations fold into shared `T` once, but a parent operation iterates multiple leaves; each leaf setter may independently infer and apply the same translation. Fix: add a transaction/generation token so one parent operation is coalesced into one transform update.
 
-- `PLAN.md:44-49` proposes redefining `points` as a property, but Manim initializes `self.points` during `Mobject.__init__` before the derived-point cache, dirty flags, and pipeline state can safely exist. Fix: specify an initialization-safe setter/getter protocol and test construction, copying, `become`, and empty mobjects.
+- `docs/plan.md:44-49` proposes redefining `points` as a property, but Manim initializes `self.points` during `Mobject.__init__` before the derived-point cache, dirty flags, and pipeline state can safely exist. Fix: specify an initialization-safe setter/getter protocol and test construction, copying, `become`, and empty mobjects.
 
-- `PLAN.md:140-148` canonicalizes keys by quantizing to the locator step, but this is undefined for callable/custom locators, logarithmic locators, floating steps, zero/negative values, and values whose formatter changes while their numeric key remains constant. Fix: require every locator to provide a stable key function, with collision and formatter-update semantics.
+- `docs/plan.md:140-148` canonicalizes keys by quantizing to the locator step, but this is undefined for callable/custom locators, logarithmic locators, floating steps, zero/negative values, and values whose formatter changes while their numeric key remains constant. Fix: require every locator to provide a stable key function, with collision and formatter-update semantics.
 
-- `PLAN.md:121-126` requires construction-time monotonicity checks over a sampled domain, but sampling cannot validate an unbounded or discontinuous custom scale and can accept a function that reverses between samples. Fix: document this as a heuristic validation, add runtime monotonicity/domain checks where required, and define failure behavior.
+- `docs/plan.md:121-126` requires construction-time monotonicity checks over a sampled domain, but sampling cannot validate an unbounded or discontinuous custom scale and can accept a function that reverses between samples. Fix: document this as a heuristic validation, add runtime monotonicity/domain checks where required, and define failure behavior.
 
-- `PLAN.md:109-126` has inconsistent invalid-input policy: non-finite function outputs split paths, while custom-scale domain violations raise. Fix: define whether domain violations become path breaks, artist errors, or warnings consistently across built-in and user-defined maps.
+- `docs/plan.md:109-126` has inconsistent invalid-input policy: non-finite function outputs split paths, while custom-scale domain violations raise. Fix: define whether domain violations become path breaks, artist errors, or warnings consistently across built-in and user-defined maps.
 
-- `PLAN.md:84-89,187-189` knowingly permits a one-frame lag while claiming every rebuilt frame is a correct plot of the current parameters. Fix: either guarantee a same-frame map/sampling snapshot or explicitly weaken the frame-correctness invariant and test the chosen behavior.
+- `docs/plan.md:84-89,187-189` knowingly permits a one-frame lag while claiming every rebuilt frame is a correct plot of the current parameters. Fix: either guarantee a same-frame map/sampling snapshot or explicitly weaken the frame-correctness invariant and test the chosen behavior.
 
-- `PLAN.md:164-170` says the performance gate will be written later, but supplies no budget, hardware, renderer, curve count, point count, or percentile criterion. Fix: put the concrete benchmark scenario and pass/fail threshold in the plan before implementation begins.
+- `docs/plan.md:164-170` says the performance gate will be written later, but supplies no budget, hardware, renderer, curve count, point count, or percentile criterion. Fix: put the concrete benchmark scenario and pass/fail threshold in the plan before implementation begins.
 
-- `PLAN.md:172-174` says the target is pinned, but `pyproject.toml:20` and `TODO.md:31-51` remain uncorrected in the repository, and the stated deliverable does not clearly include those changes. Fix: make dependency/task metadata correction an explicit acceptance criterion with the exact supported-version matrix.
+- `docs/plan.md:172-174` says the target is pinned, but `pyproject.toml:20` and `TODO.md:31-51` remain uncorrected in the repository, and the stated deliverable does not clearly include those changes. Fix: make dependency/task metadata correction an explicit acceptance criterion with the exact supported-version matrix.
 
 VERDICT: REVISE
 ### Claude's response
@@ -191,21 +191,21 @@ intervening read collapse into one.
 
 The major conceptual issues were addressed, but the revised point-integration design still has implementation-blocking gaps:
 
-- `PLAN.md:73-101` treats the getter-returned cache as a universal compatibility mechanism, but Manim’s animation methods operate on each family leaf (`pointwise_become_partial`, `become`, `indication`), not necessarily on the artist object; a property on the artist cannot observe or coordinate those leaf mutations. Fix: define an explicit artist-owned leaf/proxy type or restrict supported animations to operations whose mutation target is the artist itself.
+- `docs/plan.md:73-101` treats the getter-returned cache as a universal compatibility mechanism, but Manim’s animation methods operate on each family leaf (`pointwise_become_partial`, `become`, `indication`), not necessarily on the artist object; a property on the artist cannot observe or coordinate those leaf mutations. Fix: define an explicit artist-owned leaf/proxy type or restrict supported animations to operations whose mutation target is the artist itself.
 
-- `PLAN.md:87-101` says whole-array writes become transient overrides, but direct slice writes can leave the pipeline “clean” indefinitely; a later `get_center()` or render will observe animation-mutated geometry while the model still reports the old data. Fix: add an explicit animation/transient-generation lifecycle that marks and clears overrides, rather than using cache identity as implicit state.
+- `docs/plan.md:87-101` says whole-array writes become transient overrides, but direct slice writes can leave the pipeline “clean” indefinitely; a later `get_center()` or render will observe animation-mutated geometry while the model still reports the old data. Fix: add an explicit animation/transient-generation lifecycle that marks and clears overrides, rather than using cache identity as implicit state.
 
-- `PLAN.md:94-97` requires a write-burst token for arbitrary parent operations, but ordinary Manim `VGroup`/`Group` calls provide no callback or transaction boundary to the child objects. Fix: either require a library-owned container wrapper or state that external parent transforms are unsupported and cannot update shared `T` reliably.
+- `docs/plan.md:94-97` requires a write-burst token for arbitrary parent operations, but ordinary Manim `VGroup`/`Group` calls provide no callback or transaction boundary to the child objects. Fix: either require a library-owned container wrapper or state that external parent transforms are unsupported and cannot update shared `T` reliably.
 
-- `PLAN.md:63-71` still overstates the mutation audit: it covers `Mobject` methods but not direct writes in `VMobject`, OpenGL classes, animation code, or user code that mutates returned NumPy views. Fix: define the supported renderer/animation surface and test every operation in that surface, with unsupported mutations explicitly documented.
+- `docs/plan.md:63-71` still overstates the mutation audit: it covers `Mobject` methods but not direct writes in `VMobject`, OpenGL classes, animation code, or user code that mutates returned NumPy views. Fix: define the supported renderer/animation surface and test every operation in that surface, with unsupported mutations explicitly documented.
 
-- `docs/api-sketch.md:163-166` still presents `Create(curve)` as ordinary supported usage, while `PLAN.md:99-101` says shape-changing external writes are discarded on rebuild; if a bound parameter dirties during `Create`, the animation can reset mid-animation. Fix: specify whether data invalidation is deferred during transient animations or provide a stable animation snapshot.
+- `docs/api-sketch.md:163-166` still presents `Create(curve)` as ordinary supported usage, while `docs/plan.md:99-101` says shape-changing external writes are discarded on rebuild; if a bound parameter dirties during `Create`, the animation can reset mid-animation. Fix: specify whether data invalidation is deferred during transient animations or provide a stable animation snapshot.
 
-- `PLAN.md:210-217` combines an absolute requirement of p95 ≤4 ms with a CI rule allowing 1.5× the recorded baseline; if the baseline is already above 4 ms, CI can pass while violating the stated gate. Fix: require both `p95 ≤4 ms` and `p95 ≤1.5× baseline`, and fail baseline creation when the absolute target is missed.
+- `docs/plan.md:210-217` combines an absolute requirement of p95 ≤4 ms with a CI rule allowing 1.5× the recorded baseline; if the baseline is already above 4 ms, CI can pass while violating the stated gate. Fix: require both `p95 ≤4 ms` and `p95 ≤1.5× baseline`, and fail baseline creation when the absolute target is missed.
 
-- `PLAN.md:146-155` says every out-of-domain map value breaks the path, but tick generation, `p2c`, and standalone coordinate conversion also traverse map nodes and are not paths; their behavior remains undefined. Fix: define separate behavior for sampled artist paths, ticks, `c2p`, and `p2c` in `docs/scope.md`.
+- `docs/plan.md:146-155` says every out-of-domain map value breaks the path, but tick generation, `p2c`, and standalone coordinate conversion also traverse map nodes and are not paths; their behavior remains undefined. Fix: define separate behavior for sampled artist paths, ticks, `c2p`, and `p2c` in `docs/scope.md`.
 
-- `PLAN.md:165-171` accepts sampled monotonicity as a heuristic, but a passed custom scale can still reverse between samples and produce invalid tick ordering or a non-invertible `p2c`; this is a correctness risk, not merely documentation detail. Fix: require a user-declared trust mode or runtime monotonicity checks on the actual sampled interval before generating ticks.
+- `docs/plan.md:165-171` accepts sampled monotonicity as a heuristic, but a passed custom scale can still reverse between samples and produce invalid tick ordering or a non-invertible `p2c`; this is a correctness risk, not merely documentation detail. Fix: require a user-declared trust mode or runtime monotonicity checks on the actual sampled interval before generating ticks.
 
 VERDICT: REVISE
 ### Claude's response
@@ -272,13 +272,13 @@ and it converts a silent defect into an exception.
 
 The latest revision resolves the prior leaf-type and foreign-parent concerns, but two core animation paths are still architecturally wrong:
 
-- `PLAN.md:91-93,226-237` claims `ax.animate.shift(v)` moves bound artists smoothly, but Manim’s `.animate` creates a deep-copied target and interpolates the original axes’ family leaves; registered artists are not in that family, so they remain stationary until the final method call, then jump. Fix: provide an overridden animation that interpolates the live shared `T` and invalidates all registered artists each frame.
+- `docs/plan.md:91-93,226-237` claims `ax.animate.shift(v)` moves bound artists smoothly, but Manim’s `.animate` creates a deep-copied target and interpolates the original axes’ family leaves; registered artists are not in that family, so they remain stationary until the final method call, then jump. Fix: provide an overridden animation that interpolates the live shared `T` and invalidates all registered artists each frame.
 
 - The same problem applies to `self.play(ax.animate.set_range(...))` from `docs/api-sketch.md:119-120`: the target copy owns a separate map/registry, while the original attached artists are outside the transformed family, so curves do not rebuild during the animation. Fix: make data-channel animation operate on the live coordinate-system parameter and registered-artist set, not Manim’s default target-copy interpolation.
 
-- `PLAN.md:111-117` defers invalidation while an override is live, but `Indicate` performs `submobject.points[:, :] = ...` in place (`indication.py:559`) without invoking the setter; if a bound parameter becomes dirty during `Indicate`, there is no mechanism to mark the override live, so the getter can rebuild and erase the indication mid-animation. Fix: add an explicit supported-animation guard/snapshot for all in-place animations, or remove `Indicate` from the supported surface.
+- `docs/plan.md:111-117` defers invalidation while an override is live, but `Indicate` performs `submobject.points[:, :] = ...` in place (`indication.py:559`) without invoking the setter; if a bound parameter becomes dirty during `Indicate`, there is no mechanism to mark the override live, so the getter can rebuild and erase the indication mid-animation. Fix: add an explicit supported-animation guard/snapshot for all in-place animations, or remove `Indicate` from the supported surface.
 
-- `PLAN.md:102-109` declares `mp.Group(...).shift()` the permanent solution but does not define how that group discovers registered artists that are deliberately not submobjects; a normal family traversal cannot update them. Fix: specify `mp.Group` as a registry-aware container with an explicit shared-transform transaction, or make permanence unavailable for non-parented artists.
+- `docs/plan.md:102-109` declares `mp.Group(...).shift()` the permanent solution but does not define how that group discovers registered artists that are deliberately not submobjects; a normal family traversal cannot update them. Fix: specify `mp.Group` as a registry-aware container with an explicit shared-transform transaction, or make permanence unavailable for non-parented artists.
 
 VERDICT: REVISE
 ### Claude's response
@@ -332,9 +332,9 @@ That is a handful of lines and introduces no tree.
 
 Two redesign-level issues remain:
 
-- `PLAN.md:86-100,141-151` still cannot safely support `Indicate` on attached leaves: `Indicate` first mutates `points` in place, then calls `submobject.scale()` and `rotate()`; the plan’s leaf overrides will either treat those as permanent shared-`T` operations and distort the plot, or as attached-artist no-ops and make `Indicate` ineffective. Fix: define an explicit transient-animation mode in which leaf geometry operations mutate only the temporary buffer, and ensure it is entered before `Indicate` begins.
+- `docs/plan.md:86-100,141-151` still cannot safely support `Indicate` on attached leaves: `Indicate` first mutates `points` in place, then calls `submobject.scale()` and `rotate()`; the plan’s leaf overrides will either treat those as permanent shared-`T` operations and distort the plot, or as attached-artist no-ops and make `Indicate` ineffective. Fix: define an explicit transient-animation mode in which leaf geometry operations mutate only the temporary buffer, and ensure it is entered before `Indicate` begins.
 
-- `PLAN.md:141-151` detects in-place overrides only when a getter is reached, but `Indicate`’s scale/rotate calls occur after the in-place write and before any rebuild-triggering getter is guaranteed; therefore the operation can be classified under the clean pipeline and update `T` incorrectly. Fix: make supported in-place animations register their transient buffer before the first frame, or have every leaf geometric override compare/mark the shadow before changing state.
+- `docs/plan.md:141-151` detects in-place overrides only when a getter is reached, but `Indicate`’s scale/rotate calls occur after the in-place write and before any rebuild-triggering getter is guaranteed; therefore the operation can be classified under the clean pipeline and update `T` incorrectly. Fix: make supported in-place animations register their transient buffer before the first frame, or have every leaf geometric override compare/mark the shadow before changing state.
 
 VERDICT: REVISE
 ### Claude's response
@@ -401,13 +401,13 @@ to this verdict.
 
 Material flaws remain:
 
-- `PLAN.md:52-56,95-103,183-192` cannot preserve arbitrary transform order with one affine tail `T`: after `apply_function(f); shift(v)`, Manim semantics require `shift(f(points))`, while replaying non-affine callables after `T` computes `f(shift(points))`. A non-affine barrier does not solve the ordering problem. Fix: store an ordered transform pipeline containing affine and non-affine operations, collapsing only adjacent affine runs, or explicitly forbid transforms after a non-affine operation.
+- `docs/plan.md:52-56,95-103,183-192` cannot preserve arbitrary transform order with one affine tail `T`: after `apply_function(f); shift(v)`, Manim semantics require `shift(f(points))`, while replaying non-affine callables after `T` computes `f(shift(points))`. A non-affine barrier does not solve the ordering problem. Fix: store an ordered transform pipeline containing affine and non-affine operations, collapsing only adjacent affine runs, or explicitly forbid transforms after a non-affine operation.
 
-- `PLAN.md:91-103,157-166` uses a shadow comparison as a transient-mode detector, but the same dirty buffer can represent either an animation’s temporary geometry or an ordinary user mutation; once any in-place mutation occurs, subsequent legitimate `shift`/`scale` calls are classified as transient until `refresh()`. The documented ceiling covers one case, but this makes ordinary composition semantically wrong, not merely inconvenient. Fix: separate animation-owned temporary writes from user geometry with an explicit animation context, or remove direct in-place mutation from the supported contract.
+- `docs/plan.md:91-103,157-166` uses a shadow comparison as a transient-mode detector, but the same dirty buffer can represent either an animation’s temporary geometry or an ordinary user mutation; once any in-place mutation occurs, subsequent legitimate `shift`/`scale` calls are classified as transient until `refresh()`. The documented ceiling covers one case, but this makes ordinary composition semantically wrong, not merely inconvenient. Fix: separate animation-owned temporary writes from user geometry with an explicit animation context, or remove direct in-place mutation from the supported contract.
 
-- `PLAN.md:157-166` says a deferred rebuild runs when the override clears, but the design has no reliable “clear” event for `Wiggle`, `ApplyWave`, or arbitrary user writes; `refresh()` is manual and the next matching whole-array write is not guaranteed. A dirty bound parameter can therefore remain unapplied indefinitely. Fix: use an animation cleanup hook or make every supported animation’s `finish()`/cleanup call `refresh()`.
+- `docs/plan.md:157-166` says a deferred rebuild runs when the override clears, but the design has no reliable “clear” event for `Wiggle`, `ApplyWave`, or arbitrary user writes; `refresh()` is manual and the next matching whole-array write is not guaranteed. A dirty bound parameter can therefore remain unapplied indefinitely. Fix: use an animation cleanup hook or make every supported animation’s `finish()`/cleanup call `refresh()`.
 
-- `PLAN.md:205-212` says bound parameters are detected by polling, but it does not define snapshot/equality semantics for NumPy arrays, vector trackers, callable bindings, or `NaN`. Direct comparison of array-valued bindings is ambiguous, and `NaN != NaN` causes perpetual rebuilds. Fix: require canonical immutable snapshots and a defined equality/NaN policy for every binding type.
+- `docs/plan.md:205-212` says bound parameters are detected by polling, but it does not define snapshot/equality semantics for NumPy arrays, vector trackers, callable bindings, or `NaN`. Direct comparison of array-valued bindings is ambiguous, and `NaN != NaN` causes perpetual rebuilds. Fix: require canonical immutable snapshots and a defined equality/NaN policy for every binding type.
 
 - The plan’s registration model has no explicit cardinality rule for an artist: `ax2.add(curve)` historically rebinds it away from `ax1`, so one artist cannot simultaneously participate in two coordinate systems despite the plan’s intended shared-registration use cases. Fix: state single-owner binding as a hard invariant and provide separate view/binding objects for multi-system display.
 
@@ -477,7 +477,7 @@ source, and a shared-view object is deferred past 0.1.
 
 One implementation-breaking contradiction remains:
 
-- `PLAN.md:130-141` requires every supported animation to end with the buffer equal to the derived geometry, but `.venv` Manim 0.21.0’s `Uncreate` is `Create` with a reversed rate function and removes the object; its final geometry is empty, not the full derived shape. A dirty bound parameter during or after `Uncreate` can therefore remain deferred or rebuild from an invalid empty override. Fix: remove `Uncreate`/other non-restoring animations from the supported surface, or define animation-specific cleanup that restores the derived buffer before removal.
+- `docs/plan.md:130-141` requires every supported animation to end with the buffer equal to the derived geometry, but `.venv` Manim 0.21.0’s `Uncreate` is `Create` with a reversed rate function and removes the object; its final geometry is empty, not the full derived shape. A dirty bound parameter during or after `Uncreate` can therefore remain deferred or rebuild from an invalid empty override. Fix: remove `Uncreate`/other non-restoring animations from the supported surface, or define animation-specific cleanup that restores the derived buffer before removal.
 
 - The same precondition is not valid for arbitrary supported “in-place writes”: `Wiggle` restores its points by construction, but user writes and future Manim animations have no guaranteed restoration. The plan calls this a warning/escape-hatch ceiling, yet the implementation cannot distinguish an unrestored user edit from a still-running animation and may indefinitely suppress rebuilds. Fix: make the supported contract apply only to named library-tested animations and reject or immediately mark arbitrary user in-place writes as requiring `refresh()` before data updates.
 

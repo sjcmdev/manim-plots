@@ -1,0 +1,24 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-9.1.1, pluggy-1.6.0
+rootdir: D:\Programming\Python\manim\manim-plots
+configfile: pyproject.toml
+plugins: hypothesis-6.167.1, cov-7.1.0
+collected 296 items
+
+poc4\test_animations.py ................................................ [ 16%]
+...............                                                          [ 21%]
+poc4\test_callable.py .                                                  [ 21%]
+poc4\test_containers.py ...............                                  [ 26%]
+poc4\test_context.py ....................                                [ 33%]
+poc4\test_cost.py ...                                                    [ 34%]
+poc4\test_data_channel.py ...                                            [ 35%]
+poc4\test_detachment.py ...........................                      [ 44%]
+poc4\test_fixes.py .......                                               [ 46%]
+poc4\test_geometry.py .................................................. [ 63%]
+..                                                                       [ 64%]
+poc4\test_idioms.py ............                                         [ 68%]
+poc4\test_keyed.py .........................                             [ 77%]
+poc4\test_manim_contract.py ............................................ [ 91%]
+........................                                                 [100%]
+
+============================ 296 passed in 49.84s =============================

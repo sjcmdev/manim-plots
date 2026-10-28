@@ -13,12 +13,12 @@ build/
 .coverage
 htmlcov/
 
-# Manim
+# Test outputs: benchmark results, renders and diffs of failed visual tests
+.benchmarks/
+tests/visual/_out/
+
+# Manim, which writes videos, images, Tex and texts only under its media directory
 media/
-videos/
-images/
-Tex/
-texts/
 
 # Editors / OS
 .vscode/

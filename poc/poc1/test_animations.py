@@ -21,8 +21,9 @@ from manim import (
     Write,
     linear,
 )
-from poc.points import Leaf, OverrideLeaf, System, curve, record
-from poc.scene import ProbeScene, count_interpolation
+
+from poc1.points import Leaf, OverrideLeaf, System, curve, record
+from poc1.scene import ProbeScene, count_interpolation
 
 RESTORING = [
     Create,

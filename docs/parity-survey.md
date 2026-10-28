@@ -167,7 +167,7 @@ Classes surveyed: `CoordinateSystem`, `Axes`, `ThreeDAxes`, `NumberPlane`, `Pola
 
 ### What the inventory changed
 
-Two decisions came out of building it, both now in `PLAN.md`:
+Two decisions came out of building it, both now in `docs/plan.md`:
 
 - **The parametric curve became the fourth 0.1 artist.** `plot_parametric_curve` was
   otherwise a straight regression, and more importantly it is the only source among the
@@ -207,7 +207,7 @@ quietly come from a different release.
 
 Unlike the Manim section this one has **no drift test in the suite**: a test may only
 import what the project depends on, and matplotlib parity is an explicit non-goal in
-`PLAN.md`. The script is the manual substitute. The
+`docs/plan.md`. The script is the manual substitute. The
 section exists for two reasons — to name the capabilities a user arrives already
 expecting, and to borrow the *shape* of the extension points, which matplotlib got right
 and Manim never attempted.
@@ -231,7 +231,7 @@ and Manim never attempted.
 | Colour cycle | `set_prop_cycle` | **0.1** | minimal cycle only; theming is later |
 | Fields | `quiver`, `quiverkey`, `streamplot` | **later** | one `FieldSource`, five artists (D15) |
 | 2D scalar data | `imshow`, `matshow`, `pcolor`, `pcolormesh`, `pcolorfast`, `contour`, `contourf`, `spy` | **later** | the same pipeline head |
-| Statistical | `boxplot`, `bxp`, `violinplot`, `violin`, `pie`, `pie_label`, `ecdf`, `hexbin` | **non-goal** | already named in `PLAN.md`; `ecdf` and `hexbin` are transforms of data, so a user computes them and plots the result |
+| Statistical | `boxplot`, `bxp`, `violinplot`, `violin`, `pie`, `pie_label`, `ecdf`, `hexbin` | **non-goal** | already named in `docs/plan.md`; `ecdf` and `hexbin` are transforms of data, so a user computes them and plots the result |
 | Spectral | `acorr`, `xcorr`, `cohere`, `csd`, `psd`, `specgram`, `magnitude_spectrum`, `angle_spectrum`, `phase_spectrum` | **non-goal** | NumPy and SciPy do the transform; we plot its output |
 | Unstructured meshes | `tricontour`, `tricontourf`, `tripcolor`, `triplot` | **non-goal** | |
 | Artist adders | `add_line`, `add_patch`, `add_collection`, `add_artist`, `add_image`, `add_table`, `add_container`, `add_child_axes` | **non-goal** | the Manim scene graph is the container; `ax.add(artist)` is registration (D11) |
@@ -243,7 +243,7 @@ and Manim never attempted.
 | Set and read the range | `set_xlim`, `get_xlim`, `set_xbound`, `get_xbound`, `set_ylim` | **0.1** | `set_x_range` / `set_y_range`, animatable natively under `.animate` (D21) |
 | Reversed axis | `invert_xaxis`, `set_xinverted`, `xaxis_inverted` | **0.1** | a range whose start exceeds its stop is legal, and every locator must survive it — cheap now, a redesign later |
 | Aspect lock | `set_aspect`, `get_aspect`, `set_box_aspect`, `apply_aspect`, `get_data_ratio`, `set_adjustable`, `set_anchor` | **0.1** | a `Map` node, not a negotiation (defect 4) |
-| Axis on/off, tight, equal | `axis`, `set_axis_off`, `set_axis_on` | **0.1** | as decoration visibility and the aspect node |
+| Axis on/off, tight, equal | `axis`, `set_axis_off`, `set_axis_on` | **0.1** | decoration visibility through Manim's own style calls (F-601), and the aspect node (F-205) |
 | Autoscale to the data | `autoscale`, `autoscale_view`, `set_autoscale_on`, `relim`, `update_datalim`, `has_data`, `margins`, `set_xmargin`, `use_sticky_edges` | **0.2** | **the largest expectation gap in 0.1**, and a deliberate one: an animated range is a parameter the author drives, and an axis that rescales itself mid-animation is usually the wrong pedagogy. Deferred with a note, not overlooked |
 | Position and layout | `get_position`, `set_position`, `reset_position`, `set_axes_locator`, `label_outer`, `get_subplotspec`, `get_gridspec` | **non-goal** | the Manim scene places the mobject |
 | Insets | `inset_axes`, `indicate_inset`, `indicate_inset_zoom` | **later** | the zoom-plot backlog item |
@@ -257,7 +257,7 @@ Registered names: `linear`, `log`, `symlog`, `logit`, `asinh`, `function`, `func
 | Linear, log, symlog | `linear`, `log`, `symlog` | **0.1** | log carries minor ticks between decades (defect 9) and a correct inverse (defect 8) |
 | User-supplied pair | `FuncScale` (`function`), `FuncScaleLog` (`functionlog`) | **0.1** | the collaborator A1.3: forward and inverse supplied by the user. matplotlib validates neither monotonicity nor invertibility; we falsify both by sampling at construction, and assert tick order at generation |
 | Logit, asinh | `logit`, `asinh` | **0.2** | ordinary library scales once the contract exists |
-| Clamp a range to the scale domain | `ScaleBase.limit_range_for_scale(vmin, vmax, minpos)` | **0.1** | **found here.** Neither `PLAN.md` nor the defect list had it: a scale must be able to correct a range that leaves its domain (`x=(0, 10)` under log) rather than let a `-inf` propagate through the pipeline. Becomes `F-311` |
+| Clamp a range to the scale domain | `ScaleBase.limit_range_for_scale(vmin, vmax, minpos)` | **0.1** | **found here.** Neither `docs/plan.md` nor the defect list had it: a scale must be able to correct a range that leaves its domain (`x=(0, 10)` under log) rather than let a `-inf` propagate through the pipeline. Becomes `F-311` |
 | Per-node inverse | `Transform.inverted()`, `transform_non_affine` | **0.1** | our node contract already requires it; matplotlib is the precedent |
 | Transform tree | `transData = transScale + transLimits + transAxes` | **0.1** | independent confirmation of `Source -> Map -> placement`, and of clipping in the local space of the system rather than in data or scene space |
 
@@ -269,7 +269,7 @@ missing. All twelve concrete locators:
 
 | matplotlib locator | Verdict | Ours |
 |---|---|---|
-| `AutoLocator` | **0.1** | the default, which is `MaxN` |
+| `AutoLocator` | **0.1** | `MaxN`, on request; the default stays Manim's step (`docs/scope.md`, defaults table) |
 | `MaxNLocator` | **0.1** | `MaxN(n)`, nice-number steps |
 | `MultipleLocator` | **0.1** | `Multiple(step)`, and the sugar behind the Manim `x_range` triple |
 | `FixedLocator` | **0.1** | `Fixed([...])`, the gnuplot explicit list |
@@ -277,7 +277,7 @@ missing. All twelve concrete locators:
 | `NullLocator` | **0.1** | no ticks |
 | `LogLocator` | **0.1** | decades plus subs (defect 9) |
 | `AutoMinorLocator` | **0.1** | minor count between majors |
-| `SymmetricalLogLocator` | **0.1** | ships with symlog |
+| `SymmetricalLogLocator` | **0.1** | `SymLog`, which ships with the symlog scale (F-403, ADR 0003) |
 | `IndexLocator` | **0.2** | categorical axes |
 | `LogitLocator`, `AsinhLocator` | **0.2** | with their scales |
 
@@ -353,8 +353,8 @@ set xtics {axis | border} {{no}mirror}
 
 | Option | Verdict | Ours |
 |---|---|---|
-| `autofreq` | **0.1** | the default locator, `MaxN` |
-| `<incr>` and `<start>,<incr>,<end>` | **0.1** | `Multiple(step)` with an optional generation window |
+| `autofreq` | **0.1** | `MaxN`, on request; the default stays Manim's step |
+| `<incr>` and `<start>,<incr>,<end>` | **0.1** `<incr>`, **0.2** the window | `Multiple(step)`; a generation window has no 0.1 row |
 | `("label" <pos> <level>, ...)` | **0.1** | `Fixed([...])` taking `(value, label, level)`. **The level matters**: an explicit list must be able to place a *minor* tick, which neither the matplotlib `FixedLocator` nor the plan expressed. Becomes `F-404` |
 | `add` | **0.1** | explicit ticks *added to* the generated ones rather than replacing them — a two-line union in the locator now, a breaking change later. Becomes `F-405` |
 | `axis` or `border` | **0.1** | `ax.x.position` taking `"origin"`, `"bottom"`, `"top"` or a data value — the collaborator requirement, free after D7 |
@@ -379,11 +379,11 @@ set xtics {axis | border} {{no}mirror}
 | `set format x "%.2f"`, and gprintf `%h`, `%T`, `%P` | **0.1** | the format-string formatter, with the `%h` superscript form as the LaTeX formatter |
 | `set grid xtics mxtics` | **0.1** | a grid per level, major and minor separately |
 | `set xzeroaxis` | **0.1** | the axis line through the origin — the `_origin_shift` defect (13) from the other side |
-| `set border` | **0.1** | which frame edges are drawn |
+| `set border` | **0.1** partial | an axis at the bottom or top and a mirrored one (F-605, F-606); a box border as such is 0.2 |
 | `set xrange [] reverse` | **0.1** | see reversed ranges above |
 | `set xrange writeback` and `restore` | **non-goal** | interactive session state |
 | `set offsets`, `set margins` | **non-goal** | the Manim scene owns the frame, not the plot |
-| `set key` (legend position, columns, box, order) | **0.1** minimal | placement and a box in 0.1; column layout and ordering in 0.2 |
+| `set key` (legend position, columns, box, order) | **0.1** minimal | a default placement in 0.1 (F-801); box styling, columns and ordering in 0.2 (F-808) |
 | `set arrow`, `set label`, `set object` | **0.2** | annotations |
 | `set jitter` | **0.2** | with scatter styling |
 | `set style line` | **0.1** | named style parameters, no matplotlib shorthand (D12) |
@@ -415,7 +415,7 @@ Reference Lines, Breaks, Rug.
 | Prefix, suffix, divide by a factor, custom formula | **0.1** | all four are the callable formatter |
 | Rotation, with auto 45 and 90 degrees; text wrapping | **0.1** rotation, **0.2** wrapping | rotation is overlap answer number two |
 | **Hide overlapping labels** | **0.1** | overlap answer number three, and the one Manim lacks entirely (defect 11) |
-| Special Ticks: add or hide an individual tick at any value, with a custom label and its own style | **0.1** | exactly what keyed identity (D10) buys — `ax.x.labels.at(2.0)` — plus explicit add and hide |
+| Special Ticks: add or hide an individual tick at any value, with a custom label and its own style | **0.1** | exactly what keyed identity (D10) buys — `ax.x.numbers.at(2.0)` — plus explicit add and hide |
 | Grids: major, minor, opposite side, colour | **0.1** | |
 | Reference Lines | **0.2** | the drop-line and `axhline` cluster |
 | Breaks | **0.2** | broken axes, already deferred |

@@ -1,9 +1,10 @@
 """Every Manim symbol the design documents cite must still exist.
 
-`PLAN.md` cites Manim source by ``module.py::Symbol`` and gives a line number only as a
-hint. Symbols survive a version bump, line numbers do not — so this test imports each
-cited symbol and fails by name when upstream renames or removes one. It is the
-acceptance criterion in `PLAN.md`, not a behavioural test.
+The design documents cite Manim source by ``module.py::Symbol``, sometimes with its
+directory in front, and give a line number only as a hint. Symbols survive a version
+bump, line numbers do not — so this test imports each cited symbol and fails by name
+when upstream renames or removes one. It is the acceptance criterion in
+`docs/plan.md`, not a behavioural test.
 """
 
 from __future__ import annotations
@@ -15,9 +16,10 @@ from pathlib import Path
 import pytest
 
 DOCS = (
-    Path(__file__).parents[1] / "PLAN.md",
+    Path(__file__).parents[1] / "docs/plan.md",
     Path(__file__).parents[1] / "docs" / "scope.md",
     Path(__file__).parents[1] / "docs" / "grill-log.md",
+    *sorted((Path(__file__).parents[1] / "docs" / "adr").glob("*.md")),
 )
 
 # The Manim module each cited file name lives in. A citation names the file, because
@@ -31,6 +33,7 @@ MODULE_OF_FILE = {
     "family_ops.py": "manim.utils.family_ops",
     "functions.py": "manim.mobject.graphing.functions",
     "indication.py": "manim.animation.indication",
+    "logger_utils.py": "manim._config.logger_utils",
     "mobject.py": "manim.mobject.mobject",
     "number_line.py": "manim.mobject.graphing.number_line",
     "scale.py": "manim.mobject.graphing.scale",
@@ -39,7 +42,7 @@ MODULE_OF_FILE = {
     "vectorized_mobject.py": "manim.mobject.types.vectorized_mobject",
 }
 
-CITATION = re.compile(r"`([a-z_]+\.py)::([A-Za-z_][A-Za-z0-9_.]*)`")
+CITATION = re.compile(r"`(?:[a-z_]+/)*([a-z_]+\.py)::([A-Za-z_][A-Za-z0-9_.]*)`")
 
 # Prose describing the citation format itself, not a citation.
 PLACEHOLDERS = {("file.py", "Symbol")}

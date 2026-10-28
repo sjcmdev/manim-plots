@@ -1,6 +1,7 @@
 import pytest
 from manim import tempconfig
-from poc.points import ROOT
+
+from poc1.points import ROOT
 
 
 @pytest.fixture(autouse=True)

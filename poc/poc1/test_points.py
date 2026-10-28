@@ -3,7 +3,8 @@ from time import perf_counter_ns
 import manim
 import numpy as np
 from manim import RIGHT, Scene, VMobject
-from poc.points import (
+
+from poc1.points import (
     METRICS,
     ROOT,
     Leaf,

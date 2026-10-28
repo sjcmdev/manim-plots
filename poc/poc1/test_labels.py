@@ -5,8 +5,9 @@ from time import perf_counter_ns
 import numpy as np
 import pytest
 from manim import MathTex, ValueTracker, VGroup, Write, linear, tempconfig
-from poc.points import ROOT, Leaf, System, record
-from poc.scene import ProbeScene, count_interpolation
+
+from poc1.points import ROOT, Leaf, System, record
+from poc1.scene import ProbeScene, count_interpolation
 
 
 class TexUnavailable(RuntimeError):

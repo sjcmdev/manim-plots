@@ -4,8 +4,9 @@ from time import perf_counter_ns
 
 import numpy as np
 from manim import ValueTracker, linear, tempconfig
-from poc.points import Leaf, System, curve, record
-from poc.scene import ProbeScene
+
+from poc1.points import Leaf, System, curve, record
+from poc1.scene import ProbeScene
 
 
 def test_600_frame_rebuild_and_getter_cost():
