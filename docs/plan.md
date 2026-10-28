@@ -246,7 +246,7 @@ to something foreign, such as a Manim `ValueTracker`, is snapshotted immutably a
 compared by type, because sloppy equality here means either a missed frame or a rebuild
 every frame forever: scalars compare NaN-aware, so `NaN` equals `NaN`; arrays compare with
 `np.array_equal(..., equal_nan=True)` against a copy, never against a live view; a
-callable binding is always dirty.
+callable binding is dirty once per frame, never on every read (ADR 0003).
 
 **A plot function is sampled as Manim samples it, and live only on request** (D22,
 which revises D21). It is sampled at construction, and again whenever the data channel
@@ -286,7 +286,7 @@ express, which is the only thing that differs:
 
 - **Path sampling** — a `NaN` or `±inf` output, or an argument outside a map node's
   domain, breaks the path into segments at that point and warns once per artist per
-  rebuild. Neither silently dropped nor drawn, because `ax.plot(lambda x: 1/x)` and
+  data change (ADR 0003). Neither silently dropped nor drawn, because `ax.plot(lambda x: 1/x)` and
   `ax.plot(log, x=(-1, 10))` are both day-one cases and any other answer is wrong on one
   of them. This is what turns the audit's `LogBase.inverse_function` silent-`NaN` defect
   into something visible.

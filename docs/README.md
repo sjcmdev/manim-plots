@@ -12,8 +12,10 @@ concept. Each document here has one status:
   commit it was written against.
 
 When two documents disagree, the ADRs and the 0.1 tier of `scope.md` win, then the
-latest decision in `grill-log.md`. Between two ADRs, the later one wins where it says it
-supersedes the earlier. A disagreement is a defect to fix, not a choice.
+latest decision in `grill-log.md`. Between an ADR and `scope.md`, the ADR wins on
+contracts and mechanism and `scope.md` on what is required. Between two ADRs, the later
+one wins where it says it supersedes the earlier. A disagreement is a defect to fix, not
+a choice.
 
 ## Read first
 
@@ -22,6 +24,7 @@ supersedes the earlier. A disagreement is a defect to fix, not a choice.
 | [`scope.md`](scope.md) | Frozen (tier 0.1) | Every requirement as an `F-*` with a tier, the defaults table, invalid-input rules, paper checks, traceability |
 | [`adr/0001-architecture.md`](adr/0001-architecture.md) | Frozen | Layers, module layout, the public contracts, the leaf lifecycle |
 | [`adr/0002-test-infrastructure.md`](adr/0002-test-infrastructure.md) | Frozen | Visual baselines, benchmarks, render tests in the gate, diagnostic logging |
+| [`adr/0003-final-review-closure.md`](adr/0003-final-review-closure.md) | Frozen | The final reviews' decisions: payload and protocols, core numerics, lifecycle precedence, closeness to Manim; amends scope and ADR 0001 in place |
 | [`grill-log.md`](grill-log.md) | Living | Decisions D1-D27 with reasoning and rejected alternatives; a later decision says which earlier one it supersedes |
 | [`plan.md`](plan.md) | Living | The design rationale and mechanism in prose: pipeline, `.animate`, containers, API, the 0.1 gate, risks |
 
@@ -45,3 +48,6 @@ supersedes the earlier. A disagreement is a defect to fix, not a choice.
 | [`reviews/2026-10-24-arch-crew.md`](reviews/2026-10-24-arch-crew.md) | Record | Architecture review with the arch-crew skills, with corrections from the freeze reviews |
 | [`reviews/2026-10-24-codex.md`](reviews/2026-10-24-codex.md) | Record | Freeze review by Codex; its blockers closed by D22-D27 |
 | [`reviews/2026-10-24-claude.md`](reviews/2026-10-24-claude.md) | Record | Freeze review by Claude, independent of the Codex one; blockers closed by D22-D27 |
+| [`reviews/2026-10-28-final-codex.md`](reviews/2026-10-28-final-codex.md) | Record | Final review by Codex before implementation |
+| [`reviews/2026-10-28-final-claude.md`](reviews/2026-10-28-final-claude.md) | Record | Final review by Claude, independent of the Codex one |
+| [`reviews/2026-10-29-final-triage.md`](reviews/2026-10-29-final-triage.md) | Record | Every finding of the two final reviews and where it was closed |

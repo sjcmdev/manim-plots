@@ -243,7 +243,7 @@ and Manim never attempted.
 | Set and read the range | `set_xlim`, `get_xlim`, `set_xbound`, `get_xbound`, `set_ylim` | **0.1** | `set_x_range` / `set_y_range`, animatable natively under `.animate` (D21) |
 | Reversed axis | `invert_xaxis`, `set_xinverted`, `xaxis_inverted` | **0.1** | a range whose start exceeds its stop is legal, and every locator must survive it — cheap now, a redesign later |
 | Aspect lock | `set_aspect`, `get_aspect`, `set_box_aspect`, `apply_aspect`, `get_data_ratio`, `set_adjustable`, `set_anchor` | **0.1** | a `Map` node, not a negotiation (defect 4) |
-| Axis on/off, tight, equal | `axis`, `set_axis_off`, `set_axis_on` | **0.1** | as decoration visibility and the aspect node |
+| Axis on/off, tight, equal | `axis`, `set_axis_off`, `set_axis_on` | **0.1** | decoration visibility through Manim's own style calls (F-601), and the aspect node (F-205) |
 | Autoscale to the data | `autoscale`, `autoscale_view`, `set_autoscale_on`, `relim`, `update_datalim`, `has_data`, `margins`, `set_xmargin`, `use_sticky_edges` | **0.2** | **the largest expectation gap in 0.1**, and a deliberate one: an animated range is a parameter the author drives, and an axis that rescales itself mid-animation is usually the wrong pedagogy. Deferred with a note, not overlooked |
 | Position and layout | `get_position`, `set_position`, `reset_position`, `set_axes_locator`, `label_outer`, `get_subplotspec`, `get_gridspec` | **non-goal** | the Manim scene places the mobject |
 | Insets | `inset_axes`, `indicate_inset`, `indicate_inset_zoom` | **later** | the zoom-plot backlog item |
@@ -277,7 +277,7 @@ missing. All twelve concrete locators:
 | `NullLocator` | **0.1** | no ticks |
 | `LogLocator` | **0.1** | decades plus subs (defect 9) |
 | `AutoMinorLocator` | **0.1** | minor count between majors |
-| `SymmetricalLogLocator` | **0.1** | ships with symlog |
+| `SymmetricalLogLocator` | **0.1** | `SymLog`, which ships with the symlog scale (F-403, ADR 0003) |
 | `IndexLocator` | **0.2** | categorical axes |
 | `LogitLocator`, `AsinhLocator` | **0.2** | with their scales |
 
@@ -354,7 +354,7 @@ set xtics {axis | border} {{no}mirror}
 | Option | Verdict | Ours |
 |---|---|---|
 | `autofreq` | **0.1** | `MaxN`, on request; the default stays Manim's step |
-| `<incr>` and `<start>,<incr>,<end>` | **0.1** | `Multiple(step)` with an optional generation window |
+| `<incr>` and `<start>,<incr>,<end>` | **0.1** `<incr>`, **0.2** the window | `Multiple(step)`; a generation window has no 0.1 row |
 | `("label" <pos> <level>, ...)` | **0.1** | `Fixed([...])` taking `(value, label, level)`. **The level matters**: an explicit list must be able to place a *minor* tick, which neither the matplotlib `FixedLocator` nor the plan expressed. Becomes `F-404` |
 | `add` | **0.1** | explicit ticks *added to* the generated ones rather than replacing them — a two-line union in the locator now, a breaking change later. Becomes `F-405` |
 | `axis` or `border` | **0.1** | `ax.x.position` taking `"origin"`, `"bottom"`, `"top"` or a data value — the collaborator requirement, free after D7 |
@@ -379,11 +379,11 @@ set xtics {axis | border} {{no}mirror}
 | `set format x "%.2f"`, and gprintf `%h`, `%T`, `%P` | **0.1** | the format-string formatter, with the `%h` superscript form as the LaTeX formatter |
 | `set grid xtics mxtics` | **0.1** | a grid per level, major and minor separately |
 | `set xzeroaxis` | **0.1** | the axis line through the origin — the `_origin_shift` defect (13) from the other side |
-| `set border` | **0.1** | which frame edges are drawn |
+| `set border` | **0.1** partial | an axis at the bottom or top and a mirrored one (F-605, F-606); a box border as such is 0.2 |
 | `set xrange [] reverse` | **0.1** | see reversed ranges above |
 | `set xrange writeback` and `restore` | **non-goal** | interactive session state |
 | `set offsets`, `set margins` | **non-goal** | the Manim scene owns the frame, not the plot |
-| `set key` (legend position, columns, box, order) | **0.1** minimal | placement and a box in 0.1; column layout and ordering in 0.2 |
+| `set key` (legend position, columns, box, order) | **0.1** minimal | a default placement in 0.1 (F-801); box styling, columns and ordering in 0.2 (F-808) |
 | `set arrow`, `set label`, `set object` | **0.2** | annotations |
 | `set jitter` | **0.2** | with scatter styling |
 | `set style line` | **0.1** | named style parameters, no matplotlib shorthand (D12) |

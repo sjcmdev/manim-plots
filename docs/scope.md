@@ -1,7 +1,9 @@
 # Functional scope
 
 **Status: the 0.1 tier is frozen, 2026-10-24** (ADR 0001). Adding, removing or changing
-a 0.1 requirement now needs a new ADR; 0.2 and later rows may still move.
+a 0.1 requirement now needs a new ADR; 0.2 and later rows may still move. Amended on
+2026-10-29 by ADR 0003, which closed the final reviews; each amended row or rule carries
+*(ADR 0003)*.
 
 The decision document for task/03, completed in task/04. Every requirement is an `F-*`
 with a tier and the decision it follows from. `docs/parity-survey.md` is the source
@@ -27,6 +29,10 @@ material; `docs/plan.md` and `docs/grill-log.md` hold the reasoning;
 | `defect <n>` | finding *n* in `docs/defect-audit-0.21.md` |
 | `A<n.n>` | the collaborator's answer *n.n* in `docs/api-sketch.md` |
 | `mpl`, `gnuplot`, `origin`, `manim` | a row of the corresponding parity-survey section |
+| `stress case <n>` | case *n* of the paper check at the end of this document |
+| `PLAN`, `round <n>` | `docs/plan.md`; review round *n* in `docs/reviews/2026-09-05-plan-review-log.md` |
+| `task/<nn>` | that task in `TODO.md` |
+| `ADR <nnnn>` | an architecture decision record in `docs/adr/` |
 
 A 0.1 verdict promises the capability **and, where Manim has one with the same
 semantics, Manim's spelling** (D17, F-1009). This replaces the earlier rule that a verdict
@@ -47,12 +53,12 @@ promised the capability only.
 | F-107 | Clipping happens in the local space of the coordinate system, not in data space and not in scene space | **0.1** | defect 3, mpl 2.3 |
 | F-108 | Adaptive refinement *density* may lag one frame; the samples themselves never lag. A test asserts that the drawn geometry is a correct plot of the current parameters | **0.1** | D5 |
 | F-109 | Node contract: forward and inverse functions vectorized over `ndarray`, a declared monotonic direction, a declared dimensionality, and a domain | **0.1** | D6 |
-| F-110 | Bound parameters are polled by version counter. A foreign binding is snapshotted immutably and compared NaN-aware (`np.array_equal(..., equal_nan=True)` for arrays); a callable binding is always dirty | **0.1** | D8 |
+| F-110 | Bound parameters are polled by version counter. A foreign binding is snapshotted immutably and compared NaN-aware (`np.array_equal(..., equal_nan=True)` for arrays); a callable binding is dirty once per frame, at the synchronisation updater's token, never on every read of `points` *(ADR 0003)* | **0.1** | D8, ADR 0003 |
 | F-111 | `artist.refresh()` re-attaches a detached artist (F-905) and replaces a bare in-place edit of its points with a rebuild from the pipeline | **0.1** | D4, D19 |
-| F-112 | An artist belongs to exactly one coordinate system. Binding an already-bound artist raises rather than silently rebinding | **0.1** | D5 |
+| F-112 | An artist belongs to exactly one coordinate system. Binding an already-bound artist raises rather than silently rebinding; `ax.remove(artist)` unregisters it first *(ADR 0003)* | **0.1** | D11, ADR 0003 |
 | F-113 | One source shown in two systems is two artists over one immutable source | **0.1** | D5 |
 | F-115 | A shared view object, so one artist can be shown in two systems | **0.2** | D5 |
-| F-114 | A `Source` returns a **payload**, not a bare array, and so does every stage that transforms one. The fields, their shapes and their invariants are specified below under *The Source payload*; the `region` branch is declared in 0.1 and implemented later, because widening a frozen return type in 0.2 is exactly the breaking change this document exists to prevent | **0.1** | stress case 3 |
+| F-114 | A `Source` returns a **payload**, not a bare array, and so does every stage that transforms one. The fields, their shapes and their invariants are specified below under *The Source payload*; the `region` branch is declared in 0.1 and implemented later. Its type is in ADR 0003; a field added later is optional with a default, which breaks no 0.1 consumer *(ADR 0003)* | **0.1** | stress case 3, ADR 0003 |
 
 ### The Source payload (F-114)
 
@@ -75,7 +81,9 @@ Three rules bind the fields together:
   leaves the sample covered by no segment, which is how F-705 splits at a pole, while
   `points` and `region` keep their single segment and are excluded by `valid` alone —
   a point is not drawn, and a cell is dropped when any corner is invalid.
-- **`Map` transforms `coords` and carries the other four through untouched.**
+- **`Map` transforms `coords` and owns validity** *(ADR 0003)*: each node combines the
+  incoming `valid` mask with its own domain and finite-output mask and rebuilds the path
+  segments; `kind` and `topology` pass through untouched.
 - **`Shape` returns a payload of the same type**, with every field rebuilt to describe
   what it produced. A kind-changing operation builds a fresh payload rather than
   carrying old fields forward: isoline extraction from a region yields `kind="path"`,
@@ -93,9 +101,9 @@ choosing it later breaks nothing.
 |---|---|---|---|
 | F-201 | `p2c` inverts `c2p` to within floating-point tolerance wherever the map is invertible: on every scale under an affine frame, over the whole range. Under a non-affine frame it inverts the frame's interpolant, raises when the inversion does not converge, and documents which branch it returns | **0.1** | defect 15c, D26 |
 | F-202 | `c2p` and `p2c` raise on invalid input — a value outside the scale's domain included. They never return `NaN`, and they never clamp: clamping belongs to range configuration (F-311), never to a conversion | **0.1** | defect 8, defect 15c |
-| F-203 | Origin placement is an explicit parameter of the mapping. A range that excludes zero does not clamp the origin to the range boundary | **0.1** | defect 13, gnuplot `set xzeroaxis` |
-| F-204 | A unit size given for an axis is honoured wherever it is passed, or rejected — never accepted and ignored | **0.1** | defect 5 |
-| F-205 | Aspect lock is a `Map` node: locking it constrains the mapping rather than negotiating between two independent lengths | **0.1** | defect 4, mpl 2.2 |
+| F-203 | Where the axes cross is an explicit parameter of the mapping. By default an axis whose range excludes zero sits at the range edge, as in Manim; defect 13 is kept by default and fixable by the parameter *(ADR 0003)* | **0.1** | defect 13, gnuplot `set xzeroaxis`, ADR 0003 |
+| F-204 | A unit size given for an axis is honoured wherever it is passed, or rejected — never accepted and ignored. In `axis_config` without a length it wins over the default length; with an explicit length it raises *(ADR 0003)* | **0.1** | defect 5, ADR 0003 |
+| F-205 | Aspect lock is a `Map` node: locking it constrains the mapping rather than negotiating between two independent lengths. `adjustable="length"` (default) keeps the ranges and adapts the length not given; `adjustable="range"` keeps the lengths and widens a range; an over-constrained call raises *(ADR 0003)* | **0.1** | defect 4, mpl 2.2, ADR 0003 |
 | F-206 | Axis lengths are constructor parameters (`x_length`, `y_length`), spelled close to Manim's | **0.1** | A1.2 |
 | F-207 | `p2c` of a point off the system's plane projects it when the distance is within a tolerance relative to the system's size, and raises beyond it; it is never silently a projection presented as an inverse | **0.1** | defect 14 note, D26 |
 | F-208 | Geometric operations never corrupt the mapping: they move the system's frame (F-914), and a regression test covers the operation set that broke Manim 0.19 | **0.1** | defect 14, D18 |
@@ -105,29 +113,29 @@ choosing it later breaks nothing.
 
 | ID | Requirement | Tier | From |
 |---|---|---|---|
-| F-301 | Linear, log with an arbitrary base, and symlog ship in 0.1 | **0.1** | D9, gnuplot `set logscale` |
+| F-301 | Linear, log with an arbitrary base, and symlog ship in 0.1; symlog is matplotlib's `(base=10, linthresh=1, linscale=1)` *(ADR 0003)* | **0.1** | D9, gnuplot `set logscale`, ADR 0003 |
 | F-302 | A user supplies a scale as a forward/inverse function pair with a domain; no enum of blessed scales | **0.1** | A1.3, gnuplot `set nonlinear`, origin scale list |
 | F-303 | Scale naming is honest: the forward function is the scale transform, and the inverse is its inverse | **0.1** | defect 10 |
 | F-304 | Scale functions are vectorized over `ndarray`; no scalar-only guard that turns an array into `NaN` | **0.1** | defect 8 |
 | F-305 | Construction runs a sampled falsification of monotonicity and of round-trip inversion, documented as a heuristic that cannot see a reversal between samples | **0.1** | D6 |
 | F-306 | Tick generation asserts that the forward images of the ticks about to be emitted are ordered, and raises if they are not | **0.1** | D6 |
 | F-307 | A scale declares its domain; values outside it are handled by the invalid-input rule below | **0.1** | D6 |
-| F-311 | A scale normalises a **range** that leaves its domain, so that `x=(0, 10)` under log becomes `(eps, 10)` instead of propagating `-inf`. This applies at range configuration only — construction, `set_range`, and each frame of an animated range — and the normalised value is what `ax.x.range.value` reads back. It never applies to a coordinate conversion (F-202), which raises | **0.1** | mpl `limit_range_for_scale` |
+| F-311 | A scale normalises a **range** that leaves its domain, so that `x=(0, 10)` under log becomes `(minpos, 10)` instead of propagating `-inf`, through `limit_range(lo, hi, minpos)`, with an unknown `minpos` taken as `1e-300` *(ADR 0003)*. This applies at range configuration only — construction, `set_range`, and each frame of an animated range — and the normalised value is what `ax.x.range.value` reads back. It never applies to a coordinate conversion (F-202), which raises | **0.1** | mpl `limit_range_for_scale` |
 | F-312 | Logit, asinh, probability, probit, reciprocal and the rest of the Origin list ship as library scales | **0.2** | origin scale list |
 
 ## F-4xx — Tick location
 
 | ID | Requirement | Tier | From |
 |---|---|---|---|
-| F-401 | Locator protocol: given a range, a scale and an estimate of available label space, return tick values; `key(value)` gives each value an identity that depends on the value and the locator's configuration only, never on the range; membership — would this locator emit this value on this range — is a separate query | **0.1** | D10, D25, mpl 2.4 |
+| F-401 | Locator protocol: given a range, a scale and an estimate of available label space, return tick values; `key(value)` gives each value an identity that depends on the value and the locator's configuration only, never on the range; membership — would this locator emit this value on this range at this density — is a separate query with the same arguments *(ADR 0003)* | **0.1** | D10, D25, mpl 2.4, ADR 0003 |
 | F-402 | Tick values are computed without float accumulation — no `np.arange` over a step | **0.1** | defect 1 |
-| F-403 | 0.1 locators: `MaxN`, `Multiple`, `Log` (decades **and** subdivisions between them), `Fixed`, `Null`, and a minor-count locator | **0.1** | defect 9, mpl 2.4, origin |
-| F-404 | A `Fixed` entry is `(value, label, level)`: an explicit list can place a minor tick, not only a major one | **0.1** | gnuplot tic list level |
+| F-403 | 0.1 locators: `MaxN`, `Multiple`, `Log` (decades **and** subdivisions between them), `SymLog` *(ADR 0003)*, `Fixed`, `Null`, and a minor-count locator | **0.1** | defect 9, mpl 2.4, origin, ADR 0003 |
+| F-404 | A `Fixed` entry is `(value, label, level)`: an explicit list can place a minor tick, not only a major one. A `(value, label)` pair places a major tick *(ADR 0003)* | **0.1** | gnuplot tic list level, ADR 0003 |
 | F-405 | Explicit ticks may either replace the generated set or be added to it. On `add`, the two sets are merged by key: an explicit entry **wins** over a generated one with the same key, and it wins whole — its value, its label and its level all survive, and the generated entry is discarded even where the two values differ in the last bit. The merged list is ordered along the axis, which means ascending for an ordinary range and descending for a reversed one (F-209), never input order. A key collision *between two explicit entries* is a user error and raises; a collision inside one generated set is a locator defect (F-413) | **0.1** | gnuplot `add`, origin Special Ticks |
 | F-406 | A plain callable is accepted as a locator, and `set_ticks(...)` is sugar over `Fixed` | **0.1** | A3.3, D12 |
 | F-407 | A minor tick coinciding with a major tick is removed. This is a distinct mechanism from label overlap | **0.1** | mpl `remove_overlapping_locs` |
 | F-408 | The locator is given a label-space estimate derived from rendered label size, so a density-aware locator is possible | **0.1** | mpl `get_tick_space`, defect 11 |
-| F-409 | A degenerate tick specification (zero or negative step, empty range) raises an error naming the parameter | **0.1** | defect 15d |
+| F-409 | A degenerate tick specification (zero or negative step, empty range) raises an error naming the parameter. During an animation an empty range is a transient state instead: no ticks, collapsed artists, and `p2c` raises in that frame *(ADR 0003)* | **0.1** | defect 15d, ADR 0003 |
 | F-410 | A locator filters out-of-domain candidates rather than raising: an axis overhanging its scale's domain simply has no ticks out there | **0.1** | D6 |
 | F-411 | Tick range and coordinate mapping are independent of whether an arrow tip is drawn | **0.1** | defect 2 |
 | F-412 | Changing the range, the scale, the locator or the formatter regenerates the affected ticks; nothing goes stale | **0.1** | defect 6 |
@@ -172,13 +180,13 @@ choosing it later breaks nothing.
 | ID | Requirement | Tier | From |
 |---|---|---|---|
 | F-701 | 0.1 ships four artists: analytic function plot, array line, scatter, and parametric curve | **0.1** | D9, manim `plot_parametric_curve` |
-| F-702 | `ax.plot(...)` dispatches on argument type; `ax.plot(f)`, `ax.line(xs, ys)` and `ax.scatter(...)` are the documented verbs, and `plot` is typed with overloads | **0.1** | A2.1, A2.2, D12 |
+| F-702 | `ax.plot(...)` dispatches on argument type; `ax.plot(f)`, `ax.line(xs, ys)` and `ax.scatter(...)` are the documented verbs, and `plot` is typed with overloads. A function's parameters are the names of its signature after the first; every other keyword is style, and a parameter named like a `VMobject` style keyword raises *(ADR 0003)* | **0.1** | A2.1, A2.2, D12, ADR 0003 |
 | F-703 | Array input is normalised from either `[(x, y), ...]` or separate `xs`, `ys` | **0.1** | collaborator requirement 7 |
 | F-704 | Analytic sources are sampled adaptively, with the density decided by the source and the map, not by the ticks. A step given in `plot`'s `x_range` caps the spacing; `use_smoothing` and `use_vectorized` keep Manim's meaning, and `use_vectorized=False` — one call per sample — is the default | **0.1** | defect 15b, D22, D27 |
-| F-705 | A `NaN`, an infinity, an argument outside a node's domain, or a sign change between adjacent samples whose magnitude grows past the viewport splits the path there; `discontinuities` with `dt` forces splits. It warns once per artist per data change | **0.1** | defect 15a, D6, D27 |
+| F-705 | A `NaN`, an infinity, an argument outside a node's domain, or a sign change between adjacent samples whose magnitude grows past the viewport splits the path there; `discontinuities` with `dt` forces splits. It warns once per artist per data change, through `ManimPlotsWarning`; an animated range is one data change per play *(ADR 0003)* | **0.1** | defect 15a, D6, D27, ADR 0003 |
 | F-706 | Curves are clipped to the viewport | **0.1** | defect 3 |
 | F-707 | `i2gp` / `i2gc` answer by evaluating the source and the map at the requested input, so a `Source` exposes point evaluation as well as range sampling. An analytic source is exact; an array source interpolates linearly in its parameter and raises on a non-monotone `x` query | **0.1** | manim `input_to_graph_point`, stress case 2, D26 |
-| F-708 | `ax.add(artist)` and `ax.plot(...)` register; an artist is never a submobject of the coordinate system. A registered artist follows the system's frame and also has a geometric channel of its own (F-904). After `ReplacementTransform(ax, new_ax)` the artists bound to `ax` belong to `new_ax` | **0.1** | D11, D19, D20, A2.1 |
+| F-708 | `ax.add(artist)` and `ax.plot(...)` register; an artist is never a submobject of the coordinate system. A registered artist follows the system's frame and also has a geometric channel of its own (F-904). After `ReplacementTransform(ax, new_ax)` the artists bound to `ax` belong to `new_ax`. `ax.remove(artist)` unregisters *(ADR 0003)* | **0.1** | D11, D19, D20, A2.1, ADR 0003 |
 | F-709 | Adding the coordinate system to a scene does not add or remove the artists, and adding an artist separately is allowed | **0.1** | A6.1, D11 |
 | F-710 | `Morph(a, b)` resamples `a` on `b`'s parameterisation along arc length, and raises on a topology pair it cannot honestly resample | **0.1** | D8 |
 | F-711 | Step, bars, histograms, error bars, filled regions, drop lines, reference lines, annotations | **0.2** | mpl 2.1, manim drop lines |
@@ -206,22 +214,22 @@ choosing it later breaks nothing.
 | F-903 | Between `suspend_updating` and `resume_updating` of an animation — and from `Transform.begin`'s `align_data` call when it comes first — a leaf's buffer is transient: writes land in it and nowhere else | **0.1** | D19 |
 | F-904 | Outside animations, a geometric write is attributed by its writer on the call stack: a container whose family holds the system's frame is ignored, because the frame moved; any other container's operation becomes the artist's own transform, in the system's local space, with exact matrices read from `rotate`, `scale`, `stretch` and `apply_matrix`. A bare NumPy write is replaced at the next rebuild | **0.1** | D19 |
 | F-905 | At the end of an animation, an artist adopts the target the animation ended on; a remover leaves it detached in the state it left; an introducer or `refresh()` re-attaches it; `become` adopts the other artist's state | **0.1** | D19 |
-| F-906 | A regression matrix plays Manim's creation, indication, transform, movement and composition animations on systems and artists, and compares every end state with what Manim leaves on a plain `VMobject`, before and after the next rebuild | **0.1** | D19 |
+| F-906 | A regression matrix plays Manim's creation, indication, transform, movement and composition animations on systems and artists, and compares every end state with what Manim leaves on a plain `VMobject`, before and after the next rebuild. Sampled intermediate frames of `Create`, `Write`, `Uncreate`, `FadeIn`, `Transform` and `Indicate`, on artists and on axes, are compared with plain Manim run live, outside the differences F-1008 lists *(ADR 0003)* | **0.1** | D19, ADR 0003 |
 | F-907 | After `Uncreate` an artist is detached and degenerate, so re-adding it shows what Manim shows. A later introducer draws the current curve, where Manim's draws nothing: the one intentional lifecycle difference, documented next to `Uncreate` | **0.1** | D19 |
-| F-908 | `.animate` is Manim's own for geometry and data: no public method carries `override_animate`. The system aligns its family by role and tick key under `Transform.begin`, with a tick pool over the whole parameter path, and its leaves interpolate parameters, not points | **0.1** | D21 |
+| F-908 | `.animate` is Manim's own for geometry and data: no public method carries `override_animate`. The system aligns its family by role and tick key under `Transform.begin`, with a tick pool over the whole parameter path, and its leaves interpolate parameters, not points. Between systems whose locator configurations differ, ticks without a matching key fade out and in while the frame interpolates; a change of scale type raises, naming `FadeTransform` *(ADR 0003)* | **0.1** | D21, ADR 0003 |
 | F-909 | Geometric and data methods chain under one `.animate`: `ax.animate.shift(v).set_x_range(r)` is one animation | **0.1** | D21 |
 | F-910 | `mp.Group`, a broadcast handle for making container transforms permanent. Withdrawn: a container holding the system moves bound artists exactly (F-904, F-914) | **non-goal** | D18 |
 | F-911 | Parameters are descriptors, not `__setattr__`: `ax.x.range = (0, 30)`, `.value`, `.tracker`, `.bind(t)`. Animating one is `self.play(ax.animate.set_x_range(...))` (F-908). `@` stays coordinate conversion only | **0.1** | D12, D21, A3.2, A4.1 |
-| F-912 | Library animations in 0.1: `DrawAxes`, `TraceCurve` (data order, not path order), `ShowPoints`, `Morph`, and the data-channel animation as a public class | **0.1** | D14, A7 |
+| F-912 | Library animations in 0.1: `DrawAxes`, `TraceCurve` (data order, not path order), `ShowPoints`, `Morph`. The data channel is the native `.animate` (D21), not a class *(ADR 0003)* | **0.1** | D14, A7, ADR 0003 |
 | F-913 | `AppendData`, `Rescale`, `HighlightTick` | **0.2** | D14 |
 | F-914 | The system's placement is a hidden grid in its family: exact affine while the grid is affine, bilinear otherwise. It ignores partial drawing, stays invisible under every style call and contributes no boundary anchors. Under a non-affine grid, sparse derived leaves densify | **0.1** | D18 |
-| F-915 | The system and each artist report a synchronisation updater without `dt` to Cairo's moving-object test only when the play being compiled involves their system or a tracker they are bound to, or when they hold a live function; otherwise they stay in the static background, as a Manim graph would, and a frozen `wait` stays frozen | **0.1** | D21, D26 |
+| F-915 | The system and each artist report a synchronisation updater without `dt` to Cairo's moving-object test only when the play being compiled involves their system or a tracker they are bound to, or when they hold a live function — exactly the cases of F-918 *(ADR 0003)*; otherwise they stay in the static background, as a Manim graph would, and a frozen `wait` stays frozen | **0.1** | D21, D26 |
 | F-916 | Bound artists follow only permanent changes of their system: an animation that leaves the system where it found it, decided by simulating it on a copy, freezes the frame for the artists outside it | **0.1** | D20 |
-| F-917 | Every Manim frame, local and line the mechanism reads from the call stack, every Manim method the library overrides and every animation attribute it assigns is listed, with one source-hash pin set per supported Manim version. Line numbers are derived from source at import; Manim is never patched; an unpinned version warns at import | **0.1** | D19, D26 |
-| F-918 | A plot's function is sampled at construction and whenever the data channel resamples it. It is sampled every rendered frame only when a parameter is bound to a tracker or under `always_redraw` | **0.1** | D8, D22 |
+| F-917 | Every Manim frame, local and line the mechanism reads from the call stack, every Manim method the library overrides and every animation attribute it assigns — `starting_mobject` and `outline` among them — is listed, with one source-hash pin set per supported Manim version; `Scene.get_moving_mobjects`, whose query differs between 0.21.0 and 0.22.0, is pinned with both *(ADR 0003)*. Line numbers are derived from source at import; Manim is never patched; an unpinned version warns at import | **0.1** | D19, D26 |
+| F-918 | A plot's function is sampled at construction and whenever the data channel resamples it. It is sampled every rendered frame only when a parameter is bound to a tracker or to a callable *(ADR 0003)*, or under `always_redraw` | **0.1** | D8, D22, ADR 0003 |
 | F-919 | The leaf lifecycle follows the state × event table of ADR 0001 §4: owners keyed by animation, attached animation copies, two kinds of detachment (removed, shaped), deferred `refresh()`, immediate `become`, `reverse_points` recorded as a direction, unregistered copies, and `ReplacementTransform` transferring registered artists | **0.1** | D24 |
-| F-920 | The tick pool is built from the parameter path at four times the animation's frame density, with spare hidden leaves; a key first seen at render time takes a spare and fades in; out of spares, tests raise and a render warns once. Inactive pool leaves contribute no boundary anchors | **0.1** | D24, D25 |
-| F-921 | `mp.NumberPlane` is `mp.Axes` with the grid on and Manim's `background_line_style` mapped. A standalone `NumberLine` and `ComplexPlane` | **0.1** / **0.2** | D27 |
+| F-920 | The tick pool is built from the parameter path at four times the animation's frame density, with spare hidden leaves; a key first seen at render time takes a spare and fades in; out of spares, a render warns once through `ManimPlotsWarning`, which the test suite turns into an error *(ADR 0003)*. Inactive pool leaves contribute no boundary anchors | **0.1** | D24, D25 |
+| F-921 | `mp.NumberPlane` follows Manim's `NumberPlane`: its signature, its defaults (the table below), its `background_line_style` and its faded lines *(ADR 0003)*. A standalone `NumberLine` and `ComplexPlane` | **0.1** / **0.2** | D27, ADR 0003 |
 | F-922 | Library mobjects work with Manim's scene caching on, hashed by their derived state, and keep identity hashing | **0.1** | D27 |
 
 ## F-10xx — Quality gates
@@ -235,8 +243,8 @@ choosing it later breaks nothing.
 | F-1005 | The API is IDE-navigable: overloads on `plot`, typed descriptors, no string-keyed registry as the primary access path | **0.1** | A4.2 |
 | F-1006 | The invalid-input table below is implemented and tested on every surface it lists | **0.1** | PLAN |
 | F-1007 | Supported matrix for 0.1: Manim 0.21.0 and 0.22.0 exactly — another version is a review step (F-917) — Python >= 3.12, NumPy >= 2.5, Cairo renderer. Constructing a library mobject under the OpenGL renderer raises, naming Cairo | **0.1** | task/01, task/02, D26, D27 |
-| F-1008 | The docs state each difference from plain Manim where users will meet it: the defect fixes of the defaults table; `Create` after `Uncreate` (F-907); curves following their system and only its permanent changes (F-916), `Rotate(ax, TAU)` included; the double move in code ported from Manim that animates both; bound helper labels (F-609); `c2p` and `p2c` raising where Manim returns `NaN`; late binding of loop variables on a resample (F-918); callbacks running once more under simulation; `refresh()` after a bare point edit; approximate non-affine frames; and `PhaseFlow`-like callbacks growing an artist's transform | **0.1** | PLAN risk, D20, D22, D23 |
-| F-1009 | Every 0.1 capability with a Manim counterpart of the same semantics is reachable under Manim's name, signature and meaning: the `Axes` constructor with `axis_config` and the `NumberLine` keys listed in the defaults table, `mp.NumberPlane`, the 0.1 rows of the parity survey, and `plot`'s keywords (F-704). An `axis_config` key with no 0.1 capability raises, naming the key. Defaults follow the defaults table: Manim's except where its picture is a defect. `from manim_plots import *` exports `CartesianAxes`; `mp.Axes` is the same class | **0.1** | D17, D23, D27 |
+| F-1008 | The docs state each difference from plain Manim where users will meet it: the defect fixes of the defaults table; `Create` after `Uncreate` (F-907); curves following their system and only its permanent changes (F-916), `Rotate(ax, TAU)` included; the double move in code ported from Manim that animates both; bound helper labels (F-609); `c2p` and `p2c` raising where Manim returns `NaN`; late binding of loop variables on a resample (F-918); callbacks running once more under simulation; `refresh()` after a bare point edit; approximate non-affine frames; `PhaseFlow`-like callbacks growing an artist's transform; and *(ADR 0003)* ticks at integer multiples of the step where Manim anchors at `x_min`; the hidden frame's lag slot, so `Create(ax)` finishes its visible leaves at 24/25 of the run; partial drawing of an adaptively sampled curve paced by sample, not by `x`; `Transform` pairing ticks by key; `ax.add` registering where Manim parents; a singular frame refusing an operation that needs its inverse; and an unknown `axis_config` key raising | **0.1** | PLAN risk, D20, D22, D23, ADR 0003 |
+| F-1009 | Every 0.1 capability with a Manim counterpart of the same semantics is reachable under Manim's name, signature and meaning: the `Axes` constructor with `axis_config` and the `NumberLine` keys listed in the defaults table, `mp.NumberPlane`, the 0.1 rows of the parity survey, and `plot`'s keywords (F-704). An `axis_config` key with no 0.1 capability raises, naming the key. Defaults follow the defaults table: Manim's except where its picture is a defect. `from manim_plots import *` exports `CartesianAxes`; `mp.Axes` is the same class. `p2n` and `point_to_number` take arrays, as in 0.22.0, and an unknown attribute on a library mobject raises `AttributeError` *(ADR 0003)* | **0.1** | D17, D23, D27, ADR 0003 |
 
 ---
 
@@ -253,14 +261,16 @@ differs. This table is the oracle of the parity test against Manim's own `Axes`.
 | Lengths | `round(frame_width) - 2`, `round(frame_height) - 2` | same | parity |
 | `tips` | `True` | same | parity |
 | A two-element range | step 1 | a `Multiple(1)` locator | parity |
-| Tick positions | `x_min + k * step`, so `[0.001, 6, 1]` ticks at 0.001, 1.001, … | integer multiples `k * step` (F-402) | fix |
+| Tick positions | multiples of the step from 0 when the range contains 0, otherwise `x_min + k * step`, so `[0.001, 6, 1]` ticks at 0.001, 1.001, … *(ADR 0003)* | integer multiples `k * step` (F-402), so keys stay stable across an animated range (F-413) | difference, in F-1008 *(ADR 0003)* |
 | The end tick under a tip | dropped | kept (F-411) | fix |
 | A tick and a number where the axes cross | none (`exclude_origin_tick`, `numbers_to_exclude=[0]`) | none | parity |
 | Tick shape | straddles the line, `tick_size=0.1`, `longer_tick_multiple=2` | same; direction configurable (F-604) | parity |
 | Numbers | off (`include_numbers=False`), `font_size=36` | same | parity |
-| Decimal places | follow the step | same | parity |
+| Decimal places | the characters after the point in `str(step)`; `1e-05` gives 0 | same, except that a step in scientific notation counts its exponent: `1e-05` gives 5 *(ADR 0003)* | parity, plus a fix |
 | Label direction | x `DOWN`, y `LEFT` | same | parity |
-| An axis whose range excludes 0 | sits at the range edge | same; the origin is a parameter (F-203) | parity, plus a fix |
+| An axis whose range excludes 0 | sits at the range edge | same; the crossing is a parameter (F-203) *(ADR 0003)* | parity |
+| Centring *(ADR 0003)* | the midpoint of each range sits at the scene origin | same | parity |
+| Axis line and tip *(ADR 0003)* | `stroke_width=2.0`; tip `0.35 × 0.35`; `line_to_number_buff=0.25`; the y axis rotated by 90° | same | parity |
 | A curve outside the viewport | drawn | clipped (F-706) | fix |
 | Colour of `plot` | white for every plot | a cycle whose first colour is white (F-803) | fix for the second plot on |
 | Colour of `plot_line_graph` | `PURE_YELLOW` | same | parity |
@@ -270,10 +280,22 @@ differs. This table is the oracle of the parity test against Manim's own `Axes`.
 | `axis_config={"scaling": LogBase()}` | the range is in exponents: `y_range=[-2, 6]` spans 10⁻² to 10⁶ | same; the library's own `scale="log"` takes data values | same spelling |
 | `axis_config` keys | `NumberLine.__init__` | honoured: `include_numbers`, `numbers_to_include`, `numbers_to_exclude`, `decimal_number_config`, `font_size`, `include_ticks`, `tick_size`, `longer_tick_multiple`, `numbers_with_elongated_ticks`, `exclude_origin_tick`, `include_tip`, `tip_shape`, `tip_width`, `tip_height`, `label_direction`, `line_to_number_buff`, `unit_size`, `scaling`, `stroke_width`, `color`. Any other key raises, naming it (F-1009) | parity |
 
+What `mp.NumberPlane(...)` does against `NumberPlane(...)` (F-921) *(ADR 0003)*:
+
+| Default or argument | Manim 0.21.0 | manim-plots | Kind |
+|---|---|---|---|
+| Ranges when omitted | `(-frame_x_radius, frame_x_radius, 1)`, `(-frame_y_radius, frame_y_radius, 1)` | same | parity |
+| Lengths when omitted | from a unit size of 1, so the plane fills the frame | same | parity |
+| Axes | `stroke_width=2`, no ticks, no tips, `line_to_number_buff=SMALL_BUFF`, numbers at `font_size=24`, `label_direction=DR` | same | parity |
+| Background lines | `stroke_color=BLUE_D`, `stroke_width=2`, `stroke_opacity=1` | same | parity |
+| Faded lines | `faded_line_ratio=1`; unless given, a faded copy of the background style | same | parity |
+
 ## Invalid input: one rule, surface by surface
 
 **At construction, a malformed argument raises.** No warning, no repair, no partial
-object; the exception names the parameter.
+object; the exception names the parameter. A malformed value raises `ValueError` and a
+wrong type `TypeError`; for an array the message names the first invalid index. A
+warning at use is a `ManimPlotsWarning` *(ADR 0003)*.
 
 | Malformed input at construction | Behaviour |
 |---|---|
@@ -293,15 +315,15 @@ object; the exception names the parameter.
 | A `region` payload with `topology=None`, or a `path` or `points` payload with a topology | raise |
 
 **At use, the surface decides**, because that is the only thing that differs between the
-four.
+five *(ADR 0003)*.
 
 | Surface | `NaN` or infinity from a source or node | Argument outside a node's domain | Configured range outside the scale's domain | Degenerate parameter |
 |---|---|---|---|---|
-| **Path sampling** (F-705) | split the path, warn once per artist per rebuild | split the path, warn once | normalised by the scale before sampling (F-311), so sampling never sees it | empty source: a `(0, 2)` segments array, draw nothing, warn once |
+| **Path sampling** (F-705) | split the path, warn once per artist per data change *(ADR 0003)* | split the path, warn once | normalised by the scale before sampling (F-311), so sampling never sees it | empty source: a `(0, 2)` segments array, draw nothing, warn once |
 | **Tick generation** (F-410) | candidate dropped, no warning | candidate dropped, no warning | ticks are generated over the normalised range only | zero or negative step: **raise**, naming the parameter (F-409) |
 | **`c2p` / `p2c`** (F-202) | **raise** | **raise** | not applicable — a conversion takes a value, not a range, and never clamps | **raise** |
 | **Formatting** (F-501) | the tick never reaches the formatter | as above | as above | an empty tick list formats to an empty label list |
-| **Point and region drawing** (F-114) | sample marked invalid in `valid` and not drawn — a region cell is dropped when any corner is invalid — warn once per artist per rebuild | as the column to the left | normalised by the scale (F-311) before sampling | empty payload: `(0, 2)` segments, draw nothing, warn once |
+| **Point and region drawing** (F-114) | sample marked invalid in `valid` and not drawn — a region cell is dropped when any corner is invalid — warn once per artist per data change *(ADR 0003)* | as the column to the left | normalised by the scale (F-311) before sampling | empty payload: `(0, 2)` segments, draw nothing, warn once |
 
 The asymmetry is deliberate. A path has a segment boundary to express the failure with,
 a point set and a region have a per-sample mask, an axis has the option of simply having
@@ -388,10 +410,10 @@ been enough.**
   later `Shape` node emitting new `coords` and `topology`; the payload already permits
   that, so the upgrade is additive. And **a split path is `segments`, not sentinel `NaN`
   rows**, which matters in 0.1 already: F-705 splits at poles on the very first release.
-- Only the *implementation* of the `region` branch is deferred. The branch itself, and
-  the payload fields it needs, ship in 0.1 as declared-and-unused, because adding a field
-  to a frozen return type in 0.2 is exactly the breaking change this exercise exists to
-  prevent.
+- Only the *implementation* of the `region` branch is deferred. The branch itself and its
+  `topology` ship in 0.1 as declared-and-unused. Field values for contours and vector
+  fields arrive in 0.2 as optional payload fields with defaults, which breaks no 0.1
+  consumer (ADR 0001 §3, D26) *(ADR 0003)*.
 - Remaining risk, recorded rather than solved: general predicate domains and disjoint
   valid regions stay a 0.2 concern (D6). The validity mask in F-114 is what a predicate
   domain would eventually populate, so the shape is right even though the machinery is
@@ -438,7 +460,7 @@ layout and subplot management; tick-label tables; copying settings between axes 
 | 10 — `LogBase` naming inverted | reproduces | F-303 |
 | 11 — label overlap | reproduces | F-505, F-408 |
 | 12 — ticks centred on the axis line | reproduces | F-604 |
-| 13 — `_origin_shift` clamps to the range minimum | reproduces | F-203 |
+| 13 — `_origin_shift` clamps to the range minimum | reproduces; kept by default, fixable by a parameter *(ADR 0003)* | F-203 |
 | 14 — geometric ops corrupt the mapping | gone in 0.21.0 | F-208 (regression test), F-207 (the projection note) |
 | 15a — `plot()` joins across a pole | new | F-705 |
 | 15b — tick step doubles as the sampling step | new | F-414, F-704 |
@@ -488,6 +510,7 @@ layout and subplot management; tick-label tables; copying settings between axes 
 | D25 — tick identity is stable across ranges; the pool has spare leaves | F-401, F-413, F-920 |
 | D26 — the contracts, closed before the freeze | F-201, F-207, F-707, F-915, F-917, F-1001, F-1007 |
 | D27 — Manim's surface, case by case | F-603, F-609, F-704, F-705, F-921, F-922, F-1007 |
+| ADR 0003 — the final reviews, closed | F-110, F-112, F-114, F-203, F-204, F-205, F-301, F-311, F-401, F-403, F-404, F-409, F-702, F-705, F-708, F-906, F-908, F-912, F-915, F-917, F-918, F-920, F-921, F-1008, F-1009 |
 
 ### The parity survey
 

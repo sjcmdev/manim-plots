@@ -125,14 +125,122 @@ from a repository with nothing ambiguous in it.
 - [x] Finish the test infrastructure: visual baselines with `--update-baselines`, a
       frame-cost benchmark harness, render tests in the merge gate (`tools/check.py`),
       diagnostic logging with console and file sinks — ADR 0002
-- [ ] Two independent final reviews from one brief, by Codex and by Claude —
-      `docs/reviews/<date>-final-codex.md`, `docs/reviews/<date>-final-claude.md`
-- [ ] Every finding closed or recorded as a decision in `docs/grill-log.md`; a change to
-      a frozen contract goes through a new ADR
+- [x] Two independent final reviews from one brief, by Codex and by Claude —
+      `docs/reviews/2026-10-28-final-codex.md`, `docs/reviews/2026-10-28-final-claude.md`
+- [x] Every finding closed or recorded — `docs/reviews/2026-10-29-final-triage.md`; the
+      changes to frozen documents in ADR 0003
 
-## Stage 2 onward
+## Stage 2 — implementation
 
-With 0.1 and its architecture frozen (ADR 0001) and reviewed once more, task numbering
-continues at 06. The coarse order: numeric core (scales, tick location, frame numerics,
-lifecycle transitions) → axis and frame → data plotting → legend → documentation and
-first release. It is an order, not a schedule.
+Merged from the task lists of both final reviews. It is an order, not a schedule, and it
+retires the known risks first: the stack contract on both Manim versions in task 06, the
+4 ms per-frame margin in tasks 07 and 09.
+
+Every task starts with an **acceptance table** for the under-specified rows it owns
+(ADR 0003 §9): signatures, edge cases, errors, reviewed before code. Every task passes
+`uv run python tools/check.py`, render tests included. A benchmark runs with
+`uv run pytest -m benchmark` on one quiet machine.
+
+### task/06-core-contracts
+
+`core/payload.py`, `core/scales.py`, `core/nodes.py`, and the pin inventory of
+`mobjects/context.py`. F-103, F-105, F-109, F-114, F-201-F-209 (numerics), F-301-F-307,
+F-311, F-917 (pins), F-1003, F-1006 (payload rows).
+
+- [ ] Acceptance table: payload, scales, nodes
+- [ ] Tooling: TID251 for the layer rules (the core imports no Manim; only `context.py`
+      reads frames), a derandomised Hypothesis profile for the gate, SciPy declared,
+      `__all__`, `ManimPlotsWarning` turned into errors in the tests
+- [ ] `tests/core/test_payload.py` (one test per invalid-input row), `test_scales.py`
+      (round trip and monotonicity by Hypothesis with fixed anchors, symlog,
+      `limit_range`), `test_nodes.py` (affine round trip, singular and near-singular
+      frames, off-plane points, non-affine inversion)
+- [ ] `tests/mobjects/test_manim_contract.py`: the pin sets of 0.21.0 and 0.22.0,
+      `Scene.get_moving_mobjects` with both queries
+
+### task/07-sources-shape-params
+
+`core/sources.py`, `core/shape.py`, `core/params.py`. F-104, F-106-F-108, F-110, F-113,
+F-703-F-707, F-710 (`resample_like`), F-806, F-911 and F-918 (numerics).
+
+- [ ] Acceptance table: sources, shape, parameters
+- [ ] `tests/core/test_sources.py`, `test_shape.py` (the pipeline order of ADR 0003 §1:
+      a segment crossing the viewport, a single point, a pole gap, dash phase),
+      `test_params.py` (snapshots, a callable binding dirty once per frame)
+- [ ] `tests/benchmark/test_core_pipeline.py`: four artists of 2 000 samples on both
+      frame paths — the first reading of the 4 ms margin
+
+### task/08-ticks-formatters-lifecycle
+
+`core/ticks.py`, `core/formatters.py`, `core/lifecycle.py`. F-401-F-414, F-501-F-507,
+F-920 (plan), F-903, F-905, F-907, F-919 (transitions).
+
+- [ ] Acceptance table: locators, formatters
+- [ ] `tests/core/test_ticks.py` (keys stable across ranges and unique, `Multiple(0.1)`
+      exact, merge order on a reversed range, `contains` with `max_ticks`),
+      `test_formatters.py` (`format_ticks` and wrapped callables), `test_pool.py`,
+      `test_lifecycle.py` (every cell, and the precedence cases of ADR 0003 §5)
+
+### task/09-leaves-context-frame
+
+`mobjects/leaves.py`, `mobjects/context.py`, and enough of `system.py`, `axis.py` and
+`artists.py` for one axis and one analytic artist. F-101, F-102, F-111, F-112,
+F-901-F-905, F-914-F-917, F-1004, F-1007; F-701 and F-702 begun.
+
+- [ ] `tests/mobjects/test_leaves.py` (cache identity, leaf types), `test_context.py`,
+      `test_copy.py`
+- [ ] Render tests: F-914 against the same scene without the frame; F-915 middle frames
+      on both versions and in both insertion orders
+- [ ] `tests/benchmark/test_f1001.py`: an end-to-end spike without labels — the first
+      reading of the real gate
+
+### task/10-axis-decoration
+
+`mobjects/axis.py`, `mobjects/system.py`. F-408, F-411-F-413, F-505-F-508, F-601-F-609,
+F-921, F-1009 (constructor, `axis_config`, defaults).
+
+- [ ] Acceptance table: axis parts, label layout, `NumberPlane`
+- [ ] `tests/mobjects/test_axis.py`, `test_defaults.py` (every row of both defaults
+      tables against Manim's own `Axes` and `NumberPlane`, style attributes included,
+      under a changed `tempconfig` too), `test_number_plane.py`; visual baselines of
+      axes and label layout
+- [ ] F-1001 with labels from a warm glyph cache
+
+### task/11-artists-animate
+
+`mobjects/artists.py`, `mobjects/system.py`, `mobjects/leaves.py`. F-701-F-709,
+F-903-F-911, F-915-F-920, F-922, F-1005: keyed `.animate`, `Transform` between systems,
+the `ReplacementTransform` transfer, `ax.remove`.
+
+- [ ] Acceptance table: artists, registration, the data channel
+- [ ] `tests/mobjects/test_artists.py`, `test_registration.py`, `test_data_channel.py`
+- [ ] The F-906 matrix: end states and sampled intermediate frames against plain Manim
+      run live (ADR 0003 §7); F-922 with caching on
+
+### task/12-legend-style-animations
+
+`mobjects/legend.py`, `mobjects/animations.py`, `mobjects/artists.py`. F-710, F-801-F-807,
+F-912.
+
+- [ ] Acceptance table: legend placement and merging, the colour cycle, markers, dashes
+- [ ] `tests/mobjects/test_legend.py`, `test_style.py`, `test_animations.py`
+      (`TraceCurve` in data order, `Morph`'s pairs); visual baselines
+
+### task/13-hardening
+
+F-1001 final, F-1002, F-1003, F-1005, F-1006 on every surface.
+
+- [ ] F-1001 on both frame paths, the 1.5x check against
+      `tests/benchmark/test_plain_manim.py`, setup recorded; the JSON kept with the release
+- [ ] The full gate on both Manim versions
+
+### task/14-docs-release
+
+F-1008, F-1009 in the documentation; packaging.
+
+- [ ] Sphinx with numpydoc, warnings as errors; F-1008's differences and the migration
+      notes where users meet them
+- [ ] A changelog, absolute links in the README, Documentation and Issues URLs
+- [ ] `uv build` with `LICENSE` in the sdist and the wheel; install and import from an
+      environment outside the repository
+- [ ] `dev` into `main`, tagged: the first release

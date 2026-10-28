@@ -404,6 +404,7 @@ Recorded as a decision, not an oversight.
 discontinuities draws the pieces in path order, which is arbitrary), `ShowPoints`
 (scatter revealed in data order, composable with `TraceCurve` through an
 `AnimationGroup`), `Morph` (D8), and the data-channel animation as a public class.
+*The class is dropped by ADR 0003: since D21 the native `.animate` is the data channel.*
 
 Later: `AppendData` (points arriving over time in a time series), `Rescale` as a
 shorthand, `HighlightTick`.
@@ -587,7 +588,8 @@ the ceiling that chaining one with another must raise.
   style survives an exit and return inside one animation (qualifies D10).
 - **The plot function is a callable binding** in D8's sense, so it is always dirty. It
   is sampled once per rendered frame, by the synchronisation updater, never once per
-  read; a frozen `wait` samples nothing.
+  read; a frozen `wait` samples nothing. *Revised by D22, which samples a plot function
+  as Manim does; ADR 0003 keeps "once per frame, never per read" for callable bindings.*
 - **Every library mobject carries an updater without `dt`.** Cairo draws everything
   before the first animated or updating mobject once, as a static background
   (`scene.py::Scene.get_moving_mobjects`), which would freeze a bound artist through an
