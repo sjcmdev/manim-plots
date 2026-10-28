@@ -120,6 +120,9 @@ from a repository with nothing ambiguous in it.
       `docs/poc/`, every review under `docs/reviews/`, the plan as `docs/plan.md`, a
       document index in `docs/README.md`, a `LICENSE` file; internal prompts kept out of
       the repository
+- [x] Finish the test infrastructure: visual baselines with `--update-baselines`, a
+      frame-cost benchmark harness, render tests in the gate (`tools/check.py --render`),
+      diagnostic logging with console and file sinks — ADR 0002
 - [ ] Two independent final reviews from one brief, by Codex and by Claude —
       `docs/reviews/<date>-final-codex.md`, `docs/reviews/<date>-final-claude.md`
 - [ ] Every finding closed or recorded as a decision in `docs/grill-log.md`; a change to

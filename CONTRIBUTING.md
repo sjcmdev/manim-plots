@@ -12,6 +12,7 @@ uv run ruff check . --fix   # lint
 uv run ruff format .        # format
 uv run mypy                 # type check
 uv run python tools/check.py   # all four, across Python 3.12/3.13 x Manim 0.21/0.22
+uv run python tools/check.py --render   # the same, plus the render tests
 ```
 
 All four checks must pass across the matrix before a change is merged. There is no
@@ -38,6 +39,12 @@ into `main` when a stage is finished. Task numbers and the full plan live in `TO
   concepts that Manim, matplotlib or gnuplot already named.
 - **Comments:** explain *why*, never *what*. Code that needs a comment to explain what
   it does should be rewritten instead.
+- **Logging:** `log = logging.getLogger(__name__)` in each module, with %-style
+  arguments and never an f-string (ruff `G`, `LOG`). Nothing is logged inside a
+  per-sample loop. An argument that is costly to build goes behind
+  `log.isEnabledFor(logging.DEBUG)`. To see the log, set `MANIM_PLOTS_LOG=DEBUG` for the
+  console or `MANIM_PLOTS_LOG_FILE=<path>` for a file, or use pytest's
+  `--log-cli-level=DEBUG` (ADR 0002).
 
 ## Testing
 
@@ -52,6 +59,18 @@ into `main` when a stage is finished. Task numbers and the full plan live in `TO
   monotonicity, idempotence. A golden value copied from the current output tests that
   the code still does what it does, which is how the defects this library exists to
   avoid survived for years.
+- A visual baseline (ADR 0002) shows what the library draws and catches a change to it.
+  It never replaces an oracle. Add or change one only after looking at the picture:
+
+  ```sh
+  uv run pytest -m render                               # compare; a failure writes
+                                                        # tests/visual/_out/*.actual.png
+                                                        # and *.diff.png
+  uv run pytest -m render -k <name> --update-baselines  # accept a new or changed picture
+  ```
+
+- Benchmarks (`tests/benchmark/`, F-1001) run only on request: `uv run pytest -m
+  benchmark`. Each result goes to the terminal summary and to `.benchmarks/`.
 
 ## Public API stability
 

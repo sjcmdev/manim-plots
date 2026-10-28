@@ -41,7 +41,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the project conventions and
 
 ```
 src/manim_plots/   the library
-tests/             its test suite
+tests/             its test suite; visual baselines in tests/visual/baselines/
 tools/             the local check gate and the parity-survey snapshot tool
 docs/              scope, architecture, decisions, reviews — indexed in docs/README.md
 poc/               four proofs of concept behind ADR 0001; frozen evidence, never shipped

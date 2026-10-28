@@ -13,6 +13,10 @@ build/
 .coverage
 htmlcov/
 
+# Test outputs: benchmark results, renders and diffs of failed visual tests
+.benchmarks/
+tests/visual/_out/
+
 # Manim
 media/
 videos/

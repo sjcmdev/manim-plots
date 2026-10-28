@@ -8,8 +8,9 @@ Everything about manim-plots that is not code. Each document has one status:
   paths in it are updated when the repository moves; line numbers in it refer to the
   commit it was written against.
 
-When two documents disagree, ADR 0001 and the 0.1 tier of `scope.md` win, then the
-latest decision in `grill-log.md`. A disagreement is a defect to fix, not a choice.
+When two documents disagree, the ADRs and the 0.1 tier of `scope.md` win, then the
+latest decision in `grill-log.md`. Between two ADRs, the later one wins where it says it
+supersedes the earlier. A disagreement is a defect to fix, not a choice.
 
 ## Read first
 
@@ -17,6 +18,7 @@ latest decision in `grill-log.md`. A disagreement is a defect to fix, not a choi
 |---|---|---|
 | [`scope.md`](scope.md) | Frozen (tier 0.1) | Every requirement as an `F-*` with a tier, the defaults table, invalid-input rules, paper checks, traceability |
 | [`adr/0001-architecture.md`](adr/0001-architecture.md) | Frozen | Layers, module layout, the public contracts, the leaf lifecycle |
+| [`adr/0002-test-infrastructure.md`](adr/0002-test-infrastructure.md) | Frozen | Visual baselines, benchmarks, render tests in the gate, diagnostic logging |
 | [`grill-log.md`](grill-log.md) | Living | Decisions D1-D27 with reasoning and rejected alternatives; a later decision says which earlier one it supersedes |
 | [`plan.md`](plan.md) | Living | The design rationale and mechanism in prose: pipeline, `.animate`, containers, API, the 0.1 gate, risks |
 
