@@ -73,7 +73,8 @@ Requirements come before architecture. No module layout is decided until this ta
 closes.
 
 - [x] Turn each confirmed defect from task 01 into a functional requirement
-      — the traceability table in `docs/scope.md` maps all 18 to `F-*`
+      — the traceability table in `docs/scope.md` traces all 20 audit rows, the dropped
+        14 included, to `F-*`
 - [x] Collect the requirements list from collaborators — answered inline in
       `docs/api-sketch.md` and placed in D9; traced to `F-*` in `docs/scope.md`
 - [x] Parity survey: what matplotlib, gnuplot and OriginPro offer that Manim does not
@@ -88,7 +89,8 @@ closes.
 - [x] Public contracts: scale, locator, formatter — the extension points third
       parties implement against — `typing.Protocol`s, ADR 0001 section 3
 - [x] Separation between the data model and the Manim geometry it produces
-      — a NumPy-only `core/` and a `mobjects/` layer, ADR 0001 sections 1-2
+      — a `core/` free of Manim (NumPy, SciPy, the standard library) and a `mobjects/`
+        layer, ADR 0001 sections 1-2
 - [x] How a coordinate system survives Manim's geometric transformations
       — a hidden frame and a leaf lifecycle, ADR 0001 section 4 and D17-D21
 - [x] Record as `docs/adr/0001-architecture.md` — accepted with the maintainer's
@@ -121,7 +123,7 @@ from a repository with nothing ambiguous in it.
       document index in `docs/README.md`, a `LICENSE` file; internal prompts kept out of
       the repository
 - [x] Finish the test infrastructure: visual baselines with `--update-baselines`, a
-      frame-cost benchmark harness, render tests in the gate (`tools/check.py --render`),
+      frame-cost benchmark harness, render tests in the merge gate (`tools/check.py`),
       diagnostic logging with console and file sinks — ADR 0002
 - [ ] Two independent final reviews from one brief, by Codex and by Claude —
       `docs/reviews/<date>-final-codex.md`, `docs/reviews/<date>-final-claude.md`

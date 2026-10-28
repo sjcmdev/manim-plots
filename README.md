@@ -15,9 +15,10 @@ data plotting for Manim scenes. It builds on Manim's primitives (`Line`, `MathTe
 
 From the user's side it behaves and is spelled like plain Manim: `mp.Axes`,
 `axis_config`, `ax.plot`, `ax.add_coordinates`, `.animate`. It differs from Manim only
-where Manim's behaviour is a defect, and those fixes are on by default. The plotting
-features Manim lacks — scales, tick locators, label formatters, a legend — follow what
-matplotlib and gnuplot established.
+where Manim's behaviour is a defect, with those fixes on by default, and where binding
+data to a coordinate system needs it; the documentation lists every difference. The
+plotting features Manim lacks — scales, tick locators, label formatters, a legend —
+follow what matplotlib and gnuplot established.
 
 ## Requirements
 

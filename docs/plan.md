@@ -3,8 +3,10 @@
 _Locked via grill — by Claude + the maintainer, 2026-09-04/05._
 _Revised after Codex review rounds 1-8, 2026-09-05._
 _Revised after the four task/04 proofs of concept, 2026-10-24 (D17-D21 in the grill
-log). The shadow test, the placement chain kept by the library, `mp.Group` and the
-data-mutator `override_animate` are gone; the sections below say what replaced them._
+log), and after the freeze reviews (D22-D27). The Goal and acceptance criteria below are
+task/03's, kept as written; the design sections are current. The shadow test, the
+placement chain kept by the library, `mp.Group` and the data-mutator `override_animate`
+are gone; the sections below say what replaced them._
 
 Full reasoning and the rejected alternatives are in `docs/grill-log.md` (D1-D27).
 The annotated API sketch with the maintainer's own comments is `docs/api-sketch.md`.
@@ -404,7 +406,7 @@ the one path where the failure is both likely and unmistakable.
 
 **Generated parts keep identity, and every locator supplies its own key function.**
 A tick at `x=2.0` is the same mobject across rebuilds, so
-`ax.x.labels.at(2.0).set_color(RED)` survives an animated range change. The key cannot be
+`ax.x.numbers.at(2.0).set_color(RED)` survives an animated range change. The key cannot be
 the raw float — a recomputation yields `0.30000000000000004` where the user asked for
 `0.3` — and it cannot be derived from a step, because log and callable locators have no
 step. So `key(value)` is part of the locator protocol: `Multiple(step)` keys by the

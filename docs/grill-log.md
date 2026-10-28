@@ -1,8 +1,9 @@
 # Grill log — design decisions D1-D27
 
-Running record of decisions locked during the Act 1 interview (`/grill-me-codex`).
-Not the deliverable. Feeds `docs/plan.md`, which feeds `docs/scope.md` and the
-architecture ADR. Nothing here is implemented yet.
+The record of every design decision, D1 onwards, with its reasoning and the alternatives
+it rejected. It began as the task/03 interview (`/grill-me-codex`) and stays current: a
+later decision says which earlier one it revises. Where it disagrees with `docs/scope.md`
+or an ADR, those win (`docs/README.md`).
 
 ## D1 — Scope filter
 
@@ -123,7 +124,9 @@ outside it. Deliberate: an animation explaining the construction of the logarith
 must be able to show what happens for negative arguments, including drawing the
 wrong-but-intuitive curve. Undefined points produce a break in the path and a warning
 once per artist, never a silent NaN and never a refusal. Policy is selectable per
-artist (`warn` default, `raise`, `ignore`).
+artist (`warn` default, `raise`, `ignore`). *Superseded for 0.1 by the invalid-input
+table of `docs/scope.md`, which fixes one behaviour per surface and has no per-artist
+policy.*
 
 Source holds a read-only reference to the compiled Map, so sampling can adapt to
 curvature *after* mapping. This is the pipeline's only feedback edge, taken
@@ -743,6 +746,7 @@ value on every range.
   being compiled involves their system or a tracker they are bound to, or when they hold
   a live function. Otherwise they stay in Cairo's static background, as a Manim graph
   would. The play's animations are read from that frame, as the other stack facts are.
+  *Revises D21's "every library mobject carries an updater without `dt`".*
 
 ## D27 — Manim's surface, case by case *(default taken)*
 

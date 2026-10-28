@@ -1,8 +1,11 @@
 # Documents
 
-Everything about manim-plots that is not code. Each document has one status:
+The documents about manim-plots under `docs/`. The root holds the rest: `README.md`,
+`CONTRIBUTING.md` (conventions, the testing policy, API stability), `TODO.md` (the task
+plan and the branch policy) and `LICENSE`; `poc/README.md` describes the proofs of
+concept. Each document here has one status:
 
-- **Frozen** — a change needs a new ADR (`CONTRIBUTING.md`, *Public API stability*).
+- **Frozen** — any change needs a new ADR that says what it supersedes.
 - **Living** — kept current as decisions are made.
 - **Record** — written once and kept as a record of what was done or found. Only file
   paths in it are updated when the repository moves; line numbers in it refer to the

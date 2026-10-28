@@ -269,7 +269,7 @@ missing. All twelve concrete locators:
 
 | matplotlib locator | Verdict | Ours |
 |---|---|---|
-| `AutoLocator` | **0.1** | the default, which is `MaxN` |
+| `AutoLocator` | **0.1** | `MaxN`, on request; the default stays Manim's step (`docs/scope.md`, defaults table) |
 | `MaxNLocator` | **0.1** | `MaxN(n)`, nice-number steps |
 | `MultipleLocator` | **0.1** | `Multiple(step)`, and the sugar behind the Manim `x_range` triple |
 | `FixedLocator` | **0.1** | `Fixed([...])`, the gnuplot explicit list |
@@ -353,7 +353,7 @@ set xtics {axis | border} {{no}mirror}
 
 | Option | Verdict | Ours |
 |---|---|---|
-| `autofreq` | **0.1** | the default locator, `MaxN` |
+| `autofreq` | **0.1** | `MaxN`, on request; the default stays Manim's step |
 | `<incr>` and `<start>,<incr>,<end>` | **0.1** | `Multiple(step)` with an optional generation window |
 | `("label" <pos> <level>, ...)` | **0.1** | `Fixed([...])` taking `(value, label, level)`. **The level matters**: an explicit list must be able to place a *minor* tick, which neither the matplotlib `FixedLocator` nor the plan expressed. Becomes `F-404` |
 | `add` | **0.1** | explicit ticks *added to* the generated ones rather than replacing them — a two-line union in the locator now, a breaking change later. Becomes `F-405` |
@@ -415,7 +415,7 @@ Reference Lines, Breaks, Rug.
 | Prefix, suffix, divide by a factor, custom formula | **0.1** | all four are the callable formatter |
 | Rotation, with auto 45 and 90 degrees; text wrapping | **0.1** rotation, **0.2** wrapping | rotation is overlap answer number two |
 | **Hide overlapping labels** | **0.1** | overlap answer number three, and the one Manim lacks entirely (defect 11) |
-| Special Ticks: add or hide an individual tick at any value, with a custom label and its own style | **0.1** | exactly what keyed identity (D10) buys — `ax.x.labels.at(2.0)` — plus explicit add and hide |
+| Special Ticks: add or hide an individual tick at any value, with a custom label and its own style | **0.1** | exactly what keyed identity (D10) buys — `ax.x.numbers.at(2.0)` — plus explicit add and hide |
 | Grids: major, minor, opposite side, colour | **0.1** | |
 | Reference Lines | **0.2** | the drop-line and `axhline` cluster |
 | Breaks | **0.2** | broken axes, already deferred |
