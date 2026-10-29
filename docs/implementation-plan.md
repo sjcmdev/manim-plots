@@ -373,8 +373,33 @@ default.
 
 A user theme is a dict *(default taken)*. The names are the maintainer's to refine.
 
+Ticks at a border point inward unless a direction is set (ADR 0005 §1): an axis placed
+at a named border, a mirror, a twin's axis; an axis through the data keeps Manim's
+straddling ticks. `Theme.tick_direction=None` is that rule.
+
 **Tests.** `tests/mobjects/test_themes.py`: each theme equals the explicit calls it stands
-for; a visual baseline per theme.
+for; the inward rule on every kind of border axis and its exceptions; a visual baseline
+per theme.
+
+### 19b — an independent top axis
+
+After task 20 (ADR 0005 §2).
+
+**Modules.** `mobjects/axis.py`, `mobjects/system.py`.
+
+**Settles.**
+- `ax.secondary_xaxis(location="top", functions=None)` and `ax.secondary_yaxis(...)`,
+  matplotlib's names: ticks located and labelled in `forward(x)`, placed through
+  `inverse`; monotonic on the range or `ValueError`; following an animated range.
+- A mirror styled apart from its original: tick style, direction, locator, numbers.
+- A twin or a secondary axis on a side takes the place of that side's mirror.
+
+**Manim defects.** None: Manim has no top axis.
+
+**Tests.** `tests/mobjects/test_top_axis.py`: ticks of a secondary axis against
+`inverse` of the locator's values (nm and eV, celsius and kelvin), an animated range, a
+non-monotonic function raising, a mirror styled alone, one line on a framed side under
+`twiny`; a picture each of `twiny` and a secondary axis, a film.
 
 ### 21 — fields and flow
 

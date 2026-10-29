@@ -311,7 +311,19 @@ F-610: `twinx`, `twiny`, further offset axes; plots bound to their pair.
 Named axis themes and colour cycles, the maintainer's Origin themes among them.
 
 - [ ] Acceptance table with the names for the maintainer's review
+- [ ] Ticks at a border point inward unless a direction is set (ADR 0005 §1, TH-11);
+      the changed baselines reviewed one by one
 - [ ] Implementation, a baseline per theme, gate
+
+### task/19b-top-axis
+
+An independent top axis (ADR 0005 §2), after task 20.
+
+- [ ] Acceptance table: `secondary_xaxis`, `secondary_yaxis` with `functions=(forward,
+      inverse)`; a mirror styled on its own; a twin or a secondary axis taking the place
+      of its side's mirror
+- [ ] Implementation, tests, a picture of `twiny` and one of a secondary axis, a film,
+      gate; scope rows F-606 and F-610 and the parity survey amended
 
 ### task/21-fields-flow
 

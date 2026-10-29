@@ -265,7 +265,7 @@ differs. This table is the oracle of the parity test against Manim's own `Axes`.
 | Tick positions | multiples of the step from 0 when the range contains 0, otherwise `x_min + k * step`, so `[0.001, 6, 1]` ticks at 0.001, 1.001, … *(ADR 0003)* | integer multiples `k * step` (F-402), so keys stay stable across an animated range (F-413) | difference, in F-1008 *(ADR 0003)* |
 | The end tick under a tip | dropped | dropped; `set_tips(tick_under_tip=True)` keeps it (F-411) | Manim's |
 | A tick and a number where the axes cross | none (`exclude_origin_tick`, `numbers_to_exclude=[0]`) | none | parity |
-| Tick shape | straddles the line, `tick_size=0.1`, `longer_tick_multiple=2` | same; direction configurable (F-604) | parity |
+| Tick shape | straddles the line, `tick_size=0.1`, `longer_tick_multiple=2` | same through the data; inward on an axis placed at a border unless a direction is set *(ADR 0005)*; direction configurable (F-604) | parity; Origin at a border |
 | Numbers | off (`include_numbers=False`), `font_size=36` | same | parity |
 | Decimal places | the characters after the point in `str(step)`; `1e-05` gives 0 | same, except that a step in scientific notation counts its exponent: `1e-05` gives 5 *(ADR 0003)* | parity, plus a fix |
 | Label direction | x `DOWN`, y `LEFT` | same | parity |
