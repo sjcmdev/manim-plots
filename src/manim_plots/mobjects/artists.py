@@ -195,6 +195,8 @@ class _CurvePlot(Leaf):
         self._data_seen = -1
         self._local = np.empty((0, 3))
         self._geometry_payload = Payload.empty("path", 2)
+        self._render_segments = self._geometry_payload.segments
+        self._reversed = False
         self._dense = False
         self._warned_change: object | None = None
         self._source_invalid = (
@@ -421,7 +423,22 @@ class _CurvePlot(Leaf):
             )
             self._cache = dashed.coords.copy()
             self._render_segments = dashed.segments
+        if self._reversed:
+            self._local = self._local[::-1].copy()
+            self._cache = self._cache[::-1].copy()
+            self._render_segments = len(self._cache) - self._render_segments[::-1, ::-1]
         self._frame_seen = system.frame.version
+
+    def reverse_points(self) -> Self:
+        """Reverse traversal, retaining the direction across attached rebuilds."""
+        self._ensure()
+        if self._lifecycle.state is lc.State.ATTACHED:
+            self._reversed = not self._reversed
+            self._local = self._local[::-1].copy()
+            self._render_segments = len(self._cache) - self._render_segments[::-1, ::-1]
+        elif self._lifecycle.state is lc.State.SHAPED and self._shape is not None:
+            self._shape = self._shape[::-1].copy()
+        return super().reverse_points()
 
     @property
     def points(self) -> FloatArray:
@@ -592,6 +609,7 @@ class _CurvePlot(Leaf):
     def _adopt(self, other: Leaf) -> None:
         if isinstance(other, _CurvePlot):
             self.source = other.source
+            self._reversed = other._reversed
             self.use_smoothing = other.use_smoothing
             self._clip = other._clip
             self.line_style, self.dash, self._dash = (
@@ -869,6 +887,8 @@ class _MarkerLeaf(_CurvePlot):
             # Point-based native mobjects need no cubic subdivision.
             self._dense = not frame.is_affine
             self._local = self._own.forward(self._geometry_payload.coords)
+            if self._reversed:
+                self._local = self._local[::-1].copy()
             self._cache = frame.forward(self._local)
             assert self._system is not None
             self._frame_seen = self._system.frame.version

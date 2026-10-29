@@ -9,7 +9,7 @@ from manim import Animation, Create, VGroup, VMobject
 
 from manim_plots.core import FloatArray
 from manim_plots.core.payload import Payload
-from manim_plots.core.shape import _restrict, resample_like
+from manim_plots.core.shape import _restrict, resample_pair
 from manim_plots.core.sources import ArraySource, FunctionSource
 from manim_plots.mobjects.artists import ScatterPlot, _CurvePlot, _MarkerLeaf
 from manim_plots.mobjects.leaves import FrameLeaf
@@ -64,6 +64,7 @@ class TraceCurve(Animation):
     def begin(self) -> None:
         """Snapshot the source-order geometry before opening animation ownership."""
         canonical = self.artist.copy()
+        canonical._reversed = False
         canonical._restore()
         self._full = canonical.points.copy()
         self._data_curves: FloatArray | None = None
@@ -94,7 +95,9 @@ class TraceCurve(Animation):
         """
         progress = float(np.clip(self.rate_func(alpha), 0, 1))
         if progress >= 1:
-            self.artist.points = self._full.copy()
+            self.artist.points = (
+                self._full[::-1] if self.artist._reversed else self._full
+            ).copy()
             return
         if progress <= 0 or not len(self._full):
             self.artist.points = np.empty((0, 3))
@@ -238,7 +241,7 @@ class ShowPoints(Animation):
 
 
 class Morph(Animation):
-    """Interpolate compatible paths on the target's arc-length lattice.
+    """Interpolate compatible paths on their shared arc-length lattice.
 
     Parameters
     ----------
@@ -264,9 +267,8 @@ class Morph(Animation):
         super().__init__(a, **cast(dict[str, Any], kwargs))
 
     def _prepare(self) -> None:
-        target = _path(self.b)
-        self._from = resample_like(_path(self.a), target).coords
-        self._to = target.coords.copy()
+        source, target = resample_pair(_path(self.a), _path(self.b))
+        self._from, self._to = source.coords, target.coords
 
     def begin(self) -> None:
         """Resample once for the play, without native duplicate-point alignment."""
@@ -274,7 +276,7 @@ class Morph(Animation):
         super().begin()
 
     def interpolate_mobject(self, alpha: float) -> None:
-        """Interpolate corresponding cubic points at fixed target point count.
+        """Interpolate corresponding cubic points at a fixed shared point count.
 
         Parameters
         ----------
@@ -302,6 +304,7 @@ class Morph(Animation):
         self.a.parameters = target.parameters
         self.a._source_invalid = target._source_invalid
         self.a.use_smoothing = self.b.use_smoothing
+        self.a._reversed = self.b._reversed
         self.a._clip = self.b._clip
         self.a.line_style, self.a.dash, self.a._dash = (
             self.b.line_style,

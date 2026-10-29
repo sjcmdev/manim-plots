@@ -519,98 +519,66 @@ def densify(payload: Payload, bounds: Bounds, *, pieces: int) -> Payload:
     )
 
 
-def resample_like(payload: Payload, template: Payload) -> Payload:
-    """Fit a path to another path's cubic lattice by arc fraction per piece.
+def resample_pair(payload: Payload, target: Payload) -> tuple[Payload, Payload]:
+    """Subdivide two paths at the union of their anchors' arc fractions.
 
     Parameters
     ----------
     payload
         Source cubic geometry, with nondegenerate continuous pieces.
-    template
-        Target lattice; each curve's arc span determines a source interval.
+    target
+        Second cubic path with the same number of continuous pieces.
 
     Returns
     -------
-    Payload
-        Source geometry with exactly the template's point count and pieces.
+    tuple of Payload
+        Both paths with matching lattices, preserving their original geometry.
 
     Raises
     ------
     ValueError
-        If piece counts differ, a curve is degenerate, or the target lattice
-        cannot represent the source to within 1e-3 scene units.
+        If piece counts differ or a curve is degenerate.
     """
-    source, target = _curves(payload), _curves(template)
-    if len(payload.segments) != len(template.segments) or not len(source):
+    source_curves, target_curves = _curves(payload), _curves(target)
+    if len(payload.segments) != len(target.segments) or not len(source_curves):
         raise ValueError("Morph paths must have the same nonzero number of pieces")
-    parts = []
-    for (a, b), (c, d) in zip(
-        payload.segments // 4, template.segments // 4, strict=True
-    ):
-        curves, lattice = source[a:b], target[c:d]
+    source_parts, target_parts = [], []
+    for (a, b), (c, d) in zip(payload.segments // 4, target.segments // 4, strict=True):
+        curves, lattice = source_curves[a:b], target_curves[c:d]
         lengths, target_lengths = _lengths(curves), _lengths(lattice)
         if np.any(lengths <= 1e-12) or np.any(target_lengths <= 1e-12):
             raise ValueError("Morph cannot resample degenerate or repeated points")
-        samples = _resampled_points(
-            curves, lengths, lattice, target_lengths, np.linspace(0, 1, 4)
-        )
-        result = samples.copy()
-        # Interpolate the samples at t=1/3 and 2/3 with cubic control handles.
-        u = 27 * samples[:, 1] - 8 * samples[:, 0] - samples[:, 3]
-        v = 27 * samples[:, 2] - samples[:, 0] - 8 * samples[:, 3]
-        result[:, 1], result[:, 2] = (2 * u - v) / 18, (2 * v - u) / 18
-        check_times = np.linspace(0, 1, 17)
-        actual = _bezier_points(
-            np.repeat(result, len(check_times), axis=0),
-            np.tile(check_times, len(result)),
-        ).reshape(len(result), len(check_times), payload.coords.shape[1])
-        expected = _resampled_points(
-            curves, lengths, lattice, target_lengths, check_times
-        )
-        # Check source joins too: a short feature may lie between target samples.
-        positions = (
-            np.r_[0.0, np.cumsum(lengths)] * np.sum(target_lengths) / np.sum(lengths)
-        )
-        indices, parameters = _arc_parameters(lattice, target_lengths, positions)
-        joins = _bezier_points(result[indices], parameters)
-        source_joins = np.concatenate((curves[:1, 0], curves[:, 3]))
-        if np.any(np.linalg.norm(actual - expected, axis=2) > 1e-3) or np.any(
-            np.linalg.norm(joins - source_joins, axis=1) > 1e-3
-        ):
-            raise ValueError(
-                "Morph target parameterisation is too coarse "
-                "to resample honestly within 1e-3"
+        cumulative = np.r_[0.0, np.cumsum(lengths)]
+        target_cumulative = np.r_[0.0, np.cumsum(target_lengths)]
+        # Merge quadrature roundoff at shared anchors without tiny extra curves.
+        fractions = np.unique(
+            np.round(
+                np.r_[
+                    cumulative / cumulative[-1],
+                    target_cumulative / target_cumulative[-1],
+                ],
+                9,
             )
-        parts.append(result.reshape(-1, payload.coords.shape[1]))
-    return _assemble(parts, payload.coords.shape[1])
-
-
-def _bezier_points(curves: FloatArray, parameters: FloatArray) -> FloatArray:
-    t = parameters[:, None]
+        ).astype(np.float64)
+        source_parts.append(_subdivide_at_fractions(curves, lengths, fractions))
+        target_parts.append(_subdivide_at_fractions(lattice, target_lengths, fractions))
     return (
-        (1 - t) ** 3 * curves[:, 0]
-        + 3 * (1 - t) ** 2 * t * curves[:, 1]
-        + 3 * (1 - t) * t**2 * curves[:, 2]
-        + t**3 * curves[:, 3]
+        _assemble(source_parts, payload.coords.shape[1]),
+        _assemble(target_parts, target.coords.shape[1]),
     )
 
 
-def _resampled_points(
-    curves: FloatArray,
-    lengths: FloatArray,
-    lattice: FloatArray,
-    target_lengths: FloatArray,
-    times: FloatArray,
+def _subdivide_at_fractions(
+    curves: FloatArray, lengths: FloatArray, fractions: FloatArray
 ) -> FloatArray:
-    offsets = np.r_[0.0, np.cumsum(target_lengths)][:-1]
-    repeated = np.repeat(lattice, len(times), axis=0)
-    partial = _lengths(repeated, np.tile(times, len(lattice)))
-    positions = (
-        (partial + np.repeat(offsets, len(times)))
-        * np.sum(lengths)
-        / np.sum(target_lengths)
+    cumulative = np.r_[0.0, np.cumsum(lengths)]
+    positions = fractions * cumulative[-1]
+    # Keep original joins exact despite rounding the shared fractions.
+    positions[np.searchsorted(fractions, np.round(cumulative / cumulative[-1], 9))] = (
+        cumulative
     )
     indices, parameters = _arc_parameters(curves, lengths, positions)
-    return _bezier_points(curves[indices], parameters).reshape(
-        len(lattice), len(times), curves.shape[2]
+    upper = np.where(indices[1:] == indices[:-1], parameters[1:], 1.0)
+    return _restrict(curves[indices[:-1]], parameters[:-1], upper).reshape(
+        -1, curves.shape[2]
     )
