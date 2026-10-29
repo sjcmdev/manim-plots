@@ -1,0 +1,110 @@
+{
+  "readings": {
+    "tests/benchmark/test_f1001.py::test_f1001_four_plots_under_an_animated_range[tracker-affine]": {
+      "frames": 60,
+      "update": {
+        "median": 2.3845,
+        "p95": 2.6626,
+        "max": 2.7896
+      },
+      "frame": {
+        "median": 17.7856,
+        "p95": 18.8951,
+        "max": 19.3679
+      },
+      "setup_ms": [
+        1.1324
+      ]
+    },
+    "tests/benchmark/test_f1001.py::test_f1001_four_plots_under_an_animated_range[tracker-bilinear]": {
+      "frames": 60,
+      "update": {
+        "median": 2.7273,
+        "p95": 3.0712,
+        "max": 3.4503
+      },
+      "frame": {
+        "median": 18.3691,
+        "p95": 18.9208,
+        "max": 19.4721
+      },
+      "setup_ms": [
+        0.9624
+      ]
+    },
+    "tests/benchmark/test_f1001.py::test_f1001_four_plots_under_an_animated_range[animate-affine]": {
+      "frames": 60,
+      "update": {
+        "median": 2.4686,
+        "p95": 2.8877,
+        "max": 3.0171
+      },
+      "frame": {
+        "median": 17.3396,
+        "p95": 18.3931,
+        "max": 18.9121
+      },
+      "setup_ms": [
+        172.0389
+      ]
+    },
+    "tests/benchmark/test_f1001.py::test_f1001_four_plots_under_an_animated_range[animate-bilinear]": {
+      "frames": 60,
+      "update": {
+        "median": 2.8052,
+        "p95": 3.4002,
+        "max": 3.9624
+      },
+      "frame": {
+        "median": 18.0035,
+        "p95": 19.2093,
+        "max": 19.546
+      },
+      "setup_ms": [
+        182.4138
+      ]
+    },
+    "tests/benchmark/test_plain_manim.py::test_plain_manim_static_plots_under_an_unrelated_animation": {
+      "frames": 60,
+      "update": {
+        "median": 0.0953,
+        "p95": 0.1203,
+        "max": 0.1807
+      },
+      "frame": {
+        "median": 1.7547,
+        "p95": 1.8676,
+        "max": 2.3409
+      },
+      "setup_ms": [
+        0.683
+      ]
+    },
+    "tests/benchmark/test_plain_manim.py::test_pf3_static_library_plots_cost_at_most_one_and_a_half_plain_manims": {
+      "frames": 60,
+      "update": {
+        "median": 0.1743,
+        "p95": 0.2107,
+        "max": 0.245
+      },
+      "frame": {
+        "median": 1.8618,
+        "p95": 1.994,
+        "max": 2.3007
+      },
+      "setup_ms": [
+        0.7545
+      ]
+    }
+  },
+  "machine": {
+    "node": "DESKTOP-URD7D0V",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "cpus": 24,
+    "python": "3.13.2",
+    "manim": "0.21.0",
+    "numpy": "2.5.2"
+  },
+  "when": "2026-10-29T17:03:08+00:00"
+}

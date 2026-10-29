@@ -206,7 +206,7 @@ F-921, F-1009 (constructor, `axis_config`, defaults).
       tables against Manim's own `Axes` and `NumberPlane`, style attributes included,
       under a changed `tempconfig` too), `test_number_plane.py`; visual baselines of
       axes and label layout
-- [ ] F-1001 with labels from a warm glyph cache — measured with task 13's benchmark
+- [x] F-1001 with labels from a warm glyph cache — measured with task 13's benchmark
 
 ### task/11-artists-animate
 
@@ -234,11 +234,11 @@ F-912.
 
 F-1001 final, F-1002, F-1003, F-1005, F-1006 on every surface.
 
-- [ ] F-1001 on both frame paths, the 1.5x check against
+- [x] F-1001 on both frame paths, the 1.5x check against
       `tests/benchmark/test_plain_manim.py`, setup recorded; the JSON kept with the release
-      — 1.5x passes (1.17x); `update` p95 on a quiet machine 2026-10-29: tracker 3.9-4.4 ms,
-      `.animate` affine 4.0-4.4 ms, `.animate` bilinear 4.3-4.5 ms against 4 ms; a third
-      performance pass is next
+      — after a third performance pass, `update` p95 on a quiet machine 2026-10-29:
+      tracker 2.7 / 3.1 ms, `.animate` 2.9 / 3.4 ms (affine / bilinear) against 4 ms;
+      1.5x passes; recorded in `docs/benchmarks/0.1.json`
 - [x] The full gate on both Manim versions
 - [x] Types resolve at runtime (TY-1 to TY-3); invalid input per F-1006 (IV-1 to IV-5)
 
