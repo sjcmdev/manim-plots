@@ -147,6 +147,60 @@ def redraw(scene: Scene) -> None:
     scene.play(t.animate.set_value(2 * PI), run_time=3)
 
 
+def clip_margin(scene: Scene) -> None:
+    """Grow `a sin x` past the axes with `clip=True`, `clip=0.4` and `clip=False`.
+
+    The amplitude is a plot parameter bound to a tracker. `True` cuts the curve at the
+    axes, a margin lets it pass by that much, `False` never cuts it, as Manim draws.
+    """
+    a = ValueTracker(1.5)
+    small = {"x_range": (-3, 3, 1), "y_range": (-2, 2, 1), "x_length": 3.6}
+    for k, (clip, title) in enumerate(
+        [(True, "clip=True"), (0.4, "clip=0.4"), (False, "clip=False")]
+    ):
+        ax = mp.Axes(**small, y_length=2.4).move_to((k - 1) * 4.4 * RIGHT)
+        curve = ax.plot(lambda x, a=1.5: a * np.sin(x), a=a, clip=clip, color=BLUE)
+        scene.add(ax, curve, Text(title, font_size=26).next_to(ax, UP, buff=0.5))
+    scene.play(a.animate.set_value(2.6), run_time=2)
+    scene.play(a.animate.set_value(1.5), run_time=2)
+
+
+def trace_and_morph(scene: Scene) -> None:
+    """Trace `tanh(4x)` in data order, then morph a zigzag into a sine.
+
+    `TraceCurve` moves at a steady speed in x although the samples crowd near 0;
+    `Morph` turns a five-point zigzag into fifty samples of a sine without jitter.
+    """
+    ax = mp.Axes(**SMALL)
+    scene.add(ax)
+    curve = ax.plot(lambda x: np.tanh(4 * x), color=BLUE)
+    scene.play(mp.TraceCurve(curve), run_time=2)
+    scene.play(FadeOut(curve))
+    zigzag = ax.line([-3, -1, 0, 1, 3], [0, 1.5, -1.5, 1.5, 0], color=YELLOW)
+    xs = np.linspace(-3, 3, 50)
+    sine = ax.line(xs, np.sin(xs), color=BLUE)
+    scene.play(Create(zigzag))
+    scene.play(mp.Morph(zigzag, sine), run_time=2)
+    scene.wait(0.5)
+
+
+def legend_and_styles(scene: Scene) -> None:
+    """Draw three styled curves and their legend.
+
+    Without colour keywords they take the colour cycle; dashed and dotted line styles;
+    `ax.legend()` in the upper right corner, faded in with the curves.
+    """
+    ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-2, 2, 1), x_length=10, y_length=5)
+    curves = [
+        ax.plot(np.sin, label="sin x"),
+        ax.plot(np.cos, label="cos x", line_style=mp.LineStyle.DASHED),
+        ax.plot(lambda x: x / 3, label="x / 3", line_style=mp.LineStyle.DOTTED),
+    ]
+    scene.play(mp.DrawAxes(ax))
+    scene.play(*(Create(c) for c in curves), FadeIn(ax.legend()), run_time=2)
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -154,6 +208,9 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     pole,
     lifecycle,
     redraw,
+    clip_margin,
+    trace_and_morph,
+    legend_and_styles,
 ]
 
 
