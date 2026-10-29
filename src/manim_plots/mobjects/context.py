@@ -147,6 +147,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     Mobject.add_n_more_submobjects,
     Mobject.interpolate,
     VMobject.align_points,
+    VMobject.get_subpaths,
     Animation.begin,
     Animation.finish,
     Animation.get_all_families_zipped,
@@ -202,6 +203,9 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "VMobject.get_subpaths": (
+            "a3b39f251f72c2d4e3c5392c079f8b659457e875c9630bd59d20057a4472e0e2"
+        ),
         "CoordinateSystem.get_area": (
             "4b24b4037cd9abe31a566691d25d1844e1e41f01a04da9d2b9f9ab17531af970"
         ),
@@ -621,6 +625,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "VMobject.get_subpaths": (
+            "a3b39f251f72c2d4e3c5392c079f8b659457e875c9630bd59d20057a4472e0e2"
+        ),
         "CoordinateSystem.get_area": (
             "4b24b4037cd9abe31a566691d25d1844e1e41f01a04da9d2b9f9ab17531af970"
         ),

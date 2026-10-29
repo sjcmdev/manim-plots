@@ -55,6 +55,7 @@ from manim_plots.mobjects.artists import (
 )
 from manim_plots.mobjects.axis import TickDirection as TickDirection
 from manim_plots.mobjects.context import check_pins
+from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.helpers import FilledRegion as FilledRegion
 from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
@@ -74,6 +75,7 @@ __all__ = [
     "DecimalFormatter",
     "DrawAxes",
     "EngFormatter",
+    "ErrorBars",
     "FixedFormatter",
     "FixedLocator",
     "FormatStrFormatter",
