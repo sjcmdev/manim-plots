@@ -71,6 +71,7 @@ from manim_plots.mobjects.artists import (
 )
 from manim_plots.mobjects.axis import (
     Axis,
+    TickDirection,
     _LogExponentLocator,
     _LogMinorLocator,
     _range,
@@ -81,6 +82,7 @@ from manim_plots.mobjects.context import (
     animation_context,
     data_interpolation,
     playback_context,
+    writer_context,
 )
 from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.helpers import (
@@ -151,24 +153,25 @@ _AXIS_KEYS = frozenset(
 
 class _ArtistRegistry:
     def __init__(self) -> None:
+        self._clock = [0]
         self._refs: list[
-            weakref.ReferenceType[_CurvePlot | ScatterPlot | ErrorBars]
+            tuple[int, weakref.ReferenceType[_CurvePlot | ScatterPlot | ErrorBars]]
         ] = []
 
     def __iter__(self) -> Iterator[_CurvePlot | ScatterPlot | ErrorBars]:
-        live = [artist for ref in self._refs if (artist := ref()) is not None]
-        self._refs = [weakref.ref(artist) for artist in live]
-        return iter(live)
+        self._refs = [(order, ref) for order, ref in self._refs if ref() is not None]
+        return iter(artist for _, ref in self._refs if (artist := ref()) is not None)
 
     def __contains__(self, artist: object) -> bool:
-        return any(ref() is artist for ref in self._refs)
+        return any(ref() is artist for _, ref in self._refs)
 
     def append(self, artist: _CurvePlot | ScatterPlot | ErrorBars) -> None:
         list(self)
-        self._refs.append(weakref.ref(artist))
+        self._refs.append((self._clock[0], weakref.ref(artist)))
+        self._clock[0] += 1
 
     def remove(self, artist: _CurvePlot | ScatterPlot | ErrorBars) -> None:
-        self._refs = [ref for ref in self._refs if ref() is not artist]
+        self._refs = [(order, ref) for order, ref in self._refs if ref() is not artist]
 
 
 def _scale(value: Scale | str, name: str) -> Scale:
@@ -209,6 +212,13 @@ class CartesianAxes(VGroup):
         Adapt an omitted length or widen a range to satisfy the aspect ratio.
     **kwargs
         Native VGroup style and mobject options.
+
+    Attributes
+    ----------
+    parent
+        Root system for a twin, or None for an independent system.
+    twins
+        Twins created from this root, in creation order.
 
     Notes
     -----
@@ -388,6 +398,9 @@ class CartesianAxes(VGroup):
         for name, value in (("x_length", self.x_length), ("y_length", self.y_length)):
             if not np.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be positive and finite")
+        self.parent: CartesianAxes | None = None
+        self._twins: list[CartesianAxes] = []
+        self._twin_axis: int | None = None
         self._artists = _ArtistRegistry()
         self._data_animation = False
         self._channel_frame_moves = False
@@ -417,6 +430,7 @@ class CartesianAxes(VGroup):
         lower = -np.array([self.x_length, self.y_length]) / 2
         self.bounds = Box(lower, -lower)
         self.frame = FrameLeaf(lower, -lower, self)
+        self._channel_frame = self.frame
         self.x_axis = Axis(
             self,
             0,
@@ -440,6 +454,7 @@ class CartesianAxes(VGroup):
         for axis, own in ((self.x_axis, x_axis_config), (self.y_axis, y_axis_config)):
             given = (axis_config or {}, own or {})
             axis._default_exclusion = not any("numbers_to_exclude" in c for c in given)
+            axis._label_direction_custom = any("label_direction" in c for c in given)
         self.axes = VGroup(self.x_axis, self.y_axis)
         self.x, self.y = self.x_axis, self.y_axis
         self.submobjects = [self.x_axis, self.y_axis, self.frame]
@@ -462,12 +477,143 @@ class CartesianAxes(VGroup):
     def __getattr__(self, name: str) -> NoReturn:
         raise AttributeError(f"CartesianAxes has no attribute {name!r}")
 
+    @property
+    def twins(self) -> tuple[CartesianAxes, ...]:
+        """Return this root system's twins in creation order."""
+        return tuple(self._twins)
+
+    def twinx(
+        self,
+        y_range: Sequence[float] | None = None,
+        *,
+        y_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
+        y_axis_config: dict[str, Any] | None = None,
+        offset: float | None = None,
+    ) -> CartesianAxes:
+        """Add an independent y map on the shared frame and x axis.
+
+        Parameters
+        ----------
+        y_range, y_scale, y_axis_config
+            Constructor options for the new y axis; the range defaults to the root's.
+        offset
+            Outward spacing from the previous right axis, defaulting to 0.9.
+            The first right axis sits on the rectangle's border.
+
+        Returns
+        -------
+        CartesianAxes
+            A system whose parent is the root and whose artists use the new map.
+        """
+        return self._twin(1, y_range, y_scale, y_axis_config, offset)
+
+    def twiny(
+        self,
+        x_range: Sequence[float] | None = None,
+        *,
+        x_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
+        x_axis_config: dict[str, Any] | None = None,
+        offset: float | None = None,
+    ) -> CartesianAxes:
+        """Add an independent x map on the shared frame and y axis.
+
+        Parameters
+        ----------
+        x_range, x_scale, x_axis_config
+            Constructor options for the new x axis; the range defaults to the root's.
+        offset
+            Outward spacing from the previous top axis, defaulting to 0.9.
+            The first top axis sits on the rectangle's border.
+
+        Returns
+        -------
+        CartesianAxes
+            A system whose parent is the root and whose artists use the new map.
+        """
+        return self._twin(0, x_range, x_scale, x_axis_config, offset)
+
+    def _twin(
+        self,
+        index: int,
+        limits: Sequence[float] | None,
+        scale: Scale | Literal["linear", "log", "symlog"],
+        options: dict[str, Any] | None,
+        offset: float | None,
+    ) -> CartesianAxes:
+        root = self.parent if self.parent is not None else self
+        root._sync_data()
+        distance = 0.9 if offset is None else float(offset)
+        if not np.isfinite(distance) or distance < 0:
+            raise ValueError("offset must be finite and nonnegative")
+        ranges: list[Sequence[float]] = [
+            (*axis.range.value, axis._step) for axis in (root.x, root.y)
+        ]
+        if limits is not None:
+            ranges[index] = tuple(limits)
+        scales = [root.x._scale, root.y._scale]
+        scales[index] = _scale(scale, "x_scale" if index == 0 else "y_scale")
+        configs: list[dict[str, Any]] = [{}, {}]
+        configs[index] = {
+            "include_tip": False,
+            "label_direction": [0, 1, 0] if index == 0 else [1, 0, 0],
+            **(options or {}),
+        }
+        twin = CartesianAxes(
+            ranges[0],
+            ranges[1],
+            root.x_length,
+            root.y_length,
+            x_axis_config=configs[0],
+            y_axis_config=configs[1],
+            x_scale=scales[0],
+            y_scale=scales[1],
+        )
+        own = twin.get_axis(index)
+        own._label_direction_custom = "label_direction" in (options or {})
+        twin.parent, twin._twin_axis = root, index
+        twin._artists._clock = root._artists._clock
+        twin.frame = twin._channel_frame = root.frame
+        twin.bounds = root.bounds
+        if index == 1:
+            twin.x = twin.x_axis = root.x
+        else:
+            twin.y = twin.y_axis = root.y
+        twin.axes = VGroup(twin.x, twin.y)
+        twin.submobjects = [own]
+        twin._compile()
+        previous = [t.get_axis(index) for t in root.twins if t._twin_axis == index]
+        outward = previous[-1]._position_offset + distance if previous else 0.0
+        own.set_tick_style(direction=TickDirection.OUT)
+        own.set_position("top" if index == 0 else "right", offset=outward)
+        root._twins.append(twin)
+        root.submobjects.insert(root.submobjects.index(root.frame), twin)
+        return twin
+
+    def _systems(self) -> tuple[CartesianAxes, ...]:
+        return (self, *self._twins)
+
+    def _owned_axes(self) -> tuple[Axis, ...]:
+        return (
+            (self.x, self.y)
+            if self._twin_axis is None
+            else (self.get_axis(self._twin_axis),)
+        )
+
+    def _channel_axes(self) -> tuple[Axis, ...]:
+        return tuple(
+            axis for system in self._systems() for axis in system._owned_axes()
+        )
+
     def family_members_with_points(self) -> list[Mobject]:
         """Return members with points, using the flat animation channel directly."""
+        if self.parent is not None:
+            writer = writer_context()
+            if writer is not None and self.frame not in writer.family:
+                raise ValueError("move the twin's parent to change its geometry")
         if self._data_animation and all(isinstance(m, Leaf) for m in self.submobjects):
             if data_interpolation():
                 # The frame publishes all derived geometry at the same alpha.
-                return [self.frame]
+                return [self._channel_frame]
             self._sync_data()
             members: list[Mobject] = []
             for leaf in cast(list[Leaf], self.submobjects):
@@ -527,18 +673,51 @@ class CartesianAxes(VGroup):
             match_center,
             stretch,
         )
-        artists = self._artists
-        self.__dict__.update(target.__dict__)
-        self._artists = artists
+        assert isinstance(target, CartesianAxes)
+        if len(self.twins) != len(target.twins) or [
+            s._twin_axis for s in self._systems()
+        ] != [s._twin_axis for s in target._systems()]:
+            raise ValueError("become requires corresponding twins")
+        parent = self.parent
+        pairs = dict(zip(target._systems(), self._systems(), strict=True))
+        for new, old in pairs.items():
+            artists = old._artists
+            old.__dict__.update(new.__dict__)
+            old._artists = artists
+            old._data_version += 1
+        for old in pairs.values():
+            if old.parent is not None:
+                old.parent = pairs.get(old.parent, old.parent)
+            old._twins = [pairs[twin] for twin in old._twins]
+            old.submobjects = [
+                pairs.get(member, member)
+                if isinstance(member, CartesianAxes)
+                else member
+                for member in old.submobjects
+            ]
         for member in self.get_family():
-            if isinstance(member, (Axis, Leaf, BoundLabel)):
-                member._system = self
-        self._data_version += 1
-        for artist in artists:
-            for leaf in artist.get_family():
-                if isinstance(leaf, Leaf):
-                    leaf._frame_seen = -1
-                    leaf._event(lc.DataChange())
+            if (
+                isinstance(member, (Axis, Leaf, BoundLabel))
+                and member._system is not None
+            ):
+                member._system = pairs.get(member._system, member._system)
+        if parent is not None:
+            self.parent, self.frame = parent, parent.frame
+            self._channel_frame = self.frame
+            if self._twin_axis == 1:
+                self.x = self.x_axis = parent.x
+            else:
+                self.y = self.y_axis = parent.y
+            self.axes = VGroup(self.x, self.y)
+            self._compile()
+            for axis in self._owned_axes():
+                axis._configure()
+        for system in self._systems():
+            for artist in system._artists:
+                for leaf in artist.get_family():
+                    if isinstance(leaf, Leaf):
+                        leaf._frame_seen = -1
+                        leaf._event(lc.DataChange())
         return self
 
     def align_data(self, mobject: Mobject, skip_point_alignment: bool = False) -> Self:
@@ -560,7 +739,12 @@ class CartesianAxes(VGroup):
             return self
         self._sync_data()
         mobject._sync_data()
-        for axis, target in zip(self.axes, mobject.axes, strict=True):
+        if len(self.twins) != len(mobject.twins):
+            raise ValueError("Transform requires the same number of twins")
+        axes, targets = self._channel_axes(), mobject._channel_axes()
+        if [t._twin_axis for t in self.twins] != [t._twin_axis for t in mobject.twins]:
+            raise ValueError("Transform requires twins sharing the same dimensions")
+        for axis, target in zip(axes, targets, strict=True):
             if type(axis._scale) is not type(target._scale):
                 raise ValueError("a change of scale type requires FadeTransform")
         count = max(1, int(np.ceil(animation.run_time * config.frame_rate * 4)))
@@ -569,15 +753,11 @@ class CartesianAxes(VGroup):
         )
         pools = [
             _TickPool(axis, target, alphas)
-            for axis, target in zip(
-                (self.x, self.y), (mobject.x, mobject.y), strict=True
-            )
+            for axis, target in zip(axes, targets, strict=True)
         ]
         changed = any(
             not np.array_equal(axis.range.value, target.range.value) or not pool.same
-            for axis, target, pool in zip(
-                (self.x, self.y), (mobject.x, mobject.y), pools, strict=True
-            )
+            for axis, target, pool in zip(axes, targets, pools, strict=True)
         )
         if not changed:
             super().align_data(mobject, skip_point_alignment)
@@ -588,19 +768,25 @@ class CartesianAxes(VGroup):
             system._channel_roots = system.submobjects[:]
             system._data_animation = True
             system._channel_frame_moves = frame_moves
+            system._channel_frame = system.frame
+            if system.parent is not None:
+                system._channel_frame = FrameLeaf(
+                    system.bounds.lower, system.bounds.upper, system
+                )
+                system._channel_frame.points = system.frame._cache.copy()
             system._pool_warned = False
             system._pool_alpha = alpha
             system._syncing = True
             try:
                 for axis, pool in zip(
-                    (system.x, system.y),
+                    system._channel_axes(),
                     target_pools if system is mobject else pools,
                     strict=True,
                 ):
                     pool.alpha = alpha
                     axis._prepare_pool(pool)
-                system.x._configure()
-                system.y._configure()
+                for axis in system._channel_axes():
+                    axis._configure()
             finally:
                 system._syncing = False
         left, right = self._channel_roles(), mobject._channel_roles()
@@ -621,34 +807,34 @@ class CartesianAxes(VGroup):
             VMobject.align_data(a, b)
             families[0].append(a)
             families[1].append(b)
-        self.submobjects = [*families[0], self.frame]
-        mobject.submobjects = [*families[1], mobject.frame]
+        self.submobjects = [*families[0], self._channel_frame]
+        mobject.submobjects = [*families[1], mobject._channel_frame]
         return self
 
     def _channel_roles(self) -> dict[object, Leaf]:
         roles: dict[object, Leaf] = {}
-        for axis in (self.x, self.y):
+        for axis_id, axis in enumerate(self._channel_axes()):
             for name in ("line", "tip", "tip_start"):
                 leaf = getattr(axis, name)
                 if leaf is not None:
-                    roles[(axis.index, name)] = leaf
+                    roles[(axis_id, name)] = leaf
             for name, leaves in (
                 ("major", axis._tick_leaves),
                 ("minor", axis._minor_leaves),
             ):
                 if axis.include_ticks:
                     for key, leaf in leaves.items():
-                        roles[(axis.index, name, key)] = leaf
+                        roles[(axis_id, name, key)] = leaf
             for key, grid in axis._grid_leaves.items():
-                roles[(axis.index, "grid", key)] = grid
+                roles[(axis_id, "grid", key)] = grid
             for key, label in axis._number_leaves.items():
                 for i, leaf in enumerate(label.get_family()):
                     if isinstance(leaf, Leaf):
-                        roles[(axis.index, "number", key, i)] = leaf
+                        roles[(axis_id, "number", key, i)] = leaf
             if axis._pool is not None:
                 for level, spares in axis._pool.spares.items():
                     for i, leaf in enumerate(spares):
-                        roles[(axis.index, "spare", level, i)] = leaf
+                        roles[(axis_id, "spare", level, i)] = leaf
         included = set(roles.values())
         for i, member in enumerate(self.get_family()):
             if (
@@ -666,7 +852,10 @@ class CartesianAxes(VGroup):
         self._syncing = True
         try:
             for axis, a, b in zip(
-                (self.x, self.y), (start.x, start.y), (target.x, target.y), strict=True
+                self._channel_axes(),
+                start._channel_axes(),
+                target._channel_axes(),
+                strict=True,
             ):
                 limits = (1 - alpha) * a.range.value + alpha * b.range.value
                 if not isinstance(axis._scale, LinearScale):
@@ -681,10 +870,12 @@ class CartesianAxes(VGroup):
                     axis._range_parameter._version += 1
                 assert axis._pool is not None
                 axis._pool.alpha = alpha
-            self._compile()
-            for axis in (self.x, self.y):
+            for system in self._systems():
+                system._compile()
+            for axis in self._channel_axes():
                 axis._configure(only_crossing=axis._decoration_seen == axis._versions())
-            self._configure_grid()
+            for system in self._systems():
+                system._configure_grid()
         finally:
             self._syncing = False
 
@@ -702,7 +893,8 @@ class CartesianAxes(VGroup):
             self._data_animation = False
             self.submobjects = self._channel_roots
             del self._channel_roots
-            for axis in (self.x, self.y):
+            self._channel_frame = self.frame
+            for axis in self._channel_axes():
                 pool = axis._pool
                 if pool is not None:
                     config = pool.target if self._pool_alpha == 1 else pool.start
@@ -715,9 +907,10 @@ class CartesianAxes(VGroup):
                 axis._finish_pool()
             self._syncing = True
             try:
-                self.x._configure()
-                self.y._configure()
-                self._configure_grid()
+                for axis in self._channel_axes():
+                    axis._configure()
+                for system in self._systems():
+                    system._configure_grid()
             finally:
                 self._syncing = False
         if (
@@ -727,16 +920,26 @@ class CartesianAxes(VGroup):
                 target := getattr(animation, "target_mobject", None), CartesianAxes
             )
         ):
-            for artist in tuple(self._artists):
+            pairs = dict(zip(self._systems(), target._systems(), strict=True))
+            registered = sorted(
+                (order, system, ref)
+                for system in pairs
+                for order, ref in system._artists._refs
+            )
+            for _, system, ref in registered:
+                artist = ref()
+                if artist is None:
+                    continue
+                paired = pairs[system]
                 for leaf in artist.get_family():
                     if isinstance(leaf, Leaf):
-                        leaf._event(lc.Rebind(target))
+                        leaf._event(lc.Rebind(paired))
                 if isinstance(artist, (ScatterPlot, ErrorBars)):
-                    self._artists.remove(artist)
-                    target._artists.append(artist)
-                    artist._system = target
+                    system._artists.remove(artist)
+                    paired._artists.append(artist)
+                    artist._system = paired
                     if isinstance(artist, ErrorBars) and artist.markers is not None:
-                        artist.markers._system = target
+                        artist.markers._system = paired
         return self
 
     @property
@@ -759,6 +962,12 @@ class CartesianAxes(VGroup):
         return self.y_axis.range.value
 
     def _compile(self) -> None:
+        if self.parent is not None:
+            self.parent._sync_data()
+            self.bounds = self.parent.bounds
+            self.x_length, self.y_length = self.parent.x_length, self.parent.y_length
+            for axis in self._owned_axes():
+                axis._resize(self.x_length if axis.index == 0 else self.y_length)
         axes = (self.x_axis, self.y_axis)
         scaled = [axis._scale.forward(axis.range.value) for axis in axes]
         if self.aspect is not None:
@@ -782,6 +991,7 @@ class CartesianAxes(VGroup):
             )
         )
         self._data_version += 1
+        self._range_versions = tuple(axis._range_parameter.version for axis in axes)
 
     def _enforce_aspect(self, scaled: list[FloatArray]) -> None:
         assert self.aspect is not None
@@ -825,18 +1035,22 @@ class CartesianAxes(VGroup):
 
     def _data_dirty(self) -> bool:
         return not self._syncing and (
-            self.x_axis._range_seen != self.x_axis._range_parameter.version
-            or self.y_axis._range_seen != self.y_axis._range_parameter.version
-            or self.x_axis._style_changed()
-            or self.y_axis._style_changed()
+            (self.parent is not None and self.bounds is not self.parent.bounds)
+            or self._range_versions[0] != self.x._range_parameter.version
+            or self._range_versions[1] != self.y._range_parameter.version
+            or (self._twin_axis != 1 and self.x._style_changed())
+            or (self._twin_axis != 0 and self.y._style_changed())
         )
 
     def _sync_data(self) -> None:
         if not self._data_dirty():
             return
-        axes = (self.x_axis, self.y_axis)
-        range_changed = any(
-            axis._range_seen != axis._range_parameter.version for axis in axes
+        axes = self._owned_axes()
+        range_changed = (
+            self.parent is not None and self.bounds is not self.parent.bounds
+        ) or self._range_versions != (
+            self.x._range_parameter.version,
+            self.y._range_parameter.version,
         )
         changed = [axis for axis in axes if axis._decoration_seen != axis._versions()]
         if not range_changed and not changed:
@@ -863,6 +1077,8 @@ class CartesianAxes(VGroup):
         for artist in self._artists:
             artist._poll()
         self._sync_data()
+        for twin in self.twins:
+            twin._poll()
 
     def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
         if self._moving_query is None or self._moving_query[0] is not moving:
@@ -887,6 +1103,19 @@ class CartesianAxes(VGroup):
     def _mapping(self) -> SystemMap:
         self._sync_data()
         return SystemMap(self._data, self.frame.mapping)
+
+    def _axis_cross_value(self, index: int) -> float:
+        axis = self.get_axis(index)
+        crossing = axis._cross_value()
+        if axis._system is self and axis._position_offset == 0:
+            return crossing
+        self._sync_data()
+        axis._system._sync_data()
+        coords = np.full((1, 2), crossing)
+        coords[0, index] = axis.range.value[0]
+        local = axis._system._data.forward(coords)
+        local[0, 1 - index] += axis._outward_offset()[1 - index]
+        return float(self._data.inverse(local)[0, 1 - index])
 
     def c2p(self, *coords: ArrayLike) -> FloatArray:
         """Convert scalar coordinates, coordinate arrays or rows to scene points.
@@ -1069,24 +1298,35 @@ class CartesianAxes(VGroup):
         self,
         label: object,
         index: int,
-        edge: ArrayLike,
-        direction: ArrayLike,
+        edge: ArrayLike | None,
+        direction: ArrayLike | None,
         buff: float,
     ) -> BoundLabel:
+        axis = self.get_axis(index)
+        outward = axis._outward_offset()
+        if axis._position_outward:
+            outward[1 - index] = -1 if axis._position in ("left", "bottom") else 1
+        else:
+            outward[1 - index] = 1
+        if edge is None:
+            edge = np.eye(3)[index] + outward
+        if direction is None:
+            direction = (0.5 if index == 1 else 1) * np.eye(3)[index] + outward
         result = _label(label)
         result.next_to(
             self.get_axis(index).get_edge_center(np.asarray(edge, dtype=float)),
             direction=np.asarray(direction, dtype=float),
             buff=buff,
         )
-        result.shift_onto_screen(buff=0.25)
+        if not axis._position_outward:
+            result.shift_onto_screen(buff=0.25)
         return BoundLabel(result, self)
 
     def get_x_axis_label(
         self,
         label: object,
-        edge: ArrayLike = (1, 1, 0),
-        direction: ArrayLike = (1, 1, 0),
+        edge: ArrayLike | None = None,
+        direction: ArrayLike | None = None,
         buff: float = 0.1,
         **kwargs: Unpack[_VMStyle],
     ) -> BoundLabel:
@@ -1104,8 +1344,8 @@ class CartesianAxes(VGroup):
     def get_y_axis_label(
         self,
         label: object,
-        edge: ArrayLike = (1, 1, 0),
-        direction: ArrayLike = (1, 0.5, 0),
+        edge: ArrayLike | None = None,
+        direction: ArrayLike | None = None,
         buff: float = 0.1,
         **kwargs: Unpack[_VMStyle],
     ) -> BoundLabel:
@@ -1183,8 +1423,8 @@ class CartesianAxes(VGroup):
         return bound
 
     def _configure_grid(self) -> None:
-        self.x_axis._configure_grid()
-        self.y_axis._configure_grid()
+        for axis in self._owned_axes():
+            axis._configure_grid()
 
     @overload
     def plot(
@@ -2041,7 +2281,7 @@ class CartesianAxes(VGroup):
             raise ValueError(
                 "location must be upper right, upper left, lower left or lower right"
             )
-        artists = [a for a in self._artists if a.get_label() is not None]
+        artists = self._legend_artists()
         if not artists:
             raise ValueError("legend requires an artist with a label")
         legend = Legend(*artists, font_size=font_size, buff=buff)
@@ -2065,11 +2305,23 @@ class CartesianAxes(VGroup):
 
     def get_legend_handles_labels(self) -> tuple[list[Mobject], list[str]]:
         """Return independent handles and labels in registration order."""
-        artists = [a for a in self._artists if a.get_label() is not None]
+        artists = self._legend_artists()
         return (
             [_handle(a) for a in artists],
             [cast(str, a.get_label()) for a in artists],
         )
+
+    def _legend_artists(self) -> list[_CurvePlot | ScatterPlot | ErrorBars]:
+        registered = sorted(
+            (order, ref)
+            for system in self._systems()
+            for order, ref in system._artists._refs
+        )
+        return [
+            artist
+            for _, ref in registered
+            if (artist := ref()) is not None and artist.get_label() is not None
+        ]
 
     def scale(
         self,
@@ -2093,19 +2345,20 @@ class CartesianAxes(VGroup):
             about_edge=about_edge,
         )
         if scale_stroke:
-            for artist in self._artists:
-                for leaf in artist.get_family():
-                    if isinstance(leaf, VMobject):
-                        leaf.set_stroke(
-                            width=abs(scale_factor) * leaf.get_stroke_width(),
-                            family=False,
-                        )
-                        leaf.set_stroke(
-                            width=abs(scale_factor)
-                            * leaf.get_stroke_width(background=True),
-                            background=True,
-                            family=False,
-                        )
+            for system in self._systems():
+                for artist in system._artists:
+                    for leaf in artist.get_family():
+                        if isinstance(leaf, VMobject):
+                            leaf.set_stroke(
+                                width=abs(scale_factor) * leaf.get_stroke_width(),
+                                family=False,
+                            )
+                            leaf.set_stroke(
+                                width=abs(scale_factor)
+                                * leaf.get_stroke_width(background=True),
+                                background=True,
+                                family=False,
+                            )
         return self
 
     @property
@@ -2177,6 +2430,7 @@ class CartesianAxes(VGroup):
         result = type(self).__new__(type(self))
         memo[id(self)] = result
         result._artists = _ArtistRegistry()
+        result._artists._clock = copy.deepcopy(self._artists._clock, memo)
         for key, value in self.__dict__.items():
             if key in {"bounds", "_data"}:
                 result.__dict__[key] = value

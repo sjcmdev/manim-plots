@@ -1075,14 +1075,15 @@ class FrameLeaf(Leaf):
 
     def _freeze_artists(self) -> None:
         if self._system is not None:
-            for artist in self._system._artists:
-                for leaf in artist.get_family():
-                    if isinstance(leaf, Leaf):
-                        leaf._frozen_frame = None
-                        for _, frozen, excluded in self._suspensions:
-                            if leaf not in excluded:
-                                leaf._frozen_frame = frozen
-                        leaf._frame_seen = -1
+            for system in self._system._systems():
+                for artist in system._artists:
+                    for leaf in artist.get_family():
+                        if isinstance(leaf, Leaf):
+                            leaf._frozen_frame = None
+                            for _, frozen, excluded in self._suspensions:
+                                if leaf not in excluded:
+                                    leaf._frozen_frame = frozen
+                            leaf._frame_seen = -1
 
     def _permanent(self, animation: Animation) -> bool:
         global _SIMULATING

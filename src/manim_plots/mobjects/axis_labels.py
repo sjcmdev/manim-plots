@@ -110,6 +110,7 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
     positions = np.full((len(values), 2), axis._cross_value())
     positions[:, axis.index] = values
     anchors = np.column_stack((system._data.forward(positions), np.zeros(len(values))))
+    anchors += axis._outward_offset()
     mapping = system.frame.mapping
     current: dict[object, NumberLabel] = {}
     glyphs: list[Leaf] = []
@@ -328,7 +329,10 @@ def _configure_labels(axis: axis_module.Axis) -> None:
         key = axis.locator.key(x)
         anchor_data = np.full((1, 2), axis._cross_value())
         anchor_data[0, axis.index] = x
-        anchor = np.append(axis._system._data.forward(anchor_data)[0], 0)
+        anchor = (
+            np.append(axis._system._data.forward(anchor_data)[0], 0)
+            + axis._outward_offset()
+        )
         label = axis._labels._parts.get(key)
         changed = axis._label_content.get(key) is not value
         if label is None or changed or style_version != axis._custom_style_seen:
