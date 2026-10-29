@@ -42,10 +42,14 @@ class _Parts[T: VMobject](VGroup):
         )
         for level in levels:
             locator = axis.locator if level == "major" else axis.minor_locator
-            keys = [("fixed", round_key(value)), round_key(value)]
+            keys: list[object] = [("fixed", round_key(value))]
             if locator is not None:
                 try:
-                    keys.insert(1, locator.key(value))
+                    lo, hi = axis.range.value
+                    if locator.contains(
+                        value, float(lo), float(hi), axis._scale, axis.max_ticks
+                    ):
+                        keys.append(locator.key(value))
                 except ValueError:
                     continue
             for key in keys:
@@ -213,8 +217,8 @@ def _configure_numbers(axis: Axis) -> None:
         for glyph, local in zip(glyphs, local_points, strict=True):
             glyph._cache = placed[offset_index : offset_index + len(local)]
             offset_index += len(local)
-    for key in axis._number_leaves.keys() - current.keys():
-        for glyph in axis._number_members.pop(key):
+    for removed_key in axis._number_leaves.keys() - current.keys():
+        for glyph in axis._number_members.pop(removed_key):
             glyph._cache = np.empty((0, 3))
     axis._number_leaves = current
     axis._number_offsets = {key: axis._number_offsets[key] for key in current}
