@@ -19,8 +19,11 @@ from manim import (
     AnimationGroup,
     Axes,
     CoordinateSystem,
+    DashedLine,
+    DashedVMobject,
     DecimalNumber,
     FadeOut,
+    Line,
     LogBase,
     Mobject,
     MoveAlongPath,
@@ -31,6 +34,7 @@ from manim import (
     ShowIncreasingSubsets,
     ShowPassingFlash,
     Succession,
+    TangentLine,
     Transform,
     TransformFromCopy,
     VGroup,
@@ -81,6 +85,23 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     CoordinateSystem.get_y_axis_label,
     CoordinateSystem._get_axis_label,
     CoordinateSystem.get_graph_label,
+    CoordinateSystem.get_line_from_axis_to_point,
+    CoordinateSystem.get_vertical_line,
+    CoordinateSystem.get_horizontal_line,
+    CoordinateSystem.get_lines_to_point,
+    CoordinateSystem.get_vertical_lines_to_graph,
+    CoordinateSystem.get_T_label,
+    CoordinateSystem.angle_of_tangent,
+    CoordinateSystem.slope_of_tangent,
+    CoordinateSystem.get_secant_slope_group,
+    CoordinateSystem.plot_derivative_graph,
+    CoordinateSystem.plot_antiderivative_graph,
+    DashedLine.__init__,
+    DashedLine._calculate_num_dashes,
+    DashedVMobject.__init__,
+    TangentLine.__init__,
+    Line.__init__,
+    Line._account_for_buff,
     DecimalNumber._set_submobjects_from_number,
     DecimalNumber._get_num_string,
     DecimalNumber._get_formatter,
@@ -175,6 +196,57 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "DashedVMobject.__init__": (
+            "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
+        ),
+        "CoordinateSystem.get_line_from_axis_to_point": (
+            "a2aba1ee4fee10863c51ea03536a6650be0228d35b3d60d70d68be6302a12465"
+        ),
+        "CoordinateSystem.get_vertical_line": (
+            "454572845bb8950b67337ebed2d3d07f125d6a617257f4c9a5bc6d0d02952488"
+        ),
+        "CoordinateSystem.get_horizontal_line": (
+            "ff27b3c362ea3ba1bf52cf452afdae57f6af0f8757129c11a1e69e148879c59f"
+        ),
+        "CoordinateSystem.get_lines_to_point": (
+            "a74430bffacac4937b316b806d97fa042bcbb72b756860489a1e62dfce1f4d49"
+        ),
+        "CoordinateSystem.get_vertical_lines_to_graph": (
+            "21a720a4cb00aa75b6429530db11c368b1d7e0b2200ddb1117ba61530472f869"
+        ),
+        "CoordinateSystem.get_T_label": (
+            "8c77bbb14a30496fc11cf0b230f36cd1796bb603f6b8ad819f2ca11682d7c48a"
+        ),
+        "CoordinateSystem.angle_of_tangent": (
+            "9f35b1c8d595882ca436dc3211519187a78aa3dc66eb68042cb04a3bcfb9f6a6"
+        ),
+        "CoordinateSystem.slope_of_tangent": (
+            "fcb9e995f09dfa7a9317d5fa7d520334f33deb22311e31b3fcad7f2e27417985"
+        ),
+        "CoordinateSystem.get_secant_slope_group": (
+            "5ba9cba3d65e5bd56134349c4cd077e3319806104f5809471ee9fdc8597e641b"
+        ),
+        "CoordinateSystem.plot_derivative_graph": (
+            "37b6974aedda180664cd7579b417bb0fdd5abd302cc5605b675245436c2b3e05"
+        ),
+        "CoordinateSystem.plot_antiderivative_graph": (
+            "a98df77383cebe0f341393f2a95f7a20b209e1dca30783e9efcb71ba1e27bd2e"
+        ),
+        "DashedLine.__init__": (
+            "9d507bbe97021a4a0a4125443d350ce428cbe556d9b928ffa4ccb9f3c2007fa8"
+        ),
+        "DashedLine._calculate_num_dashes": (
+            "a7f096d1f0585ece460d84711c8ffb4cb6a11a620e8827bfa5dfcb2d6ed0a6c4"
+        ),
+        "TangentLine.__init__": (
+            "135a555ebd431ad3d882fef073a8e17205418a4650808186c81ff8738989913f"
+        ),
+        "Line.__init__": (
+            "f878f82eced744c5893e782dcf324b309266900bb948293a7313f701fe3ac0bf"
+        ),
+        "Line._account_for_buff": (
+            "834ce9ce3971cc11fc7aec7b1747c432df83a49b6a572ab56c38bce9cff6908a"
+        ),
         "get_json": (
             "dbe7d2639c78f2dcc702c9b4f325e59498789259aa738f5ac75c408ed5e4ae87"
         ),
@@ -528,6 +600,57 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "DashedVMobject.__init__": (
+            "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
+        ),
+        "CoordinateSystem.get_line_from_axis_to_point": (
+            "a2aba1ee4fee10863c51ea03536a6650be0228d35b3d60d70d68be6302a12465"
+        ),
+        "CoordinateSystem.get_vertical_line": (
+            "454572845bb8950b67337ebed2d3d07f125d6a617257f4c9a5bc6d0d02952488"
+        ),
+        "CoordinateSystem.get_horizontal_line": (
+            "ff27b3c362ea3ba1bf52cf452afdae57f6af0f8757129c11a1e69e148879c59f"
+        ),
+        "CoordinateSystem.get_lines_to_point": (
+            "a74430bffacac4937b316b806d97fa042bcbb72b756860489a1e62dfce1f4d49"
+        ),
+        "CoordinateSystem.get_vertical_lines_to_graph": (
+            "21a720a4cb00aa75b6429530db11c368b1d7e0b2200ddb1117ba61530472f869"
+        ),
+        "CoordinateSystem.get_T_label": (
+            "8c77bbb14a30496fc11cf0b230f36cd1796bb603f6b8ad819f2ca11682d7c48a"
+        ),
+        "CoordinateSystem.angle_of_tangent": (
+            "9f35b1c8d595882ca436dc3211519187a78aa3dc66eb68042cb04a3bcfb9f6a6"
+        ),
+        "CoordinateSystem.slope_of_tangent": (
+            "fcb9e995f09dfa7a9317d5fa7d520334f33deb22311e31b3fcad7f2e27417985"
+        ),
+        "CoordinateSystem.get_secant_slope_group": (
+            "5ba9cba3d65e5bd56134349c4cd077e3319806104f5809471ee9fdc8597e641b"
+        ),
+        "CoordinateSystem.plot_derivative_graph": (
+            "37b6974aedda180664cd7579b417bb0fdd5abd302cc5605b675245436c2b3e05"
+        ),
+        "CoordinateSystem.plot_antiderivative_graph": (
+            "a98df77383cebe0f341393f2a95f7a20b209e1dca30783e9efcb71ba1e27bd2e"
+        ),
+        "DashedLine.__init__": (
+            "9d507bbe97021a4a0a4125443d350ce428cbe556d9b928ffa4ccb9f3c2007fa8"
+        ),
+        "DashedLine._calculate_num_dashes": (
+            "a7f096d1f0585ece460d84711c8ffb4cb6a11a620e8827bfa5dfcb2d6ed0a6c4"
+        ),
+        "TangentLine.__init__": (
+            "135a555ebd431ad3d882fef073a8e17205418a4650808186c81ff8738989913f"
+        ),
+        "Line.__init__": (
+            "f878f82eced744c5893e782dcf324b309266900bb948293a7313f701fe3ac0bf"
+        ),
+        "Line._account_for_buff": (
+            "834ce9ce3971cc11fc7aec7b1747c432df83a49b6a572ab56c38bce9cff6908a"
+        ),
         "get_json": (
             "dbe7d2639c78f2dcc702c9b4f325e59498789259aa738f5ac75c408ed5e4ae87"
         ),

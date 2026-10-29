@@ -10,6 +10,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 import numpy as np
 from numpy.typing import ArrayLike
+from scipy.interpolate import CubicSpline  # type: ignore[import-untyped]
 
 from manim_plots.core import BoolArray, FloatArray, IntArray
 from manim_plots.core.nodes import CompiledMap, SystemMap
@@ -20,6 +21,118 @@ CHORD_TOLERANCE = 0.5 * PIXEL
 INITIAL_SAMPLES = 33
 MAX_DEPTH = 12
 MAX_SAMPLES = 20_000
+
+
+class _CalculusSource:
+    """Cache calculus queries against a versioned, replaceable parent source."""
+
+    def __init__(
+        self,
+        parent: Callable[[], Source],
+        limits: Callable[[], tuple[float, float]],
+        revision: Callable[[], object],
+        *,
+        integral: bool = False,
+        y_intercept: float = 0,
+        x_range: Sequence[float] | None = None,
+        discontinuities: Iterable[float] | None = None,
+        dt: float = 1e-8,
+    ) -> None:
+        self._parent, self._limits, self._revision = parent, limits, revision
+        self._integral, self._intercept = integral, y_intercept
+        self._explicit_range = _range(x_range, "x_range")
+        self._extra_gaps = _options(self._values, True, discontinuities, dt)
+        self.dt = dt
+        self._seen: object = None
+        self._primitive: Any = None
+        self._anchor = 0.0
+        self.use_vectorized = True
+        self.discontinuities: tuple[float, ...] = ()
+
+    @property
+    def _range(self) -> tuple[float, ...]:
+        return (
+            tuple(sorted(self._limits()))
+            if self._explicit_range is None
+            else self._explicit_range
+        )
+
+    def _sync(self) -> None:
+        seen = self._revision()
+        if seen == self._seen:
+            return
+        parent = self._parent()
+        self.discontinuities = tuple(
+            sorted(set((*getattr(parent, "discontinuities", ()), *self._extra_gaps)))
+        )
+        if self._integral:
+            lo, hi = sorted(self._limits())
+            # Integrate one cubic interpolant over the entire grid, including the
+            # anchor exactly. Queries then cost one polynomial evaluation.
+            anchor = 0.0 if lo <= 0 <= hi else self._limits()[0]
+            if anchor == 0:
+                with np.errstate(all="ignore"):
+                    try:
+                        valid_zero = bool(np.isfinite(parent.at(0)).all())
+                    except (ValueError, ZeroDivisionError, OverflowError):
+                        valid_zero = False
+                if not valid_zero:
+                    anchor = self._limits()[0]
+            grid = np.unique(np.append(np.linspace(lo, hi, 4097), anchor))
+            values = parent.at(grid)[:, 1]
+            self._primitive = CubicSpline(grid, values).antiderivative()
+            self._anchor = float(self._primitive(anchor))
+        self._seen = seen
+
+    def _values(self, x: FloatArray) -> FloatArray:
+        self._sync()
+        if self._integral:
+            return np.asarray(
+                self._primitive(x) - self._anchor + self._intercept, dtype=float
+            )
+        h = np.cbrt(np.finfo(float).eps) * np.maximum(1, np.abs(x))
+        parent = self._parent()
+        return np.asarray(
+            (parent.at(x + h)[:, 1] - parent.at(x - h)[:, 1]) / (2 * h), dtype=float
+        )
+
+    def at(self, t: ArrayLike) -> FloatArray:
+        """Return exact derivative queries or queries of the cached primitive.
+
+        Parameters
+        ----------
+        t
+            Scalar or one-dimensional data inputs.
+
+        Returns
+        -------
+        FloatArray
+            Input and derived value in each row.
+        """
+        x = _inputs(t)
+        return np.column_stack((x, self._values(x)))
+
+    def sample(self, map: CompiledMap, bounds: Bounds) -> Payload:
+        """Sample the derived function with the ordinary adaptive sampler.
+
+        Parameters
+        ----------
+        map, bounds
+            Coordinate conversions and local sampling bounds.
+
+        Returns
+        -------
+        Payload
+            Data-space path, as for FunctionSource.
+        """
+        self._sync()
+        return FunctionSource(
+            self._values,
+            self._range,
+            use_vectorized=True,
+            discontinuities=self.discontinuities,
+            dt=self.dt,
+        ).sample(map, bounds)
 
 
 @runtime_checkable

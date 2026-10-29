@@ -55,6 +55,8 @@ from manim_plots.mobjects.artists import (
 )
 from manim_plots.mobjects.axis import TickDirection as TickDirection
 from manim_plots.mobjects.context import check_pins
+from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
+from manim_plots.mobjects.helpers import HelperLine as HelperLine
 from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
