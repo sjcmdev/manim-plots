@@ -71,9 +71,10 @@ def lines(ax) -> list[tuple[float, float, float, float]]:
     return out
 
 
-def tick_side(axis) -> tuple[float, float]:
-    """How far the first major tick reaches either side of its axis line."""
-    tick = np.asarray(axis.ticks[0].points)
+def tick_side(axis, level: str = "major") -> tuple[float, float]:
+    """How far the first tick of a level reaches below and above (left and right of) its
+    axis line."""
+    tick = np.asarray((axis.ticks if level == "major" else axis.minor_ticks)[0].points)
     i = 1 - axis.index
     middle = float(np.asarray(axis.line.points)[:, i].mean())
     return middle - float(tick[:, i].min()), float(tick[:, i].max()) - middle
@@ -105,10 +106,13 @@ def test_th3_border_themes_put_the_axes_on_a_box(name):
     assert ax.x_axis.tip is None and ax.y_axis.tip is None
 
 
-def test_th3_origin_ticks_point_out_with_one_minor_between_majors():
+def test_th3_origin_ticks_point_in_with_one_minor_between_majors():
     ax = axes(theme="origin")
-    below, above = tick_side(ax.x_axis)
-    assert below > 0 and above == pytest.approx(0, abs=1e-9)
+    for level in ("major", "minor"):
+        below, above = tick_side(ax.x_axis, level)
+        assert above > 0 and below == pytest.approx(0, abs=1e-9)
+        left, right = tick_side(ax.y_axis, level)
+        assert right > 0 and left == pytest.approx(0, abs=1e-9)
     assert len(ax.x_axis.minor_ticks) == len(ax.x_axis.ticks) - 1
     assert len(ax.x_axis.grid) == 0
 
@@ -256,3 +260,76 @@ def test_th10_a_plane_takes_the_cycle_and_keeps_its_grid():
     plain, themed = mp.NumberPlane(), mp.NumberPlane(theme="base")
     assert len(themed.background_lines) == len(plain.background_lines)
     assert hexes([themed.plot(np.sin).get_color()]) == HEX["origin"].split()[:1]
+
+
+# --- TH-11 ----------------------------------------------------------------------------
+
+
+def inward(axis, side: str, level: str = "major") -> bool:
+    """Whether the ticks of an axis on `side` reach only toward the data rectangle."""
+    low, high = tick_side(axis, level)
+    if side in ("bottom", "left"):
+        return high > 0 and low == pytest.approx(0, abs=1e-9)
+    return low > 0 and high == pytest.approx(0, abs=1e-9)
+
+
+@pytest.mark.parametrize(
+    ("name", "side"), [("x", "bottom"), ("x", "top"), ("y", "left"), ("y", "right")]
+)
+def test_th11_an_axis_placed_at_a_border_points_its_ticks_in(name, side):
+    ax = axes()
+    axis = getattr(ax, name)
+    axis.set_position(side)
+    assert inward(axis, side)
+
+
+def test_th11_an_offset_axis_points_its_ticks_in():
+    ax = axes()
+    ax.y.set_position("left", offset=0.5)
+    assert inward(ax.y, "left")
+
+
+def test_th11_a_mirror_and_a_twin_point_their_ticks_in():
+    ax = axes()
+    ax.x.set_position("bottom")
+    ax.y.set_position("left")
+    top, right = ax.x.mirror(), ax.y.mirror()
+    assert inward(top, "top") and inward(right, "right")
+    first = ax.twinx(y_range=(0, 1, 0.25))
+    second = ax.twinx(y_range=(0, 100, 25))
+    assert inward(first.y_axis, "right") and inward(second.y_axis, "right")
+    twin = ax.twiny(x_range=(0, 5, 1))
+    assert inward(twin.x_axis, "top")
+
+
+def test_th11_axes_through_the_data_keep_manims_ticks():
+    for ax in (axes(), mp.Axes(x_range=(1, 5, 1), y_range=(2, 6, 1))):
+        for axis in (ax.x, ax.y):
+            low, high = tick_side(axis)
+            assert low == pytest.approx(high, abs=1e-9) and low > 0
+    ax = axes()
+    ax.x.set_position(2.0)
+    ax.y.set_position("origin", fraction=0.0)
+    for axis in (ax.x, ax.y):
+        low, high = tick_side(axis)
+        assert low == pytest.approx(high, abs=1e-9)
+
+
+def test_th11_a_set_direction_wins_also_over_a_later_position():
+    ax = axes()
+    ax.x.set_ticks_direction(mp.TickDirection.OUT)
+    ax.x.set_position("bottom")
+    below, above = tick_side(ax.x)
+    assert below > 0 and above == pytest.approx(0, abs=1e-9)
+    ax.y.set_position("left")
+    ax.y.set_tick_style(direction=mp.TickDirection.BOTH)
+    left, right = tick_side(ax.y)
+    assert left == pytest.approx(right, abs=1e-9)
+
+
+def test_th11_a_themes_direction_wins_and_none_is_the_rule():
+    assert all(theme.tick_direction is None for theme in mp.THEMES.values())
+    out = dataclasses.replace(mp.THEMES["origin"], tick_direction=mp.TickDirection.OUT)
+    ax = axes(theme=out)
+    below, above = tick_side(ax.x_axis)
+    assert below > 0 and above == pytest.approx(0, abs=1e-9)
