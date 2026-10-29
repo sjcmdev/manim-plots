@@ -91,3 +91,11 @@ class CartesianAxes:
   `__manim` twin drawn by hand with `Line`s on Manim's `Axes` for the linear half.
 - A frame-cost reading: 200 points with errors in x and y under `ax.animate.set_x_range`
   on F-1001's axes, recorded here, not gated.
+
+## Frame-cost reading
+
+2026-10-29, Codex's run: 200 points with x and y errors under `ax.animate.set_x_range` on
+F-1001's decorated axes, Manim 0.21, 1080p60: `update` p95 36.7 ms, frame p95 61.8 ms.
+The family holds 206 mobjects: the four bar and cap families are one leaf each, and the
+cost is the scatter's 200 marker leaves, as for `ax.scatter` alone. For task 23's
+performance pass.

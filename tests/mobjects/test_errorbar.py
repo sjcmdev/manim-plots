@@ -227,8 +227,10 @@ def test_ed2_an_animated_set_data_moves_each_bar():
         scene.play(eb.animate.set_data(X, Y + 2, yerr=1.0), run_time=1)
 
     tops = probe(construct, lambda: float(ax.p2c(segments(eb.ybars)[0][1])[1]))
-    assert tops[-1] == pytest.approx(Y[0] + 3, abs=1e-6)
     assert any(Y[0] + 0.5 + 1e-3 < t < Y[0] + 3 - 1e-3 for t in tops)
+    assert tops == sorted(tops)  # the probe's last frame comes before the play's end
+    top = float(ax.p2c(segments(eb.ybars)[0][1])[1])
+    assert top == pytest.approx(Y[0] + 3, abs=1e-6)
 
 
 def test_ed2_a_different_count_under_animate_raises():
