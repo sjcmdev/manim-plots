@@ -1,11 +1,18 @@
 """Inventory and source pins for the Manim internals used by the library."""
 
+import ast
 import hashlib
 import inspect
+import sys
+import textwrap
 import warnings
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from types import FrameType
+from typing import Any, cast
 
 import manim
+import numpy as np
 from manim import (
     Animation,
     AnimationGroup,
@@ -20,6 +27,7 @@ from manim import (
     Succession,
     Transform,
     TransformFromCopy,
+    VGroup,
     VMobject,
     Wiggle,
     always_redraw,
@@ -31,7 +39,7 @@ from manim.camera.camera import Camera
 from manim.mobject.mobject import _AnimationBuilder
 from manim.renderer.cairo_renderer import CairoRenderer
 
-from manim_plots.core import ManimPlotsWarning
+from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
     Mobject.rotate,
@@ -104,10 +112,20 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     Camera.set_cairo_context_path,
     DrawBorderThenFill.begin,
     Mobject.get_family_updaters,
+    Mobject.__getattr__,
+    VMobject.set_fill,
+    VMobject.set_stroke,
+    VMobject.interpolate_color,
+    VMobject.pointwise_become_partial,
+    VGroup.add,
+    Mobject.remove,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Mobject.remove": (
+            "b57f7a7caadb6f17c0e9a2211a2b3ed39f43c48949238387901aba2ab78b4aa8"
+        ),
         "Mobject.rotate": (
             "d8654a36c8cb817b8341eda2498230b26a1f9d010fc1c2d8f9383057134d8ae8"
         ),
@@ -315,11 +333,32 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "DrawBorderThenFill.begin": (
             "a4a73c4ecb61734d10a94bfad4a53f0e7cd135ebd9653065820e90ca1f76d720"
         ),
+        "Mobject.__getattr__": (
+            "4b63b7f9c1e9a41087e93e3c5c9fea4413523b5511af51caf4f06d8f2c6d451b"
+        ),
+        "VMobject.set_fill": (
+            "e325766f129f638c59186f1b32ff63d4601a653a20744467f62db4713772f49e"
+        ),
+        "VMobject.set_stroke": (
+            "1ee05806ebe6f8558b037e760bdcfac0ad9595bced1d993a85c8abee95772595"
+        ),
+        "VMobject.interpolate_color": (
+            "1f9f95a1383f72ba1576bb0177cb81b32b95dc115b337b36b152c3c521b2d72d"
+        ),
+        "VMobject.pointwise_become_partial": (
+            "c78b17aeb714c07dc36e800a54c642f1226503698ed9a38224322eb45ac1f21d"
+        ),
+        "VGroup.add": (
+            "0c23544a19789dd871a576725ac0832fe2a0af89a75dac8c7c26eb598edd515a"
+        ),
         "Mobject.get_family_updaters": (
             "37cd7d253aa5e9d4ccfaddd4e81677fadaf99600f4b9ba7b6d9d5717f71e86c8"
         ),
     },
     "0.22.0": {
+        "Mobject.remove": (
+            "0de58573f90f6468ac258de89cad2eae2b84cdeddc859a67f492333259864f5d"
+        ),
         "Mobject.rotate": (
             "d8654a36c8cb817b8341eda2498230b26a1f9d010fc1c2d8f9383057134d8ae8"
         ),
@@ -527,6 +566,24 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "DrawBorderThenFill.begin": (
             "a4a73c4ecb61734d10a94bfad4a53f0e7cd135ebd9653065820e90ca1f76d720"
         ),
+        "Mobject.__getattr__": (
+            "4b63b7f9c1e9a41087e93e3c5c9fea4413523b5511af51caf4f06d8f2c6d451b"
+        ),
+        "VMobject.set_fill": (
+            "e325766f129f638c59186f1b32ff63d4601a653a20744467f62db4713772f49e"
+        ),
+        "VMobject.set_stroke": (
+            "1ee05806ebe6f8558b037e760bdcfac0ad9595bced1d993a85c8abee95772595"
+        ),
+        "VMobject.interpolate_color": (
+            "1f9f95a1383f72ba1576bb0177cb81b32b95dc115b337b36b152c3c521b2d72d"
+        ),
+        "VMobject.pointwise_become_partial": (
+            "c78b17aeb714c07dc36e800a54c642f1226503698ed9a38224322eb45ac1f21d"
+        ),
+        "VGroup.add": (
+            "0c23544a19789dd871a576725ac0832fe2a0af89a75dac8c7c26eb598edd515a"
+        ),
         "Mobject.get_family_updaters": (
             "37cd7d253aa5e9d4ccfaddd4e81677fadaf99600f4b9ba7b6d9d5717f71e86c8"
         ),
@@ -602,3 +659,209 @@ def check_pins(version: str | None = None) -> None:
     if key not in _WARNED:
         _WARNED.add(key)
         warnings.warn(message, ManimPlotsWarning, stacklevel=2)
+
+
+def _last_write(method: Callable[..., Any]) -> int:
+    lines, first = inspect.getsourcelines(method)
+    tree = ast.parse(textwrap.dedent("".join(lines)))
+    writes: list[int] = []
+    for node in ast.walk(tree):
+        targets = (
+            node.targets
+            if isinstance(node, ast.Assign)
+            else [node.target]
+            if isinstance(node, (ast.AugAssign, ast.AnnAssign))
+            else []
+        )
+        if any(isinstance(t, ast.Attribute) and t.attr == "points" for t in targets):
+            writes.append(first + cast(ast.stmt, node).lineno - 1)
+    return max(writes)
+
+
+_WRITERS = {
+    Mobject.shift.__code__: _last_write(Mobject.shift),
+    Mobject.apply_points_function_about_point.__code__: _last_write(
+        Mobject.apply_points_function_about_point
+    ),
+}
+_BEGIN = frozenset(
+    m.__code__
+    for m in (Animation.begin, AnimationGroup.begin, Succession.begin, Transform.begin)
+)
+_FINISH = frozenset(
+    m.__code__ for m in (Animation.finish, AnimationGroup.finish, Succession.finish)
+)
+
+
+def affine_context() -> FloatArray | None:
+    """Return the native operation's exact row-vector linear matrix, if any."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            code, values = frame.f_code, frame.f_locals
+            if code is Mobject.rotate.__code__:
+                return cast(FloatArray, values["rot_matrix"].T.copy())
+            if code is Mobject.scale.__code__:
+                return np.eye(3) * float(values["scale_factor"])
+            if code is Mobject.stretch.__code__:
+                matrix = np.eye(3)
+                matrix[values["dim"], values["dim"]] = values["factor"]
+                return matrix
+            if code is Mobject.apply_matrix.__code__:
+                return cast(FloatArray, values["full_matrix"].T.copy())
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
+
+
+def animation_context(
+    finishing: bool = False, transform_only: bool = False
+) -> Animation | None:
+    """Read the nearest animation begin or finish boundary.
+
+    Parameters
+    ----------
+    finishing
+        Read a finish boundary instead of a begin boundary.
+    transform_only
+        Restrict the query to Transform.begin, before point alignment.
+    """
+    codes = (
+        {Transform.begin.__code__}
+        if transform_only
+        else _FINISH
+        if finishing
+        else _BEGIN
+    )
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            if frame.f_code in codes:
+                return cast(Animation, frame.f_locals["self"])
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
+
+
+@dataclass
+class WriterContext:
+    """Hold copied operation facts and a family memo, without retaining a frame.
+
+    Parameters
+    ----------
+    container, family
+        Native writer and its family, collected once per operation.
+    vector
+        Shift vector, or None for a points function.
+    function, pivot, matrix
+        Points function, pivot and optional exact row-vector linear matrix.
+    application
+        Original VMobject.apply_function invocation, if present.
+    last
+        Whether this assignment is the writer's final points assignment.
+    """
+
+    container: Mobject
+    family: frozenset[Mobject]
+    vector: FloatArray | None = None
+    function: Callable[[FloatArray], FloatArray] | None = None
+    pivot: FloatArray | None = None
+    matrix: FloatArray | None = None
+    application: tuple[VMobject, Callable[..., Any]] | None = None
+    last: bool = False
+
+
+def writer_context() -> WriterContext | None:
+    """Attribute a native geometric write and memoise its container family."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            code = frame.f_code
+            if code in _WRITERS:
+                values = frame.f_locals
+                result = values.get("__manim_plots_writer")
+                if result is None:
+                    container = values["self"]
+                    result = WriterContext(container, frozenset(container.get_family()))
+                    if code is Mobject.shift.__code__:
+                        result.vector = values["total_vector"].copy()
+                    else:
+                        result.function = values["func"]
+                        result.pivot = values["about_point"].copy()
+                        result.matrix = affine_context()
+                        outer = frame.f_back
+                        try:
+                            while outer is not None:
+                                if outer.f_code is VMobject.apply_function.__code__:
+                                    result.application = (
+                                        outer.f_locals["self"],
+                                        outer.f_locals["function"],
+                                    )
+                                    break
+                                outer = outer.f_back
+                        finally:
+                            del outer
+                    values["__manim_plots_writer"] = result
+                result.last = frame.f_lineno == _WRITERS[code]
+                return cast(WriterContext, result)
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
+
+
+def buffer_write() -> bool:
+    """Return whether a getter is inside a multi-assignment native operation."""
+    frame: FrameType | None = sys._getframe(2)
+    try:
+        while frame is not None:
+            code = frame.f_code
+            if code in _WRITERS or code is VMobject.set_anchors_and_handles.__code__:
+                return True
+            frame = frame.f_back
+        return False
+    finally:
+        del frame
+
+
+def playback_context() -> tuple[int, float | str, int] | None:
+    """Return a shared token for a rendered frame or a play's finish boundary."""
+    frame: FrameType | None = sys._getframe(1)
+    boundary = None
+    try:
+        while frame is not None:
+            if frame.f_code is Scene.update_to_time.__code__:
+                values = frame.f_locals
+                token = values.get("__manim_plots_playback")
+                if token is None:
+                    scene = values["self"]
+                    token = (id(scene), values["t"], int(scene.renderer.num_plays))
+                    values["__manim_plots_playback"] = token
+                return cast(tuple[int, float | str, int], token)
+            if frame.f_code is Scene.play_internal.__code__:
+                scene = frame.f_locals["self"]
+                boundary = (id(scene), "finish", int(scene.renderer.num_plays))
+            frame = frame.f_back
+        return boundary
+    finally:
+        del frame
+
+
+def moving_context() -> frozenset[Mobject] | None:
+    """Read and memoise animated families during Cairo's moving-object query."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            if frame.f_code is Scene.get_moving_mobjects.__code__:
+                values = frame.f_locals
+                result = values.get("__manim_plots_moving")
+                if result is None:
+                    result = frozenset(values["animation_mobjects"])
+                    values["__manim_plots_moving"] = result
+                return cast(frozenset[Mobject], result)
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
