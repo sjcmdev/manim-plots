@@ -15,18 +15,32 @@ from manim_plots.core.scales import (
     Scale,
     SymLogScale,
 )
+from manim_plots.core.shape import Shape
+from manim_plots.core.sources import (
+    ArraySource,
+    Bounds,
+    FunctionSource,
+    ParametricSource,
+    Source,
+)
 from manim_plots.mobjects.context import check_pins
 
 __version__ = version("manim-plots")
 
 __all__ = [
+    "ArraySource",
+    "Bounds",
     "CompiledMap",
     "FunctionScale",
+    "FunctionSource",
     "LinearScale",
     "LogScale",
     "ManimPlotsWarning",
+    "ParametricSource",
     "Payload",
     "Scale",
+    "Shape",
+    "Source",
     "SymLogScale",
     "__version__",
 ]
