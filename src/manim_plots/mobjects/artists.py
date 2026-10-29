@@ -243,6 +243,9 @@ class _CurvePlot(Leaf):
             return
         if self._write_start is None:
             self._write_start = self._cache.copy()
+            if context.pivot is not None:
+                # Manim subtracts the pivot in place before this first assignment.
+                self._write_start += context.pivot
         self._cache = np.asarray(value, dtype=float)
         if not context.last:
             return
