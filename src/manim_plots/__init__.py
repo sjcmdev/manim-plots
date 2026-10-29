@@ -25,6 +25,14 @@ from manim_plots.core.scales import (
     Scale,
     SymLogScale,
 )
+from manim_plots.core.shape import Shape
+from manim_plots.core.sources import (
+    ArraySource,
+    Bounds,
+    FunctionSource,
+    ParametricSource,
+    Source,
+)
 from manim_plots.core.ticks import (
     FixedLocator,
     Locator,
@@ -40,6 +48,8 @@ from manim_plots.mobjects.context import check_pins
 __version__ = version("manim-plots")
 
 __all__ = [
+    "ArraySource",
+    "Bounds",
     "CompiledMap",
     "DecimalFormatter",
     "EngFormatter",
@@ -48,6 +58,7 @@ __all__ = [
     "FormatStrFormatter",
     "Formatter",
     "FunctionScale",
+    "FunctionSource",
     "Labels",
     "LinearScale",
     "Locator",
@@ -59,9 +70,12 @@ __all__ = [
     "MultipleLocator",
     "NullFormatter",
     "NullLocator",
+    "ParametricSource",
     "Payload",
     "Scale",
     "ScientificFormatter",
+    "Shape",
+    "Source",
     "SymLogLocator",
     "SymLogScale",
     "__version__",

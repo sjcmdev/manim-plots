@@ -164,12 +164,13 @@ F-311, F-917 (pins), F-1003, F-1006 (payload rows).
 `core/sources.py`, `core/shape.py`, `core/params.py`. F-104, F-106-F-108, F-110, F-113,
 F-703-F-707, F-710 (`resample_like`), F-806, F-911 and F-918 (numerics).
 
-- [ ] Acceptance table: sources, shape, parameters
-- [ ] `tests/core/test_sources.py`, `test_shape.py` (the pipeline order of ADR 0003 §1:
+- [x] Acceptance table: sources, shape, parameters — `docs/acceptance/07-sources-shape-params.md`
+- [x] `tests/core/test_sources.py`, `test_shape.py` (the pipeline order of ADR 0003 §1:
       a segment crossing the viewport, a single point, a pole gap, dash phase),
       `test_params.py` (snapshots, a callable binding dirty once per frame)
-- [ ] `tests/benchmark/test_core_pipeline.py`: four artists of 2 000 samples on both
-      frame paths — the first reading of the 4 ms margin
+- [x] `tests/benchmark/test_core_pipeline.py`: four artists of 2 000 samples on both
+      frame paths — the first reading of the 4 ms margin: p95 3.4 ms affine, 4.7 ms
+      warped, for the core alone, after one optimisation pass
 
 ### task/08-ticks-formatters-lifecycle
 
