@@ -22,11 +22,12 @@ Modules: `src/manim_plots/core/__init__.py`, `core/payload.py`, `core/scales.py`
 ```python
 Kind = Literal["path", "points", "region"]
 
+
 @dataclass(frozen=True)
 class Payload:
     kind: Kind
-    coords: FloatArray                       # (n, d)
-    segments: IntArray                       # (s, 2), half-open [start, stop)
+    coords: FloatArray  # (n, d)
+    segments: IntArray  # (s, 2), half-open [start, stop)
     topology: IntArray | tuple[int, int] | None = None
     valid: BoolArray | None = None
 
@@ -36,6 +37,7 @@ class Payload:
     def points(cls, coords: FloatArray, valid: BoolArray | None = None) -> Payload: ...
     @classmethod
     def empty(cls, kind: Kind, dim: int) -> Payload: ...
+
 
 def split_segments(segments: IntArray, valid: BoolArray) -> IntArray: ...
 ```
@@ -88,20 +90,32 @@ class Scale(Protocol):
     def increasing(self) -> bool: ...
     def forward(self, x: ArrayLike) -> FloatArray: ...
     def inverse(self, u: ArrayLike) -> FloatArray: ...
-    def limit_range(self, lo: float, hi: float, minpos: float) -> tuple[float, float]: ...
+    def limit_range(
+        self, lo: float, hi: float, minpos: float
+    ) -> tuple[float, float]: ...
+
 
 @dataclass(frozen=True)
 class LinearScale: ...
+
+
 @dataclass(frozen=True)
 class LogScale:
     base: float = 10.0
+
+
 @dataclass(frozen=True)
 class SymLogScale:
     base: float = 10.0
     linthresh: float = 1.0
     linscale: float = 1.0
+
+
 class FunctionScale:
-    def __init__(self, forward, inverse, domain, closed=(False, False), increasing=True): ...
+    def __init__(
+        self, forward, inverse, domain, closed=(False, False), increasing=True
+    ): ...
+
 
 MINPOS_UNKNOWN = 1e-300
 ```
@@ -178,11 +192,12 @@ class SystemMap:       # SystemMap(data, frame, own=None) — satisfies Compiled
 ## K — pins, `mobjects/context.py` (F-917)
 
 ```python
-SYMBOLS: tuple[Callable[..., object], ...]          # the inventory
-PINS: Mapping[str, Mapping[str, str]]               # Manim version -> qualname -> sha256
+SYMBOLS: tuple[Callable[..., object], ...]  # the inventory
+PINS: Mapping[str, Mapping[str, str]]  # Manim version -> qualname -> sha256
 
-def symbol_name(symbol) -> str: ...                 # its __qualname__
-def source_hashes() -> dict[str, str]: ...          # for the installed Manim
+
+def symbol_name(symbol) -> str: ...  # its __qualname__
+def source_hashes() -> dict[str, str]: ...  # for the installed Manim
 def check_pins(version: str | None = None) -> None: ...
 ```
 
