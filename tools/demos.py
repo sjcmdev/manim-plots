@@ -441,6 +441,60 @@ def derived_graphs(scene: Scene) -> None:
     scene.play(a.animate.set_value(0.6), run_time=2)
 
 
+def twin_axes(scene: Scene) -> None:
+    """Plot two quantities on two y axes, then pan the shared x range.
+
+    `ax.twinx(y_range=...)` adds a y axis on the right with its own range; each plot
+    belongs to its pair of axes, and an animated x range moves both.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(
+        x_range=(0, 10, 1),
+        y_range=(0, 100, 20),
+        x_length=9,
+        y_length=4.8,
+        axis_config={"include_numbers": True, "font_size": 22},
+    ).shift(0.4 * DOWN)
+    pressure = ax.twinx(
+        y_range=(0, 2, 0.5), y_axis_config={"include_numbers": True, "font_size": 22}
+    )
+    temperature = ax.plot(lambda x: 50 + 30 * np.sin(x / 2), color=RED)
+    drop = pressure.plot(lambda x: 1.8 * np.exp(-x / 6), color=BLUE)
+    ax.y_axis.set_color(RED)
+    pressure.y_axis.set_color(BLUE)
+    show_call(scene, shown, "pressure = ax.twinx(y_range=(0, 2, 0.5))")
+    scene.play(Create(ax), Create(temperature), Create(drop), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((0, 20)))")
+    scene.play(ax.animate.set_x_range((0, 20)), run_time=2.5)
+    show_call(scene, shown, "self.play(pressure.animate.set_y_range((0, 1, 0.25)))")
+    scene.play(pressure.animate.set_y_range((0, 1, 0.25)), run_time=2)
+    scene.wait(0.5)
+
+
+def errorbar_data(scene: Scene) -> None:
+    """Move measured points and their error bars with `.animate.set_data`.
+
+    `ax.errorbar(x, y, yerr=..., xerr=...)` draws bars in data space and caps of a fixed
+    size; `set_data` under `.animate` moves and stretches each bar to its new place.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(0, 6, 1), y_range=(0, 5, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    xs = np.arange(1.0, 6.0)
+    bars = ax.errorbar(xs, 1 + xs / 2, yerr=0.3, xerr=0.15, color=YELLOW, line=True)
+    scene.add(ax, bars)
+    show_call(scene, shown, "self.play(bars.animate.set_data(x, y, yerr=...))")
+    scene.play(
+        bars.animate.set_data(
+            xs, 4 - xs / 2, yerr=[[0.2, 0.4, 0.2, 0.5, 0.3], [0.6, 0.2, 0.5, 0.2, 0.4]]
+        ),
+        run_time=2.5,
+    )
+    show_call(scene, shown, "self.play(ax.animate.set_y_range((0, 8)))")
+    scene.play(ax.animate.set_y_range((0, 8)), run_time=2)
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -459,6 +513,8 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     secant_to_tangent,
     riemann_refines,
     derived_graphs,
+    twin_axes,
+    errorbar_data,
 ]
 
 
