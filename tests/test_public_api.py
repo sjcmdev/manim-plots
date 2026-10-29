@@ -48,6 +48,20 @@ EXPECTED = {
     "NullFormatter",
     # task 09
     "CartesianAxes",
+    # task 11
+    "FunctionPlot",
+    "LinePlot",
+    "ScatterPlot",
+    "ParametricPlot",
+    # task 12
+    "Legend",
+    "LineStyle",
+    "Marker",
+    "COLOR_CYCLE",
+    "DrawAxes",
+    "TraceCurve",
+    "ShowPoints",
+    "Morph",
 }
 
 

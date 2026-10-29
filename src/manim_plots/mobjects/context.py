@@ -156,6 +156,9 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VGroup.add,
     Mobject.remove,
     Mobject.reduce_across_dimension,
+    VMobject.scale,
+    VMobject.split,
+    Animation.interpolate_mobject,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
@@ -252,6 +255,15 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "LogBase.get_custom_labels": (
             "d92f86ca4ffedbb5c4844c8657003d9d9f06c8ad66f76eb128e8a4a4f1415c36"
+        ),
+        "VMobject.scale": (
+            "a49555af84f1592f2649dfc9bd89f8b91331b3193ff00162185d462b40a54a37"
+        ),
+        "VMobject.split": (
+            "ed5b27ee300e1e74e5ad8a3d30b6c0ac0e60cbba3604d275577272f6c1d04371"
+        ),
+        "Animation.interpolate_mobject": (
+            "6df42ab42e168d57a38584100dd57cc87b474fcee5a2531ca3d0c4465b28bb66"
         ),
         "Mobject.reduce_across_dimension": (
             "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
@@ -581,6 +593,15 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "LogBase.get_custom_labels": (
             "d92f86ca4ffedbb5c4844c8657003d9d9f06c8ad66f76eb128e8a4a4f1415c36"
+        ),
+        "VMobject.scale": (
+            "a49555af84f1592f2649dfc9bd89f8b91331b3193ff00162185d462b40a54a37"
+        ),
+        "VMobject.split": (
+            "ed5b27ee300e1e74e5ad8a3d30b6c0ac0e60cbba3604d275577272f6c1d04371"
+        ),
+        "Animation.interpolate_mobject": (
+            "6df42ab42e168d57a38584100dd57cc87b474fcee5a2531ca3d0c4465b28bb66"
         ),
         "Mobject.reduce_across_dimension": (
             "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
@@ -1015,10 +1036,11 @@ def writer_context() -> WriterContext | None:
                     container = values["self"]
                     result = WriterContext(container, frozenset(container.get_family()))
                     if code is Mobject.shift.__code__:
-                        result.vector = values["total_vector"].copy()
+                        # Manim passes a tuple through when one tuple is given.
+                        result.vector = np.array(values["total_vector"], dtype=float)
                     else:
                         result.function = values["func"]
-                        result.pivot = values["about_point"].copy()
+                        result.pivot = np.array(values["about_point"], dtype=float)
                         result.matrix = affine_context()
                         outer = frame.f_back
                         try:

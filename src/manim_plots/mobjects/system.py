@@ -3,14 +3,26 @@
 from __future__ import annotations
 
 import copy
-import weakref
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Literal, NoReturn, Self, Unpack, cast
+from typing import Any, Literal, NoReturn, Self, Unpack, cast, overload
 
 import numpy as np
-from manim import BLUE_D, Dot, LinearBase, LogBase, Mobject, VGroup, VMobject, config
+from manim import (
+    BLUE_D,
+    DEFAULT_DOT_RADIUS,
+    PURE_YELLOW,
+    Dot,
+    LinearBase,
+    LogBase,
+    Mobject,
+    VDict,
+    VGroup,
+    VMobject,
+    config,
+)
 from manim import Axes as NativeAxes
 from manim.constants import RendererType
+from manim.typing import Point3DLike, Vector3DLike
 from manim.utils.color import ParsableManimColor
 from manim.utils.config_ops import merge_dicts_recursively
 from numpy.typing import ArrayLike
@@ -39,7 +51,15 @@ from manim_plots.core.ticks import (
     MultipleLocator,
     SymLogLocator,
 )
-from manim_plots.mobjects.artists import FunctionPlot
+from manim_plots.mobjects.artists import (
+    FunctionPlot,
+    LinePlot,
+    Marker,
+    ParametricPlot,
+    ScatterPlot,
+    _CurvePlot,
+    _parameterize,
+)
 from manim_plots.mobjects.axis import (
     Axis,
     _LogExponentLocator,
@@ -51,13 +71,15 @@ from manim_plots.mobjects.leaves import (
     BoundLabel,
     FrameLeaf,
     GridLeaf,
+    _ArtistOptions,
     _label,
     _NumberOptions,
-    _PlotOptions,
+    _ParametricOptions,
     _reported_updaters,
     _synchronise,
     _VMStyle,
 )
+from manim_plots.mobjects.legend import Legend, _handle
 
 _DEFAULT_LENGTHS = (round(config.frame_width) - 2, round(config.frame_height) - 2)
 _AXIS_KEYS = frozenset(
@@ -123,6 +145,8 @@ class CartesianAxes(VGroup):
     **kwargs
         Native VGroup style and mobject options.
     """
+
+    _color_index: int = 0
 
     def __init__(
         self,
@@ -274,7 +298,8 @@ class CartesianAxes(VGroup):
         for name, value in (("x_length", self.x_length), ("y_length", self.y_length)):
             if not np.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be positive and finite")
-        self._artists: weakref.WeakSet[FunctionPlot] = weakref.WeakSet()
+        self._artists: list[_CurvePlot | ScatterPlot] = []
+        self._moving_query: tuple[frozenset[Mobject], bool] | None = None
         self._actual_updaters: list[Callable[..., Any]] = []
         self._syncing = True
         self._data_version = 0
@@ -450,8 +475,6 @@ class CartesianAxes(VGroup):
 
     def _poll(self) -> None:
         parameters = (*self.x_axis._parameters(), *self.y_axis._parameters())
-        if all(parameter.tracker is None for parameter in parameters):
-            return
         token = playback_context()
         if token is not None and token == self._poll_token:
             return
@@ -459,9 +482,17 @@ class CartesianAxes(VGroup):
         self._token += 1
         for parameter in parameters:
             parameter.poll(self._token)
+        for artist in self._artists:
+            if isinstance(artist, _CurvePlot):
+                artist._poll()
         self._sync_data()
 
     def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
+        if self._moving_query is None or self._moving_query[0] is not moving:
+            self._moving_query = (moving, self._sync_needed(moving))
+        return self._moving_query[1]
+
+    def _sync_needed(self, moving: frozenset[Mobject]) -> bool:
         if not hasattr(self, "frame"):
             return False
         if self.frame in moving:
@@ -471,6 +502,9 @@ class CartesianAxes(VGroup):
                 tracker = parameter.tracker
                 if tracker is not None and (callable(tracker) or tracker in moving):
                     return True
+        for artist in self._artists:
+            if isinstance(artist, _CurvePlot) and artist._needs_sync(moving):
+                return True
         return False
 
     def _mapping(self) -> SystemMap:
@@ -720,7 +754,8 @@ class CartesianAxes(VGroup):
         """
 
         def anchor() -> FloatArray:
-            source_range = graph.source._range
+            # Since task 11 a plot's source is typed as the base Source.
+            source_range = getattr(graph.source, "_range", None)
             if x_val is None:
                 limits = (
                     self.x_axis.range.value if source_range is None else source_range
@@ -752,29 +787,330 @@ class CartesianAxes(VGroup):
         self.x_axis._configure_grid()
         self.y_axis._configure_grid()
 
+    @overload
     def plot(
         self,
         function: Callable[..., Any],
         x_range: Sequence[float] | None = None,
         use_vectorized: bool = False,
-        **kwargs: Unpack[_PlotOptions],
-    ) -> FunctionPlot:
-        """Create and register an analytic function plot.
+        **kwargs: object,
+    ) -> FunctionPlot: ...
+
+    @overload
+    def plot(
+        self,
+        xs: ArrayLike,
+        ys: ArrayLike | None = None,
+        **kwargs: Unpack[_ArtistOptions],
+    ) -> LinePlot: ...
+
+    def plot(
+        self,
+        *args: object,
+        **kwargs: object,
+    ) -> FunctionPlot | LinePlot:
+        """Create and register a function plot or an array line.
+
+        Parameters
+        ----------
+        *args
+            Function, optional x_range and use_vectorized; or array xs and ys.
+        **kwargs
+            Named inputs, function parameters, native styles and sampling options.
+        """
+        if args:
+            function = args[0]
+        elif "function" in kwargs:
+            function = kwargs.pop("function")
+        else:
+            function = kwargs.pop("xs", None)
+        if callable(function):
+            if len(args) > 3:
+                raise TypeError("plot accepts function, x_range and use_vectorized")
+            function, _ = _parameterize(function, kwargs)
+            x_range = args[1] if len(args) > 1 else kwargs.pop("x_range", None)
+            use_vectorized = (
+                args[2] if len(args) > 2 else kwargs.pop("use_vectorized", False)
+            )
+            artist = FunctionPlot(
+                function,
+                self,
+                cast(Sequence[float] | None, x_range),
+                cast(bool, use_vectorized),
+                **cast(dict[str, Any], kwargs),
+            )
+            self.add(artist)
+            return artist
+        if len(args) > 2:
+            raise TypeError("plot accepts xs and ys for an array line")
+        ys = args[1] if len(args) > 1 else kwargs.pop("ys", None)
+        return self.line(
+            cast(ArrayLike, function),
+            cast(ArrayLike | None, ys),
+            **cast(_ArtistOptions, kwargs),
+        )
+
+    def line(
+        self,
+        xs: ArrayLike,
+        ys: ArrayLike | None = None,
+        **kwargs: Unpack[_ArtistOptions],
+    ) -> LinePlot:
+        """Create and register a straight array line.
+
+        Parameters
+        ----------
+        xs, ys
+            Separate coordinates, or pairs in xs with ys omitted.
+        **kwargs
+            Native VMobject styles.
+        """
+        artist = LinePlot(xs, self, ys, **kwargs)
+        self.add(artist)
+        return artist
+
+    def scatter(
+        self,
+        xs: ArrayLike,
+        ys: ArrayLike | None = None,
+        *,
+        marker: Mobject | Marker | None = None,
+        label: str | None = None,
+        clip: bool | float = True,
+        **kwargs: Unpack[_VMStyle],
+    ) -> ScatterPlot:
+        """Create and register independent markers in input order.
+
+        Parameters
+        ----------
+        xs, ys
+            Separate coordinates, or pairs in xs with ys omitted.
+        marker
+            Marker enum or native template, defaulting to Dot().
+        label
+            Legend entry text, or None to omit this artist.
+        clip
+            True, False, or a clipping margin in scene units.
+        **kwargs
+            Native VMobject styles for the markers.
+        """
+        artist = ScatterPlot(
+            xs, self, ys, marker=marker, label=label, clip=clip, **kwargs
+        )
+        self.add(artist)
+        return artist
+
+    def plot_parametric_curve(
+        self,
+        function: Callable[..., Any],
+        use_vectorized: bool = False,
+        **kwargs: Unpack[_ParametricOptions],
+    ) -> ParametricPlot:
+        """Create and register a parameterized curve.
 
         Parameters
         ----------
         function
-            Scalar or vectorized analytic function.
-        x_range
-            Optional sampling interval and maximum spacing.
+            Callable returning coordinates or coordinate arrays.
         use_vectorized
-            Pass arrays to the callable when true.
+            Evaluate arrays instead of scalars when true.
         **kwargs
-            Native VMobject styles and Manim's sampling/shape options.
+            t_range (default (0, 1)), sampling options and native styles.
         """
-        artist = FunctionPlot(function, self, x_range, use_vectorized, **kwargs)
+        artist = ParametricPlot(function, self, use_vectorized, **kwargs)
         self.add(artist)
         return artist
+
+    def plot_line_graph(
+        self,
+        x_values: ArrayLike,
+        y_values: ArrayLike,
+        z_values: ArrayLike | None = None,
+        line_color: ParsableManimColor = PURE_YELLOW,
+        add_vertex_dots: bool = True,
+        vertex_dot_radius: float = DEFAULT_DOT_RADIUS,
+        vertex_dot_style: _VMStyle | None = None,
+        **kwargs: Unpack[_ArtistOptions],
+    ) -> VDict:
+        """Return Manim's named line and optional vertex-dot groups.
+
+        Parameters
+        ----------
+        x_values, y_values, z_values
+            Vertex coordinates; the optional z coordinate is ignored in 2D.
+        line_color
+            Line stroke color, defaulting to PURE_YELLOW.
+        add_vertex_dots
+            Include a ScatterPlot under vertex_dots when true.
+        vertex_dot_radius, vertex_dot_style
+            Native Dot radius and style options.
+        **kwargs
+            Native styles for the line.
+        """
+        options = kwargs.copy()
+        options["color"] = line_color
+        line = self.line(x_values, y_values, **options)
+        result = VDict([("line_graph", line)])
+        if add_vertex_dots:
+            marker = Dot(radius=vertex_dot_radius, **(vertex_dot_style or {}))
+            result.add(
+                [
+                    (
+                        "vertex_dots",
+                        self.scatter(
+                            x_values,
+                            y_values,
+                            marker=marker,
+                            clip=kwargs.get("clip", True),
+                        ),
+                    )
+                ]
+            )
+        return result
+
+    def i2gc(self, x: float, graph: _CurvePlot) -> tuple[float, float]:
+        """Evaluate a bound graph's source exactly or by linear interpolation.
+
+        Parameters
+        ----------
+        x
+            Source input, independent of the sampled anchors.
+        graph
+            Function, array line or parametric artist bound to this system.
+
+        Returns
+        -------
+        tuple of float
+            The two data coordinates.
+        """
+        if not isinstance(graph, _CurvePlot) or graph._system is not self:
+            raise ValueError("graph must be bound to this system")
+        coords = graph.source.at(x)[0]
+        return float(coords[0]), float(coords[1])
+
+    input_to_graph_coords = i2gc
+
+    def i2gp(self, x: float, graph: _CurvePlot) -> FloatArray:
+        """Map an exact source query to a scene point.
+
+        Parameters
+        ----------
+        x
+            Source input.
+        graph
+            Artist bound to this system.
+
+        Returns
+        -------
+        FloatArray
+            Scene point of shape (3,).
+        """
+        return self.c2p(*self.i2gc(x, graph))
+
+    input_to_graph_point = i2gp
+
+    def legend(
+        self,
+        location: str = "upper right",
+        *,
+        font_size: float = 24,
+        buff: float = 0.25,
+    ) -> Legend:
+        """Create a bound legend for labelled artists in registration order.
+
+        Parameters
+        ----------
+        location
+            One of upper right, upper left, lower left or lower right.
+        font_size, buff
+            Native text size and entry/corner spacing in scene units.
+
+        Returns
+        -------
+        Legend
+            The newly created legend, attached to this system's family.
+        """
+        locations = {
+            "upper right": (1, 1),
+            "upper left": (-1, 1),
+            "lower left": (-1, -1),
+            "lower right": (1, -1),
+        }
+        if location not in locations:
+            raise ValueError(
+                "location must be upper right, upper left, lower left or lower right"
+            )
+        artists = [a for a in self._artists if a.get_label() is not None]
+        if not artists:
+            raise ValueError("legend requires an artist with a label")
+        legend = Legend(*artists, font_size=font_size, buff=buff)
+        corner = np.array([*locations[location], 0.0], dtype=float)
+        local = np.where(corner[:2] > 0, self.bounds.upper, self.bounds.lower)
+        legend.shift(
+            self.frame.mapping.forward(local[None])[0]
+            - corner * buff
+            - legend.get_corner(corner)
+        )
+        previous = self.get_legend()
+        if previous is not None:
+            self.submobjects.remove(previous)
+        self.submobjects.append(legend)
+        self._legend = legend
+        return legend
+
+    def get_legend(self) -> Legend | None:
+        """Return the last legend created by this system, or None."""
+        return getattr(self, "_legend", None)
+
+    def get_legend_handles_labels(self) -> tuple[list[Mobject], list[str]]:
+        """Return independent handles and labels in registration order."""
+        artists = [a for a in self._artists if a.get_label() is not None]
+        return (
+            [_handle(a) for a in artists],
+            [cast(str, a.get_label()) for a in artists],
+        )
+
+    def scale(
+        self,
+        scale_factor: float,
+        scale_stroke: bool = False,
+        *,
+        about_point: Point3DLike | None = None,
+        about_edge: Vector3DLike | None = None,
+    ) -> Self:
+        """Scale the frame and optionally all registered artists' strokes.
+
+        Parameters
+        ----------
+        scale_factor, scale_stroke, about_point, about_edge
+            Native VMobject scaling options.
+        """
+        super().scale(
+            scale_factor,
+            scale_stroke=scale_stroke,
+            about_point=about_point,
+            about_edge=about_edge,
+        )
+        if scale_stroke:
+            for artist in self._artists:
+                for leaf in artist.get_family():
+                    if isinstance(leaf, VMobject):
+                        leaf.set_stroke(
+                            width=abs(scale_factor) * leaf.get_stroke_width(),
+                            family=False,
+                        )
+                        leaf.set_stroke(
+                            width=abs(scale_factor)
+                            * leaf.get_stroke_width(background=True),
+                            background=True,
+                            family=False,
+                        )
+        return self
+
+    @property
+    def artists(self) -> tuple[_CurvePlot | ScatterPlot, ...]:
+        """Return registered artists in registration order, excluding copies."""
+        return tuple(self._artists)
 
     def add(self, *artists: Mobject | Iterable[VMobject]) -> Self:
         """Register artists without parenting them.
@@ -782,18 +1118,24 @@ class CartesianAxes(VGroup):
         Parameters
         ----------
         *artists
-            Function plots with this system as their single owner.
+            Artists with this system as their single owner.
         """
         for artist in artists:
-            if not isinstance(artist, FunctionPlot):
-                raise TypeError("artists must be FunctionPlot objects")
+            if not isinstance(artist, (_CurvePlot, ScatterPlot)):
+                raise TypeError("artists must be plotting artists")
             if artist._system is not None and artist._system is not self:
                 raise ValueError("artist is bound to another system")
-            if artist._system is None:
-                artist._dirty = True
-                artist._frame_seen = -1
-            artist._system = self
-            self._artists.add(artist)
+            if artist not in self._artists:
+                if artist._system is None:
+                    artist._system = self
+                    for leaf in artist.get_family():
+                        if isinstance(leaf, _CurvePlot):
+                            leaf._system = self
+                            leaf._frozen_frame = None
+                            leaf._parameter_token = -1
+                            leaf._frame_seen = -1
+                            leaf.refresh()
+                self._artists.append(artist)
         return self
 
     def remove(self, *artists: Mobject | Iterable[VMobject]) -> Self:
@@ -805,18 +1147,26 @@ class CartesianAxes(VGroup):
             Artists to unregister.
         """
         for artist in artists:
-            if isinstance(artist, FunctionPlot) and artist in self._artists:
-                self._artists.discard(artist)
-                artist._system = None
+            if artist not in self._artists:
+                raise ValueError("artist is not registered with this system")
+            assert isinstance(artist, (_CurvePlot, ScatterPlot))
+            for leaf in artist.get_family():
+                if isinstance(leaf, _CurvePlot):
+                    leaf._ensure()
+                    leaf._system = None
+            self._artists.remove(artist)
+            artist._system = None
         return self
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         result = type(self).__new__(type(self))
         memo[id(self)] = result
-        result._artists = weakref.WeakSet()
+        result._artists = []
         for key, value in self.__dict__.items():
             if key in {"bounds", "_data"}:
                 result.__dict__[key] = value
+            elif key == "_moving_query":
+                result.__dict__[key] = None
             elif key != "_artists":
                 result.__dict__[key] = copy.deepcopy(value, memo)
         return result

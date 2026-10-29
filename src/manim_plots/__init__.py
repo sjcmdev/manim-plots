@@ -43,8 +43,19 @@ from manim_plots.core.ticks import (
     NullLocator,
     SymLogLocator,
 )
+from manim_plots.mobjects.animations import DrawAxes, Morph, ShowPoints, TraceCurve
+from manim_plots.mobjects.artists import (
+    COLOR_CYCLE,
+    FunctionPlot,
+    LinePlot,
+    LineStyle,
+    Marker,
+    ParametricPlot,
+    ScatterPlot,
+)
 from manim_plots.mobjects.axis import TickDirection as TickDirection
 from manim_plots.mobjects.context import check_pins
+from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
 from manim_plots.mobjects.system import NumberPlane as NumberPlane
@@ -52,37 +63,49 @@ from manim_plots.mobjects.system import NumberPlane as NumberPlane
 __version__ = version("manim-plots")
 
 __all__ = [
+    "COLOR_CYCLE",
     "ArraySource",
     "Bounds",
     "CartesianAxes",
     "CompiledMap",
     "DecimalFormatter",
+    "DrawAxes",
     "EngFormatter",
     "FixedFormatter",
     "FixedLocator",
     "FormatStrFormatter",
     "Formatter",
+    "FunctionPlot",
     "FunctionScale",
     "FunctionSource",
     "Labels",
+    "Legend",
+    "LinePlot",
+    "LineStyle",
     "LinearScale",
     "Locator",
     "LogLocator",
     "LogScale",
     "ManimPlotsWarning",
+    "Marker",
     "MaxNLocator",
     "MinorCountLocator",
+    "Morph",
     "MultipleLocator",
     "NullFormatter",
     "NullLocator",
+    "ParametricPlot",
     "ParametricSource",
     "Payload",
     "Scale",
+    "ScatterPlot",
     "ScientificFormatter",
     "Shape",
+    "ShowPoints",
     "Source",
     "SymLogLocator",
     "SymLogScale",
+    "TraceCurve",
     "__version__",
 ]
 

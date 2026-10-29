@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 import re
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, NoReturn, Self, TypedDict, Unpack, cast
 
 import numpy as np
@@ -25,7 +25,7 @@ from manim_plots.mobjects.context import (
 )
 
 if TYPE_CHECKING:
-    from manim_plots.mobjects.artists import FunctionPlot
+    from manim_plots.mobjects.artists import FunctionPlot, LineStyle
     from manim_plots.mobjects.system import CartesianAxes
 
 _SIMULATING = False
@@ -57,7 +57,14 @@ class _VMStyle(TypedDict, total=False):
     z_index: float
 
 
-class _PlotOptions(_VMStyle, total=False):
+class _ArtistOptions(_VMStyle, total=False):
+    label: str | None
+    clip: bool | float
+    line_style: LineStyle
+    dash: tuple[float, float] | None
+
+
+class _PlotOptions(_ArtistOptions, total=False):
     use_smoothing: bool
     discontinuities: Iterable[float] | None
     dt: float
@@ -89,23 +96,35 @@ class _RotateOptions(TypedDict, total=False):
     about_edge: Vector3DLike | None
 
 
+class _ParametricOptions(_PlotOptions, total=False):
+    t_range: Sequence[float]
+
+
 def _reported_updaters(
-    actual: list[Callable[..., Any]], system: CartesianAxes | None
+    actual: list[Callable[..., Any]],
+    system: CartesianAxes | None,
+    leaf: Leaf | None = None,
 ) -> list[Callable[..., Any]]:
     if not actual or _synchronise not in actual:
         return actual
     moving = moving_context()
-    if moving is not None and (system is None or not system._needs_sync(moving)):
+    if moving is not None and (
+        system is None
+        or not (
+            system._needs_sync(moving)
+            or (leaf is not None and leaf._needs_sync(moving))
+        )
+    ):
         return [u for u in actual if u is not _synchronise]
     return actual
 
 
 def _synchronise(mobject: Mobject) -> None:
-    system = (
-        mobject._system if isinstance(mobject, Leaf) else cast("CartesianAxes", mobject)
-    )
+    system = cast("CartesianAxes | None", getattr(mobject, "_system", mobject))
     if system is not None:
         system._poll()
+        if isinstance(mobject, Leaf):
+            mobject._poll()
 
 
 class Leaf(VMobject):
@@ -160,7 +179,7 @@ class Leaf(VMobject):
     @property
     def updaters(self) -> list[Callable[..., Any]]:
         """Report the synchronisation updater to either Cairo query version."""
-        return _reported_updaters(self._actual_updaters, self._system)
+        return _reported_updaters(self._actual_updaters, self._system, self)
 
     @updaters.setter
     def updaters(self, value: list[Callable[..., Any]]) -> None:
@@ -183,6 +202,12 @@ class Leaf(VMobject):
             owner._ensure()
         if self._system is not None and self._lifecycle.state is lc.State.ATTACHED:
             self._system._sync_data()
+
+    def _poll(self) -> None:
+        pass
+
+    def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
+        return False
 
     def _event(self, event: lc.Event) -> None:
         self._lifecycle, actions = lc.transition(self._lifecycle, event)
@@ -342,6 +367,10 @@ class Leaf(VMobject):
                 result.__dict__[key] = lc.Leaf() if rebuilding else lc.Leaf(value.state)
             elif key == "_suspensions":
                 result.__dict__[key] = []
+            elif key == "parameters":
+                result.__dict__[key] = {
+                    name: copy.copy(parameter) for name, parameter in value.items()
+                }
             else:
                 result.__dict__[key] = copy.deepcopy(value, memo)
         if rebuilding:
@@ -885,11 +914,13 @@ class FrameLeaf(Leaf):
     def _freeze_artists(self) -> None:
         if self._system is not None:
             for artist in self._system._artists:
-                artist._frozen_frame = None
-                for _, frozen, excluded in self._suspensions:
-                    if artist not in excluded:
-                        artist._frozen_frame = frozen
-                artist._frame_seen = -1
+                for leaf in artist.get_family():
+                    if isinstance(leaf, Leaf):
+                        leaf._frozen_frame = None
+                        for _, frozen, excluded in self._suspensions:
+                            if leaf not in excluded:
+                                leaf._frozen_frame = frozen
+                        leaf._frame_seen = -1
 
     def _permanent(self, animation: Animation) -> bool:
         global _SIMULATING

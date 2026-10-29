@@ -1,14 +1,38 @@
-"""Analytic artists derived from the numeric Source, Map and Shape pipeline."""
+"""Artists derived from the numeric Source, Map and Shape pipeline."""
 
 from __future__ import annotations
 
+import copy
+import inspect
 import warnings
 from collections.abc import Callable, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, Self, Unpack
+from enum import Enum
+from numbers import Real
+from typing import TYPE_CHECKING, Any, Self, Unpack, cast
 
 import numpy as np
-from manim import VMobject
+from manim import (
+    BLUE,
+    DEFAULT_DOT_RADIUS,
+    GREEN,
+    ORANGE,
+    PURPLE,
+    RED,
+    TEAL,
+    WHITE,
+    YELLOW,
+    Circle,
+    Cross,
+    Dot,
+    Mobject,
+    Square,
+    Star,
+    Triangle,
+    VGroup,
+    VMobject,
+)
 from manim.typing import Point3DLike, Vector3DLike
+from manim.utils.color import ManimColor
 from numpy.typing import ArrayLike
 
 from manim_plots.core import FloatArray, ManimPlotsWarning
@@ -21,9 +45,18 @@ from manim_plots.core.nodes import (
     Node,
     SystemMap,
 )
+from manim_plots.core.params import Parameter
 from manim_plots.core.payload import Payload, split_segments
-from manim_plots.core.shape import clip, corners, densify, smooth
-from manim_plots.core.sources import FunctionSource
+from manim_plots.core.shape import clip as clip_path
+from manim_plots.core.shape import corners, densify, smooth
+from manim_plots.core.shape import dash as dash_path
+from manim_plots.core.sources import (
+    ArraySource,
+    Box,
+    FunctionSource,
+    ParametricSource,
+    Source,
+)
 from manim_plots.mobjects.context import (
     WriterContext,
     affine_context,
@@ -31,61 +64,204 @@ from manim_plots.mobjects.context import (
     playback_context,
     writer_context,
 )
-from manim_plots.mobjects.leaves import Leaf, _synchronise, _VMStyle
+from manim_plots.mobjects.leaves import Leaf, _ArtistOptions, _synchronise, _VMStyle
 
 if TYPE_CHECKING:
     from manim_plots.mobjects.system import CartesianAxes
 
 
-class FunctionPlot(Leaf):
-    """Draw an analytic source through a Cartesian system's current frame.
+COLOR_CYCLE: tuple[ManimColor, ...] = (
+    WHITE,
+    BLUE,
+    YELLOW,
+    GREEN,
+    RED,
+    PURPLE,
+    ORANGE,
+    TEAL,
+)
 
-    Parameters
-    ----------
-    function
-        Analytic function returning y values.
-    system
-        Coordinate system supplying ranges, bounds and placement.
-    x_range
-        Optional sampling interval and maximum sample spacing.
-    use_vectorized
-        Evaluate arrays instead of individual scalars.
-    use_smoothing
-        Fit native cubic splines instead of straight cubic segments.
-    discontinuities, dt
-        Explicit gaps and their half-width, with Manim's meaning.
-    **kwargs
-        Native VMobject style options.
-    """
 
+class LineStyle(Enum):
+    """Select a solid, dashed or dotted stroke in scene units."""
+
+    SOLID = "solid"
+    DASHED = "dashed"
+    DOTTED = "dotted"
+
+
+class Marker(Enum):
+    """Select a native Manim marker with the default dot's width."""
+
+    DOT = "dot"
+    CIRCLE = "circle"
+    SQUARE = "square"
+    TRIANGLE = "triangle"
+    CROSS = "cross"
+    STAR = "star"
+
+
+def _cycle_style(
+    system: CartesianAxes, style: _VMStyle, *, scatter: bool = False
+) -> None:
+    keys = (
+        ("color", "stroke_color", "fill_color")
+        if scatter
+        else ("color", "stroke_color")
+    )
+    if not any(key in style for key in keys):
+        index = getattr(system, "_color_index", 0)
+        style["color"] = COLOR_CYCLE[index % len(COLOR_CYCLE)]
+        system._color_index = index + 1
+
+
+def _validate_label(label: str | None) -> None:
+    if label is not None and not isinstance(label, str):
+        raise TypeError("label must be a string or None")
+
+
+def _validate_clip(value: bool | float) -> None:
+    if not isinstance(value, (bool, Real)):
+        raise TypeError("clip must be bool or a real margin")
+    if not np.isfinite(value):
+        raise ValueError("clip must be finite")
+
+
+def _clip_box(system: CartesianAxes, value: bool | float) -> Box:
+    if isinstance(value, bool):
+        return system.bounds
+    bounds = system.bounds
+    origin = np.zeros((3, 2))
+    origin[1:] = np.eye(2)
+    placed = system.frame.mapping.forward(origin)
+    units = np.linalg.norm(placed[1:] - placed[0], axis=1)
+    margin = value / units
+    if np.any(bounds.lower - margin >= bounds.upper + margin):
+        raise ValueError("clip margin narrows the rectangle to nothing")
+    return Box(bounds.lower - margin, bounds.upper + margin)
+
+
+def _dash_pattern(
+    line_style: LineStyle, dash: tuple[float, float] | None
+) -> tuple[float, float] | None:
+    if not isinstance(line_style, LineStyle):
+        raise TypeError("line_style must be a LineStyle")
+    if dash is not None:
+        if not isinstance(dash, tuple):
+            raise TypeError("dash must be an (on, off) tuple")
+        if len(dash) != 2:
+            raise ValueError("dash must contain on and off")
+        on, off = dash
+        if any(not isinstance(v, Real) or isinstance(v, bool) for v in dash):
+            raise TypeError("dash lengths must be real numbers")
+        if not np.isfinite(dash).all() or on <= 0 or off < 0:
+            raise ValueError("dash requires finite on > 0 and off >= 0")
+        return dash
+    return {
+        LineStyle.SOLID: None,
+        LineStyle.DASHED: (0.2, 0.1),
+        LineStyle.DOTTED: (0.03, 0.07),
+    }[line_style]
+
+
+class _CurvePlot(Leaf):
     def __init__(
         self,
-        function: Callable[..., Any],
+        source: Source,
         system: CartesianAxes,
-        x_range: Sequence[float] | None = None,
-        use_vectorized: bool = False,
         *,
         use_smoothing: bool = True,
-        discontinuities: Iterable[float] | None = None,
-        dt: float = 1e-8,
+        label: str | None = None,
+        line_style: LineStyle = LineStyle.SOLID,
+        dash: tuple[float, float] | None = None,
+        clip: bool | float = True,
         **kwargs: Unpack[_VMStyle],
     ) -> None:
-        self.source = FunctionSource(
-            function,
-            x_range,
-            use_vectorized=use_vectorized,
-            discontinuities=discontinuities,
-            dt=dt,
-        )
+        _validate_label(label)
+        _validate_clip(clip)
+        _clip_box(system, clip)
+        self._label = label
+        self._clip = clip
+        self.line_style = line_style
+        self.dash = dash
+        self._dash = _dash_pattern(line_style, dash)
+        _cycle_style(system, kwargs)
+        self.source = source
+        if not hasattr(self, "parameters"):
+            self.parameters: dict[str, Parameter[Any]] = {}
+        self._parameter_versions: dict[str, int] = {}
+        self._parameter_token = -1
         self.use_smoothing = use_smoothing
         self._data_seen = -1
         self._local = np.empty((0, 3))
         self._geometry_payload = Payload.empty("path", 2)
+        self._render_segments = self._geometry_payload.segments
+        self._reversed = False
         self._dense = False
-        self._warned_change: tuple[int | None, int] | None = None
+        self._warned_change: object | None = None
+        self._source_invalid = (
+            isinstance(source, ArraySource) and not np.isfinite(source.data).all()
+        )
         super().__init__(system=system, **kwargs)
         self.add_updater(_synchronise)
         self._rebuild()
+
+    def set_label(self, label: str | None) -> Self:
+        """Set the legend label.
+
+        Parameters
+        ----------
+        label
+            Entry text, or None to omit this artist.
+        """
+        _validate_label(label)
+        self._label = label
+        return self
+
+    def get_label(self) -> str | None:
+        """Return the legend label, or None when unset."""
+        return self._label
+
+    def set_clip(self, value: bool | float) -> Self:
+        """Set clipping and rebuild the artist.
+
+        Parameters
+        ----------
+        value
+            True, False, or a finite margin in scene units.
+        """
+        _validate_clip(value)
+        if self._system is not None:
+            _clip_box(self._system, value)
+        self._clip = value
+        self._dirty = True
+        self._ensure()
+        return self
+
+    def get_clip(self) -> bool | float:
+        """Return the clipping policy or margin in scene units."""
+        return self._clip
+
+    def _poll(self) -> None:
+        system = self._system
+        if system is None or self._parameter_token == system._token:
+            return
+        self._parameter_token = system._token
+        for parameter in self.parameters.values():
+            parameter.poll(system._token)
+
+    def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
+        for parameter in self.parameters.values():
+            tracker = parameter.tracker
+            if tracker is not None and (callable(tracker) or tracker in moving):
+                return True
+        return False
+
+    def _parameters_changed(self) -> bool:
+        for name, parameter in self.parameters.items():
+            if self._parameter_versions.get(name) != parameter.version:
+                return True
+        return False
 
     def _frame(self) -> FrameMap:
         assert self._system is not None
@@ -109,11 +285,17 @@ class FunctionPlot(Leaf):
                 self._frame_seen = system.frame.version
             return
         system._sync_data()
-        if self._dirty or self._data_seen != system._data_version:
+        if (
+            self._dirty
+            or self._data_seen != system._data_version
+            or (self.parameters and self._parameters_changed())
+        ):
             self._rebuild()
         elif self._frame_seen != system.frame.version:
             frame = self._frame()
-            if self._dense == frame.is_affine:
+            if not isinstance(self._clip, bool):
+                self._rebuild()
+            elif self._dash is not None or self._dense == frame.is_affine:
                 self._place(frame)
             else:
                 self._cache = frame.forward(self._local)
@@ -126,28 +308,56 @@ class FunctionPlot(Leaf):
         system._sync_data()
         frame = self._frame()
         mapping = SystemMap(system._data, frame)
-        payload = self.source.sample(mapping, system.bounds)
-        if (
-            not len(payload.coords)
-            or (payload.valid is not None and not payload.valid.all())
-            or len(payload.segments) > len(self.source.discontinuities) + 1
-        ):
+        bounds = _clip_box(system, self._clip)
+        sampling_bounds = bounds
+        if self._clip is False:
+            extent = None
+            if isinstance(self.source, ArraySource):
+                finite = self.source.data[np.isfinite(self.source.data).all(axis=1)]
+                if len(finite):
+                    extent = system._data.forward(finite)[:, 0]
+            elif isinstance(self.source, FunctionSource) and self.source._range:
+                extent = system._data.forward(
+                    np.column_stack((self.source._range[:2], np.zeros(2)))
+                )[:, 0]
+            if extent is not None:
+                lower, upper = bounds.lower.copy(), bounds.upper.copy()
+                lower[0] = min(lower[0], float(np.min(extent)))
+                upper[0] = max(upper[0], float(np.max(extent)))
+                sampling_bounds = Box(lower, upper)
+        payload = self.source.sample(mapping, sampling_bounds)
+        if isinstance(self.source, ArraySource):
+            invalid = self._source_invalid or not len(self.source.data)
+        else:
+            invalid = (
+                not len(payload.coords)
+                or (payload.valid is not None and not payload.valid.all())
+                or len(payload.segments)
+                > len(getattr(self.source, "discontinuities", ())) + 1
+            )
+        if invalid:
             token = playback_context()
             change = (
-                (None, system._data_version) if token is None else (token[0], token[2])
+                (
+                    None,
+                    system._data_version,
+                    tuple(p.version for p in self.parameters.values()),
+                )
+                if token is None
+                else (token[0], token[2])
             )
             if self._warned_change != change:
                 self._warned_change = change
                 warnings.warn(
-                    "function source is empty or contains invalid samples or a pole; "
+                    "source is empty or contains invalid samples or a pole; "
                     "the path is split",
                     ManimPlotsWarning,
                     stacklevel=3,
                 )
         payload = system._data.apply_payload(payload)
-        if self.use_smoothing and len(payload.segments) > 1:
+        if self._clip is not False and self.use_smoothing and len(payload.segments) > 1:
             # Keep visible samples and their brackets; remote pole tails ring globally.
-            inside = system.bounds.contains(payload.coords)
+            inside = bounds.contains(payload.coords)
             keep = inside.copy()
             keep[:-1] |= inside[1:]
             keep[1:] |= inside[:-1]
@@ -160,10 +370,15 @@ class FunctionPlot(Leaf):
                     split_segments(payload.segments, keep),
                     valid=keep,
                 )
-        payload = (smooth if self.use_smoothing else corners)(payload, system.bounds)
-        self._geometry_payload = clip(payload, system.bounds)
+        payload = (smooth if self.use_smoothing else corners)(payload, bounds)
+        self._geometry_payload = (
+            payload if self._clip is False else clip_path(payload, bounds)
+        )
         self._place(frame)
         self._data_seen = system._data_version
+        self._parameter_versions = {
+            name: parameter.version for name, parameter in self.parameters.items()
+        }
         self._dirty = False
 
     def _restore(self) -> None:
@@ -171,7 +386,15 @@ class FunctionPlot(Leaf):
         if system is None:
             return
         system._sync_data()
-        if self._dirty or self._data_seen != system._data_version:
+        if (
+            self._dirty
+            or self._data_seen != system._data_version
+            or (self.parameters and self._parameters_changed())
+            or (
+                not isinstance(self._clip, bool)
+                and self._frame_seen != system.frame.version
+            )
+        ):
             self._rebuild()
         else:
             self._place(self._frame())
@@ -185,12 +408,37 @@ class FunctionPlot(Leaf):
         if self._dense and 0 < count < 64:
             payload = densify(payload, system.bounds, pieces=(64 + count - 1) // count)
         if self._own.nodes:
-            local = np.column_stack((payload.coords, np.zeros(len(payload.coords))))
+            local = payload.coords
+            if local.shape[1] == 2:
+                local = np.column_stack((local, np.zeros(len(local))))
             self._local = self._own.forward(local)
         else:
             self._local = payload.coords
         self._cache = frame.forward(self._local)
+        self._render_segments = payload.segments
+        if self._dash is not None:
+            placed = Payload._trusted("path", self._cache, payload.segments)
+            dashed = dash_path(
+                placed, system.bounds, on=self._dash[0], off=self._dash[1]
+            )
+            self._cache = dashed.coords.copy()
+            self._render_segments = dashed.segments
+        if self._reversed:
+            self._local = self._local[::-1].copy()
+            self._cache = self._cache[::-1].copy()
+            self._render_segments = len(self._cache) - self._render_segments[::-1, ::-1]
         self._frame_seen = system.frame.version
+
+    def reverse_points(self) -> Self:
+        """Reverse traversal, retaining the direction across attached rebuilds."""
+        self._ensure()
+        if self._lifecycle.state is lc.State.ATTACHED:
+            self._reversed = not self._reversed
+            self._local = self._local[::-1].copy()
+            self._render_segments = len(self._cache) - self._render_segments[::-1, ::-1]
+        elif self._lifecycle.state is lc.State.SHAPED and self._shape is not None:
+            self._shape = self._shape[::-1].copy()
+        return super().reverse_points()
 
     @property
     def points(self) -> FloatArray:
@@ -213,6 +461,9 @@ class FunctionPlot(Leaf):
             return
         if self._write_start is None:
             self._write_start = self._cache.copy()
+            if context.pivot is not None:
+                # Manim subtracts the pivot in place before this first assignment.
+                self._write_start += context.pivot
         self._cache = np.asarray(value, dtype=float)
         if not context.last:
             return
@@ -257,7 +508,10 @@ class FunctionPlot(Leaf):
         matrix: FloatArray | None = None,
         offset: FloatArray | None = None,
     ) -> Self:
-        if self._lifecycle.state in {lc.State.TRANSIENT, lc.State.REMOVED}:
+        if self._system is None or self._lifecycle.state in {
+            lc.State.TRANSIENT,
+            lc.State.REMOVED,
+        }:
             self._cache = function(self._cache)
             return self
         self._ensure()
@@ -288,6 +542,8 @@ class FunctionPlot(Leaf):
             local = np.column_stack((local, np.zeros(len(local))))
         self._local = node.apply(local)
         self._cache = function(self._cache)
+        if self._dash is not None:
+            self._place(frame)
         return self
 
     def shift(self, *vectors: Vector3DLike) -> Self:
@@ -351,8 +607,447 @@ class FunctionPlot(Leaf):
         return self._geometry(apply)
 
     def _adopt(self, other: Leaf) -> None:
-        if isinstance(other, FunctionPlot):
+        if isinstance(other, _CurvePlot):
             self.source = other.source
+            self._reversed = other._reversed
             self.use_smoothing = other.use_smoothing
+            self._clip = other._clip
+            self.line_style, self.dash, self._dash = (
+                other.line_style,
+                other.dash,
+                other._dash,
+            )
         super()._adopt(other)
         self._rebuild()
+
+
+class _ParameterizedFunction:
+    def __init__(
+        self,
+        function: Callable[..., Any],
+        signature: inspect.Signature,
+        parameters: dict[str, Parameter[Any]],
+    ) -> None:
+        self.function, self.signature, self.parameters = function, signature, parameters
+
+    def __call__(self, x: float | FloatArray) -> ArrayLike:
+        args = [x]
+        kwargs = {}
+        for item in list(self.signature.parameters.values())[1:]:
+            if item.kind is inspect.Parameter.POSITIONAL_ONLY:
+                args.append(self.parameters[item.name].value)
+            elif item.name in self.parameters:
+                parameter = self.parameters[item.name]
+                if parameter.version or parameter.value is not item.default:
+                    kwargs[item.name] = parameter.value
+        return cast(ArrayLike, self.function(*args, **kwargs))
+
+
+def _parameterize(
+    function: Callable[..., Any], kwargs: dict[str, object]
+) -> tuple[Callable[..., Any], dict[str, Parameter[Any]]]:
+    if isinstance(function, _ParameterizedFunction):
+        return function, function.parameters
+    parameters: dict[str, Parameter[Any]] = {}
+    try:
+        signature = inspect.signature(function)
+    except (TypeError, ValueError):
+        return function, parameters
+    for item in list(signature.parameters.values())[1:]:
+        if item.kind in {
+            inspect.Parameter.VAR_POSITIONAL,
+            inspect.Parameter.VAR_KEYWORD,
+        }:
+            continue
+        if item.name in _ArtistOptions.__annotations__:
+            raise ValueError(f"parameter {item.name!r} is a reserved artist keyword")
+        value = kwargs.pop(item.name, item.default)
+        if value is inspect.Parameter.empty:
+            raise TypeError(f"missing function parameter {item.name!r}")
+        bound = callable(value) or callable(getattr(value, "get_value", None))
+        parameter: Parameter[Any] = Parameter(None if bound else value, name=item.name)
+        if bound:
+            parameter.bind(value)
+            parameter.poll(0)
+        parameters[item.name] = parameter
+    if parameters:
+        function = _ParameterizedFunction(function, signature, parameters)
+    return function, parameters
+
+
+class FunctionPlot(_CurvePlot):
+    """Draw an analytic function with versioned parameters through a system.
+
+    Parameters
+    ----------
+    function
+        Scalar or vectorized function; arguments after the first are parameters.
+    system
+        Coordinate system supplying ranges, bounds and placement.
+    x_range
+        Optional sampling interval and maximum sample spacing.
+    use_vectorized
+        Evaluate arrays instead of individual scalars.
+    use_smoothing
+        Fit native cubic splines instead of straight cubic segments.
+    discontinuities, dt
+        Explicit gaps and their half-width, with Manim's meaning.
+    **kwargs
+        Function parameter values or bindings, and native VMobject styles.
+    """
+
+    def __init__(
+        self,
+        function: Callable[..., Any],
+        system: CartesianAxes,
+        x_range: Sequence[float] | None = None,
+        use_vectorized: bool = False,
+        *,
+        use_smoothing: bool = True,
+        discontinuities: Iterable[float] | None = None,
+        dt: float = 1e-8,
+        **kwargs: object,
+    ) -> None:
+        function, self.parameters = _parameterize(function, kwargs)
+        super().__init__(
+            FunctionSource(
+                function,
+                x_range,
+                use_vectorized=use_vectorized,
+                discontinuities=discontinuities,
+                dt=dt,
+            ),
+            system,
+            use_smoothing=use_smoothing,
+            **cast(_ArtistOptions, kwargs),
+        )
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        result = super().__deepcopy__(memo)
+        result.parameters = {
+            name: copy.copy(parameter) for name, parameter in self.parameters.items()
+        }
+        source = self.source
+        if isinstance(source, FunctionSource) and isinstance(
+            source.function, _ParameterizedFunction
+        ):
+            result.source = FunctionSource(
+                _ParameterizedFunction(
+                    source.function.function,
+                    source.function.signature,
+                    result.parameters,
+                ),
+                source._range,
+                use_vectorized=source.use_vectorized,
+                discontinuities=source.discontinuities,
+                dt=source.dt,
+            )
+        return result
+
+
+class LinePlot(_CurvePlot):
+    """Draw immutable array data, clipping straight segments to the viewport.
+
+    Parameters
+    ----------
+    xs, ys
+        Separate coordinate sequences, or pairs in xs with ys omitted.
+    system
+        Coordinate system supplying bounds and placement.
+    **kwargs
+        Native VMobject styles.
+    """
+
+    def __init__(
+        self,
+        xs: ArrayLike,
+        system: CartesianAxes,
+        ys: ArrayLike | None = None,
+        **kwargs: Unpack[_ArtistOptions],
+    ) -> None:
+        super().__init__(ArraySource(xs, ys), system, use_smoothing=False, **kwargs)
+
+
+class ParametricPlot(_CurvePlot):
+    """Draw a parameterized curve through a Cartesian system.
+
+    Parameters
+    ----------
+    function
+        Callable returning two or three coordinates per input.
+    system
+        Coordinate system supplying bounds and placement.
+    use_vectorized
+        Return a sequence of coordinate arrays when true.
+    t_range
+        Parameter endpoints and optional maximum spacing.
+    use_smoothing
+        Fit native cubic splines when true.
+    discontinuities, dt
+        Explicit gaps and their half-width.
+    **kwargs
+        Native VMobject styles.
+    """
+
+    def __init__(
+        self,
+        function: Callable[..., Any],
+        system: CartesianAxes,
+        use_vectorized: bool = False,
+        *,
+        t_range: Sequence[float] = (0.0, 1.0),
+        use_smoothing: bool = True,
+        discontinuities: Iterable[float] | None = None,
+        dt: float = 1e-8,
+        **kwargs: Unpack[_ArtistOptions],
+    ) -> None:
+        super().__init__(
+            ParametricSource(
+                function,
+                t_range,
+                use_vectorized=use_vectorized,
+                discontinuities=discontinuities,
+                dt=dt,
+            ),
+            system,
+            use_smoothing=use_smoothing,
+            **kwargs,
+        )
+
+
+class _MarkerLeaf(_CurvePlot):
+    def __init__(
+        self,
+        native: Mobject,
+        source: ArraySource,
+        index: int,
+        system: CartesianAxes,
+        clip: bool | float = True,
+    ) -> None:
+        self._outline = native.points.copy()
+        self._index = index
+        self._visible = True
+        self._opacities = (1.0, 1.0, 1.0)
+        super().__init__(
+            source, system, use_smoothing=False, clip=clip, color=native.get_color()
+        )
+        if isinstance(native, VMobject):
+            self.match_style(native, family=False)
+        else:
+            self.set_color(native.get_color())
+        self._visible = True
+        self._dirty = True
+        self._ensure()
+
+    def _rebuild(self) -> None:
+        system = self._system
+        if system is None:
+            return
+        system._sync_data()
+        assert isinstance(self.source, ArraySource)
+        data = self.source.data[self._index : self._index + 1]
+        payload = system._data.apply_payload(
+            Payload.points(data, np.isfinite(data).all(axis=1))
+        )
+        visible = bool(
+            (payload.valid is None or payload.valid[0])
+            and (
+                self._clip is False
+                or _clip_box(system, self._clip).contains(payload.coords)[0]
+            )
+        )
+        if visible != self._visible:
+            if visible:
+                fill, stroke, background = self._opacities
+            else:
+                self._opacities = (
+                    self.get_fill_opacity(),
+                    self.get_stroke_opacity(),
+                    self.get_stroke_opacity(background=True),
+                )
+                fill = stroke = background = 0.0
+            self.set_fill(opacity=fill, family=False)
+            self.set_stroke(opacity=stroke, family=False)
+            self.set_stroke(opacity=background, background=True, family=False)
+            self._visible = visible
+        center = np.zeros(3)
+        if np.isfinite(payload.coords).all():
+            center[:2] = payload.coords[0]
+        points = self._outline + center
+        # Marker outlines already are native control points, including local depth.
+        self._geometry_payload = Payload._trusted(
+            "path", points, np.array([[0, len(points)]], dtype=np.intp)
+        )
+        self._place(self._frame())
+        self._data_seen = system._data_version
+        self._dirty = False
+
+    def _place(self, frame: FrameMap) -> None:
+        if len(self._outline) % 4:
+            # Point-based native mobjects need no cubic subdivision.
+            self._dense = not frame.is_affine
+            self._local = self._own.forward(self._geometry_payload.coords)
+            if self._reversed:
+                self._local = self._local[::-1].copy()
+            self._cache = frame.forward(self._local)
+            assert self._system is not None
+            self._frame_seen = self._system.frame.version
+        else:
+            super()._place(frame)
+
+
+class ScatterPlot(VGroup):
+    """Draw one independent marker per input row, retaining hidden rows in order.
+
+    Parameters
+    ----------
+    xs, ys
+        Separate coordinates, or pairs in xs with ys omitted.
+    system
+        Coordinate system supplying bounds and placement.
+    marker
+        Marker enum or native template, defaulting to Dot().
+    label
+        Legend entry text, or None when unset.
+    clip
+        True, False, or a finite clipping margin in scene units.
+    **kwargs
+        Native VMobject styles applied to the marker template.
+    """
+
+    def __init__(
+        self,
+        xs: ArrayLike,
+        system: CartesianAxes,
+        ys: ArrayLike | None = None,
+        *,
+        marker: Mobject | Marker | None = None,
+        label: str | None = None,
+        clip: bool | float = True,
+        **kwargs: Unpack[_VMStyle],
+    ) -> None:
+        _validate_label(label)
+        _validate_clip(clip)
+        _clip_box(system, clip)
+        self._label, self._clip = label, clip
+        self.source = ArraySource(xs, ys, kind="points")
+        if marker is not None and not isinstance(marker, (Mobject, Marker)):
+            raise TypeError("marker must be a Marker, Mobject or None")
+        if marker is None or isinstance(marker, Marker):
+            _cycle_style(system, kwargs, scatter=True)
+            shape = Marker.DOT if marker is None else marker
+            template: Mobject = {
+                Marker.DOT: Dot,
+                Marker.CIRCLE: Circle,
+                Marker.SQUARE: Square,
+                Marker.TRIANGLE: Triangle,
+                Marker.CROSS: Cross,
+                Marker.STAR: Star,
+            }[shape]()
+            template.width = 2 * DEFAULT_DOT_RADIUS
+            if shape in {Marker.SQUARE, Marker.TRIANGLE, Marker.STAR}:
+                cast(VMobject, template).set_fill(opacity=1)
+        else:
+            template = marker.copy()
+        if kwargs:
+            for member in template.get_family():
+                if isinstance(member, VMobject):
+                    if "color" in kwargs:
+                        member.set_color(kwargs["color"], family=False)
+                    style = member.get_style()
+                    for name, value in kwargs.items():
+                        if name in style:
+                            style[name] = value
+                        elif name != "color":
+                            setattr(member, name, value)
+                    member.set_style(**style, family=False)
+        template.shift(-template.get_center())
+        self._marker_template = template.copy()
+        self._system: CartesianAxes | None = system
+        super().__init__()
+        if isinstance(template, VMobject):
+            self.match_style(template, family=False)
+
+        def convert(native: Mobject, index: int) -> VMobject:
+            children = [convert(child, index) for child in native.submobjects]
+            if len(native.points):
+                leaf = _MarkerLeaf(native, self.source, index, system, clip)
+                leaf.submobjects = children
+                return leaf
+            group = VGroup(*children)
+            if isinstance(native, VMobject):
+                group.match_style(native, family=False)
+            return group
+
+        self.submobjects = [convert(template, i) for i in range(len(self.source.data))]
+        self.add_updater(_synchronise)
+
+    def set_label(self, label: str | None) -> Self:
+        """Set the legend label.
+
+        Parameters
+        ----------
+        label
+            Entry text, or None to omit this scatter.
+        """
+        _validate_label(label)
+        self._label = label
+        return self
+
+    def get_label(self) -> str | None:
+        """Return the legend label, or None when unset."""
+        return self._label
+
+    def set_clip(self, value: bool | float) -> Self:
+        """Set the marker-centre clipping policy.
+
+        Parameters
+        ----------
+        value
+            True, False, or a finite scene-unit margin.
+        """
+        _validate_clip(value)
+        if self._system is not None:
+            _clip_box(self._system, value)
+        self._clip = value
+        for leaf in self.get_family():
+            if isinstance(leaf, _MarkerLeaf):
+                leaf.set_clip(value)
+        return self
+
+    def get_clip(self) -> bool | float:
+        """Return the marker-centre clipping policy."""
+        return self._clip
+
+    def shift(self, *vectors: Vector3DLike) -> Self:
+        """Translate markers, recording the operation in their local transforms.
+
+        Parameters
+        ----------
+        *vectors
+            Native scene-space vectors, summed before application.
+        """
+        return super().shift(np.sum(np.asarray(vectors, dtype=float), axis=0))
+
+    @property
+    def updaters(self) -> list[Callable[..., Any]]:
+        """Report synchronisation when this scatter's system can move."""
+        from manim_plots.mobjects.leaves import _reported_updaters
+
+        return _reported_updaters(self._actual_updaters, self._system)
+
+    @updaters.setter
+    def updaters(self, value: list[Callable[..., Any]]) -> None:
+        self._actual_updaters = value
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        result = type(self).__new__(type(self))
+        memo[id(self)] = result
+        for key, value in self.__dict__.items():
+            if key == "_system":
+                result.__dict__[key] = memo.get(id(value), value)
+            elif key == "source":
+                result.__dict__[key] = value
+            else:
+                result.__dict__[key] = copy.deepcopy(value, memo)
+        return result

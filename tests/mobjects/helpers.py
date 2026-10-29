@@ -75,6 +75,18 @@ def dense(points: np.ndarray, per_curve: int = 16) -> np.ndarray:
     return np.asarray(out).reshape(-1, 3)
 
 
+def along(points: np.ndarray, per_curve: int = 64) -> np.ndarray:
+    """Points along a VMobject's cubic curves in path order, ``per_curve`` per curve
+    (`dense` returns the same points in another order, fine for sets)."""
+    n = np.asarray(points).reshape(-1, 4, 3).shape[0]
+    return (
+        dense(points, per_curve)
+        .reshape(per_curve, n, 3)
+        .transpose(1, 0, 2)
+        .reshape(-1, 3)
+    )
+
+
 def assert_same_curve(a: np.ndarray, b: np.ndarray, atol: float) -> None:
     """Two curves trace the same set within ``atol``, however they are sampled."""
     pa, pb = dense(a), dense(b)
