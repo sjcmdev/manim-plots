@@ -31,7 +31,8 @@ from manim import (
     VGroup,
     VMobject,
 )
-from manim.typing import Point3DLike, Vector3DLike
+from manim.animation.transform import _MethodAnimation
+from manim.typing import PathFuncType, Point3DLike, Vector3DLike
 from manim.utils.color import ManimColor
 from numpy.typing import ArrayLike
 
@@ -60,11 +61,18 @@ from manim_plots.core.sources import (
 from manim_plots.mobjects.context import (
     WriterContext,
     affine_context,
+    animation_context,
     buffer_write,
     playback_context,
     writer_context,
 )
-from manim_plots.mobjects.leaves import Leaf, _ArtistOptions, _synchronise, _VMStyle
+from manim_plots.mobjects.leaves import (
+    _STRAIGHT,
+    Leaf,
+    _ArtistOptions,
+    _synchronise,
+    _VMStyle,
+)
 
 if TYPE_CHECKING:
     from manim_plots.mobjects.system import CartesianAxes
@@ -202,6 +210,7 @@ class _CurvePlot(Leaf):
         self._source_invalid = (
             isinstance(source, ArraySource) and not np.isfinite(source.data).all()
         )
+        self._parameter_animation = False
         super().__init__(system=system, **kwargs)
         self.add_updater(_synchronise)
         self._rebuild()
@@ -275,6 +284,8 @@ class _CurvePlot(Leaf):
         )
 
     def _ensure(self) -> None:
+        if self._alignment_locked:
+            return
         system = self._system
         state = self._lifecycle.state
         if system is None or state is lc.State.TRANSIENT or state is lc.State.REMOVED:
@@ -307,6 +318,21 @@ class _CurvePlot(Leaf):
             return
         system._sync_data()
         frame = self._frame()
+        collapsed = [
+            i
+            for i, axis in enumerate((system.x, system.y))
+            if axis.range.value[0] == axis.range.value[1]
+        ]
+        if collapsed:
+            local = self._geometry_payload.coords.copy()
+            local[:, collapsed] = 0
+            self._geometry_payload = Payload._trusted(
+                "path", local, self._geometry_payload.segments
+            )
+            self._place(frame)
+            self._data_seen = system._data_version
+            self._dirty = False
+            return
         mapping = SystemMap(system._data, frame)
         bounds = _clip_box(system, self._clip)
         sampling_bounds = bounds
@@ -443,7 +469,12 @@ class _CurvePlot(Leaf):
     @property
     def points(self) -> FloatArray:
         """Return the current derived or animation-owned buffer itself."""
-        if self._ready and not buffer_write():
+        if (
+            self._ready
+            and not self._alignment_locked
+            and self._lifecycle.state not in (lc.State.TRANSIENT, lc.State.REMOVED)
+            and not buffer_write()
+        ):
             self._ensure()
         return self._cache
 
@@ -608,7 +639,19 @@ class _CurvePlot(Leaf):
 
     def _adopt(self, other: Leaf) -> None:
         if isinstance(other, _CurvePlot):
+            old, new = self._system, other._system
+            registered = old is not None and self in old._artists
+            if old is not new:
+                if registered:
+                    assert old is not None
+                    old._artists.remove(self)
+                self._system = new
+                if registered and new is not None:
+                    new._artists.append(self)
+            other = other.copy()
             self.source = other.source
+            self.parameters = other.parameters
+            self._source_invalid = other._source_invalid
             self._reversed = other._reversed
             self.use_smoothing = other.use_smoothing
             self._clip = other._clip
@@ -617,8 +660,65 @@ class _CurvePlot(Leaf):
                 other.dash,
                 other._dash,
             )
+            self._geometry_payload = other._geometry_payload
+            self._local = other._local
+            self._render_segments = other._render_segments
+            self._data_seen = other._data_seen
+            self._frame_seen = other._frame_seen
+            self._parameter_versions = {
+                name: parameter.version for name, parameter in self.parameters.items()
+            }
+            self._parameter_token = -1
+            self._frozen_frame = None
         super()._adopt(other)
-        self._rebuild()
+        self._dirty = False
+        self._parameter_animation = False
+
+    def align_data(self, mobject: Mobject, skip_point_alignment: bool = False) -> Self:
+        """Align native artist buffers and detect animated function parameters.
+
+        Parameters
+        ----------
+        mobject, skip_point_alignment
+            Native target and alignment option.
+        """
+        animation = animation_context(transform_only=True)
+        self._parameter_animation = (
+            isinstance(animation, _MethodAnimation)
+            and isinstance(mobject, _CurvePlot)
+            and self.parameters.keys() == mobject.parameters.keys()
+            and any(
+                not np.array_equal(p.value, mobject.parameters[name].value)
+                for name, p in self.parameters.items()
+            )
+        )
+        return super().align_data(mobject, skip_point_alignment)
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Interpolate data parameters for native method animations.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native endpoints, progress and geometric interpolation path.
+        """
+        if self._parameter_animation:
+            assert isinstance(mobject1, _CurvePlot)
+            assert isinstance(mobject2, _CurvePlot)
+            for name, parameter in self.parameters.items():
+                parameter.value = (1 - alpha) * mobject1.parameters[
+                    name
+                ].value + alpha * mobject2.parameters[name].value
+            self._rebuild()
+            self.interpolate_color(mobject1, mobject2, alpha)
+            return self
+        return super().interpolate(mobject1, mobject2, alpha, path_func)
 
 
 class _ParameterizedFunction:
@@ -721,6 +821,27 @@ class FunctionPlot(_CurvePlot):
             use_smoothing=use_smoothing,
             **cast(_ArtistOptions, kwargs),
         )
+
+    def set_parameters(self, **values: object) -> Self:
+        """Set named function parameters, including through native ``animate``.
+
+        Parameters
+        ----------
+        **values
+            Values of arguments declared after the function's input coordinate.
+
+        Raises
+        ------
+        ValueError
+            If a name is not a declared function parameter.
+        """
+        for name in values:
+            if name not in self.parameters:
+                raise ValueError(f"unknown function parameter {name!r}")
+        for name, value in values.items():
+            self.parameters[name].value = value
+        self._ensure()
+        return self
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         result = super().__deepcopy__(memo)

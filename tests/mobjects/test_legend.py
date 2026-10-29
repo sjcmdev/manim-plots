@@ -76,7 +76,7 @@ def test_lg2_no_labelled_artist_raises():
 
 def test_lg2_handles_and_labels_without_a_legend():
     ax = axes()
-    two_curves(ax)
+    _curves = two_curves(ax)  # held: the registry holds artists weakly (RG-1)
     handles, labels = ax.get_legend_handles_labels()
     assert labels == ["sin", "cos"]
     assert len(handles) == 2
@@ -111,7 +111,7 @@ def test_lg3_a_scatter_handle_is_a_copy_of_its_marker():
 
 def test_lg3_entries_stack_with_labels_left_aligned():
     ax = axes()
-    two_curves(ax)
+    _curves = two_curves(ax)  # held: the registry holds artists weakly (RG-1)
     legend = ax.legend(buff=0.25)
     first, second = legend.entries
     assert first.label.get_left()[0] == pytest.approx(
@@ -138,7 +138,7 @@ CORNERS = {
 @pytest.mark.parametrize("location", list(CORNERS))
 def test_lg4_the_legend_sits_buff_inside_its_corner(location):
     ax = axes()
-    two_curves(ax)
+    _curves = two_curves(ax)  # held: the registry holds artists weakly (RG-1)
     legend = ax.legend(location=location, buff=0.25)
     (x, y), direction = CORNERS[location]
     corner = ax.c2p(x, y)
@@ -149,14 +149,14 @@ def test_lg4_the_legend_sits_buff_inside_its_corner(location):
 
 def test_lg4_an_unknown_location_lists_the_four():
     ax = axes()
-    two_curves(ax)
+    _curves = two_curves(ax)  # held: the registry holds artists weakly (RG-1)
     with pytest.raises(ValueError, match="upper right"):
         ax.legend(location="best")
 
 
 def test_lg4_the_legend_follows_its_axes_and_keeps_its_corner():
     ax = axes()
-    two_curves(ax)
+    _curves = two_curves(ax)  # held: the registry holds artists weakly (RG-1)
     legend = ax.legend()
     ax.shift(RIGHT + UP)
     np.testing.assert_allclose(
@@ -215,7 +215,7 @@ def test_lg6_merge_and_split():
 
 def test_lg7_every_legend_leaf_is_a_library_leaf():
     ax = axes()
-    two_curves(ax)
+    _curves = two_curves(ax)  # held: the registry holds artists weakly (RG-1)
     ax.scatter([0, 1], [0, 1], label="dots")
     legend = ax.legend()
     leaves = legend.family_members_with_points()

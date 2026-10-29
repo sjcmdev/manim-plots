@@ -6,6 +6,7 @@ import inspect
 import sys
 import textwrap
 import warnings
+import weakref
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from types import FrameType
@@ -43,10 +44,20 @@ from manim.animation.transform import ShrinkToCenter, _MethodAnimation
 from manim.camera.camera import Camera
 from manim.mobject.mobject import _AnimationBuilder
 from manim.renderer.cairo_renderer import CairoRenderer
+from manim.utils.hashing import (
+    _CustomEncoder,
+    _Memoizer,
+    get_hash_from_play_call,
+    get_json,
+)
 
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    get_json,
+    get_hash_from_play_call,
+    _CustomEncoder.default,
+    _Memoizer._handle_already_processed,
     NumberLine.__init__,
     NumberLine.get_tick,
     NumberLine.get_tick_range,
@@ -163,6 +174,18 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "get_json": (
+            "dbe7d2639c78f2dcc702c9b4f325e59498789259aa738f5ac75c408ed5e4ae87"
+        ),
+        "get_hash_from_play_call": (
+            "b7d5f2fe8ab3ab9c84dbe8ee9fbac4babaafbff8ec5c1408bb6d81b92b017373"
+        ),
+        "_CustomEncoder.default": (
+            "39c83d428607292ace2ec8a2a2d1bd5e636d95cadf38da2b44d35dcfafac1125"
+        ),
+        "_Memoizer._handle_already_processed": (
+            "717d612fcdd1a521fd45ba92f47cdfdc2e32c5c647090cfdf2aa40e17d208d5d"
+        ),
         "NumberLine.__init__": (
             "009ac481d80c22e2859219dfb574bfb554c9dcb029980de5097076ca01098b8b"
         ),
@@ -501,6 +524,18 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "get_json": (
+            "dbe7d2639c78f2dcc702c9b4f325e59498789259aa738f5ac75c408ed5e4ae87"
+        ),
+        "get_hash_from_play_call": (
+            "ac69107783b6cf4dc819baa833aed7ae323a8fb8180770642be74fa6300c21f5"
+        ),
+        "_CustomEncoder.default": (
+            "39c83d428607292ace2ec8a2a2d1bd5e636d95cadf38da2b44d35dcfafac1125"
+        ),
+        "_Memoizer._handle_already_processed": (
+            "717d612fcdd1a521fd45ba92f47cdfdc2e32c5c647090cfdf2aa40e17d208d5d"
+        ),
         "NumberLine.__init__": (
             "009ac481d80c22e2859219dfb574bfb554c9dcb029980de5097076ca01098b8b"
         ),
@@ -1077,7 +1112,10 @@ def buffer_write() -> bool:
         del frame
 
 
-def playback_context() -> tuple[int, float | str, int] | None:
+type _PlaybackToken = tuple[weakref.ReferenceType[Scene], float | str, int]
+
+
+def playback_context() -> _PlaybackToken | None:
     """Return a shared token for a rendered frame or a play's finish boundary."""
     frame: FrameType | None = sys._getframe(1)
     boundary = None
@@ -1088,12 +1126,16 @@ def playback_context() -> tuple[int, float | str, int] | None:
                 token = values.get("__manim_plots_playback")
                 if token is None:
                     scene = values["self"]
-                    token = (id(scene), values["t"], int(scene.renderer.num_plays))
+                    token = (
+                        weakref.ref(scene),
+                        values["t"],
+                        int(scene.renderer.num_plays),
+                    )
                     values["__manim_plots_playback"] = token
-                return cast(tuple[int, float | str, int], token)
+                return cast(_PlaybackToken, token)
             if frame.f_code is Scene.play_internal.__code__:
                 scene = frame.f_locals["self"]
-                boundary = (id(scene), "finish", int(scene.renderer.num_plays))
+                boundary = (weakref.ref(scene), "finish", int(scene.renderer.num_plays))
             frame = frame.f_back
         return boundary
     finally:

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Callable, Iterable, Sequence
+import weakref
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import Any, Literal, NoReturn, Self, Unpack, cast, overload
 
 import numpy as np
@@ -28,6 +29,7 @@ from manim.utils.config_ops import merge_dicts_recursively
 from numpy.typing import ArrayLike
 
 from manim_plots.core import FloatArray
+from manim_plots.core import lifecycle as lc
 from manim_plots.core.nodes import (
     FRAME_NODES,
     AffineNode,
@@ -65,13 +67,20 @@ from manim_plots.mobjects.axis import (
     _LogExponentLocator,
     _LogMinorLocator,
     _range,
+    _TickPool,
 )
-from manim_plots.mobjects.context import playback_context
+from manim_plots.mobjects.context import (
+    _PlaybackToken,
+    animation_context,
+    playback_context,
+)
 from manim_plots.mobjects.leaves import (
     BoundLabel,
     FrameLeaf,
     GridLeaf,
+    Leaf,
     _ArtistOptions,
+    _become_target,
     _label,
     _NumberOptions,
     _ParametricOptions,
@@ -106,6 +115,26 @@ _AXIS_KEYS = frozenset(
         "color",
     ]
 )
+
+
+class _ArtistRegistry:
+    def __init__(self) -> None:
+        self._refs: list[weakref.ReferenceType[_CurvePlot | ScatterPlot]] = []
+
+    def __iter__(self) -> Iterator[_CurvePlot | ScatterPlot]:
+        live = [artist for ref in self._refs if (artist := ref()) is not None]
+        self._refs = [weakref.ref(artist) for artist in live]
+        return iter(live)
+
+    def __contains__(self, artist: object) -> bool:
+        return any(ref() is artist for ref in self._refs)
+
+    def append(self, artist: _CurvePlot | ScatterPlot) -> None:
+        list(self)
+        self._refs.append(weakref.ref(artist))
+
+    def remove(self, artist: _CurvePlot | ScatterPlot) -> None:
+        self._refs = [ref for ref in self._refs if ref() is not artist]
 
 
 def _scale(value: Scale | str, name: str) -> Scale:
@@ -298,12 +327,16 @@ class CartesianAxes(VGroup):
         for name, value in (("x_length", self.x_length), ("y_length", self.y_length)):
             if not np.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be positive and finite")
-        self._artists: list[_CurvePlot | ScatterPlot] = []
+        self._artists = _ArtistRegistry()
+        self._data_animation = False
+        self._channel_frame_moves = False
+        self._pool_warned = False
+        self._channel_roots: list[VMobject] = []
         self._moving_query: tuple[frozenset[Mobject], bool] | None = None
         self._actual_updaters: list[Callable[..., Any]] = []
         self._syncing = True
         self._data_version = 0
-        self._poll_token: tuple[int, float | str, int] | None = None
+        self._poll_token: _PlaybackToken | None = None
         self._token = 0
         super().__init__(**kwargs)
         # Native geometry is constructed without labels; all labels use our cache.
@@ -368,6 +401,239 @@ class CartesianAxes(VGroup):
     def __getattr__(self, name: str) -> NoReturn:
         raise AttributeError(f"CartesianAxes has no attribute {name!r}")
 
+    def become(
+        self,
+        mobject: Mobject,
+        match_height: bool = False,
+        match_width: bool = False,
+        match_depth: bool = False,
+        match_center: bool = False,
+        stretch: bool = False,
+    ) -> Self:
+        """Adopt another system's parameters and frame, retaining bound artists.
+
+        Parameters
+        ----------
+        mobject, match_height, match_width, match_depth, match_center, stretch
+            Native target and size/placement preparation options.
+        """
+        if not isinstance(mobject, CartesianAxes):
+            super().become(
+                mobject, match_height, match_width, match_depth, match_center, stretch
+            )
+            return self
+        target = _become_target(
+            self,
+            mobject.copy(),
+            match_height,
+            match_width,
+            match_depth,
+            match_center,
+            stretch,
+        )
+        artists = self._artists
+        self.__dict__.update(target.__dict__)
+        self._artists = artists
+        for member in self.get_family():
+            if isinstance(member, (Axis, Leaf, BoundLabel)):
+                member._system = self
+        self._data_version += 1
+        for artist in artists:
+            for leaf in artist.get_family():
+                if isinstance(leaf, Leaf):
+                    leaf._frame_seen = -1
+                    leaf._event(lc.DataChange())
+        return self
+
+    def align_data(self, mobject: Mobject, skip_point_alignment: bool = False) -> Self:
+        """Align a system Transform by decoration role and locator identity.
+
+        Parameters
+        ----------
+        mobject, skip_point_alignment
+            Native target and alignment option.
+
+        Raises
+        ------
+        ValueError
+            If the target changes a scale type; use FadeTransform instead.
+        """
+        animation = animation_context(transform_only=True)
+        if animation is None or not isinstance(mobject, CartesianAxes):
+            super().align_data(mobject, skip_point_alignment)
+            return self
+        self._sync_data()
+        mobject._sync_data()
+        for axis, target in zip(self.axes, mobject.axes, strict=True):
+            if type(axis._scale) is not type(target._scale):
+                raise ValueError("a change of scale type requires FadeTransform")
+        count = max(1, int(np.ceil(animation.run_time * config.frame_rate * 4)))
+        alphas = np.array(
+            [animation.rate_func(t) for t in np.linspace(0, 1, count + 1)]
+        )
+        pools = [
+            _TickPool(axis, target, alphas)
+            for axis, target in zip(
+                (self.x, self.y), (mobject.x, mobject.y), strict=True
+            )
+        ]
+        changed = any(
+            not np.array_equal(axis.range.value, target.range.value) or not pool.same
+            for axis, target, pool in zip(
+                (self.x, self.y), (mobject.x, mobject.y), pools, strict=True
+            )
+        )
+        if not changed:
+            super().align_data(mobject, skip_point_alignment)
+            return self
+        target_pools = [copy.deepcopy(pool) for pool in pools]
+        frame_moves = not np.array_equal(self.frame._cache, mobject.frame._cache)
+        for system, alpha in ((self, 0.0), (mobject, 1.0)):
+            system._channel_roots = system.submobjects[:]
+            system._data_animation = True
+            system._channel_frame_moves = frame_moves
+            system._pool_warned = False
+            system._pool_alpha = alpha
+            system._syncing = True
+            try:
+                for axis, pool in zip(
+                    (system.x, system.y),
+                    target_pools if system is mobject else pools,
+                    strict=True,
+                ):
+                    pool.alpha = alpha
+                    axis._prepare_pool(pool)
+                system.x._configure()
+                system.y._configure()
+            finally:
+                system._syncing = False
+        left, right = self._channel_roles(), mobject._channel_roles()
+        roles = dict.fromkeys((*left, *right))
+        families: list[list[VMobject]] = [[], []]
+        for role in roles:
+            a, b = left.get(role), right.get(role)
+            if a is None:
+                assert b is not None
+                a = Leaf(np.zeros_like(b._cache), self)
+                a.match_style(b)
+                a.set_opacity(0)
+            if b is None:
+                b = Leaf(np.zeros_like(a._cache), mobject)
+                b.match_style(a)
+                b.set_opacity(0)
+            # Native point alignment is safe here: derived interpolation bypasses it.
+            VMobject.align_data(a, b)
+            families[0].append(a)
+            families[1].append(b)
+        self.submobjects = [*families[0], self.frame]
+        mobject.submobjects = [*families[1], mobject.frame]
+        return self
+
+    def _channel_roles(self) -> dict[object, Leaf]:
+        roles: dict[object, Leaf] = {}
+        for axis in (self.x, self.y):
+            for name in ("line", "tip", "tip_start"):
+                leaf = getattr(axis, name)
+                if leaf is not None:
+                    roles[(axis.index, name)] = leaf
+            for name, leaves in (
+                ("major", axis._tick_leaves),
+                ("minor", axis._minor_leaves),
+            ):
+                if axis.include_ticks:
+                    for key, leaf in leaves.items():
+                        roles[(axis.index, name, key)] = leaf
+            for key, grid in axis._grid_leaves.items():
+                roles[(axis.index, "grid", key)] = grid
+            for key, label in axis._number_leaves.items():
+                for i, leaf in enumerate(label.get_family()):
+                    if isinstance(leaf, Leaf):
+                        roles[(axis.index, "number", key, i)] = leaf
+            if axis._pool is not None:
+                for level, spares in axis._pool.spares.items():
+                    for i, leaf in enumerate(spares):
+                        roles[(axis.index, "spare", level, i)] = leaf
+        included = set(roles.values())
+        for i, member in enumerate(self.get_family()):
+            if (
+                isinstance(member, Leaf)
+                and member is not self.frame
+                and member not in included
+            ):
+                roles[("extra", i)] = member
+        return roles
+
+    def _interpolate_data(
+        self, start: CartesianAxes, target: CartesianAxes, alpha: float
+    ) -> None:
+        self._pool_alpha = alpha
+        self._syncing = True
+        try:
+            for axis, a, b in zip(
+                (self.x, self.y), (start.x, start.y), (target.x, target.y), strict=True
+            ):
+                limits = (1 - alpha) * a.range.value + alpha * b.range.value
+                limits.flags.writeable = False
+                axis._range_parameter._value = limits
+                axis._range_parameter._version += 1
+                assert axis._pool is not None
+                axis._pool.alpha = alpha
+            self._compile()
+            self.x._configure()
+            self.y._configure()
+            self._configure_grid()
+        finally:
+            self._syncing = False
+
+    def resume_updating(self, recursive: bool = True) -> Self:
+        """Close a prepared pool and transfer bindings after a replacement.
+
+        Parameters
+        ----------
+        recursive
+            Resume native family updaters when true.
+        """
+        animation = animation_context(finishing=True)
+        super().resume_updating(recursive)
+        if self._data_animation:
+            self._data_animation = False
+            self.submobjects = self._channel_roots
+            del self._channel_roots
+            for axis in (self.x, self.y):
+                pool = axis._pool
+                if pool is not None:
+                    config = pool.target if self._pool_alpha == 1 else pool.start
+                    (
+                        axis.locator,
+                        axis.minor_locator,
+                        axis._explicit,
+                        axis._tick_mode,
+                    ) = config
+                axis._finish_pool()
+            self._syncing = True
+            try:
+                self.x._configure()
+                self.y._configure()
+                self._configure_grid()
+            finally:
+                self._syncing = False
+        if (
+            animation is not None
+            and getattr(animation, "replace_mobject_with_target_in_scene", False)
+            and isinstance(
+                target := getattr(animation, "target_mobject", None), CartesianAxes
+            )
+        ):
+            for artist in tuple(self._artists):
+                for leaf in artist.get_family():
+                    if isinstance(leaf, Leaf):
+                        leaf._event(lc.Rebind(target))
+                if isinstance(artist, ScatterPlot):
+                    self._artists.remove(artist)
+                    target._artists.append(artist)
+                    artist._system = target
+        return self
+
     @property
     def updaters(self) -> list[Callable[..., Any]]:
         """Expose synchronisation only to plays that can change this system."""
@@ -394,7 +660,9 @@ class CartesianAxes(VGroup):
             self._enforce_aspect(scaled)
         lower = np.array([limits[0] for limits in scaled])
         span = np.array([limits[1] - limits[0] for limits in scaled])
-        factors = np.array([self.x_length, self.y_length]) / span
+        factors = np.divide(
+            [self.x_length, self.y_length], span, out=np.zeros(2), where=span != 0
+        )
         self._data = Chain(
             (
                 *(
@@ -403,7 +671,8 @@ class CartesianAxes(VGroup):
                     if not isinstance(axis._scale, LinearScale)
                 ),
                 AffineNode.from_parts(
-                    np.diag(factors), self.bounds.lower - lower * factors
+                    np.diag(factors),
+                    np.where(span == 0, 0, self.bounds.lower - lower * factors),
                 ),
             )
         )
@@ -1164,7 +1433,7 @@ class CartesianAxes(VGroup):
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         result = type(self).__new__(type(self))
         memo[id(self)] = result
-        result._artists = []
+        result._artists = _ArtistRegistry()
         for key, value in self.__dict__.items():
             if key in {"bounds", "_data"}:
                 result.__dict__[key] = value

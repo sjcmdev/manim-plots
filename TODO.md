@@ -214,9 +214,10 @@ F-921, F-1009 (constructor, `axis_config`, defaults).
 F-903-F-911, F-915-F-920, F-922, F-1005: keyed `.animate`, `Transform` between systems,
 the `ReplacementTransform` transfer, `ax.remove`.
 
-- [ ] Acceptance table: artists, registration, the data channel
-- [ ] `tests/mobjects/test_artists.py`, `test_registration.py`, `test_data_channel.py`
-- [ ] The F-906 matrix: end states and sampled intermediate frames against plain Manim
+- [x] Acceptance table: artists, registration, the data channel (parts A and B; RG-1,
+      MX-4 and MX-5 added after probes)
+- [x] `tests/mobjects/test_artists.py`, `test_registration.py`, `test_data_channel.py`
+- [x] The F-906 matrix: end states and sampled intermediate frames against plain Manim
       run live (ADR 0003 §7); F-922 with caching on
 
 ### task/12-legend-style-animations
