@@ -244,6 +244,8 @@ def _path(coords: FloatArray, labels: IntArray) -> Payload:
 
 def _sum_rows(values: FloatArray) -> FloatArray:
     # Three coordinate columns add in the same order without a strided reduction.
+    if values.shape[1] == 2:
+        return values[:, 0] + values[:, 1]
     if values.shape[1] == 3:
         return values[:, 0] + values[:, 1] + values[:, 2]
     return values.sum(axis=1)
@@ -356,10 +358,20 @@ class _AnalyticSource:
             return Payload.empty("path", 2)
         t = ts[0] if len(ts) == 1 else np.concatenate(ts)
         labels = ids[0] if len(ids) == 1 else np.concatenate(ids)
-        coords = self._evaluate(t)
-        screen = map.to_screen(coords)
         depth: IntArray | None = None
         active = labels[1:] == labels[:-1]
+        probes = None
+        if 1 < len(t) < MAX_SAMPLES:
+            mid = t[:-1] / 2 + t[1:] / 2
+            mid = mid if active.all() else mid[active]
+            evaluated = self._evaluate(np.concatenate((t, mid)))
+            mapped = map.to_screen(evaluated)
+            coords, points = evaluated[: len(t)], evaluated[len(t) :]
+            screen, images = mapped[: len(t)], mapped[len(t) :]
+            probes = points, images
+        else:
+            coords = self._evaluate(t)
+            screen = map.to_screen(coords)
         for _ in range(MAX_DEPTH):
             if len(t) < 2 or len(t) >= MAX_SAMPLES:
                 break
@@ -374,26 +386,38 @@ class _AnalyticSource:
                     left_t, right_t = t[indices], t[indices + 1]
                     left, right = screen[indices], screen[indices + 1]
                 mid = left_t / 2 + right_t / 2
-                points = self._evaluate(mid)
-                images = map.to_screen(points)
+                if probes is None:
+                    points = self._evaluate(mid)
+                    images = map.to_screen(points)
+                else:
+                    points, images = probes
+                    probes = None
+                # The chord midpoint is an admissible closest-point candidate.
+                delta = images - left / 2 - right / 2
+                if (_sum_rows(delta * delta) <= CHORD_TOLERANCE**2).all():
+                    break
                 chord = right - left
                 norm = _sum_rows(chord * chord)
+                delta = images - left
                 fraction = np.divide(
-                    _sum_rows((images - left) * chord),
+                    _sum_rows(delta * chord),
                     norm,
                     out=np.zeros(len(mid)),
                     where=norm != 0,
                 )
-                closest = left + np.clip(fraction, 0, 1)[:, None] * chord
-                delta = images - closest
-                error = np.sqrt(_sum_rows(delta * delta))
+                np.clip(fraction, 0, 1, out=fraction)
+                chord *= fraction[:, None]
+                delta -= chord
+                error = _sum_rows(delta * delta)
                 if np.isfinite(screen).all() and np.isfinite(images).all():
-                    refine = error > CHORD_TOLERANCE
+                    refine = error > CHORD_TOLERANCE**2
                 else:
                     lv = np.isfinite(left).all(axis=1)
                     rv = np.isfinite(right).all(axis=1)
                     mv = np.isfinite(images).all(axis=1)
-                    refine = (lv != rv) | (lv & rv & (~mv | (error > CHORD_TOLERANCE)))
+                    refine = (lv != rv) | (
+                        lv & rv & (~mv | (error > CHORD_TOLERANCE**2))
+                    )
                 refine &= (mid > left_t) & (mid < right_t)
             chosen = np.flatnonzero(refine)[: MAX_SAMPLES - len(t)]
             if not len(chosen):

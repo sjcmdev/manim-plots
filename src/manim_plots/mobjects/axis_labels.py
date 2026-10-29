@@ -257,24 +257,28 @@ def _layout_overlap(axis: axis_module.Axis, group: _Parts[Any]) -> None:
     # Reset only opacity previously hidden by this policy, preserving user styling.
     for label in labels:
         _restore_overlap(label)
-    boxes: list[FloatArray] = []
+    outlines: list[FloatArray] = []
+    sizes: list[int] = []
     for label in labels:
-        outlines = [
+        parts = [
             glyph._cache
             for glyph in label.get_family()
             if isinstance(glyph, Leaf) and len(glyph._cache)
         ]
-        points = np.concatenate(outlines) if outlines else np.empty((0, 3))
-        boxes.append(
-            np.array([points.min(axis=0)[:2], points.max(axis=0)[:2]])
-            if len(points)
-            else np.zeros((2, 2))
-        )
-
-    bounds = np.array(boxes)
+        outlines.extend(parts)
+        sizes.append(sum(len(part) for part in parts))
+    bounds = np.zeros((len(labels), 2, 2))
+    if outlines:
+        points = np.concatenate(outlines)[:, :2]
+        starts = np.cumsum([0, *sizes[:-1]])
+        nonempty = np.asarray(sizes) != 0
+        bounds[nonempty, 0] = np.minimum.reduceat(points, starts[nonempty], axis=0)
+        bounds[nonempty, 1] = np.maximum.reduceat(points, starts[nonempty], axis=0)
     overlap = (bounds[:, None, 0] < bounds[None, :, 1]).all(axis=2)
     overlap &= overlap.T
     np.fill_diagonal(overlap, False)
+    if not overlap.any():
+        return
 
     visible = list(range(len(labels)))
     if axis.overlap.value == "drop":

@@ -146,6 +146,7 @@ class _TickPool:
         self.active: dict[object, float] = {}
         self.absent: dict[object, FloatArray] = {}
         self.styles: dict[Leaf, tuple[FloatArray, FloatArray]] = {}
+        self._opacities: dict[Leaf, float] = {}
         self.spares: dict[Level, list[TickLeaf]] = {"major": [], "minor": []}
         start, end = axis.range.value, target.range.value
         schedule: list[tuple[float, dict[object, Tick]]] = []
@@ -258,6 +259,9 @@ class _TickPool:
         return None
 
     def _show(self, leaf: Leaf, opacity: float) -> None:
+        if self._opacities.get(leaf) == opacity:
+            return
+        self._opacities[leaf] = opacity
         if leaf not in self.styles:
             self.styles[leaf] = (
                 leaf.stroke_rgbas[:, 3].copy(),
@@ -438,6 +442,9 @@ class Axis(VGroup):
         self._crossing_edges = np.zeros(1, dtype=np.intp)
         self._crossing_ticks: tuple[object, ...] | None = None
         self._crossing_density = -1
+        self._crossing_data = np.empty((0, 2))
+        self._crossing_centers = np.empty((0, 2))
+        self._crossing_fixed = np.empty(0, dtype=np.bool_)
         self._native = native
         self._line_reference = native.points.copy()
         self._start_reference = native.get_start().copy()
@@ -692,11 +699,32 @@ class Axis(VGroup):
                 )
             elif type(locator) is MultipleLocator:
                 tick_config = (MultipleLocator, locator.step, self.include_ticks)
+        items = None
+        stable_items = False
         if (
-            only_crossing
+            not only_crossing
+            and self._range_seen != self.range.version
             and tick_config is not None
             and tick_config == self._crossing_ticks
-            and self._decoration_seen == self._versions()
+            and self._crossing_frame == system.frame.version
+            and self._style_seen == self._versions()[1:]
+            and not self._mirrors
+            and not self._label_values
+            and self._tick_styles["major"].get("direction", TickDirection.BOTH)
+            is TickDirection.BOTH
+            and (self._pool is None or self._pool.same)
+        ):
+            items = (
+                self._drawn_items()
+                if self._pool is None
+                else self._uncovered(self._pool._update(self), self.range.value)
+            )
+            stable_items = items == self._items
+        if (
+            (only_crossing or stable_items)
+            and tick_config is not None
+            and tick_config == self._crossing_ticks
+            and (stable_items or self._decoration_seen == self._versions())
             and self._crossing_frame == system.frame.version
             and not self._mirrors
             and (self._pool is None or self._pool.same)
@@ -704,7 +732,12 @@ class Axis(VGroup):
             # The other range moves this decoration only across its own direction.
             delta = origin - self._crossing_origin
             delta[self.index] = 0
-            placed = mapping.forward(self._crossing_local + delta)
+            local = self._crossing_local + delta
+            centers = system._data.forward(self._crossing_data)
+            shifts = centers[:, self.index] - self._crossing_centers[:, self.index]
+            shifts[self._crossing_fixed] = 0
+            local[:, self.index] += np.repeat(shifts, np.diff(self._crossing_edges))
+            placed = mapping.forward(local)
             for leaf, start, stop in zip(
                 self._crossing_leaves,
                 self._crossing_edges[:-1],
@@ -713,12 +746,14 @@ class Axis(VGroup):
             ):
                 leaf._cache = placed[start:stop]
             if self.max_ticks == self._crossing_density:
-                if not mapping.is_affine:
+                if stable_items or not mapping.is_affine:
                     for group in (self._numbers, self._labels):
                         group._replace(group._parts)
                         _layout_overlap(self, group)
                 if self._pool is not None:
                     self._pool._apply(self)
+                self._range_seen = self.range.version
+                self._decoration_seen = self._versions()
                 return
         self.line._axis_local = self._line_reference + offset
         self.line._cache = mapping.forward(self.line._axis_local)
@@ -729,9 +764,13 @@ class Axis(VGroup):
             self.tip_start._axis_local = self._tip_start_reference + offset
             self.tip_start._cache = mapping.forward(self.tip_start._axis_local)
         self._items = (
-            self._drawn_items()
-            if self._pool is None
-            else self._uncovered(self._pool._update(self), self.range.value)
+            items
+            if items is not None
+            else (
+                self._drawn_items()
+                if self._pool is None
+                else self._uncovered(self._pool._update(self), self.range.value)
+            )
         )
         for level in ("major", "minor"):
             self._configure_level(level)
@@ -779,17 +818,35 @@ class Axis(VGroup):
             for leaf in self.get_family()
             if isinstance(leaf, Leaf) and leaf._axis_local is not None
         ]
-        local = [
+        parts = [
             leaf._axis_local
             for leaf in self._crossing_leaves
             if leaf._axis_local is not None
         ]
-        self._crossing_local = np.concatenate(local)
-        self._crossing_edges = np.r_[0, np.cumsum([len(points) for points in local])]
+        self._crossing_local = np.concatenate(parts)
+        self._crossing_edges = np.r_[0, np.cumsum([len(points) for points in parts])]
         self._crossing_origin = origin
         self._crossing_frame = system.frame.version
         self._crossing_ticks = tick_config
         self._crossing_density = self.max_ticks
+        values: dict[Leaf, float] = {}
+        for item in self._items:
+            ticks = self._tick_leaves if item.level == "major" else self._minor_leaves
+            if item.key in ticks:
+                values[ticks[item.key]] = item.value
+            for glyph in self._number_members.get((item.level, item.key), ()):
+                values[glyph] = item.value
+        self._crossing_data = np.full(
+            (len(self._crossing_leaves), 2), self._cross_value()
+        )
+        self._crossing_data[:, self.index] = [
+            values.get(leaf, float(self.range.value[0]))
+            for leaf in self._crossing_leaves
+        ]
+        self._crossing_centers = system._data.forward(self._crossing_data)
+        self._crossing_fixed = np.array(
+            [leaf not in values for leaf in self._crossing_leaves]
+        )
 
     def _prepare_pool(self, pool: _TickPool) -> None:
         self._pool = pool

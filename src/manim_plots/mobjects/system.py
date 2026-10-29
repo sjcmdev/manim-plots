@@ -72,6 +72,7 @@ from manim_plots.mobjects.axis import (
 from manim_plots.mobjects.context import (
     _PlaybackToken,
     animation_context,
+    data_interpolation,
     playback_context,
 )
 from manim_plots.mobjects.leaves import (
@@ -431,6 +432,9 @@ class CartesianAxes(VGroup):
     def family_members_with_points(self) -> list[Mobject]:
         """Return members with points, using the flat animation channel directly."""
         if self._data_animation and all(isinstance(m, Leaf) for m in self.submobjects):
+            if data_interpolation():
+                # The frame publishes all derived geometry at the same alpha.
+                return [self.frame]
             self._sync_data()
             members: list[Mobject] = []
             for leaf in cast(list[Leaf], self.submobjects):
@@ -440,6 +444,25 @@ class CartesianAxes(VGroup):
                     members.append(leaf)
             return members
         return super().family_members_with_points()
+
+    def update(self, dt: float = 0, recursive: bool = True) -> Self:
+        """Update active channel leaves without traversing updater-free decorations.
+
+        Parameters
+        ----------
+        dt, recursive
+            Native updater elapsed time and family traversal flag.
+        """
+        if not self._data_animation:
+            return super().update(dt, recursive)
+        if self.updating_suspended:
+            return self
+        super().update(dt, recursive=False)
+        if recursive:
+            for member in self.submobjects:
+                if member.submobjects or member.updaters:
+                    member.update(dt, recursive=True)
+        return self
 
     def become(
         self,

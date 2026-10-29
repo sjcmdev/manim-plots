@@ -1037,6 +1037,19 @@ def animation_context(
         del frame
 
 
+def data_interpolation() -> bool:
+    """Identify a Transform's simultaneous derived-data interpolation query."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            if frame.f_code is Transform.get_all_families_zipped.__code__:
+                return bool(frame.f_locals["self"].lag_ratio == 0)
+            frame = frame.f_back
+        return False
+    finally:
+        del frame
+
+
 @dataclass
 class WriterContext:
     """Hold copied operation facts and a family memo, without retaining a frame.
