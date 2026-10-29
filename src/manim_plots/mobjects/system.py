@@ -82,6 +82,7 @@ from manim_plots.mobjects.leaves import (
     Leaf,
     _ArtistOptions,
     _become_target,
+    _ClipInput,
     _label,
     _NumberOptions,
     _ParametricOptions,
@@ -1197,9 +1198,12 @@ class CartesianAxes(VGroup):
         Manim's x_range, use_vectorized, use_smoothing, discontinuities and dt keep
         their meaning. A range step caps sample spacing independently of ticks.
         Curves split at invalid samples and poles, and clip to the viewport by
-        default. Use ``clip=False`` to disable clipping or a numeric margin in
-        scene units to expand or narrow it. Uncoloured plots advance a cycle whose
-        first colour is white; an explicit colour does not advance it.
+        default. ``clip`` accepts True, False, a finite numeric margin in scene
+        units, or a two-entry tuple or list ``(cx, cy)`` for independent x and y
+        policies. True clips at the viewport, False disables clipping, and
+        positive margins expand the interval while negative margins narrow it.
+        A single value applies to both axes. Uncoloured plots advance a cycle
+        whose first colour is white; an explicit colour does not advance it.
         """
         if args:
             function = args[0]
@@ -1246,7 +1250,8 @@ class CartesianAxes(VGroup):
         xs, ys
             Separate coordinates, or pairs in xs with ys omitted.
         **kwargs
-            Native VMobject styles.
+            Native VMobject styles and artist options, including ``clip`` as in
+            ``plot``.
         """
         artist = LinePlot(xs, self, ys, **kwargs)
         self.add(artist)
@@ -1259,7 +1264,7 @@ class CartesianAxes(VGroup):
         *,
         marker: Mobject | Marker | None = None,
         label: str | None = None,
-        clip: bool | float = True,
+        clip: _ClipInput = True,
         **kwargs: Unpack[_VMStyle],
     ) -> ScatterPlot:
         """Create and register independent markers in input order.
@@ -1273,7 +1278,10 @@ class CartesianAxes(VGroup):
         label
             Legend entry text, or None to omit this artist.
         clip
-            True, False, or a clipping margin in scene units.
+            True clips marker centres at the viewport, False disables clipping,
+            and a finite margin in scene units expands (positive) or narrows
+            (negative) the interval. A single value applies to both axes; a
+            two-entry tuple or list ``(cx, cy)`` sets each axis independently.
         **kwargs
             Native VMobject styles for the markers.
         """
@@ -1298,7 +1306,8 @@ class CartesianAxes(VGroup):
         use_vectorized
             Evaluate arrays instead of scalars when true.
         **kwargs
-            t_range (default (0, 1)), sampling options and native styles.
+            t_range (default (0, 1)), sampling options, native styles and artist
+            options, including ``clip`` as in ``plot``.
         """
         artist = ParametricPlot(function, self, use_vectorized, **kwargs)
         self.add(artist)
@@ -1328,7 +1337,9 @@ class CartesianAxes(VGroup):
         vertex_dot_radius, vertex_dot_style
             Native Dot radius and style options.
         **kwargs
-            Native styles for the line.
+            Native styles and artist options for the line. ``clip`` also applies
+            to the vertex dots and accepts the same scalar or ``(cx, cy)`` tuple
+            or list as ``plot``.
         """
         options = kwargs.copy()
         options["color"] = line_color
