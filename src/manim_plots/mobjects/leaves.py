@@ -24,6 +24,7 @@ from manim_plots.mobjects.context import (
 )
 
 if TYPE_CHECKING:
+    from manim_plots.mobjects.artists import LineStyle
     from manim_plots.mobjects.system import CartesianAxes
 
 _SIMULATING = False
@@ -55,7 +56,14 @@ class _VMStyle(TypedDict, total=False):
     z_index: float
 
 
-class _PlotOptions(_VMStyle, total=False):
+class _ArtistOptions(_VMStyle, total=False):
+    label: str | None
+    clip: bool | float
+    line_style: LineStyle
+    dash: tuple[float, float] | None
+
+
+class _PlotOptions(_ArtistOptions, total=False):
     use_smoothing: bool
     discontinuities: Iterable[float] | None
     dt: float

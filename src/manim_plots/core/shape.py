@@ -366,14 +366,33 @@ def _arc_parameters(
     target = positions - cumulative[indices]
     lo, hi = np.zeros(len(positions)), np.ones(len(positions))
     selected = curves[indices]
-    for _ in range(48):
-        mid = (lo + hi) / 2
-        below = _lengths(selected, mid) < target
-        lo = np.where(below, mid, lo)
-        hi = np.where(below, hi, mid)
-    result = (lo + hi) / 2
+    sizes = lengths[indices]
+    endpoints = (target <= 0) | (target >= sizes - 1e-12 * np.maximum(sizes, 1.0))
+    result = np.clip(np.divide(target, sizes, out=lo.copy(), where=sizes > 0), 0, 1)
+    delta = 3 * np.diff(selected, axis=1)
+    for _ in range(40):
+        error = _lengths(selected, result) - target
+        done = endpoints | (np.abs(error) <= 1e-12 * np.maximum(sizes, 1.0))
+        if done.all():
+            break
+        lo = np.where(error < 0, result, lo)
+        hi = np.where(error >= 0, result, hi)
+        t = result[:, None]
+        speed = np.linalg.norm(
+            (1 - t) ** 2 * delta[:, 0]
+            + 2 * (1 - t) * t * delta[:, 1]
+            + t**2 * delta[:, 2],
+            axis=1,
+        )
+        candidate = result - np.divide(
+            error, speed, out=np.zeros_like(error), where=speed > 0
+        )
+        candidate = np.where(
+            (candidate > lo) & (candidate < hi), candidate, (lo + hi) / 2
+        )
+        result = np.where(done, result, candidate)
     result[target <= 0] = 0
-    result[target >= lengths[indices]] = 1
+    result[target >= sizes - 1e-12 * np.maximum(sizes, 1.0)] = 1
     return indices, result
 
 
@@ -415,7 +434,14 @@ def dash(
     parts: list[FloatArray] = []
     dim = payload.coords.shape[1]
     with np.errstate(all="ignore"):
-        lengths = _lengths(curves)
+        chord = np.linalg.norm(curves[:, 3] - curves[:, 0], axis=1)
+        polygon = np.linalg.norm(np.diff(curves, axis=1), axis=2).sum(axis=1)
+        # These bound the true arc length; dense paths need no quadrature.
+        lengths = (
+            (chord + polygon) / 2
+            if np.sum(polygon - chord) <= 1e-4
+            else _lengths(curves)
+        )
         period = on + off
         offset = phase % period
         for start, stop in payload.segments // 4:
@@ -434,16 +460,29 @@ def dash(
             # Quadrature roundoff must not turn an endpoint into another dash.
             keep = begins < total - 8 * np.finfo(np.float64).eps * total
             begins, ends = begins[keep], ends[keep]
+            if not len(begins):
+                continue
             indices, times = _arc_parameters(
                 segment, sizes, np.column_stack((begins, ends)).ravel()
             )
-            for (first, last), (a, b) in zip(
-                indices.reshape(-1, 2), times.reshape(-1, 2), strict=True
-            ):
-                selected = segment[first : last + 1].copy()
-                low, high = np.zeros(len(selected)), np.ones(len(selected))
-                low[0], high[-1] = a, b
-                parts.append(_restrict(selected, low, high).reshape(-1, dim))
+            first, last = indices[::2], indices[1::2]
+            counts = last - first + 1
+            dash_ids = np.repeat(np.arange(len(first)), counts)
+            offsets = np.r_[0, np.cumsum(counts)]
+            curve_ids = (
+                np.arange(offsets[-1])
+                - np.repeat(offsets[:-1], counts)
+                + first[dash_ids]
+            )
+            low, high = np.zeros(len(curve_ids)), np.ones(len(curve_ids))
+            low[offsets[:-1]], high[offsets[1:] - 1] = times[::2], times[1::2]
+            divided_curves = segment[curve_ids].copy()
+            boundary = (low > 0) | (high < 1)
+            divided_curves[boundary] = _restrict(
+                divided_curves[boundary], low[boundary], high[boundary]
+            )
+            divided = divided_curves.reshape(-1, dim)
+            parts.extend(np.split(divided, offsets[1:-1] * 4))
     return _assemble(parts, dim)
 
 
@@ -477,4 +516,101 @@ def densify(payload: Payload, bounds: Bounds, *, pieces: int) -> Payload:
         divided = _restrict(np.repeat(curves, pieces, axis=0), lo, hi)
     return Payload(
         "path", divided.reshape(-1, payload.coords.shape[1]), payload.segments * pieces
+    )
+
+
+def resample_like(payload: Payload, template: Payload) -> Payload:
+    """Fit a path to another path's cubic lattice by arc fraction per piece.
+
+    Parameters
+    ----------
+    payload
+        Source cubic geometry, with nondegenerate continuous pieces.
+    template
+        Target lattice; each curve's arc span determines a source interval.
+
+    Returns
+    -------
+    Payload
+        Source geometry with exactly the template's point count and pieces.
+
+    Raises
+    ------
+    ValueError
+        If piece counts differ, a curve is degenerate, or the target lattice
+        cannot represent the source to within 1e-3 scene units.
+    """
+    source, target = _curves(payload), _curves(template)
+    if len(payload.segments) != len(template.segments) or not len(source):
+        raise ValueError("Morph paths must have the same nonzero number of pieces")
+    parts = []
+    for (a, b), (c, d) in zip(
+        payload.segments // 4, template.segments // 4, strict=True
+    ):
+        curves, lattice = source[a:b], target[c:d]
+        lengths, target_lengths = _lengths(curves), _lengths(lattice)
+        if np.any(lengths <= 1e-12) or np.any(target_lengths <= 1e-12):
+            raise ValueError("Morph cannot resample degenerate or repeated points")
+        samples = _resampled_points(
+            curves, lengths, lattice, target_lengths, np.linspace(0, 1, 4)
+        )
+        result = samples.copy()
+        # Interpolate the samples at t=1/3 and 2/3 with cubic control handles.
+        u = 27 * samples[:, 1] - 8 * samples[:, 0] - samples[:, 3]
+        v = 27 * samples[:, 2] - samples[:, 0] - 8 * samples[:, 3]
+        result[:, 1], result[:, 2] = (2 * u - v) / 18, (2 * v - u) / 18
+        check_times = np.linspace(0, 1, 17)
+        actual = _bezier_points(
+            np.repeat(result, len(check_times), axis=0),
+            np.tile(check_times, len(result)),
+        ).reshape(len(result), len(check_times), payload.coords.shape[1])
+        expected = _resampled_points(
+            curves, lengths, lattice, target_lengths, check_times
+        )
+        # Check source joins too: a short feature may lie between target samples.
+        positions = (
+            np.r_[0.0, np.cumsum(lengths)] * np.sum(target_lengths) / np.sum(lengths)
+        )
+        indices, parameters = _arc_parameters(lattice, target_lengths, positions)
+        joins = _bezier_points(result[indices], parameters)
+        source_joins = np.concatenate((curves[:1, 0], curves[:, 3]))
+        if np.any(np.linalg.norm(actual - expected, axis=2) > 1e-3) or np.any(
+            np.linalg.norm(joins - source_joins, axis=1) > 1e-3
+        ):
+            raise ValueError(
+                "Morph target parameterisation is too coarse "
+                "to resample honestly within 1e-3"
+            )
+        parts.append(result.reshape(-1, payload.coords.shape[1]))
+    return _assemble(parts, payload.coords.shape[1])
+
+
+def _bezier_points(curves: FloatArray, parameters: FloatArray) -> FloatArray:
+    t = parameters[:, None]
+    return (
+        (1 - t) ** 3 * curves[:, 0]
+        + 3 * (1 - t) ** 2 * t * curves[:, 1]
+        + 3 * (1 - t) * t**2 * curves[:, 2]
+        + t**3 * curves[:, 3]
+    )
+
+
+def _resampled_points(
+    curves: FloatArray,
+    lengths: FloatArray,
+    lattice: FloatArray,
+    target_lengths: FloatArray,
+    times: FloatArray,
+) -> FloatArray:
+    offsets = np.r_[0.0, np.cumsum(target_lengths)][:-1]
+    repeated = np.repeat(lattice, len(times), axis=0)
+    partial = _lengths(repeated, np.tile(times, len(lattice)))
+    positions = (
+        (partial + np.repeat(offsets, len(times)))
+        * np.sum(lengths)
+        / np.sum(target_lengths)
+    )
+    indices, parameters = _arc_parameters(curves, lengths, positions)
+    return _bezier_points(curves[indices], parameters).reshape(
+        len(lattice), len(times), curves.shape[2]
     )

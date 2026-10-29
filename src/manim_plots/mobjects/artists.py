@@ -6,11 +6,33 @@ import copy
 import inspect
 import warnings
 from collections.abc import Callable, Iterable, Sequence
+from enum import Enum
+from numbers import Real
 from typing import TYPE_CHECKING, Any, Self, Unpack, cast
 
 import numpy as np
-from manim import Dot, Mobject, VGroup, VMobject
+from manim import (
+    BLUE,
+    DEFAULT_DOT_RADIUS,
+    GREEN,
+    ORANGE,
+    PURPLE,
+    RED,
+    TEAL,
+    WHITE,
+    YELLOW,
+    Circle,
+    Cross,
+    Dot,
+    Mobject,
+    Square,
+    Star,
+    Triangle,
+    VGroup,
+    VMobject,
+)
 from manim.typing import Point3DLike, Vector3DLike
+from manim.utils.color import ManimColor
 from numpy.typing import ArrayLike
 
 from manim_plots.core import FloatArray, ManimPlotsWarning
@@ -25,9 +47,12 @@ from manim_plots.core.nodes import (
 )
 from manim_plots.core.params import Parameter
 from manim_plots.core.payload import Payload, split_segments
-from manim_plots.core.shape import clip, corners, densify, smooth
+from manim_plots.core.shape import clip as clip_path
+from manim_plots.core.shape import corners, densify, smooth
+from manim_plots.core.shape import dash as dash_path
 from manim_plots.core.sources import (
     ArraySource,
+    Box,
     FunctionSource,
     ParametricSource,
     Source,
@@ -39,10 +64,104 @@ from manim_plots.mobjects.context import (
     playback_context,
     writer_context,
 )
-from manim_plots.mobjects.leaves import Leaf, _synchronise, _VMStyle
+from manim_plots.mobjects.leaves import Leaf, _ArtistOptions, _synchronise, _VMStyle
 
 if TYPE_CHECKING:
     from manim_plots.mobjects.system import CartesianAxes
+
+
+COLOR_CYCLE: tuple[ManimColor, ...] = (
+    WHITE,
+    BLUE,
+    YELLOW,
+    GREEN,
+    RED,
+    PURPLE,
+    ORANGE,
+    TEAL,
+)
+
+
+class LineStyle(Enum):
+    """Select a solid, dashed or dotted stroke in scene units."""
+
+    SOLID = "solid"
+    DASHED = "dashed"
+    DOTTED = "dotted"
+
+
+class Marker(Enum):
+    """Select a native Manim marker with the default dot's width."""
+
+    DOT = "dot"
+    CIRCLE = "circle"
+    SQUARE = "square"
+    TRIANGLE = "triangle"
+    CROSS = "cross"
+    STAR = "star"
+
+
+def _cycle_style(
+    system: CartesianAxes, style: _VMStyle, *, scatter: bool = False
+) -> None:
+    keys = (
+        ("color", "stroke_color", "fill_color")
+        if scatter
+        else ("color", "stroke_color")
+    )
+    if not any(key in style for key in keys):
+        index = getattr(system, "_color_index", 0)
+        style["color"] = COLOR_CYCLE[index % len(COLOR_CYCLE)]
+        system._color_index = index + 1
+
+
+def _validate_label(label: str | None) -> None:
+    if label is not None and not isinstance(label, str):
+        raise TypeError("label must be a string or None")
+
+
+def _validate_clip(value: bool | float) -> None:
+    if not isinstance(value, (bool, Real)):
+        raise TypeError("clip must be bool or a real margin")
+    if not np.isfinite(value):
+        raise ValueError("clip must be finite")
+
+
+def _clip_box(system: CartesianAxes, value: bool | float) -> Box:
+    if isinstance(value, bool):
+        return system.bounds
+    bounds = system.bounds
+    origin = np.zeros((3, 2))
+    origin[1:] = np.eye(2)
+    placed = system.frame.mapping.forward(origin)
+    units = np.linalg.norm(placed[1:] - placed[0], axis=1)
+    margin = value / units
+    if np.any(bounds.lower - margin >= bounds.upper + margin):
+        raise ValueError("clip margin narrows the rectangle to nothing")
+    return Box(bounds.lower - margin, bounds.upper + margin)
+
+
+def _dash_pattern(
+    line_style: LineStyle, dash: tuple[float, float] | None
+) -> tuple[float, float] | None:
+    if not isinstance(line_style, LineStyle):
+        raise TypeError("line_style must be a LineStyle")
+    if dash is not None:
+        if not isinstance(dash, tuple):
+            raise TypeError("dash must be an (on, off) tuple")
+        if len(dash) != 2:
+            raise ValueError("dash must contain on and off")
+        on, off = dash
+        if any(not isinstance(v, Real) or isinstance(v, bool) for v in dash):
+            raise TypeError("dash lengths must be real numbers")
+        if not np.isfinite(dash).all() or on <= 0 or off < 0:
+            raise ValueError("dash requires finite on > 0 and off >= 0")
+        return dash
+    return {
+        LineStyle.SOLID: None,
+        LineStyle.DASHED: (0.2, 0.1),
+        LineStyle.DOTTED: (0.03, 0.07),
+    }[line_style]
 
 
 class _CurvePlot(Leaf):
@@ -52,8 +171,21 @@ class _CurvePlot(Leaf):
         system: CartesianAxes,
         *,
         use_smoothing: bool = True,
+        label: str | None = None,
+        line_style: LineStyle = LineStyle.SOLID,
+        dash: tuple[float, float] | None = None,
+        clip: bool | float = True,
         **kwargs: Unpack[_VMStyle],
     ) -> None:
+        _validate_label(label)
+        _validate_clip(clip)
+        _clip_box(system, clip)
+        self._label = label
+        self._clip = clip
+        self.line_style = line_style
+        self.dash = dash
+        self._dash = _dash_pattern(line_style, dash)
+        _cycle_style(system, kwargs)
         self.source = source
         if not hasattr(self, "parameters"):
             self.parameters: dict[str, Parameter[Any]] = {}
@@ -71,6 +203,42 @@ class _CurvePlot(Leaf):
         super().__init__(system=system, **kwargs)
         self.add_updater(_synchronise)
         self._rebuild()
+
+    def set_label(self, label: str | None) -> Self:
+        """Set the legend label.
+
+        Parameters
+        ----------
+        label
+            Entry text, or None to omit this artist.
+        """
+        _validate_label(label)
+        self._label = label
+        return self
+
+    def get_label(self) -> str | None:
+        """Return the legend label, or None when unset."""
+        return self._label
+
+    def set_clip(self, value: bool | float) -> Self:
+        """Set clipping and rebuild the artist.
+
+        Parameters
+        ----------
+        value
+            True, False, or a finite margin in scene units.
+        """
+        _validate_clip(value)
+        if self._system is not None:
+            _clip_box(self._system, value)
+        self._clip = value
+        self._dirty = True
+        self._ensure()
+        return self
+
+    def get_clip(self) -> bool | float:
+        """Return the clipping policy or margin in scene units."""
+        return self._clip
 
     def _poll(self) -> None:
         system = self._system
@@ -123,7 +291,9 @@ class _CurvePlot(Leaf):
             self._rebuild()
         elif self._frame_seen != system.frame.version:
             frame = self._frame()
-            if self._dense == frame.is_affine:
+            if not isinstance(self._clip, bool):
+                self._rebuild()
+            elif self._dash is not None or self._dense == frame.is_affine:
                 self._place(frame)
             else:
                 self._cache = frame.forward(self._local)
@@ -136,7 +306,24 @@ class _CurvePlot(Leaf):
         system._sync_data()
         frame = self._frame()
         mapping = SystemMap(system._data, frame)
-        payload = self.source.sample(mapping, system.bounds)
+        bounds = _clip_box(system, self._clip)
+        sampling_bounds = bounds
+        if self._clip is False:
+            extent = None
+            if isinstance(self.source, ArraySource):
+                finite = self.source.data[np.isfinite(self.source.data).all(axis=1)]
+                if len(finite):
+                    extent = system._data.forward(finite)[:, 0]
+            elif isinstance(self.source, FunctionSource) and self.source._range:
+                extent = system._data.forward(
+                    np.column_stack((self.source._range[:2], np.zeros(2)))
+                )[:, 0]
+            if extent is not None:
+                lower, upper = bounds.lower.copy(), bounds.upper.copy()
+                lower[0] = min(lower[0], float(np.min(extent)))
+                upper[0] = max(upper[0], float(np.max(extent)))
+                sampling_bounds = Box(lower, upper)
+        payload = self.source.sample(mapping, sampling_bounds)
         if isinstance(self.source, ArraySource):
             invalid = self._source_invalid or not len(self.source.data)
         else:
@@ -166,9 +353,9 @@ class _CurvePlot(Leaf):
                     stacklevel=3,
                 )
         payload = system._data.apply_payload(payload)
-        if self.use_smoothing and len(payload.segments) > 1:
+        if self._clip is not False and self.use_smoothing and len(payload.segments) > 1:
             # Keep visible samples and their brackets; remote pole tails ring globally.
-            inside = system.bounds.contains(payload.coords)
+            inside = bounds.contains(payload.coords)
             keep = inside.copy()
             keep[:-1] |= inside[1:]
             keep[1:] |= inside[:-1]
@@ -181,8 +368,10 @@ class _CurvePlot(Leaf):
                     split_segments(payload.segments, keep),
                     valid=keep,
                 )
-        payload = (smooth if self.use_smoothing else corners)(payload, system.bounds)
-        self._geometry_payload = clip(payload, system.bounds)
+        payload = (smooth if self.use_smoothing else corners)(payload, bounds)
+        self._geometry_payload = (
+            payload if self._clip is False else clip_path(payload, bounds)
+        )
         self._place(frame)
         self._data_seen = system._data_version
         self._parameter_versions = {
@@ -199,6 +388,10 @@ class _CurvePlot(Leaf):
             self._dirty
             or self._data_seen != system._data_version
             or (self.parameters and self._parameters_changed())
+            or (
+                not isinstance(self._clip, bool)
+                and self._frame_seen != system.frame.version
+            )
         ):
             self._rebuild()
         else:
@@ -220,6 +413,14 @@ class _CurvePlot(Leaf):
         else:
             self._local = payload.coords
         self._cache = frame.forward(self._local)
+        self._render_segments = payload.segments
+        if self._dash is not None:
+            placed = Payload._trusted("path", self._cache, payload.segments)
+            dashed = dash_path(
+                placed, system.bounds, on=self._dash[0], off=self._dash[1]
+            )
+            self._cache = dashed.coords.copy()
+            self._render_segments = dashed.segments
         self._frame_seen = system.frame.version
 
     @property
@@ -324,6 +525,8 @@ class _CurvePlot(Leaf):
             local = np.column_stack((local, np.zeros(len(local))))
         self._local = node.apply(local)
         self._cache = function(self._cache)
+        if self._dash is not None:
+            self._place(frame)
         return self
 
     def shift(self, *vectors: Vector3DLike) -> Self:
@@ -390,6 +593,12 @@ class _CurvePlot(Leaf):
         if isinstance(other, _CurvePlot):
             self.source = other.source
             self.use_smoothing = other.use_smoothing
+            self._clip = other._clip
+            self.line_style, self.dash, self._dash = (
+                other.line_style,
+                other.dash,
+                other._dash,
+            )
         super()._adopt(other)
         self._rebuild()
 
@@ -432,8 +641,8 @@ def _parameterize(
             inspect.Parameter.VAR_KEYWORD,
         }:
             continue
-        if item.name in _VMStyle.__annotations__:
-            raise ValueError(f"parameter {item.name!r} is a VMobject style keyword")
+        if item.name in _ArtistOptions.__annotations__:
+            raise ValueError(f"parameter {item.name!r} is a reserved artist keyword")
         value = kwargs.pop(item.name, item.default)
         if value is inspect.Parameter.empty:
             raise TypeError(f"missing function parameter {item.name!r}")
@@ -492,7 +701,7 @@ class FunctionPlot(_CurvePlot):
             ),
             system,
             use_smoothing=use_smoothing,
-            **cast(_VMStyle, kwargs),
+            **cast(_ArtistOptions, kwargs),
         )
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
@@ -536,7 +745,7 @@ class LinePlot(_CurvePlot):
         xs: ArrayLike,
         system: CartesianAxes,
         ys: ArrayLike | None = None,
-        **kwargs: Unpack[_VMStyle],
+        **kwargs: Unpack[_ArtistOptions],
     ) -> None:
         super().__init__(ArraySource(xs, ys), system, use_smoothing=False, **kwargs)
 
@@ -572,7 +781,7 @@ class ParametricPlot(_CurvePlot):
         use_smoothing: bool = True,
         discontinuities: Iterable[float] | None = None,
         dt: float = 1e-8,
-        **kwargs: Unpack[_VMStyle],
+        **kwargs: Unpack[_ArtistOptions],
     ) -> None:
         super().__init__(
             ParametricSource(
@@ -590,13 +799,20 @@ class ParametricPlot(_CurvePlot):
 
 class _MarkerLeaf(_CurvePlot):
     def __init__(
-        self, native: Mobject, source: ArraySource, index: int, system: CartesianAxes
+        self,
+        native: Mobject,
+        source: ArraySource,
+        index: int,
+        system: CartesianAxes,
+        clip: bool | float = True,
     ) -> None:
         self._outline = native.points.copy()
         self._index = index
         self._visible = True
         self._opacities = (1.0, 1.0, 1.0)
-        super().__init__(source, system, use_smoothing=False)
+        super().__init__(
+            source, system, use_smoothing=False, clip=clip, color=native.get_color()
+        )
         if isinstance(native, VMobject):
             self.match_style(native, family=False)
         else:
@@ -617,7 +833,10 @@ class _MarkerLeaf(_CurvePlot):
         )
         visible = bool(
             (payload.valid is None or payload.valid[0])
-            and system.bounds.contains(payload.coords)[0]
+            and (
+                self._clip is False
+                or _clip_box(system, self._clip).contains(payload.coords)[0]
+            )
         )
         if visible != self._visible:
             if visible:
@@ -667,7 +886,11 @@ class ScatterPlot(VGroup):
     system
         Coordinate system supplying bounds and placement.
     marker
-        Native marker template, defaulting to Dot().
+        Marker enum or native template, defaulting to Dot().
+    label
+        Legend entry text, or None when unset.
+    clip
+        True, False, or a finite clipping margin in scene units.
     **kwargs
         Native VMobject styles applied to the marker template.
     """
@@ -678,14 +901,35 @@ class ScatterPlot(VGroup):
         system: CartesianAxes,
         ys: ArrayLike | None = None,
         *,
-        marker: Mobject | None = None,
+        marker: Mobject | Marker | None = None,
+        label: str | None = None,
+        clip: bool | float = True,
         **kwargs: Unpack[_VMStyle],
     ) -> None:
+        _validate_label(label)
+        _validate_clip(clip)
+        _clip_box(system, clip)
+        self._label, self._clip = label, clip
         self.source = ArraySource(xs, ys, kind="points")
-        if marker is not None and not isinstance(marker, Mobject):
-            raise TypeError("marker must be a Mobject or None")
-        template = Dot(**kwargs) if marker is None else marker.copy()
-        if marker is not None and kwargs:
+        if marker is not None and not isinstance(marker, (Mobject, Marker)):
+            raise TypeError("marker must be a Marker, Mobject or None")
+        if marker is None or isinstance(marker, Marker):
+            _cycle_style(system, kwargs, scatter=True)
+            shape = Marker.DOT if marker is None else marker
+            template: Mobject = {
+                Marker.DOT: Dot,
+                Marker.CIRCLE: Circle,
+                Marker.SQUARE: Square,
+                Marker.TRIANGLE: Triangle,
+                Marker.CROSS: Cross,
+                Marker.STAR: Star,
+            }[shape]()
+            template.width = 2 * DEFAULT_DOT_RADIUS
+            if shape in {Marker.SQUARE, Marker.TRIANGLE, Marker.STAR}:
+                cast(VMobject, template).set_fill(opacity=1)
+        else:
+            template = marker.copy()
+        if kwargs:
             for member in template.get_family():
                 if isinstance(member, VMobject):
                     if "color" in kwargs:
@@ -698,19 +942,62 @@ class ScatterPlot(VGroup):
                             setattr(member, name, value)
                     member.set_style(**style, family=False)
         template.shift(-template.get_center())
+        self._marker_template = template.copy()
         self._system: CartesianAxes | None = system
         super().__init__()
+        if isinstance(template, VMobject):
+            self.match_style(template, family=False)
 
         def convert(native: Mobject, index: int) -> VMobject:
             children = [convert(child, index) for child in native.submobjects]
             if len(native.points):
-                leaf = _MarkerLeaf(native, self.source, index, system)
+                leaf = _MarkerLeaf(native, self.source, index, system, clip)
                 leaf.submobjects = children
                 return leaf
-            return VGroup(*children)
+            group = VGroup(*children)
+            if isinstance(native, VMobject):
+                group.match_style(native, family=False)
+            return group
 
         self.submobjects = [convert(template, i) for i in range(len(self.source.data))]
         self.add_updater(_synchronise)
+
+    def set_label(self, label: str | None) -> Self:
+        """Set the legend label.
+
+        Parameters
+        ----------
+        label
+            Entry text, or None to omit this scatter.
+        """
+        _validate_label(label)
+        self._label = label
+        return self
+
+    def get_label(self) -> str | None:
+        """Return the legend label, or None when unset."""
+        return self._label
+
+    def set_clip(self, value: bool | float) -> Self:
+        """Set the marker-centre clipping policy.
+
+        Parameters
+        ----------
+        value
+            True, False, or a finite scene-unit margin.
+        """
+        _validate_clip(value)
+        if self._system is not None:
+            _clip_box(self._system, value)
+        self._clip = value
+        for leaf in self.get_family():
+            if isinstance(leaf, _MarkerLeaf):
+                leaf.set_clip(value)
+        return self
+
+    def get_clip(self) -> bool | float:
+        """Return the marker-centre clipping policy."""
+        return self._clip
 
     def shift(self, *vectors: Vector3DLike) -> Self:
         """Translate markers, recording the operation in their local transforms.
