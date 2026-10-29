@@ -818,10 +818,10 @@ class CartesianAxes(VGroup):
             self._syncing = False
 
     def _poll(self) -> None:
-        parameters = (*self.x_axis._parameters(), *self.y_axis._parameters())
         token = playback_context()
         if token is not None and token == self._poll_token:
             return
+        parameters = (*self.x_axis._parameters(), *self.y_axis._parameters())
         self._poll_token = token
         self._token += 1
         for parameter in parameters:

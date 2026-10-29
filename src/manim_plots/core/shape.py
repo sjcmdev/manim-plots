@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from functools import lru_cache
 from numbers import Real
 
 import numpy as np
-from scipy.linalg import solve_banded  # type: ignore[import-untyped]
+from scipy.linalg.lapack import dpttrf, dpttrs  # type: ignore[import-untyped]
 
 from manim_plots.core import FloatArray, IntArray
 from manim_plots.core.payload import Payload
@@ -51,37 +52,51 @@ def _assemble(
     return build("path", coords, segments)
 
 
+@lru_cache(maxsize=128)
+def _spline_factor(n: int, closed: bool) -> tuple[FloatArray, FloatArray]:
+    diagonal = np.full(n, 4.0)
+    diagonal[0], diagonal[-1] = (3, 3) if closed else (2, 3.5)
+    off_diagonal = np.ones(n - 1)
+    diagonal, off_diagonal, info = dpttrf(
+        diagonal, off_diagonal, overwrite_d=True, overwrite_e=True
+    )
+    # These fixed, strictly diagonally dominant matrices are positive definite.
+    assert info == 0
+    return np.asarray(diagonal), np.asarray(off_diagonal)
+
+
 def _handles(anchors: FloatArray) -> tuple[FloatArray, FloatArray]:
     n, dim = len(anchors) - 1, anchors.shape[1]
     if n == 1:
         return (2 * anchors[:1] + anchors[1:]) / 3, (anchors[:1] + 2 * anchors[1:]) / 3
-    band = np.ones((3, n))
-    band[1] = 4
     # Exact closure takes precedence over Manim's signed endpoint tolerance.
     closed = bool(
         np.array_equal(anchors[0], anchors[-1])
         or np.all(np.abs(anchors[-1] - anchors[0]) <= 1e-8 + 1e-5 * anchors[0])
     )
     if closed:
-        band[1, [0, -1]] = 3
         rhs = np.empty((n, dim + 1))
         rhs[:, :dim] = 4 * anchors[:-1] + 2 * anchors[1:]
         rhs[:, dim] = 0
         rhs[[0, -1], dim] = 1
-        solved = np.asarray(
-            solve_banded((1, 1), band, rhs, check_finite=False), dtype=np.float64
+    else:
+        rhs = 4 * anchors[:-1] + 2 * anchors[1:]
+        rhs[0], rhs[-1] = (
+            anchors[0] + 2 * anchors[1],
+            (8 * anchors[-2] + anchors[-1]) / 2,
         )
+    # Halving the open spline's last equation makes the matrix symmetric.
+    # Only its coefficients are cached; every solve uses the current anchors.
+    solved, info = dpttrs(*_spline_factor(n, closed), rhs, overwrite_b=True)
+    if info < 0:
+        raise ValueError(f"illegal value in {-info}-th argument of internal dpttrs")
+    solved = np.asarray(solved, dtype=np.float64)
+    if closed:
         y, q = solved[:, :dim], solved[:, dim, None]
         first = y - q * (y[0] + y[-1]) / (1 + q[0] + q[-1])
         second = 2 * anchors[1:] - np.roll(first, -1, axis=0)
     else:
-        band[1, 0], band[1, -1] = 2, 7
-        band[2, -2] = 2
-        rhs = 4 * anchors[:-1] + 2 * anchors[1:]
-        rhs[0], rhs[-1] = anchors[0] + 2 * anchors[1], 8 * anchors[-2] + anchors[-1]
-        first = np.asarray(
-            solve_banded((1, 1), band, rhs, check_finite=False), dtype=np.float64
-        )
+        first = solved
         second = np.empty_like(first)
         second[:-1] = 2 * anchors[1:-1] - first[1:]
         second[-1] = (anchors[-1] + first[-1]) / 2

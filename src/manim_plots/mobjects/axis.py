@@ -588,7 +588,13 @@ class Axis(VGroup):
         self._reference_length = length
 
     def _parameters(self) -> tuple[Parameter[Any], ...]:
-        return (self.range, self.rotation, self.offset, self.justify, self.overlap)
+        return (
+            self._range_parameter,
+            self._rotation_parameter,
+            self._offset_parameter,
+            self._justify_parameter,
+            self._overlap_parameter,
+        )
 
     def _style_changed(self) -> bool:
         seen = self._style_seen

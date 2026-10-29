@@ -12,7 +12,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 from manim_plots.core import BoolArray, FloatArray, IntArray
-from manim_plots.core.nodes import CompiledMap
+from manim_plots.core.nodes import CompiledMap, SystemMap
 from manim_plots.core.payload import Payload, split_segments
 
 PIXEL = 8 / 1080
@@ -365,6 +365,25 @@ class _AnalyticSource:
             mid = t[:-1] / 2 + t[1:] / 2
             mid = mid if active.all() else mid[active]
             evaluated = self._evaluate(np.concatenate((t, mid)))
+            if active.all() and type(map) is SystemMap:
+                certified, contained = map._straight_enough(
+                    evaluated,
+                    len(t),
+                    CHORD_TOLERANCE,
+                    bounds.lower,
+                    bounds.upper,
+                    parametric=self._parametric,
+                )
+                if certified:
+                    if contained:
+                        return Payload._trusted(
+                            "path",
+                            evaluated[: len(t)],
+                            np.array([[0, len(t)]], dtype=np.intp),
+                        )
+                    return self._split_poles(
+                        t, evaluated[: len(t)], labels, map, bounds
+                    )
             mapped = map.to_screen(evaluated)
             coords, points = evaluated[: len(t)], evaluated[len(t) :]
             screen, images = mapped[: len(t)], mapped[len(t) :]
