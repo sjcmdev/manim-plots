@@ -207,7 +207,11 @@ class LinearScale(_ScaleBase):
         FloatArray
             Identity transform with the input shape.
         """
-        return _evaluate(x, lambda values: values, self.domain, self.closed)
+        if type(self) is not LinearScale:
+            return _evaluate(x, lambda values: values, self.domain, self.closed)
+        with np.errstate(all="ignore"):
+            values = np.asarray(x, dtype=np.float64)
+            return np.where(np.isfinite(values), values, np.nan)
 
     def inverse(self, u: ArrayLike) -> FloatArray:
         """Return the identity inverse on finite input.

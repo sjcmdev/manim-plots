@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, cast, overload
+from typing import Any, Generic, TypeVar, cast, overload
 
 import numpy as np
 from numpy.typing import ArrayLike
+
+T = TypeVar("T")
 
 
 def _snapshot[T](value: T) -> T:
@@ -42,7 +44,8 @@ def _same(left: object, right: object) -> bool:
     return bool(left == right)
 
 
-class Parameter[T]:
+# Property accessors need a module-scoped TypeVar for get_type_hints on 3.12/3.13.
+class Parameter(Generic[T]):  # noqa: UP046
     """Hold an immutable value and a version counter with an optional binding.
 
     Parameters
@@ -166,7 +169,7 @@ class Parameter[T]:
         return self._version
 
 
-class Param[T]:
+class Param(Generic[T]):  # noqa: UP046
     """Describe a lazily created, per-instance Parameter attribute.
 
     Parameters

@@ -354,17 +354,20 @@ class _AnalyticSource:
                 remaining -= count
         if not ts:
             return Payload.empty("path", 2)
-        t, labels = np.concatenate(ts), np.concatenate(ids)
+        t = ts[0] if len(ts) == 1 else np.concatenate(ts)
+        labels = ids[0] if len(ids) == 1 else np.concatenate(ids)
         coords = self._evaluate(t)
         screen = map.to_screen(coords)
-        depth = np.zeros(len(t) - 1, dtype=np.intp)
+        depth: IntArray | None = None
         active = labels[1:] == labels[:-1]
         for _ in range(MAX_DEPTH):
-            indices = np.flatnonzero(active)
-            if not len(indices) or len(t) >= MAX_SAMPLES:
+            if len(t) < 2 or len(t) >= MAX_SAMPLES:
+                break
+            indices = None if active.all() else np.flatnonzero(active)
+            if indices is not None and not len(indices):
                 break
             with np.errstate(all="ignore"):
-                if active.all():
+                if indices is None:
                     left_t, right_t = t[:-1], t[1:]
                     left, right = screen[:-1], screen[1:]
                 else:
@@ -395,7 +398,7 @@ class _AnalyticSource:
             chosen = np.flatnonzero(refine)[: MAX_SAMPLES - len(t)]
             if not len(chosen):
                 break
-            edges = indices[chosen]
+            edges = chosen if indices is None else indices[chosen]
             insert = np.zeros(len(t) - 1, dtype=np.bool_)
             insert[edges] = True
             positions = np.arange(len(t)) + np.concatenate(([0], np.cumsum(insert)))
@@ -408,6 +411,8 @@ class _AnalyticSource:
             added = positions[edges] + 1
             new_t[added], new_coords[added] = mid[chosen], points[chosen]
             new_screen[added], new_labels[added] = images[chosen], labels[edges]
+            if depth is None:
+                depth = np.zeros(len(t) - 1, dtype=np.intp)
             depth = np.repeat(depth + insert, 1 + insert)
             active = np.repeat(insert, 1 + insert) & (depth < MAX_DEPTH)
             t, coords, screen, labels = new_t, new_coords, new_screen, new_labels

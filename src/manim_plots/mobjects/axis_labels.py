@@ -2,21 +2,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, Generic, TypeVar, cast
 
 import numpy as np
 from manim import LogBase, MathTex, Tex, VGroup, VMobject
 
 from manim_plots.core import FloatArray
 from manim_plots.core.ticks import Level, round_key
+from manim_plots.mobjects import axis as axis_module
 from manim_plots.mobjects.leaves import Leaf, NumberLabel, _label
 
-if TYPE_CHECKING:
-    from manim_plots.mobjects.axis import Axis
+T = TypeVar("T", bound=VMobject)
 
 
-class _Parts[T: VMobject](VGroup):
-    def __init__(self, axis: Axis, level: Level | None = "major") -> None:
+# Bound method hints must also resolve without the declaring class's local namespace.
+class _Parts(VGroup, Generic[T]):  # noqa: UP046
+    def __init__(self, axis: axis_module.Axis, level: Level | None = "major") -> None:
         self._axis = axis
         self._level = level
         self._parts: dict[object, T] = {}
@@ -63,7 +64,8 @@ class _Parts[T: VMobject](VGroup):
         self.submobjects = list(parts.values())
 
 
-def _configure_numbers(axis: Axis) -> None:
+def _configure_numbers(axis: axis_module.Axis) -> None:
+    axis._crossing_frame = -1
     items = axis._items or axis._drawn_items()
     for old_label in axis._number_leaves.values():
         _restore_overlap(old_label)
@@ -219,6 +221,7 @@ def _configure_numbers(axis: Axis) -> None:
         placed = mapping.forward(np.concatenate(local_points))
         offset_index = 0
         for glyph, local in zip(glyphs, local_points, strict=True):
+            glyph._axis_local = local
             glyph._cache = placed[offset_index : offset_index + len(local)]
             offset_index += len(local)
     if axis._pool is None:
@@ -247,7 +250,7 @@ def _restore_overlap(label: VMobject) -> None:
         delattr(label, "_overlap_opacity")
 
 
-def _layout_overlap(axis: Axis, group: _Parts[Any]) -> None:
+def _layout_overlap(axis: axis_module.Axis, group: _Parts[Any]) -> None:
     labels = list(group.submobjects)
     if not labels:
         return
@@ -257,7 +260,9 @@ def _layout_overlap(axis: Axis, group: _Parts[Any]) -> None:
     boxes: list[FloatArray] = []
     for label in labels:
         outlines = [
-            cast(Leaf, glyph)._cache for glyph in label.family_members_with_points()
+            glyph._cache
+            for glyph in label.get_family()
+            if isinstance(glyph, Leaf) and len(glyph._cache)
         ]
         points = np.concatenate(outlines) if outlines else np.empty((0, 3))
         boxes.append(
@@ -266,23 +271,20 @@ def _layout_overlap(axis: Axis, group: _Parts[Any]) -> None:
             else np.zeros((2, 2))
         )
 
-    def overlaps(left: int, right: int) -> bool:
-        return bool(
-            np.all(boxes[left][0] < boxes[right][1])
-            and np.all(boxes[right][0] < boxes[left][1])
-        )
+    bounds = np.array(boxes)
+    overlap = (bounds[:, None, 0] < bounds[None, :, 1]).all(axis=2)
+    overlap &= overlap.T
+    np.fill_diagonal(overlap, False)
 
     visible = list(range(len(labels)))
     if axis.overlap.value == "drop":
-        while any(
-            overlaps(a, b) for i, a in enumerate(visible) for b in visible[i + 1 :]
-        ):
+        while overlap[np.ix_(visible, visible)].any():
             visible = visible[::2]
         group.submobjects = [labels[i] for i in visible]
         return
     visible = []
     for i, label in enumerate(labels):
-        if any(overlaps(i, previous) for previous in visible):
+        if overlap[i, visible].any():
             cast(Any, label)._overlap_opacity = [
                 (label, label.get_fill_opacity(), label.get_stroke_opacity()),
                 *(
@@ -295,7 +297,8 @@ def _layout_overlap(axis: Axis, group: _Parts[Any]) -> None:
             visible.append(i)
 
 
-def _configure_labels(axis: Axis) -> None:
+def _configure_labels(axis: axis_module.Axis) -> None:
+    axis._crossing_frame = -1
     labels: dict[object, VGroup] = {}
     lo, hi = sorted(axis.range.value)
     mapping = axis._system.frame.mapping
@@ -367,7 +370,8 @@ def _configure_labels(axis: Axis) -> None:
         ):
             leaf = cast(Leaf, member)
             leaf._system = axis._system
-            leaf._cache = mapping.forward(offset + anchor)
+            leaf._axis_local = offset + anchor
+            leaf._cache = mapping.forward(leaf._axis_local)
         labels[key] = label
         axis._label_content[key] = axis._label_values[x]
     for key in axis._labels._parts.keys() - labels.keys():

@@ -722,7 +722,23 @@ class FrameMap:
             if not self._is_affine:
                 indices = np.arange(len(self.nodes) - self.n - 1)[:, None]
                 corners = np.array([0, 1, self.n, self.n + 1])
-                self._cell_nodes = self.nodes[indices + corners]
+                cells = self.nodes[indices + corners]
+                cell_coefficients = (
+                    cells[:, 0],
+                    cells[:, 1] - cells[:, 0],
+                    cells[:, 2] - cells[:, 0],
+                    cells[:, 3] - cells[:, 2] - cells[:, 1] + cells[:, 0],
+                )
+                self._cell_coefficients = tuple(
+                    tuple(np.ascontiguousarray(c[:, axis]) for c in cell_coefficients)
+                    for axis in range(3)
+                )
+                self._cell_corners = (
+                    None
+                    if all(np.isfinite(c).all() for c in cell_coefficients)
+                    else cells
+                )
+                self._constant_coordinates = (self.nodes == self.nodes[0]).all(axis=0)
             self._basis = coefficients[:2] / self._span[:, None]
             self._origin = coefficients[2]
             self._is_singular = self.is_affine and _singular(self._basis)
@@ -788,18 +804,33 @@ class FrameMap:
         """Return whether the affine in-plane part meets SINGULAR_RTOL."""
         return self._is_singular
 
-    def _cells(self, xy: FloatArray) -> tuple[IntArray, FloatArray]:
+    def _cells(self, xy: FloatArray) -> tuple[IntArray, FloatArray, FloatArray]:
         u = (xy[:, 0] - self.lower[0]) * self._cell_scale[0]
         v = (xy[:, 1] - self.lower[1]) * self._cell_scale[1]
         i = np.floor(np.clip(u, 0, self.n - 2)).astype(np.intp)
         j = np.floor(np.clip(v, 0, self.n - 2)).astype(np.intp)
-        return j * self.n + i, np.column_stack((u - i, v - j))
+        return j * self.n + i, u - i, v - j
 
     def _bilinear(self, xy: FloatArray) -> FloatArray:
-        index, fractions = self._cells(xy)
-        u, v = fractions.T
-        weights = np.column_stack(((1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v))
-        result: FloatArray = np.einsum("ni,nij->nj", weights, self._cell_nodes[index])
+        index, u, v = self._cells(xy)
+        if self._cell_corners is not None:
+            # Differences of finite corners can overflow; retain weighted interpolation.
+            weights = np.column_stack(
+                ((1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v)
+            )
+            fallback: FloatArray = np.einsum(
+                "ni,nij->nj", weights, self._cell_corners[index]
+            )
+            return fallback
+        result = np.empty((len(xy), 3))
+        # Contiguous coefficient columns avoid gathering twelve values per point.
+        for axis, (a, b, c, d) in enumerate(self._cell_coefficients):
+            if self._constant_coordinates[axis]:
+                result[:, axis] = self.nodes[0, axis]
+            else:
+                result[:, axis] = (
+                    a[index] + u * b[index] + v * (c[index] + u * d[index])
+                )
         return result
 
     def forward(self, local: FloatArray) -> FloatArray:
@@ -840,8 +871,8 @@ class FrameMap:
             return result
 
     def _jacobian(self, xy: FloatArray) -> FloatArray:
-        index, fractions = self._cells(xy)
-        u, v = fractions.T[:, :, None]
+        index, u, v = self._cells(xy)
+        u, v = u[:, None], v[:, None]
         p00 = self.nodes[index]
         p10 = self.nodes[index + 1]
         p01 = self.nodes[index + self.n]

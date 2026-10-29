@@ -8,7 +8,7 @@ import warnings
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum
 from numbers import Real
-from typing import TYPE_CHECKING, Any, Self, Unpack, cast
+from typing import Any, Self, Unpack, cast
 
 import numpy as np
 from manim import (
@@ -36,6 +36,7 @@ from manim.typing import PathFuncType, Point3DLike, Vector3DLike
 from manim.utils.color import ManimColor
 from numpy.typing import ArrayLike
 
+import manim_plots as mp
 from manim_plots.core import FloatArray, ManimPlotsWarning
 from manim_plots.core import lifecycle as lc
 from manim_plots.core.nodes import (
@@ -74,10 +75,6 @@ from manim_plots.mobjects.leaves import (
     _VMStyle,
 )
 
-if TYPE_CHECKING:
-    from manim_plots.mobjects.system import CartesianAxes
-
-
 COLOR_CYCLE: tuple[ManimColor, ...] = (
     WHITE,
     BLUE,
@@ -110,7 +107,7 @@ class Marker(Enum):
 
 
 def _cycle_style(
-    system: CartesianAxes, style: _VMStyle, *, scatter: bool = False
+    system: mp.CartesianAxes, style: _VMStyle, *, scatter: bool = False
 ) -> None:
     keys = (
         ("color", "stroke_color", "fill_color")
@@ -135,7 +132,7 @@ def _validate_clip(value: bool | float) -> None:
         raise ValueError("clip must be finite")
 
 
-def _clip_box(system: CartesianAxes, value: bool | float) -> Box:
+def _clip_box(system: mp.CartesianAxes, value: bool | float) -> Box:
     if isinstance(value, bool):
         return system.bounds
     bounds = system.bounds
@@ -172,11 +169,34 @@ def _dash_pattern(
     }[line_style]
 
 
+class _SampleWarnings:
+    def __init__(self) -> None:
+        self._seen: object | None = None
+        self._warned: object | None = None
+
+    def warn(
+        self,
+        system: mp.CartesianAxes,
+        source: Source,
+        message: str,
+        versions: tuple[int, ...] = (),
+    ) -> None:
+        seen = (id(system), id(source), system._data_version, versions)
+        if self._seen == seen:
+            return
+        self._seen = seen
+        token = playback_context()
+        change = seen if token is None else (token[0], token[2], id(system), id(source))
+        if self._warned != change:
+            self._warned = change
+            warnings.warn(message, ManimPlotsWarning, stacklevel=4)
+
+
 class _CurvePlot(Leaf):
     def __init__(
         self,
         source: Source,
-        system: CartesianAxes,
+        system: mp.CartesianAxes,
         *,
         use_smoothing: bool = True,
         label: str | None = None,
@@ -206,7 +226,8 @@ class _CurvePlot(Leaf):
         self._render_segments = self._geometry_payload.segments
         self._reversed = False
         self._dense = False
-        self._warned_change: object | None = None
+        if not hasattr(self, "_sample_warnings"):
+            self._sample_warnings = _SampleWarnings()
         self._source_invalid = (
             isinstance(source, ArraySource) and not np.isfinite(source.data).all()
         )
@@ -361,26 +382,15 @@ class _CurvePlot(Leaf):
                 or len(payload.segments)
                 > len(getattr(self.source, "discontinuities", ())) + 1
             )
-        if invalid:
-            token = playback_context()
-            change = (
-                (
-                    None,
-                    system._data_version,
-                    tuple(p.version for p in self.parameters.values()),
-                )
-                if token is None
-                else (token[0], token[2])
-            )
-            if self._warned_change != change:
-                self._warned_change = change
-                warnings.warn(
-                    "source is empty or contains invalid samples or a pole; "
-                    "the path is split",
-                    ManimPlotsWarning,
-                    stacklevel=3,
-                )
         payload = system._data.apply_payload(payload)
+        if invalid or (payload.valid is not None and not payload.valid.all()):
+            self._sample_warnings.warn(
+                system,
+                self.source,
+                "source is empty or contains invalid samples or a pole; "
+                "the path is split",
+                tuple(p.version for p in self.parameters.values()),
+            )
         if self._clip is not False and self.use_smoothing and len(payload.segments) > 1:
             # Keep visible samples and their brackets; remote pole tails ring globally.
             inside = bounds.contains(payload.coords)
@@ -799,7 +809,7 @@ class FunctionPlot(_CurvePlot):
     def __init__(
         self,
         function: Callable[..., Any],
-        system: CartesianAxes,
+        system: mp.CartesianAxes,
         x_range: Sequence[float] | None = None,
         use_vectorized: bool = False,
         *,
@@ -882,7 +892,7 @@ class LinePlot(_CurvePlot):
     def __init__(
         self,
         xs: ArrayLike,
-        system: CartesianAxes,
+        system: mp.CartesianAxes,
         ys: ArrayLike | None = None,
         **kwargs: Unpack[_ArtistOptions],
     ) -> None:
@@ -913,7 +923,7 @@ class ParametricPlot(_CurvePlot):
     def __init__(
         self,
         function: Callable[..., Any],
-        system: CartesianAxes,
+        system: mp.CartesianAxes,
         use_vectorized: bool = False,
         *,
         t_range: Sequence[float] = (0.0, 1.0),
@@ -942,9 +952,11 @@ class _MarkerLeaf(_CurvePlot):
         native: Mobject,
         source: ArraySource,
         index: int,
-        system: CartesianAxes,
+        system: mp.CartesianAxes,
         clip: bool | float = True,
+        sample_warnings: _SampleWarnings | None = None,
     ) -> None:
+        self._sample_warnings = sample_warnings or _SampleWarnings()
         self._outline = native.points.copy()
         self._index = index
         self._visible = True
@@ -970,6 +982,12 @@ class _MarkerLeaf(_CurvePlot):
         payload = system._data.apply_payload(
             Payload.points(data, np.isfinite(data).all(axis=1))
         )
+        if payload.valid is not None and not payload.valid.all():
+            self._sample_warnings.warn(
+                system,
+                self.source,
+                "source contains invalid samples; points are hidden",
+            )
         visible = bool(
             (payload.valid is None or payload.valid[0])
             and (
@@ -1039,7 +1057,7 @@ class ScatterPlot(VGroup):
     def __init__(
         self,
         xs: ArrayLike,
-        system: CartesianAxes,
+        system: mp.CartesianAxes,
         ys: ArrayLike | None = None,
         *,
         marker: Mobject | Marker | None = None,
@@ -1084,15 +1102,23 @@ class ScatterPlot(VGroup):
                     member.set_style(**style, family=False)
         template.shift(-template.get_center())
         self._marker_template = template.copy()
-        self._system: CartesianAxes | None = system
+        self._system: mp.CartesianAxes | None = system
+        self._sample_warnings = _SampleWarnings()
+        self._validity_seen = -1
+        self._ready = False
+        self._cache = np.empty((0, 3))
         super().__init__()
+        self._ready = True
+        self._poll()
         if isinstance(template, VMobject):
             self.match_style(template, family=False)
 
         def convert(native: Mobject, index: int) -> VMobject:
             children = [convert(child, index) for child in native.submobjects]
             if len(native.points):
-                leaf = _MarkerLeaf(native, self.source, index, system, clip)
+                leaf = _MarkerLeaf(
+                    native, self.source, index, system, clip, self._sample_warnings
+                )
                 leaf.submobjects = children
                 return leaf
             group = VGroup(*children)
@@ -1102,6 +1128,33 @@ class ScatterPlot(VGroup):
 
         self.submobjects = [convert(template, i) for i in range(len(self.source.data))]
         self.add_updater(_synchronise)
+
+    @property
+    def points(self) -> FloatArray:
+        """Return the group buffer, checking invalid or empty data once per change."""
+        if self._ready:
+            self._poll()
+        return self._cache
+
+    @points.setter
+    def points(self, value: ArrayLike) -> None:
+        self._cache = np.asarray(value, dtype=float)
+
+    def _poll(self) -> None:
+        system = self._system
+        if system is None:
+            return
+        system._sync_data()
+        if self._validity_seen == system._data_version:
+            return
+        self._validity_seen = system._data_version
+        data = self.source.data
+        if not len(data) or not system._data.valid(data).all():
+            self._sample_warnings.warn(
+                system,
+                self.source,
+                "source is empty or contains invalid samples; points are hidden",
+            )
 
     def set_label(self, label: str | None) -> Self:
         """Set the legend label.
