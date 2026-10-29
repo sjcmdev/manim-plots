@@ -6,6 +6,16 @@ from collections.abc import Mapping
 from importlib.metadata import version
 
 from manim_plots.core import ManimPlotsWarning
+from manim_plots.core.formatters import (
+    DecimalFormatter,
+    EngFormatter,
+    FixedFormatter,
+    FormatStrFormatter,
+    Formatter,
+    Labels,
+    NullFormatter,
+    ScientificFormatter,
+)
 from manim_plots.core.nodes import CompiledMap
 from manim_plots.core.payload import Payload
 from manim_plots.core.scales import (
@@ -23,6 +33,16 @@ from manim_plots.core.sources import (
     ParametricSource,
     Source,
 )
+from manim_plots.core.ticks import (
+    FixedLocator,
+    Locator,
+    LogLocator,
+    MaxNLocator,
+    MinorCountLocator,
+    MultipleLocator,
+    NullLocator,
+    SymLogLocator,
+)
 from manim_plots.mobjects.context import check_pins
 
 __version__ = version("manim-plots")
@@ -31,16 +51,32 @@ __all__ = [
     "ArraySource",
     "Bounds",
     "CompiledMap",
+    "DecimalFormatter",
+    "EngFormatter",
+    "FixedFormatter",
+    "FixedLocator",
+    "FormatStrFormatter",
+    "Formatter",
     "FunctionScale",
     "FunctionSource",
+    "Labels",
     "LinearScale",
+    "Locator",
+    "LogLocator",
     "LogScale",
     "ManimPlotsWarning",
+    "MaxNLocator",
+    "MinorCountLocator",
+    "MultipleLocator",
+    "NullFormatter",
+    "NullLocator",
     "ParametricSource",
     "Payload",
     "Scale",
+    "ScientificFormatter",
     "Shape",
     "Source",
+    "SymLogLocator",
     "SymLogScale",
     "__version__",
 ]
