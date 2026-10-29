@@ -7,7 +7,8 @@ Each row is one scene: the library's baseline, its plain-Manim twin (the test of
 same name with the suffix ``__manim``) when there is one, and the ``actual`` and
 ``diff`` images a failing run left in ``tests/visual/_out/``. The caption is the test's
 docstring. A baseline that git does not have at the ``--since`` ref is a *candidate*:
-nobody has reviewed it yet. The page is written to ``tests/visual/_out/gallery.html``.
+nobody has reviewed it yet. The videos of `tools/demos.py` come first, captioned by
+their docstrings. The page is written to ``tests/visual/_out/gallery.html``.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ ROOT = Path(__file__).parents[1]
 VISUAL = ROOT / "tests" / "visual"
 BASELINES = VISUAL / "baselines"
 OUT = VISUAL / "_out"
+DEMOS = OUT / "demos"
 TWIN = "__manim"
 
 STYLE = """
@@ -41,7 +43,7 @@ h2 { font-size: 15px; margin: 0; font-family: ui-monospace, monospace; }
 .caption { color: var(--muted); margin: 4px 0 8px; white-space: pre-wrap; }
 .row { display: flex; flex-wrap: wrap; gap: 12px; }
 figure { margin: 0; flex: 1 1 360px; max-width: 100%; }
-figure img { width: 100%; height: auto; border: 1px solid var(--line);
+figure img, figure video { width: 100%; height: auto; border: 1px solid var(--line);
   background: #000; }
 figcaption { font-size: 12px; color: var(--muted); }
 """
@@ -56,6 +58,32 @@ def docstrings() -> dict[tuple[str, str], str]:
             if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                 found[(path.stem, node.name)] = ast.get_docstring(node) or ""
     return found
+
+
+def demo_captions() -> dict[str, str]:
+    """Map each demo function of `tools/demos.py` to its docstring."""
+    tree = ast.parse((ROOT / "tools" / "demos.py").read_text(encoding="utf-8"))
+    return {
+        node.name: ast.get_docstring(node) or ""
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef)
+    }
+
+
+def demos() -> list[str]:
+    """One section per rendered demo video."""
+    captions = demo_captions()
+    sections = []
+    for video in sorted(DEMOS.glob("*.mp4"), key=lambda v: v.stat().st_mtime):
+        source = html.escape(video.relative_to(OUT).as_posix())
+        caption = html.escape(captions.get(video.stem, ""))
+        sections.append(
+            f"<section><h2>demo::{html.escape(video.stem)}</h2>"
+            f'<p class="caption">{caption}</p><div class="row"><figure>'
+            f'<video src="{source}" controls loop muted playsinline preload="metadata">'
+            "</video></figure></div></section>"
+        )
+    return sections
 
 
 def reviewed(since: str) -> set[str]:
@@ -85,7 +113,7 @@ def main() -> int:
     since = parser.parse_args().since
     known = reviewed(since)
     captions = docstrings()
-    sections = []
+    sections = demos()
     for baseline in sorted(BASELINES.glob("*/*.png")):
         module, name = baseline.parent.name, baseline.stem
         if name.endswith(TWIN):
