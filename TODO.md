@@ -136,7 +136,8 @@ Merged from the task lists of both final reviews. It is an order, not a schedule
 retires the known risks first: the stack contract on both Manim versions in task 06, the
 4 ms per-frame margin in tasks 07 and 09.
 
-Every task starts with an **acceptance table** for the under-specified rows it owns
+How the work is split and run is `docs/implementation-plan.md`. Every task starts with an
+**acceptance table** for the under-specified rows it owns
 (ADR 0003 §9): signatures, edge cases, errors, reviewed before code. Every task passes
 `uv run python tools/check.py`, render tests included. A benchmark runs with
 `uv run pytest -m benchmark` on one quiet machine.
@@ -147,15 +148,15 @@ Every task starts with an **acceptance table** for the under-specified rows it o
 `mobjects/context.py`. F-103, F-105, F-109, F-114, F-201-F-209 (numerics), F-301-F-307,
 F-311, F-917 (pins), F-1003, F-1006 (payload rows).
 
-- [ ] Acceptance table: payload, scales, nodes
-- [ ] Tooling: TID251 for the layer rules (the core imports no Manim; only `context.py`
+- [x] Acceptance table: payload, scales, nodes — `docs/acceptance/06-core-contracts.md`
+- [x] Tooling: TID251 for the layer rules (the core imports no Manim; only `context.py`
       reads frames), a derandomised Hypothesis profile for the gate, SciPy declared,
       `__all__`, `ManimPlotsWarning` turned into errors in the tests
-- [ ] `tests/core/test_payload.py` (one test per invalid-input row), `test_scales.py`
+- [x] `tests/core/test_payload.py` (one test per invalid-input row), `test_scales.py`
       (round trip and monotonicity by Hypothesis with fixed anchors, symlog,
       `limit_range`), `test_nodes.py` (affine round trip, singular and near-singular
       frames, off-plane points, non-affine inversion)
-- [ ] `tests/mobjects/test_manim_contract.py`: the pin sets of 0.21.0 and 0.22.0,
+- [x] `tests/mobjects/test_manim_contract.py`: the pin sets of 0.21.0 and 0.22.0,
       `Scene.get_moving_mobjects` with both queries
 
 ### task/07-sources-shape-params
