@@ -388,6 +388,7 @@ class Axis(VGroup):
         self.tick_size = native.tick_size
         self.font_size = native.font_size
         self.label_direction = np.asarray(native.label_direction, dtype=float)
+        self._label_direction_custom = False
         self.line_to_number_buff = native.line_to_number_buff
         self.numbers_to_exclude = tuple(native.numbers_to_exclude)
         # Manim's default exclusion of 0, which follows the crossing (_hides_zero).
@@ -408,6 +409,8 @@ class Axis(VGroup):
         self._tick_styles: dict[Level, dict[str, Any]] = {"major": {}, "minor": {}}
         self._position: str | float = "origin"
         self._position_fraction: float | None = None
+        self._position_offset = 0.0
+        self._position_outward = False
         self._mirrors: list[Axis] = []
         self._mirror_of: Axis | None = None
         self._decoration_seen: tuple[int, ...] = ()
@@ -615,6 +618,8 @@ class Axis(VGroup):
         value, nothing crosses this axis at 0 and its tick and number come back.
         """
         other = self._system.get_axis(1 - self.index)
+        if other._system is not self._system:  # a twin's own axis: nothing crosses at 0
+            return False
         crossing = other._position == "origin" and other._position_fraction is None
         return self.exclude_origin_tick and crossing
 
@@ -643,6 +648,12 @@ class Axis(VGroup):
             return float(hi)
         return float(where)
 
+    def _outward_offset(self) -> FloatArray:
+        offset = np.zeros(3)
+        sign = -1 if self._position in ("left", "bottom") else 1
+        offset[1 - self.index] = sign * self._position_offset
+        return offset
+
     def _tick_items(self) -> tuple[Tick, ...]:
         lo, hi = self.range.value
         return axis_ticks(
@@ -665,7 +676,8 @@ class Axis(VGroup):
     ) -> tuple[Tick, ...]:
         """Leave out the items at an end of ``limits`` that carries a tip."""
         source = self._mirror_of or self
-        tips = (self.tip_start, self.tip)
+        # A mirror shares the original's tick set even without its own tips.
+        tips = (self.tip_start or source.tip_start, self.tip or source.tip)
         ends = [v for v, tip in zip(limits, tips, strict=True) if tip]
         if source.tick_under_tip or not ends or not items:
             return items
@@ -689,7 +701,7 @@ class Axis(VGroup):
         system = self._system
         coords = np.array([[self.range.value[0], self.range.value[0]]])
         coords[0, 1 - self.index] = self._cross_value()
-        origin = np.append(system._data.forward(coords)[0], 0)
+        origin = np.append(system._data.forward(coords)[0], 0) + self._outward_offset()
         offset = origin - self._crossing_reference
         offset[self.index] = 0
         mapping = system.frame.mapping
@@ -796,23 +808,7 @@ class Axis(VGroup):
             mirror.locator, mirror.minor_locator = self.locator, self.minor_locator
             mirror._explicit, mirror._tick_mode = self._explicit, self._tick_mode
             mirror._tick_styles = self._tick_styles
-            mirror._line_reference = self._line_reference
-            mirror._start_reference = self._start_reference
-            mirror._end_reference = self._end_reference
-            mirror._reference_length = self._reference_length
-            mirror._tip_reference = self._tip_reference
-            mirror._tip_start_reference = self._tip_start_reference
-            for attr in ("tip", "tip_start"):
-                source = getattr(self, attr)
-                target = getattr(mirror, attr)
-                if source is None and target is not None:
-                    mirror.remove(target)
-                    setattr(mirror, attr, None)
-                elif source is not None and target is None:
-                    target = TipLeaf(source._cache, system)
-                    target.match_style(source)
-                    setattr(mirror, attr, target)
-                    mirror.add(target)
+            mirror._resize(self._reference_length)
             mirror._configure()
         if self._pool is not None:
             self._pool._apply(self)
@@ -911,7 +907,13 @@ class Axis(VGroup):
                 )
                 local *= factors[:, None, None]
         major = self._tick_styles["major"]
-        direction = style.get("direction", major.get("direction", TickDirection.BOTH))
+        direction = style.get(
+            "direction",
+            major.get(
+                "direction",
+                TickDirection.OUT if self._position_outward else TickDirection.BOTH,
+            ),
+        )
         if direction is not TickDirection.BOTH:
             other = system.get_axis(1 - self.index)
             limits = other._scale.forward(other.range.value)
@@ -926,6 +928,7 @@ class Axis(VGroup):
         positions[:, self.index] = [item.value for item in items]
         centers = system._data.forward(positions)
         local[:, :, :2] += centers[:, None, :]
+        local += self._outward_offset()
         placed = system.frame.mapping.forward(local.reshape(-1, 3)).reshape(local.shape)
         previous = self._tick_leaves if level == "major" else self._minor_leaves
         current: dict[object, TickLeaf] = {}
@@ -1088,8 +1091,22 @@ class Axis(VGroup):
         major = self._tick_styles["major"].get("width", self.line.get_stroke_width())
         return 0.75 * float(major)
 
+    def set_ticks_direction(self, direction: TickDirection) -> Self:
+        """Set the major tick direction, inherited by unconfigured minor ticks.
+
+        Parameters
+        ----------
+        direction
+            Both sides of the line, toward the interior, or toward the exterior.
+        """
+        return self.set_tick_style(direction=direction)
+
     def set_position(
-        self, where: str | float = "origin", *, fraction: float | None = None
+        self,
+        where: str | float = "origin",
+        *,
+        fraction: float | None = None,
+        offset: float | None = None,
     ) -> Self:
         """Move only this axis's decoration across the other coordinate range.
 
@@ -1099,6 +1116,9 @@ class Axis(VGroup):
             Origin, an appropriate border name, or a data value of the other axis.
         fraction
             Optional fraction of the other axis's transformed range, from zero to one.
+        offset
+            Finite nonnegative distance outward from a named border in scene units.
+            Only border positions without a fraction accept an offset.
         """
         if isinstance(where, str):
             sides = ("bottom", "top") if self.index == 0 else ("left", "right")
@@ -1112,7 +1132,25 @@ class Axis(VGroup):
             fraction = _finite(fraction, "fraction")
             if not 0 <= fraction <= 1:
                 raise ValueError("fraction must be between zero and one")
+        distance = 0.0
+        if offset is not None:
+            distance = _finite(offset, "offset")
+            if (
+                distance < 0
+                or where not in ("left", "right", "top", "bottom")
+                or fraction is not None
+            ):
+                raise ValueError("offset requires a border and a nonnegative distance")
         self._position, self._position_fraction = where, fraction
+        self._position_offset = distance
+        self._position_outward = offset is not None
+        if offset is not None and not self._label_direction_custom:
+            self.label_direction = np.eye(3)[1 - self.index] * (
+                -1 if where in ("left", "bottom") else 1
+            )
+            self._label_style_seen = None
+            self._custom_style_seen = None
+        self._crossing_frame = -1
         self._regenerate()
         self._system.get_axis(1 - self.index)._regenerate()
         return self
@@ -1202,6 +1240,7 @@ class Axis(VGroup):
             None if self._tip_reference is None else self._tip_reference.copy()
         )
         mirror.include_numbers = False
+        mirror.set_tips(end=False)
         mirror.line.match_style(self.line)
         self._mirrors.append(mirror)
         self.add(mirror)
