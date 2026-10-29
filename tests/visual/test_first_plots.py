@@ -4,8 +4,7 @@ Rows RT-1 to RT-3 of `docs/acceptance/09-leaves-context-frame.md`. RT-1 and RT-2
 correctness oracles — a render compared with another render, F-914 and F-915. RT-3 is a
 visual baseline pair for the maintainer's review: the library's picture and its
 ``__manim`` twin. They differ where the defaults table says the library fixes Manim: the
-tick under a tip is kept (F-411), the curve is clipped to the axes (F-706), and a pole
-splits the curve (F-705).
+curve is clipped to the axes (F-706), and a pole splits the curve (F-705).
 """
 
 from __future__ import annotations

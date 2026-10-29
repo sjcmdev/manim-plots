@@ -41,7 +41,7 @@ def tick_values(ax, axis="x", level="ticks"):
 def test_lb1_a_locator_regenerates_the_ticks():
     ax = axes()
     ax.x.set_locator(MultipleLocator(2.5))
-    assert tick_values(ax) == [2.5, 5.0, 7.5, 10.0]
+    assert tick_values(ax) == [2.5, 5.0, 7.5]  # 10 is under the tip, as in Manim
 
 
 def test_lb1_a_plain_callable_is_a_locator():
@@ -183,6 +183,21 @@ def test_dp3_tips_at_either_end_change_no_mapping():
     assert ax.x_axis.tip is not None and ax.x_axis.tip_start is not None
     np.testing.assert_allclose(ax.c2p(7, 1), before)
     assert tick_values(ax) == ticks
+
+
+def test_dp3_the_tick_under_a_tip_is_left_out_unless_asked_for():
+    # As in Manim: an end with a tip has no tick and no number; without a tip it has.
+    ax = axes(axis_config={"include_numbers": True})
+    assert tick_values(ax)[-1] == 9
+    assert max(ax.p2c(n.get_center())[0] for n in ax.x_axis.numbers) < 9.5
+    ax.x.set_tips(end=True, tick_under_tip=True)
+    assert tick_values(ax)[-1] == 10
+    assert max(ax.p2c(n.get_center())[0] for n in ax.x_axis.numbers) > 9.5
+    ax.x.set_tips(end=True)
+    assert tick_values(ax)[-1] == 9
+    assert tick_values(axes(tips=False))[-1] == 10
+    with pytest.raises(TypeError):
+        ax.x.set_tips(tick_under_tip=1)
 
 
 def test_dp4_a_mirrored_axis_is_unlabelled_on_the_other_side():

@@ -64,7 +64,7 @@ class _Parts[T: VMobject](VGroup):
 
 
 def _configure_numbers(axis: Axis) -> None:
-    items = axis._items or axis._tick_items()
+    items = axis._items or axis._drawn_items()
     for old_label in axis._number_leaves.values():
         _restore_overlap(old_label)
     major = [item for item in items if item.level == "major"]

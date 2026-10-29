@@ -138,7 +138,7 @@ def test_ax4_lines_and_tips_are_manims(case):
 
 
 @pytest.mark.parametrize("case", CASES, ids=ids)
-def test_ax4_every_manim_tick_is_there_plus_the_one_under_the_tip(case):
+def test_ax4_every_manim_tick_is_there_and_no_other(case):
     ours, theirs = mp.Axes(**case), Axes(**case)
     for mine, manim_axis in (
         (ours.x_axis, theirs.x_axis),
@@ -150,8 +150,7 @@ def test_ax4_every_manim_tick_is_there_plus_the_one_under_the_tip(case):
             style = next(t for t in mine.ticks if same_points(tick.points, t.points))
             assert style.get_stroke_width() == tick.get_stroke_width()
             assert style.get_stroke_color() == tick.get_stroke_color()
-        extra = len(our_ticks) - len(manim_axis.ticks)
-        assert extra == (1 if case.get("tips", True) else 0)
+        assert len(our_ticks) == len(manim_axis.ticks)
 
 
 # --- AX-5 to AX-7: conversions -------------------------------------------------------
