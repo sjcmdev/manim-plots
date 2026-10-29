@@ -53,10 +53,12 @@ from manim_plots.mobjects.artists import (
     ParametricPlot,
     ScatterPlot,
 )
+from manim_plots.mobjects.axis import TickDirection as TickDirection
 from manim_plots.mobjects.context import check_pins
 from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
+from manim_plots.mobjects.system import NumberPlane as NumberPlane
 
 __version__ = version("manim-plots")
 
