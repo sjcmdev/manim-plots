@@ -2,9 +2,18 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
+from hypothesis import settings
 
 REPORT = pytest.StashKey[list[str]]()
+
+# The gate must not depend on luck or on a database left by an earlier run:
+# derandomised, and no example database, whose files a sandboxed agent could lock.
+settings.register_profile("gate", derandomize=True, database=None, deadline=None)
+settings.register_profile("explore", max_examples=2000, database=None, deadline=None)
+settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "gate"))
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

@@ -481,6 +481,7 @@ source = { editable = "." }
 dependencies = [
     { name = "manim" },
     { name = "numpy" },
+    { name = "scipy" },
 ]
 
 [package.dev-dependencies]
@@ -495,6 +496,7 @@ dev = [
 requires-dist = [
     { name = "manim", specifier = ">=0.21,<0.23" },
     { name = "numpy", specifier = ">=2.5" },
+    { name = "scipy", specifier = ">=1.15" },
 ]
 
 [package.metadata.requires-dev]
