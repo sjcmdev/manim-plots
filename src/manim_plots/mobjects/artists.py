@@ -803,7 +803,28 @@ class FunctionPlot(_CurvePlot):
     discontinuities, dt
         Explicit gaps and their half-width, with Manim's meaning.
     **kwargs
-        Function parameter values or bindings, and native VMobject styles.
+        Function parameter values or bindings, native VMobject styles, and label,
+        line_style, dash and clip. Clipping defaults to True; False disables it,
+        and a number gives a margin in scene units. Uncoloured plots take the next
+        colour in the system's cycle, starting with white.
+
+    Notes
+    -----
+    Samples are refined adaptively, independently of the tick step. Invalid
+    samples and poles split the path; the result is clipped to the viewport.
+    Native Create paces partial drawing by sample count, not by x, so dense bends
+    take longer to reveal. Use TraceCurve with a linear rate function for steady
+    progress in data x.
+
+    Uncreate detaches the curve: later data changes leave its removed buffer
+    alone. Unlike plain Manim, a subsequent Create reattaches it and draws the
+    current data. Calling refresh also reattaches it. A bare edit of points lasts
+    only until the next rebuild; refresh replaces that edit with derived geometry.
+
+    A curve's own geometric transform persists through resampling and moves with
+    its axes. PhaseFlow-like callbacks append to that transform each frame, so a
+    long animation can grow its transform chain. Prefer one affine operation when
+    it describes the intended movement.
     """
 
     def __init__(
