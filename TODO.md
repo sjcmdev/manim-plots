@@ -242,9 +242,9 @@ F-1001 final, F-1002, F-1003, F-1005, F-1006 on every surface.
 
 F-1008, F-1009 in the documentation; packaging.
 
-- [ ] Sphinx with numpydoc, warnings as errors; F-1008's differences and the migration
+- [x] Sphinx with numpydoc, warnings as errors; F-1008's differences and the migration
       notes where users meet them
-- [ ] A changelog, absolute links in the README, Documentation and Issues URLs
-- [ ] `uv build` with `LICENSE` in the sdist and the wheel; install and import from an
+- [x] A changelog, absolute links in the README, Documentation and Issues URLs
+- [x] `uv build` with `LICENSE` in the sdist and the wheel; install and import from an
       environment outside the repository
-- [ ] `dev` into `main`, tagged: the first release
+- [ ] `dev` into `main`, tagged: the first release — the maintainer's call (RL-4)
