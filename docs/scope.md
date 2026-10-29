@@ -3,7 +3,8 @@
 **Status: the 0.1 tier is frozen, 2026-10-24** (ADR 0001). Adding, removing or changing
 a 0.1 requirement now needs a new ADR; 0.2 and later rows may still move. Amended on
 2026-10-29 by ADR 0003, which closed the final reviews; each amended row or rule carries
-*(ADR 0003)*.
+*(ADR 0003)*. ADR 0004 joins 0.1 and 0.2 into one first release and lists the rows that
+join the 0.1 tier; each is amended by its task and carries *(ADR 0004)*.
 
 The decision document for task/03, completed in task/04. Every requirement is an `F-*`
 with a tier and the decision it follows from. `docs/parity-survey.md` is the source

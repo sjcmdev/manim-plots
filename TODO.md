@@ -251,4 +251,77 @@ F-1008, F-1009 in the documentation; packaging.
 - [x] A changelog, absolute links in the README, Documentation and Issues URLs
 - [x] `uv build` with `LICENSE` in the sdist and the wheel; install and import from an
       environment outside the repository
-- [ ] `dev` into `main`, tagged: the first release — the maintainer's call (RL-4)
+- [x] `dev` into `main`, tagged: the first release — moved to task 23 (ADR 0004)
+
+## Stage 3 — the rest of the first release
+
+ADR 0004 joins 0.1 and 0.2 into one release, `0.1.0`. Each task is run as in stage 2,
+acceptance table first; modules, settled points and the Manim defects each task fixes
+are in `docs/implementation-plan.md`. Task 13's F-1001 closes before task 16.
+
+### task/15-clip-per-axis
+
+F-706 amended: `clip=(x, y)`, each a bool or a margin.
+
+- [ ] Acceptance table, scope row amended
+- [ ] Implementation, tests, gate
+
+### task/16-helpers-lines
+
+Manim's drop lines and calculus helpers, bound: `get_vertical_line`,
+`get_horizontal_line`, `get_lines_to_point`, `get_line_from_axis_to_point`,
+`get_vertical_lines_to_graph`, `axvline`, `axhline`, `get_T_label`, `slope_of_tangent`,
+`angle_of_tangent`, `get_tangent_line`, `get_tangent_vector`, `get_secant_slope_group`,
+`plot_derivative_graph`, `plot_antiderivative_graph`.
+
+- [ ] Acceptance table: the bound-helper base, each helper's signature, the defects fixed
+- [ ] Implementation, tests against Manim's helpers, visual pairs, gate
+
+### task/17-helpers-regions
+
+`fill_between`, `get_area`, `get_riemann_rectangles`; clipping a filled region.
+
+- [ ] Acceptance table
+- [ ] Implementation, exact-area tests, visual pairs, gate
+
+### task/18-errorbar
+
+`ax.errorbar` with x and y errors, symmetric and asymmetric, correct on log scales.
+
+- [ ] Acceptance table
+- [ ] Implementation, tests, visual pair, gate
+
+### task/19-twin-axes
+
+F-610: `twinx`, `twiny`, further offset axes; plots bound to their pair.
+
+- [ ] Acceptance table, scope row amended
+- [ ] Implementation, tests, visual baselines, gate
+
+### task/20-themes
+
+Named axis themes and colour cycles, the maintainer's Origin themes among them.
+
+- [ ] Acceptance table with the names for the maintainer's review
+- [ ] Implementation, a baseline per theme, gate
+
+### task/21-fields-flow
+
+The field source and the `region` payload; `ArrowVectorField`, `StreamLines`,
+`get_vector`, one integrator and a `Flow` animation; `plot_implicit_curve` if it fits.
+
+- [ ] Acceptance table
+- [ ] Implementation, tests, visual pairs, gate
+
+### task/22-polar
+
+`mp.PolarPlane`, `plot_polar_graph` and Manim's polar conversions; `Node` public.
+
+- [ ] Acceptance table
+- [ ] Implementation, tests, visual pairs, gate
+
+### task/23-release
+
+- [ ] F-1001 read again; invalid input and types on the new surfaces
+- [ ] Documentation, gallery and parity survey for every new name; changelog
+- [ ] `dev` into `main`, tagged `v0.1.0` — the maintainer's call

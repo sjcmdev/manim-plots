@@ -217,4 +217,214 @@ F-1006 — the invalid-input table on every surface it lists; the full gate.
 ### 14 — documentation and release
 
 Sphinx with numpydoc, F-1008's differences where users meet them, a changelog, packaging.
-The merge of `dev` into `main` and its tag are the maintainer's.
+The merge of `dev` into `main` and its tag moved to task 23 (ADR 0004).
+
+## Stage 3 — the rest of the first release
+
+ADR 0004 joins 0.1 and 0.2 into one release. The loop, the roles and the rules above stay.
+The tasks below use the same three headings and add a fourth, **Manim defects**: the
+defects each task fixes, probed on 0.21.0. Task 13's F-1001 closes before task 16
+(ADR 0004 §7). Tasks 17 and 18 may run side by side in a worktree, and so may task 21
+beside tasks 19 and 20.
+
+### 15 — clipping per axis
+
+**Modules.** `mobjects/artists.py`.
+
+**Settles.** `clip` also takes `(x, y)`, each a bool or a margin in scene units, on every
+artist and on `set_clip`/`get_clip`. An axis that is not clipped samples and draws past
+the viewport on that axis, as `clip=False` does today. Validation, and the error for a
+pair of the wrong length. Scope row F-706 amended.
+
+**Tests.** `tests/mobjects/test_style.py`: each combination on a function plot, a line, a
+scatter and a parametric curve; a pole with y unclipped; a visual pair.
+
+### 13, finished — F-1001
+
+A third performance pass from the profile of 2026-10-29: resampling on every frame of an
+animated range, the bilinear frame on Bézier points, Manim's `inspect.signature` per
+updater. Then `--record` into `docs/benchmarks/0.1.json`.
+
+### 16 — bound helpers I: lines and tangents
+
+**Modules.** `mobjects/helpers.py` (new), `mobjects/system.py` (the verbs),
+`core/sources.py` (derived sources).
+
+**Settles.** The bound-helper base, generalising `BoundLabel`: inputs held as parameters,
+a `ValueTracker` accepted for any of them, a rebuild on a change of range, frame, graph
+parameters or tracker, and the leaf lifecycle of a plot. Then, with Manim's signatures
+and return types:
+
+- drop lines: `get_vertical_line`, `get_horizontal_line`, `get_lines_to_point`,
+  `get_line_from_axis_to_point`, `get_vertical_lines_to_graph`. A scene point is
+  converted to data once and then follows the system. The line ends at the axis where it
+  is drawn (F-605), not at 0. `axvline` and `axhline` span the viewport;
+- `get_T_label`: the triangle sits on the x axis where it is drawn; `x_val` may be a
+  tracker;
+- `slope_of_tangent` and `angle_of_tangent`: computed from the source in data space, with
+  Manim's meaning. `get_tangent_line(x, graph, length)` and `get_tangent_vector(x, graph)`
+  are tangent to the drawn curve, so they are correct on a log scale and a warped frame;
+- `get_secant_slope_group`: legs along the system's axes. `dx` may be a tracker, so a
+  secant can close into the tangent. `dx=0` raises instead of falling back to the default;
+- `plot_derivative_graph` and `plot_antiderivative_graph`: derived sources that follow
+  the parent's parameters. The antiderivative integrates once per rebuild over the
+  sampled grid. `y_intercept` keeps Manim's meaning, the value at `x = 0`; where 0 is
+  outside the parent's domain, the anchor is the start of its range *(default taken)*.
+
+**Manim defects.**
+- `get_T_label` puts the triangle at `y = 0`, off the axis when the range excludes 0. In
+  `Axes(x_range=[1, 5], y_range=[2, 10])` the triangle's top is at -4.5 and the axis at -3.
+- `get_secant_slope_group` draws its legs along the scene's axes, so they stay horizontal
+  on axes rotated by 30°. With `dx=0` it silently uses the default `dx`.
+- `plot_antiderivative_graph` integrates from 0 again for every sample, and fails when 0
+  is outside the domain.
+- None of the helpers follows a changed range or parameter.
+
+**Tests.** `tests/mobjects/test_helpers_lines.py`: each helper against Manim's on default
+axes, with equal geometry; the same after `set_x_range`, under `.animate`, with a tracker,
+and on rotated and log axes. Visual pairs; a frame-cost reading.
+
+### 17 — bound helpers II: regions
+
+**Modules.** `mobjects/helpers.py`, `core/shape.py` (clipping a filled region).
+
+**Settles.** `fill_between`, whose bounds may be graphs, arrays or a constant over an `x`
+range, and `get_area` on top of it with Manim's signature. A filled region is clipped by
+restricting `x` and clamping between its two boundaries, and stays closed after clipping.
+Manim's colour tuples become a gradient. `get_riemann_rectangles` keeps Manim's
+signature, and every rectangle is a quadrilateral in data space. `show_signed_area` and
+`blend`; `dx` may be a tracker; rectangles are paired by index under `Transform`.
+
+**Manim defects.**
+- `get_riemann_rectangles` steps with `np.arange` and draws one rectangle too many:
+  `x_range=[1, 1.3], dx=0.1` gives 4 instead of 3.
+- With `bounded_graph`, it evaluates the lower curve at the left edge whatever
+  `input_sample_type` says. With the right sample on `[1, 2]` the bottom is at 0.25 where
+  it should be at 0.5.
+- Its rectangles are axis-aligned in the scene, which is wrong on rotated and warped
+  frames.
+- `get_area` builds its polygon from Bézier control points.
+- Neither is clipped, and neither follows.
+
+**Tests.** `tests/mobjects/test_helpers_regions.py`: exact areas (the shoelace of the
+drawn region against the integral), counts, bounded and signed cases, clipping at each
+edge, log axes, a tracker `dx`. Visual pairs; a frame-cost reading.
+
+### 18 — error bars
+
+**Modules.** `mobjects/artists.py`, `mobjects/system.py`.
+
+**Settles.** `ax.errorbar(x, y, yerr=None, xerr=None, *, capsize, marker, ...)`, where
+`yerr` and `xerr` mean what they mean in matplotlib: a scalar, one value per point, or a
+`(2, n)` lower/upper pair. Bars live in data space and caps in scene units. A bar that
+leaves a log scale's domain is clipped at the viewport, never `NaN`. Task 15's
+`clip=(x, y)` applies. The legend handle; data changes under `.animate`, with bars keyed
+by point.
+
+**Tests.** `tests/mobjects/test_errorbar.py`: symmetric, asymmetric, x and y together,
+log axes, clipping, an animated update, the legend. A visual pair against a hand-built
+Manim scene.
+
+### 19 — twin and multiple axes
+
+**Modules.** `mobjects/system.py`, `mobjects/axis.py`.
+
+**Settles.**
+- `ax.twinx(...)` and `ax.twiny(...)` return a system that shares `ax`'s frame and its
+  other axis. The twin's own axis sits at the opposite border; further ones are offset
+  outward, as in Origin's `3Ys` and `4Ys` templates.
+- Plots bind to their pair, and `ax.legend()` collects the twins' plots
+  *(default taken)*. Clipping per pair falls out of that.
+- Geometry and `.animate` on `ax` move the twins, and an animated shared range moves both.
+- `Transform`, `copy` and `become` work with a shared frame.
+- A twin's axis and a mirror have no tip (ADR 0004 §8). Scope row F-610 amended.
+
+**Tests.** `tests/mobjects/test_twin.py`: the twins follow under shift, rotate and
+`.animate`; a shared range animated; clipping per pair; the legend; three y axes; visual
+baselines.
+
+### 20 — themes and colour cycles
+
+**Modules.** `mobjects/themes.py` (new), `mobjects/system.py`.
+
+**Settles.** A theme is a named set of defaults applied at construction: axis position,
+mirrors, tips, tick direction and minor count, grid levels, legend corner and frame,
+colour cycle. It is passed as `CartesianAxes(..., theme="origin")` or set as a module
+default.
+
+| Theme | What it sets |
+|---|---|
+| `manim` | today's defaults |
+| `origin` | Origin's default graph |
+| `base` | the maintainer's `Base-plot.otpu`: a box, the major grid, a framed legend upper right |
+| `paper` | black and white, ticks in, series told apart by dash and marker |
+| `lab` | major and minor grid |
+
+| Cycle | Source |
+|---|---|
+| `manim` | today's cycle |
+| `origin` | the maintainer's 12 colours, `something.oth` |
+| `fire` | the maintainer's `S03 Fire.oth`, for series ordered by a parameter |
+| `colorblind` | a colour-blind-safe cycle |
+| `gray` | shades of grey |
+
+A user theme is a dict *(default taken)*. The names are the maintainer's to refine.
+
+**Tests.** `tests/mobjects/test_themes.py`: each theme equals the explicit calls it stands
+for; a visual baseline per theme.
+
+### 21 — fields and flow
+
+**Modules.** `core/sources.py` (`FieldSource`), `core/shape.py` (the `region` branch),
+`mobjects/fields.py` (new).
+
+**Settles.**
+- `FieldSource` samples a vector or scalar function of data coordinates over the viewport
+  on a grid and returns a `region` payload, the branch declared in 0.1.
+- `ArrowVectorField` and `StreamLines` keep Manim's signatures and gain a system to bind
+  to; `ax.get_vector`.
+- One RK4 step function serves stream lines, `nudge`, `start_submobject_movement` and
+  `StreamLines.start_animation`. A `Flow` animation moves points, mobjects and stream
+  lines along the field.
+- `plot_implicit_curve` by marching squares on the scalar field, if it fits
+  *(default taken)*.
+
+**Manim defects.**
+- `StreamLines` integrates with Euler, while `nudge` uses RK4.
+- Start points come from `np.arange` and accumulate error.
+- The out-of-box test pads one side by a step less than the other.
+- The `if not step` branch never runs.
+- Fields live in scene coordinates and ignore the axes, except through
+  `fit_to_coordinate_system`.
+
+**Tests.** `tests/core/test_fields.py` (RK4 against analytic orbits: a rotation field's
+stream lines close), `tests/mobjects/test_fields.py` (parity pictures, following the
+system, flow); a frame-cost reading.
+
+### 22 — polar
+
+**Modules.** `core/nodes.py` (`Node` made public), `mobjects/polar.py` (new),
+`core/formatters.py` (fractions of π).
+
+**Settles.**
+- `mp.PolarPlane` with Manim's signature: `radius_max`, `size`, `azimuth_step`,
+  `azimuth_units`, `azimuth_direction`, `azimuth_offset`, `radius_config`, and the
+  background and faded lines.
+- The polar map as a coupled node.
+- An angular axis (a circle with ticks and labels) and a radial one; circles and spokes
+  as the grid; clipping to the disk; tick keys on a periodic axis.
+- `plot_polar_graph` on every system, as Manim defines it on `CoordinateSystem`;
+  `polar_to_point`, `point_to_polar`, `pr2pt`, `pt2pr`, `get_coordinate_labels`,
+  `get_radian_label`.
+
+**Tests.** `tests/mobjects/test_polar.py`: parity with Manim's `PolarPlane` on its
+defaults, round trips, clipping at the rim, an animated radius; visual pairs.
+
+### 23 — the release
+
+- F-1001 read again.
+- The invalid-input table on every new surface; types.
+- The gallery, *Differences from Manim* and *Coming from Manim* for every new helper, each
+  with its Manim twin.
+- The parity survey's verdicts moved; the changelog.
+- Then the maintainer merges into `main` and tags `v0.1.0`.
