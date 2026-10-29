@@ -222,6 +222,8 @@ class _Binding:
         if self._deriving:
             return
         system = self.system
+        if system.parent is not None:
+            system.parent._sync_data()
         system._sync_data()
         graph = self.graph
         if isinstance(graph, _DerivedPlot):
@@ -231,8 +233,11 @@ class _Binding:
             system.frame.version,
             system.x_axis._position,
             system.x_axis._position_fraction,
+            system.x_axis._position_offset,
             system.y_axis._position,
             system.y_axis._position_fraction,
+            system.y_axis._position_offset,
+            None if system.parent is None else system.parent._data_version,
             None if graph is None else id(graph.source),
             None if graph is None else id(graph._own),
             graph._binding.version if isinstance(graph, _DerivedPlot) else None,
@@ -627,7 +632,7 @@ class FilledRegion(_CurvePlot):
 def _graph_boundary(system: mp.CartesianAxes, graph: _CurvePlot) -> list[FloatArray]:
     limits = _limits(system, graph)
     ends = system._data.forward(
-        np.column_stack((limits, np.full(2, system.x_axis._cross_value())))
+        np.column_stack((limits, np.full(2, system._axis_cross_value(0))))
     )[:, 0]
     lower, upper = system.bounds.lower.copy(), system.bounds.upper.copy()
     lower[0], upper[0] = min(lower[0], min(ends)), max(upper[0], max(ends))
@@ -750,7 +755,7 @@ def _area(
         binding = cast(_RegionBinding, base)
         a, b = _region_range(binding, graph, bounded_graph, x_range is not None)
         ends = binding.local(
-            [[a, system.x_axis._cross_value()], [b, system.x_axis._cross_value()]]
+            [[a, system._axis_cross_value(0)], [b, system._axis_cross_value(0)]]
         )
         limits = np.sort(ends[:, 0])
         top = _graph_boundary(system, graph)
@@ -758,7 +763,7 @@ def _area(
             bottom = _graph_boundary(system, bounded_graph)
         else:
             baseline = (
-                system.x_axis._cross_value() if bounded_graph is None else bounded_graph
+                system._axis_cross_value(0) if bounded_graph is None else bounded_graph
             )
             bottom = [binding.local([[a, baseline], [b, baseline]])]
             bottom[0] = bottom[0][np.argsort(bottom[0][:, 0])]
@@ -860,8 +865,8 @@ def _fill_between(
             else:
                 limits = binding.local(
                     [
-                        [min(grid), system.x_axis._cross_value()],
-                        [max(grid), system.x_axis._cross_value()],
+                        [min(grid), system._axis_cross_value(0)],
+                        [max(grid), system._axis_cross_value(0)],
                     ]
                 )[:, 0]
                 pairs.extend(
@@ -1035,7 +1040,7 @@ def _riemann(
                 )[:, :2]
         else:
             baseline = (
-                system.x_axis._cross_value() if bounded_graph is None else bounded_graph
+                system._axis_cross_value(0) if bounded_graph is None else bounded_graph
             )
             bottoms = binding.local(
                 np.column_stack((samples, np.full(count, baseline)))
@@ -1044,7 +1049,7 @@ def _riemann(
             np.column_stack(
                 (
                     np.r_[xs, xs + width_scale_factor * step],
-                    np.full(2 * count, system.x_axis._cross_value()),
+                    np.full(2 * count, system._axis_cross_value(0)),
                 )
             )
         )[:, 0]
@@ -1227,7 +1232,7 @@ def _drop(
         raw = binding.parameters["point"].value
         coords = system.p2c(raw) if dynamic else np.asarray(raw, dtype=float)
         start = coords.copy()
-        start[1 - index] = system.get_axis(index)._cross_value()
+        start[1 - index] = system._axis_cross_value(index)
         binding.parts["line"] = binding.local([start, coords])
 
     binding = _Binding(system, derive, {"point": data})
@@ -1261,7 +1266,7 @@ def _verticals(
         for i, x in enumerate(np.linspace(limits[0], limits[1], num_lines)):
             if _valid_x(system, graph, float(x)):
                 local = _graph_local(system, graph, float(x))
-                bottom = binding.local([[x, system.x_axis._cross_value()]])[0]
+                bottom = binding.local([[x, system._axis_cross_value(0)]])[0]
                 if len(local) != len(bottom):
                     bottom = np.append(bottom, 0)
                 binding.parts[str(i)] = np.array([bottom, local])
@@ -1337,7 +1342,7 @@ def _t_label(
         x = binding.number("x_val")
         if not binding.check_x("x_val"):
             return
-        start = [x, system.x_axis._cross_value()]
+        start = [x, system._axis_cross_value(0)]
         bottom = binding.local([start])[0]
         top = _graph_local(system, graph, x)
         if len(top) != len(bottom):

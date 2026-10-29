@@ -301,8 +301,10 @@ Manim's drop lines and calculus helpers, bound: `get_vertical_line`,
 
 F-610: `twinx`, `twiny`, further offset axes; plots bound to their pair.
 
-- [ ] Acceptance table, scope row amended
-- [ ] Implementation, tests, visual baselines, gate
+- [x] Acceptance table — `docs/acceptance/19-twin-axes.md`; scope row F-610 still to
+      amend in task 23 with the others
+- [x] Implementation, tests, visual baselines, gate — Codex's run stopped on its usage
+      limit before its report; a twin's zero tick fixed at merge; F-1001 2.7-3.3 ms
 
 ### task/20-themes
 

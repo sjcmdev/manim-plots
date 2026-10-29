@@ -172,3 +172,48 @@ def test_errorbars_on_a_log_axis(visual):
         scene.add(ax, ax.errorbar(xs, ys, yerr=[2.0, 5.0, 10.0, 30.0], color=BLUE))
 
     visual(construct)
+
+
+@pytest.mark.render
+def test_two_y_axes(visual):
+    """Origin's DOUBLEY layout: a temperature on the left axis and a pressure on a
+    twin's right axis, each curve in its axis's colour (task 19)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(
+            x_range=(0, 10, 1),
+            y_range=(0, 100, 20),
+            x_length=9,
+            y_length=5,
+            axis_config={"include_numbers": True, "font_size": 24},
+        )
+        pressure = ax.twinx(
+            y_range=(0, 2, 0.5),
+            y_axis_config={"include_numbers": True, "font_size": 24},
+        )
+        temperature = ax.plot(lambda x: 20 + 6 * x, color=RED)
+        drop = pressure.plot(lambda x: 1.8 * np.exp(-x / 4), color=BLUE)
+        ax.y_axis.set_color(RED)
+        pressure.y_axis.set_color(BLUE)
+        scene.add(ax, temperature, drop)
+
+    visual(construct)
+
+
+@pytest.mark.render
+def test_three_y_axes(visual):
+    """Origin's 3Ys_Y-YY layout: one axis on the left, two on the right, the second
+    offset outward (task 19)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(x_range=(0, 10, 1), y_range=(0, 1, 0.2), x_length=8, y_length=5)
+        second = ax.twinx(y_range=(0, 50, 10))
+        third = ax.twinx(y_range=(-1, 1, 0.5))
+        scene.add(
+            ax,
+            ax.plot(lambda x: (x / 10) ** 2, color=YELLOW),
+            second.plot(lambda x: 5 * x, color=RED),
+            third.plot(np.sin, color=BLUE),
+        )
+
+    visual(construct)

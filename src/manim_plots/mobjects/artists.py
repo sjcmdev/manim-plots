@@ -119,6 +119,7 @@ def _cycle_style(
         else ("color", "stroke_color")
     )
     if not any(key in style for key in keys):
+        system = system.parent if system.parent is not None else system
         index = getattr(system, "_color_index", 0)
         style["color"] = COLOR_CYCLE[index % len(COLOR_CYCLE)]
         system._color_index = index + 1
