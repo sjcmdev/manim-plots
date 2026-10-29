@@ -177,8 +177,8 @@ F-703-F-707, F-710 (`resample_like`), F-806, F-911 and F-918 (numerics).
 `core/ticks.py`, `core/formatters.py`, `core/lifecycle.py`. F-401-F-414, F-501-F-507,
 F-920 (plan), F-903, F-905, F-907, F-919 (transitions).
 
-- [ ] Acceptance table: locators, formatters
-- [ ] `tests/core/test_ticks.py` (keys stable across ranges and unique, `Multiple(0.1)`
+- [x] Acceptance table: locators, formatters
+- [x] `tests/core/test_ticks.py` (keys stable across ranges and unique, `Multiple(0.1)`
       exact, merge order on a reversed range, `contains` with `max_ticks`),
       `test_formatters.py` (`format_ticks` and wrapped callables), `test_pool.py`,
       `test_lifecycle.py` (every cell, and the precedence cases of ADR 0003 §5)
