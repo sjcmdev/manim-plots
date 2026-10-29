@@ -7,6 +7,7 @@ import inspect
 import warnings
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum
+from math import isfinite
 from numbers import Real
 from typing import Any, Self, Unpack, cast
 
@@ -71,6 +72,9 @@ from manim_plots.mobjects.leaves import (
     _STRAIGHT,
     Leaf,
     _ArtistOptions,
+    _ClipInput,
+    _ClipPair,
+    _ClipValue,
     _synchronise,
     _VMStyle,
 )
@@ -125,25 +129,58 @@ def _validate_label(label: str | None) -> None:
         raise TypeError("label must be a string or None")
 
 
-def _validate_clip(value: bool | float) -> None:
-    if not isinstance(value, (bool, Real)):
-        raise TypeError("clip must be bool or a real margin")
-    if not np.isfinite(value):
-        raise ValueError("clip must be finite")
+def _validate_clip(value: object) -> _ClipValue:
+    if isinstance(value, (tuple, list)) and len(value) != 2:
+        raise ValueError("clip must contain two axis entries")
+    entries = value if isinstance(value, (tuple, list)) else (value,)
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, (bool, Real)):
+            raise TypeError(f"clip[{index}] must be bool or a real margin")
+        if not isfinite(entry):
+            raise ValueError(f"clip[{index}] must be finite")
+    return cast(_ClipValue, tuple(value) if isinstance(value, list) else value)
 
 
-def _clip_box(system: mp.CartesianAxes, value: bool | float) -> Box:
-    if isinstance(value, bool):
+def _clip_axes(value: _ClipValue) -> _ClipPair:
+    return value if isinstance(value, tuple) else (value, value)
+
+
+def _clip_has_margin(value: _ClipValue) -> bool:
+    return any(not isinstance(axis, bool) for axis in _clip_axes(value))
+
+
+def _clip_box(system: mp.CartesianAxes, value: _ClipValue) -> Box:
+    if not _clip_has_margin(value):
         return system.bounds
     bounds = system.bounds
     origin = np.zeros((3, 2))
     origin[1:] = np.eye(2)
     placed = system.frame.mapping.forward(origin)
     units = np.linalg.norm(placed[1:] - placed[0], axis=1)
-    margin = value / units
-    if np.any(bounds.lower - margin >= bounds.upper + margin):
+    margin = (
+        np.array(
+            [0.0 if isinstance(axis, bool) else axis for axis in _clip_axes(value)],
+            dtype=float,
+        )
+        / units
+    )
+    span = bounds.upper - bounds.lower
+    # A fitted frame can leave roundoff-sized remnants of a collapsed interval.
+    if np.any(span + 2 * margin <= 8 * np.finfo(float).eps * span):
         raise ValueError("clip margin narrows the rectangle to nothing")
     return Box(bounds.lower - margin, bounds.upper + margin)
+
+
+def _unclipped_box(bounds: Box, axes: _ClipPair, coords: FloatArray) -> Box:
+    lower, upper = bounds.lower.copy(), bounds.upper.copy()
+    for index, axis in enumerate(axes):
+        if axis is False:
+            values = coords[:, index]
+            finite = values[np.isfinite(values)]
+            if len(finite):
+                lower[index] = min(lower[index], float(np.min(finite)))
+                upper[index] = max(upper[index], float(np.max(finite)))
+    return Box(lower, upper)
 
 
 def _dash_pattern(
@@ -202,14 +239,15 @@ class _CurvePlot(Leaf):
         label: str | None = None,
         line_style: LineStyle = LineStyle.SOLID,
         dash: tuple[float, float] | None = None,
-        clip: bool | float = True,
+        clip: _ClipInput = True,
         **kwargs: Unpack[_VMStyle],
     ) -> None:
         _validate_label(label)
-        _validate_clip(clip)
-        _clip_box(system, clip)
+        clip_value = _validate_clip(clip)
+        _clip_box(system, clip_value)
         self._label = label
-        self._clip = clip
+        self._clip = clip_value
+        self._clip_has_margin = _clip_has_margin(clip_value)
         self.line_style = line_style
         self.dash = dash
         self._dash = _dash_pattern(line_style, dash)
@@ -252,24 +290,39 @@ class _CurvePlot(Leaf):
         """Return the legend label, or None when unset."""
         return self._label
 
-    def set_clip(self, value: bool | float) -> Self:
+    def set_clip(self, value: _ClipInput) -> Self:
         """Set clipping and rebuild the artist.
 
         Parameters
         ----------
         value
-            True, False, or a finite margin in scene units.
+            True clips at the viewport, False disables clipping, and a finite
+            margin in scene units expands or narrows it. A tuple or list
+            ``(cx, cy)`` applies these policies independently to x and y.
+
+        Returns
+        -------
+        Self
+            This artist after rebuilding.
         """
-        _validate_clip(value)
+        clip = _validate_clip(value)
         if self._system is not None:
-            _clip_box(self._system, value)
-        self._clip = value
+            _clip_box(self._system, clip)
+        self._clip = clip
+        self._clip_has_margin = _clip_has_margin(clip)
         self._dirty = True
         self._ensure()
         return self
 
-    def get_clip(self) -> bool | float:
-        """Return the clipping policy or margin in scene units."""
+    def get_clip(self) -> _ClipValue:
+        """Return the clipping policy or margin in scene units.
+
+        Returns
+        -------
+        bool or float or tuple
+            The supplied policy; per-axis entries are returned as ``(cx, cy)``,
+            including when set from a list.
+        """
         return self._clip
 
     def _poll(self) -> None:
@@ -325,7 +378,7 @@ class _CurvePlot(Leaf):
             self._rebuild()
         elif self._frame_seen != system.frame.version:
             frame = self._frame()
-            if not isinstance(self._clip, bool):
+            if self._clip_has_margin:
                 self._rebuild()
             elif self._dash is not None or self._dense == frame.is_affine:
                 self._place(frame)
@@ -356,8 +409,11 @@ class _CurvePlot(Leaf):
             return
         mapping = SystemMap(system._data, frame)
         bounds = _clip_box(system, self._clip)
+        clip_axes = _clip_axes(self._clip)
+        unclipped = any(axis is False for axis in clip_axes)
+        clipped = any(axis is not False for axis in clip_axes)
         sampling_bounds = bounds
-        if self._clip is False:
+        if clip_axes[0] is False:
             extent = None
             if isinstance(self.source, ArraySource):
                 finite = self.source.data[np.isfinite(self.source.data).all(axis=1)]
@@ -391,9 +447,14 @@ class _CurvePlot(Leaf):
                 "the path is split",
                 tuple(p.version for p in self.parameters.values()),
             )
-        if self._clip is not False and self.use_smoothing and len(payload.segments) > 1:
+        if clipped and self.use_smoothing and len(payload.segments) > 1:
             # Keep visible samples and their brackets; remote pole tails ring globally.
-            inside = bounds.contains(payload.coords)
+            trim_bounds = (
+                _unclipped_box(bounds, clip_axes, payload.coords)
+                if unclipped
+                else bounds
+            )
+            inside = trim_bounds.contains(payload.coords)
             keep = inside.copy()
             keep[:-1] |= inside[1:]
             keep[1:] |= inside[:-1]
@@ -407,9 +468,11 @@ class _CurvePlot(Leaf):
                     valid=keep,
                 )
         payload = (smooth if self.use_smoothing else corners)(payload, bounds)
-        self._geometry_payload = (
-            payload if self._clip is False else clip_path(payload, bounds)
-        )
+        if clipped:
+            if unclipped:
+                bounds = _unclipped_box(bounds, clip_axes, payload.coords)
+            payload = clip_path(payload, bounds)
+        self._geometry_payload = payload
         self._place(frame)
         self._data_seen = system._data_version
         self._parameter_versions = {
@@ -426,10 +489,7 @@ class _CurvePlot(Leaf):
             self._dirty
             or self._data_seen != system._data_version
             or (self.parameters and self._parameters_changed())
-            or (
-                not isinstance(self._clip, bool)
-                and self._frame_seen != system.frame.version
-            )
+            or (self._clip_has_margin and self._frame_seen != system.frame.version)
         ):
             self._rebuild()
         else:
@@ -665,6 +725,7 @@ class _CurvePlot(Leaf):
             self._reversed = other._reversed
             self.use_smoothing = other.use_smoothing
             self._clip = other._clip
+            self._clip_has_margin = other._clip_has_margin
             self.line_style, self.dash, self._dash = (
                 other.line_style,
                 other.dash,
@@ -805,8 +866,9 @@ class FunctionPlot(_CurvePlot):
     **kwargs
         Function parameter values or bindings, native VMobject styles, and label,
         line_style, dash and clip. Clipping defaults to True; False disables it,
-        and a number gives a margin in scene units. Uncoloured plots take the next
-        colour in the system's cycle, starting with white.
+        and a number gives a margin in scene units. A tuple or list ``(cx, cy)``
+        sets each axis independently. Uncoloured plots take the next colour in
+        the system's cycle, starting with white.
 
     Notes
     -----
@@ -907,7 +969,9 @@ class LinePlot(_CurvePlot):
     system
         Coordinate system supplying bounds and placement.
     **kwargs
-        Native VMobject styles.
+        Native VMobject styles and artist options. ``clip`` accepts True, False,
+        a finite scene-unit margin, or a tuple or list ``(cx, cy)`` of these
+        policies for x and y independently.
     """
 
     def __init__(
@@ -938,7 +1002,9 @@ class ParametricPlot(_CurvePlot):
     discontinuities, dt
         Explicit gaps and their half-width.
     **kwargs
-        Native VMobject styles.
+        Native VMobject styles and artist options. ``clip`` accepts True, False,
+        a finite scene-unit margin, or a tuple or list ``(cx, cy)`` of these
+        policies for x and y independently.
     """
 
     def __init__(
@@ -974,7 +1040,7 @@ class _MarkerLeaf(_CurvePlot):
         source: ArraySource,
         index: int,
         system: mp.CartesianAxes,
-        clip: bool | float = True,
+        clip: _ClipInput = True,
         sample_warnings: _SampleWarnings | None = None,
     ) -> None:
         self._sample_warnings = sample_warnings or _SampleWarnings()
@@ -1009,13 +1075,13 @@ class _MarkerLeaf(_CurvePlot):
                 self.source,
                 "source contains invalid samples; points are hidden",
             )
-        visible = bool(
-            (payload.valid is None or payload.valid[0])
-            and (
-                self._clip is False
-                or _clip_box(system, self._clip).contains(payload.coords)[0]
-            )
-        )
+        axes = _clip_axes(self._clip)
+        visible = payload.valid is None or bool(payload.valid[0])
+        if visible and any(axis is not False for axis in axes):
+            bounds = _clip_box(system, self._clip)
+            if any(axis is False for axis in axes):
+                bounds = _unclipped_box(bounds, axes, payload.coords)
+            visible = bool(bounds.contains(payload.coords)[0])
         if visible != self._visible:
             if visible:
                 fill, stroke, background = self._opacities
@@ -1070,7 +1136,9 @@ class ScatterPlot(VGroup):
     label
         Legend entry text, or None when unset.
     clip
-        True, False, or a finite clipping margin in scene units.
+        True clips marker centres at the viewport, False disables clipping,
+        and a finite scene-unit margin expands or narrows it. A tuple or list
+        ``(cx, cy)`` applies these policies independently to x and y.
     **kwargs
         Native VMobject styles applied to the marker template.
     """
@@ -1083,13 +1151,13 @@ class ScatterPlot(VGroup):
         *,
         marker: Mobject | Marker | None = None,
         label: str | None = None,
-        clip: bool | float = True,
+        clip: _ClipInput = True,
         **kwargs: Unpack[_VMStyle],
     ) -> None:
         _validate_label(label)
-        _validate_clip(clip)
-        _clip_box(system, clip)
-        self._label, self._clip = label, clip
+        clip_value = _validate_clip(clip)
+        _clip_box(system, clip_value)
+        self._label, self._clip = label, clip_value
         self.source = ArraySource(xs, ys, kind="points")
         if marker is not None and not isinstance(marker, (Mobject, Marker)):
             raise TypeError("marker must be a Marker, Mobject or None")
@@ -1138,7 +1206,12 @@ class ScatterPlot(VGroup):
             children = [convert(child, index) for child in native.submobjects]
             if len(native.points):
                 leaf = _MarkerLeaf(
-                    native, self.source, index, system, clip, self._sample_warnings
+                    native,
+                    self.source,
+                    index,
+                    system,
+                    clip_value,
+                    self._sample_warnings,
                 )
                 leaf.submobjects = children
                 return leaf
@@ -1193,26 +1266,67 @@ class ScatterPlot(VGroup):
         """Return the legend label, or None when unset."""
         return self._label
 
-    def set_clip(self, value: bool | float) -> Self:
+    def set_clip(self, value: _ClipInput) -> Self:
         """Set the marker-centre clipping policy.
 
         Parameters
         ----------
         value
-            True, False, or a finite scene-unit margin.
+            True clips at the viewport, False disables clipping, and a finite
+            margin in scene units expands or narrows it. A tuple or list
+            ``(cx, cy)`` applies these policies independently to x and y.
+
+        Returns
+        -------
+        Self
+            This scatter after rebuilding its markers.
         """
-        _validate_clip(value)
+        clip = _validate_clip(value)
         if self._system is not None:
-            _clip_box(self._system, value)
-        self._clip = value
+            _clip_box(self._system, clip)
+        self._clip = clip
         for leaf in self.get_family():
             if isinstance(leaf, _MarkerLeaf):
-                leaf.set_clip(value)
+                leaf.set_clip(clip)
         return self
 
-    def get_clip(self) -> bool | float:
-        """Return the marker-centre clipping policy."""
+    def get_clip(self) -> _ClipValue:
+        """Return the marker-centre clipping policy.
+
+        Returns
+        -------
+        bool or float or tuple
+            The supplied policy; per-axis entries are returned as ``(cx, cy)``,
+            including when set from a list.
+        """
         return self._clip
+
+    def become(
+        self,
+        mobject: Mobject,
+        match_height: bool = False,
+        match_width: bool = False,
+        match_depth: bool = False,
+        match_center: bool = False,
+        stretch: bool = False,
+    ) -> Self:
+        """Adopt native target geometry and another scatter's clipping policy.
+
+        Parameters
+        ----------
+        mobject, match_height, match_width, match_depth, match_center, stretch
+            Native target and size/placement preparation options.
+        """
+        super().become(
+            mobject, match_height, match_width, match_depth, match_center, stretch
+        )
+        if isinstance(mobject, ScatterPlot):
+            self._clip = mobject._clip
+            for leaf in self.get_family():
+                if isinstance(leaf, _MarkerLeaf):
+                    leaf._clip = self._clip
+                    leaf._clip_has_margin = _clip_has_margin(self._clip)
+        return self
 
     def shift(self, *vectors: Vector3DLike) -> Self:
         """Translate markers, recording the operation in their local transforms.

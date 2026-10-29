@@ -306,6 +306,7 @@ class Morph(Animation):
         self.a.use_smoothing = self.b.use_smoothing
         self.a._reversed = self.b._reversed
         self.a._clip = self.b._clip
+        self.a._clip_has_margin = self.b._clip_has_margin
         self.a.line_style, self.a.dash, self.a._dash = (
             self.b.line_style,
             self.b.dash,

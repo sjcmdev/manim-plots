@@ -56,9 +56,15 @@ class _VMStyle(TypedDict, total=False):
     z_index: float
 
 
+type _Clip = bool | float
+type _ClipPair = tuple[_Clip, _Clip]
+type _ClipValue = _Clip | _ClipPair
+type _ClipInput = _ClipValue | list[_Clip]
+
+
 class _ArtistOptions(_VMStyle, total=False):
     label: str | None
-    clip: bool | float
+    clip: _ClipInput
     line_style: mp.LineStyle
     dash: tuple[float, float] | None
 
