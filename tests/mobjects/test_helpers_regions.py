@@ -24,6 +24,7 @@ import manim_plots as mp
 from .helpers import along, probe
 
 UNIT = (12 / 14) * (6 / 8)  # scene area of one data unit on the default axes
+CORNERS = (np.array([-1.0, -1.0, 0.0]), np.array([1.0, 1.0, 0.0]))
 
 
 def quarter(x):
@@ -164,7 +165,7 @@ def test_ar2_area_and_box_equal_manims_on_default_axes():
     a = ours.get_area(ours.plot(quarter), x_range=(-2, 3))
     b = theirs.get_area(theirs.plot(quarter), x_range=(-2, 3))
     assert area(a) == pytest.approx(abs(signed(np.asarray(b.get_vertices()))), rel=1e-3)
-    for corner in ([-1, -1, 0], [1, 1, 0]):
+    for corner in CORNERS:
         np.testing.assert_allclose(
             a.get_corner(corner), b.get_corner(corner), atol=1e-3
         )
@@ -281,7 +282,7 @@ def test_rr4_corners_equal_manims_on_default_axes(sample):
     )
     assert len(a) == len(b) == 4
     for ours_rect, their_rect in zip(a, b, strict=True):
-        for corner in ([-1, -1, 0], [1, 1, 0]):
+        for corner in CORNERS:
             np.testing.assert_allclose(
                 ours_rect.get_corner(corner), their_rect.get_corner(corner), atol=1e-6
             )
