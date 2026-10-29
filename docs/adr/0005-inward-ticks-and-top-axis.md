@@ -6,9 +6,10 @@
 - **Builds on:** ADR 0004 §2 (what joins the first release), §4 (a contract change before
   the release goes through an ADR), §8 and §9.
 - **Supersedes:** in `docs/acceptance/19-twin-axes.md`, TW-2's "ticks ... on the
-  outside" (the numbers stay outside); the outward default of an axis placed with an
-  `offset` (task 10); in `docs/acceptance/20-themes.md`, `origin`'s "ticks outward". The
-  scope defaults row *Tick shape* is amended by task 20.
+  outside" (the numbers stay outside) and TW-1's twin of a twin for the axis it shares
+  (§3); the outward default of an axis placed with an `offset` (task 10); in
+  `docs/acceptance/20-themes.md`, `origin`'s "ticks outward". The scope defaults row
+  *Tick shape* is amended by task 20.
 
 ## Context
 
@@ -59,9 +60,32 @@ Task 19b, after task 20:
 - `twiny` and the secondary axis shown in the gallery, a picture each and a film of an
   animated range carrying the top axis.
 
+### 3. Any pair of axes
+
+A plot binds to one x axis and one y axis, and every pair is one call away. Also task
+19b:
+
+- A twin's `twinx` and `twiny` share the calling system's other axis, matplotlib's
+  meaning: `ax.twinx(...).twiny(...)` is the system of the top and the right axis. Today
+  a twin of a twin shares the root's axis, so that call silently plots against the left
+  axis (probed 2026-10-29). A twin's parent stays the root.
+- `ax.twin(x=None, y=None)` returns the system of any existing x axis with any existing
+  y axis of `ax`'s family, given as the axis or as a system whose axis it is; `None`
+  keeps the calling system's. It is made once, draws nothing of its own, and binds
+  artists, follows ranges and joins the legend and the colour cycle as a twin does
+  *(default taken: the name, of the `twinx` family rather than `get_*`, because it
+  returns a system)*.
+
+```python
+right = ax.twinx(y_range=(0, 1))       # bottom x, right y
+top = ax.twiny(x_range=(0, 50))        # top x, left y
+corner = ax.twin(x=top, y=right)       # top x, right y
+corner.plot(f)                         # also: right.twiny(...) makes a new top axis
+```
+
 ## Consequences
 
 - Task 20 grows one row (TH-11) and a handful of changed baselines: the twin pictures and
   every border axis without a set direction.
-- Task 19b adds `secondary_xaxis` and `secondary_yaxis` to the public API and amends
-  scope rows F-606 and F-610 and the parity survey's *Mirrored decoration* row.
+- Task 19b adds `twin`, `secondary_xaxis` and `secondary_yaxis` to the public API and
+  amends scope rows F-606 and F-610 and the parity survey's *Mirrored decoration* row.
