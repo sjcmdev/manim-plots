@@ -283,16 +283,20 @@ def _crossings(curve: FloatArray, box: Box) -> tuple[FloatArray, FloatArray]:
     points = curve[:, :2] / scale
     for axis in range(2):
         p = points[:, axis]
+        coefficients = [
+            p[0],
+            3 * (p[1] - p[0]),
+            3 * (p[2] - 2 * p[1] + p[0]),
+            p[3] - 3 * p[2] + 3 * p[1] - p[0],
+        ]
         for bound in (box.lower[axis], box.upper[axis]):
-            coefficients = np.array(
-                [
-                    p[0] - bound / scale,
-                    3 * (p[1] - p[0]),
-                    3 * (p[2] - 2 * p[1] + p[0]),
-                    p[3] - 3 * p[2] + 3 * p[1] - p[0],
-                ]
-            )
-            solutions = np.polynomial.polynomial.polyroots(coefficients)
+            coefficients[0] = p[0] - bound / scale
+            # Roundoff in a lower-degree curve must not scale the companion matrix.
+            tolerance = 1e-14 * max(map(abs, coefficients))
+            degree = 3
+            while degree > 0 and abs(coefficients[degree]) <= tolerance:
+                degree -= 1
+            solutions = np.polynomial.polynomial.polyroots(coefficients[: degree + 1])
             for root in solutions:
                 if abs(root.imag) <= 1e-10 and 0 < root.real < 1:
                     roots.append(float(root.real))
