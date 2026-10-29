@@ -224,8 +224,9 @@ the `ReplacementTransform` transfer, `ax.remove`.
 `mobjects/legend.py`, `mobjects/animations.py`, `mobjects/artists.py`. F-710, F-801-F-807,
 F-912.
 
-- [ ] Acceptance table: legend placement and merging, the colour cycle, markers, dashes
-- [ ] `tests/mobjects/test_legend.py`, `test_style.py`, `test_animations.py`
+- [x] Acceptance table: legend placement and merging, the colour cycle, markers, dashes, the
+      `clip` keyword with a margin (asked for on 2026-10-29)
+- [x] `tests/mobjects/test_legend.py`, `test_style.py`, `test_animations.py`
       (`TraceCurve` in data order, `Morph`'s pairs); visual baselines
 
 ### task/13-hardening
