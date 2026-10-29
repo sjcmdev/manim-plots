@@ -130,6 +130,7 @@ These rows cover the mechanism; task 11's F-906 matrix covers every animation.
 |---|---|
 | RT-1 | F-914: the last frame of `ax` plus `ax.plot(np.sin)` is pixel-identical (Manim's tolerance) to the same scene with `VGroup` of `ax`'s submobjects but the frame — and so after `ax.set_color(RED)`, `ax.set_stroke(width=8)`, `ax.set_fill(BLUE, opacity=1)`, `ax.rotate(0.3)` |
 | RT-2 | F-915: the middle frame of `ax.animate.shift(2 * RIGHT)`, with the curve added before `ax` and after it, equals a still frame of `ax` and the curve shifted by `RIGHT` |
+| RT-4 | A leaf the system drops during a play draws nothing: Manim's Cairo `play` draws the family list it took when the play began, so a tick that leaves a range bound to a tracker must not keep its points. The middle frame of `play(t.animate.set_value(2.5))` with `ax.x.range.bind(lambda: (t - 3, t + 3))` equals a still frame of `x_range=(-1.75, 4.25, 1)`. Added after the first demo video showed the dropped ticks piled at the axis ends |
 | RT-3 | The first visual pair: `mp.Axes()` with `plot(np.sin)` and `Axes()` with `plot(np.sin)` in plain Manim (`__manim` twin); and `x_range=(-1, 10, 1), y_range=(-2, 2, 0.5)` with `plot(lambda x: 1 / (x - 4.5))` — the pole split and the clipping (F-705, F-706) — with its twin |
 
 ## BM — benchmark

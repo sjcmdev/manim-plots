@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from manim import BLUE, RED, RIGHT, Axes, Scene, VGroup
+from manim import BLUE, RED, RIGHT, Axes, Scene, ValueTracker, VGroup
 
 import manim_plots as mp
 
@@ -86,6 +86,31 @@ def test_rt2_a_bound_curve_does_not_freeze_in_the_background(curve_first):
     single, _ = render(still, "all")
     ((y, x),) = _origins(single.shape, tile)[:1]
     assert same_picture(middle, single[y : y + tile[0], x : x + tile[1]], tile)
+
+
+@pytest.mark.render
+def test_rt4_a_tick_dropped_during_a_play_is_not_drawn():
+    """A pan of a bound range: the middle frame equals a still of the range there, so
+    the ticks that left the range are not drawn at the axis end."""
+
+    def moving(scene: Scene) -> None:
+        t = ValueTracker(0.0)
+        ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-2, 2, 1))
+        ax.x.range.bind(lambda: (t.get_value() - 3, t.get_value() + 3))
+        scene.add(ax, ax.plot(np.sin))
+        scene.play(t.animate.set_value(2.5), run_time=1)
+
+    def still(scene: Scene) -> None:
+        ax = mp.Axes(x_range=(-1.75, 4.25, 1), y_range=(-2, 2, 1))
+        scene.add(ax, ax.plot(np.sin))
+
+    sheet, tile = render(moving, "all")
+    tiles = [
+        sheet[y : y + tile[0], x : x + tile[1]] for y, x in _origins(sheet.shape, tile)
+    ]
+    single, _ = render(still, "all")
+    ((y, x),) = _origins(single.shape, tile)[:1]
+    assert same_picture(tiles[3], single[y : y + tile[0], x : x + tile[1]], tile)
 
 
 @pytest.mark.render
