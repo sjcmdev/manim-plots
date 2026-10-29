@@ -86,15 +86,15 @@ def _configure_numbers(axis: Axis) -> None:
             if item.level == "major" or item.label is not None
         ]
     lo, hi = sorted(axis.range.value)
+    hides_zero = axis._hides_zero()
+    excluded = axis.numbers_to_exclude
+    if axis._default_exclusion and not hides_zero:
+        excluded = tuple(x for x in excluded if x != 0)
     values = np.array(
         [
             float(x)
             for x in candidates
-            if (
-                x not in axis.numbers_to_exclude
-                and lo <= x <= hi
-                and (x != 0 or not axis.exclude_origin_tick)
-            )
+            if x not in excluded and lo <= x <= hi and (x != 0 or not hides_zero)
         ]
     )
     formatted = axis.formatter.format_ticks(values)

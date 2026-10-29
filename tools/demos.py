@@ -20,6 +20,7 @@ from manim import (
     DOWN,
     LEFT,
     PI,
+    RED,
     RIGHT,
     UP,
     YELLOW,
@@ -39,6 +40,7 @@ from manim import (
 )
 
 import manim_plots as mp
+from manim_plots import MultipleLocator, TickDirection
 
 OUT = Path(__file__).parents[1] / "tests" / "visual" / "_out"
 DEMOS = OUT / "demos"
@@ -119,16 +121,18 @@ def pole(scene: Scene) -> None:
 def lifecycle(scene: Scene) -> None:
     """Play Manim's animations on a bound curve.
 
-    `Wiggle`; `Uncreate`, a range change, and `Create` drawing the current curve (Manim
-    would draw nothing); `Indicate(ax)` with the curve still; `FadeOut` and `FadeIn`.
+    `Wiggle`; `Uncreate`, a range change animated by a tracker, and `Create` drawing
+    the current curve (Manim would draw nothing); `Indicate(ax)` with the curve still;
+    `FadeOut` and `FadeIn`.
     """
     ax = mp.Axes(**SMALL)
     curve = ax.plot(np.cos, color=BLUE)
     scene.add(ax, curve)
     scene.play(Wiggle(curve))
     scene.play(Uncreate(curve))
-    ax.x.range = (-1, 5)
-    scene.wait(0.5)
+    left = ValueTracker(-3.0)
+    ax.x.range.bind(lambda: (left.get_value(), left.get_value() + 6))
+    scene.play(left.animate.set_value(-1.0))
     scene.play(Create(curve))
     scene.play(Indicate(ax))
     scene.play(FadeOut(curve))
@@ -201,6 +205,107 @@ def legend_and_styles(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def show_call(scene: Scene, shown: list[Text], code: str) -> None:
+    """Put the call being made at the top of the frame, replacing the previous one."""
+    new = Text(code, font="Consolas", font_size=22).to_edge(UP, buff=0.35)
+    if shown:
+        scene.remove(shown.pop())
+    shown.append(new)
+    scene.add(new)
+
+
+def legend_placement(scene: Scene) -> None:
+    """Place the legend: the default corner, the other three, and beside the axes.
+
+    `ax.legend()` sits in the upper right corner of the axes; `location` picks another
+    corner and `font_size` its size; each call replaces the axes' legend. The legend
+    is a mobject: `next_to` puts it outside the axes, and it moves with them.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-3, 3, 1), x_length=7, y_length=4.6)
+    ax.shift(1.6 * LEFT + 0.4 * DOWN)
+    curves = [
+        ax.plot(np.sin, label="sin x"),
+        ax.plot(np.cos, label="cos x", line_style=mp.LineStyle.DASHED),
+    ]
+    show_call(scene, shown, "ax.legend()")
+    legend = ax.legend()
+    scene.add(ax, *curves)
+    scene.play(FadeIn(legend))
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("upper left")')
+    ax.legend("upper left")
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("lower left")')
+    ax.legend("lower left")
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("lower right")')
+    ax.legend("lower right")
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("upper left", font_size=32)')
+    ax.legend("upper left", font_size=32)
+    scene.wait(1)
+    show_call(scene, shown, "ax.legend().next_to(ax, RIGHT, aligned_edge=UP)")
+    ax.legend().next_to(ax, RIGHT, aligned_edge=UP)
+    scene.wait(1)
+    show_call(scene, shown, "self.play(ax.animate.shift(0.8 * RIGHT))")
+    scene.play(ax.animate.shift(0.8 * RIGHT))
+    scene.wait(0.6)
+
+
+def axis_controls(scene: Scene) -> None:
+    """Restyle the axes one call at a time, each call shown on screen.
+
+    The axes move to the borders, a locator adds minor ticks, the ticks point out, the
+    grids appear and a mirrored x axis closes the box. The curve stays where its data
+    is throughout.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(
+        x_range=(-2, 10, 2),
+        y_range=(-1, 5, 1),
+        x_length=10,
+        y_length=5,
+        axis_config={"include_numbers": True},
+    ).shift(0.4 * DOWN)
+    curve = ax.plot(lambda x: 2.5 + 2 * np.sin(x), color=RED)
+    show_call(scene, shown, 'ax = mp.Axes(..., axis_config={"include_numbers": True})')
+    scene.add(ax, curve)
+    scene.wait(1)
+    show_call(scene, shown, 'ax.x.set_position("bottom")')
+    ax.x.set_position("bottom")
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.y.set_position("left")')
+    ax.y.set_position("left")
+    scene.wait(1.2)
+    show_call(
+        scene, shown, "ax.x.set_locator(MultipleLocator(2), minor=MultipleLocator(1))"
+    )
+    ax.x.set_locator(MultipleLocator(2), minor=MultipleLocator(1))
+    scene.wait(1.2)
+    show_call(scene, shown, "ax.x.set_tick_style(direction=TickDirection.OUT)")
+    ax.x.set_tick_style(direction=TickDirection.OUT)
+    scene.wait(1.2)
+    show_call(scene, shown, "ax.y.set_tick_style(direction=TickDirection.OUT)")
+    ax.y.set_tick_style(direction=TickDirection.OUT)
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.x.set_grid("major", stroke_opacity=0.5)')
+    ax.x.set_grid("major", stroke_opacity=0.5)
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.x.set_grid("minor", stroke_opacity=0.2)')
+    ax.x.set_grid("minor", stroke_opacity=0.2)
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.y.set_grid("major", stroke_opacity=0.5)')
+    ax.y.set_grid("major", stroke_opacity=0.5)
+    scene.wait(1.2)
+    show_call(scene, shown, "ax.x.mirror()")
+    ax.x.mirror()
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.x.set_tick_style("minor", length=0.25, color=YELLOW)')
+    ax.x.set_tick_style("minor", length=0.25, color=YELLOW)
+    scene.wait(1.2)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -211,6 +316,8 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     clip_margin,
     trace_and_morph,
     legend_and_styles,
+    legend_placement,
+    axis_controls,
 ]
 
 

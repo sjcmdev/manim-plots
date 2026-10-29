@@ -207,6 +207,8 @@ class Axis(VGroup):
         self.label_direction = np.asarray(native.label_direction, dtype=float)
         self.line_to_number_buff = native.line_to_number_buff
         self.numbers_to_exclude = tuple(native.numbers_to_exclude)
+        # Manim's default exclusion of 0, which follows the crossing (_hides_zero).
+        self._default_exclusion = True
         self.numbers_to_include = self._config.get("numbers_to_include")
         self.include_numbers = self._config.get("include_numbers", False)
         self.decimal_number_config = self._config.get(
@@ -406,6 +408,16 @@ class Axis(VGroup):
     def _versions(self) -> tuple[int, ...]:
         return tuple(parameter.version for parameter in self._parameters())
 
+    def _hides_zero(self) -> bool:
+        """Whether the tick and number at 0 are left out, as Manim leaves them out.
+
+        Manim's axes cross at the origin; once the other axis moves to a border or a
+        value, nothing crosses this axis at 0 and its tick and number come back.
+        """
+        other = self._system.get_axis(1 - self.index)
+        crossing = other._position == "origin" and other._position_fraction is None
+        return self.exclude_origin_tick and crossing
+
     def _cross_value(self) -> float:
         other = self._system.get_axis(1 - self.index)
         lo, hi = other.range.value
@@ -524,7 +536,7 @@ class Axis(VGroup):
         items = [
             item
             for item in self._items
-            if item.level == level and (item.value != 0 or not self.exclude_origin_tick)
+            if item.level == level and (item.value != 0 or not self._hides_zero())
         ]
         style = self._tick_styles[level]
         major_length = self._tick_styles["major"].get("length", 2 * self.tick_size)
@@ -545,7 +557,8 @@ class Axis(VGroup):
                     ]
                 )
                 local *= factors[:, None, None]
-        direction = style.get("direction", TickDirection.BOTH)
+        major = self._tick_styles["major"]
+        direction = style.get("direction", major.get("direction", TickDirection.BOTH))
         if direction is not TickDirection.BOTH:
             other = system.get_axis(1 - self.index)
             limits = other._scale.forward(other.range.value)
@@ -569,7 +582,8 @@ class Axis(VGroup):
                 leaf = TickLeaf(points, system)
                 leaf.match_style(self.line)
                 leaf.set_stroke(
-                    color=style.get("color", leaf.get_color()), width=style.get("width")
+                    color=style.get("color", leaf.get_color()),
+                    width=style.get("width", self._default_width(level)),
                 )
             else:
                 leaf._cache = points
@@ -663,6 +677,9 @@ class Axis(VGroup):
     ) -> Self:
         """Style one tick level, measuring length as its full scene length.
 
+        A minor level takes the major level's direction until its own is set, half its
+        length and three quarters of its width.
+
         Parameters
         ----------
         level
@@ -693,8 +710,18 @@ class Axis(VGroup):
             leaf.set_stroke(
                 color=leaf.get_color() if color is None else color, width=width
             )
+        if level == "major" and "width" not in self._tick_styles["minor"]:
+            for leaf in self._minor_leaves.values():
+                leaf.set_stroke(width=self._default_width("minor"))
         self._regenerate()
         return self
+
+    def _default_width(self, level: Level) -> float | None:
+        """Return an unset width: the line's for major, 3/4 of major's for minor."""
+        if level == "major":
+            return None
+        major = self._tick_styles["major"].get("width", self.line.get_stroke_width())
+        return 0.75 * float(major)
 
     def set_position(
         self, where: str | float = "origin", *, fraction: float | None = None
@@ -722,6 +749,7 @@ class Axis(VGroup):
                 raise ValueError("fraction must be between zero and one")
         self._position, self._position_fraction = where, fraction
         self._regenerate()
+        self._system.get_axis(1 - self.index)._regenerate()
         return self
 
     def set_tips(
@@ -1050,8 +1078,7 @@ class Axis(VGroup):
             [
                 item.value
                 for item in self._drawn_items()
-                if item.level == "major"
-                and (item.value != 0 or not self.exclude_origin_tick)
+                if item.level == "major" and (item.value != 0 or not self._hides_zero())
             ]
         )
 
@@ -1150,6 +1177,7 @@ class Axis(VGroup):
         self.include_numbers = True
         if excluding is not None:
             self.numbers_to_exclude = tuple(excluding)
+            self._default_exclusion = False
         self._number_options = dict(kwargs)
         if font_size is not None:
             self._number_options["font_size"] = font_size
