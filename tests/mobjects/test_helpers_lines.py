@@ -621,3 +621,24 @@ def test_dg3_the_antiderivative_follows_its_parent():
     integral = ax.plot_antiderivative_graph(parent)
     parent.set_parameters(a=2.0)
     np.testing.assert_allclose(values(ax, integral, XS), 2 * np.sin(XS), atol=1e-6)
+
+
+def test_hb1_a_secant_stays_clipped_on_every_frame_of_its_animation():
+    # The secant demo flickered past the axes for single frames (a root-solve defect).
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(-1, 6, 1), x_length=9, y_length=5)
+    graph = ax.plot(lambda x: x**2 / 4 + 0.5)
+    dx = ValueTracker(2.0)
+    group = ax.get_secant_slope_group(1, graph, dx=dx, secant_line_length=7)
+
+    def construct(scene: Scene) -> None:
+        scene.add(ax, graph, group)
+        scene.play(dx.animate.set_value(0.0), run_time=3)
+
+    frames = probe(
+        construct, lambda: np.array(group.secant_line.points, copy=True), frame_rate=30
+    )
+    lower, upper = ax.bounds.lower, ax.bounds.upper
+    for points in frames:
+        assert len(points) == 4  # one straight piece
+        assert (points[:, :2] >= lower - 1e-9).all()
+        assert (points[:, :2] <= upper + 1e-9).all()
