@@ -62,6 +62,23 @@ def test_a_clipped_spiral(visual):
     visual(construct)
 
 
+@pytest.mark.render
+def test_clip_per_axis(visual):
+    """`clip=(True, False)`: a blue curve over x in (-5, 5) cut at the axes' sides but
+    not at their top and bottom, beside a red one clipped on both axes (F-706,
+    ADR 0004)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(**RANGES)
+        free_y = ax.plot(
+            lambda x: 2.3 * np.sin(x), x_range=(-5, 5), clip=(True, False), color=BLUE
+        )
+        both = ax.plot(lambda x: 2.3 * np.cos(x), x_range=(-5, 5), color=RED)
+        scene.add(ax, free_y, both)
+
+    visual(construct)
+
+
 LINE_GRAPH = ([-2, -1, 0, 1, 2], [0, 1, 0.5, -1, 0])
 
 

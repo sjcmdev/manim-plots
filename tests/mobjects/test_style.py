@@ -329,3 +329,136 @@ def test_cl2_set_clip_rebuilds_and_reads_back():
     curve.set_clip(0.2)
     assert curve.get_clip() == 0.2
     assert extent(curve)[0] <= 2.2 + 1e-9
+
+
+# --- CP: clipping per axis (task 15) -------------------------------------------------
+
+
+def wide(clip):
+    """2.3 sin x over x in (-5, 5): it leaves the rectangle on both axes."""
+    return axes().plot(tall(), x_range=(-5, 5), clip=clip)
+
+
+def test_cp1_y_unclipped_reaches_past_the_top_and_stays_within_the_sides():
+    top, side = extent(wide((True, False)))
+    assert top == pytest.approx(2.3, abs=5e-3)  # a spline's overshoot
+    assert side <= 3.0 + 1e-9
+
+
+def test_cp1_x_unclipped_reaches_past_the_sides_and_stays_within_the_top():
+    top, side = extent(wide((False, True)))
+    assert side == pytest.approx(5.0, abs=1e-6)
+    assert top <= 2.0 + 1e-9
+
+
+def test_cp1_a_margin_on_one_axis_only():
+    top, side = extent(wide((0.2, False)))
+    assert 3.1 < side <= 3.2 + 1e-9
+    assert top == pytest.approx(2.3, abs=5e-3)
+    top, side = extent(wide((False, 0.2)))
+    assert side == pytest.approx(5.0, abs=1e-6)
+    assert 2.1 < top <= 2.2 + 1e-9
+
+
+@pytest.mark.parametrize("value", [True, False, 0.2, -0.5])
+def test_cp1_a_single_value_equals_its_pair(value):
+    np.testing.assert_array_equal(wide(value).points, wide((value, value)).points)
+
+
+def test_cp1_a_list_is_a_pair():
+    np.testing.assert_array_equal(
+        wide([True, False]).points, wide((True, False)).points
+    )
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda ax, clip: ax.line([-5, 0, 5], [0, 2.2, 0], clip=clip),
+        lambda ax, clip: ax.plot_parametric_curve(
+            lambda t: (4 * np.cos(t), 2.2 * np.sin(t)), t_range=(0, 6.28), clip=clip
+        ),
+        lambda ax, clip: ax.plot_line_graph([-5, 0, 5], [0, 2.2, 0], clip=clip)[
+            "line_graph"
+        ],
+    ],
+    ids=["line", "parametric", "line_graph"],
+)
+def test_cp2_every_line_like_artist_clips_per_axis(make):
+    top, side = extent(make(axes(), (True, False)))
+    assert side <= 3.0 + 1e-9 and top > 2.1
+    top, side = extent(make(axes(), (False, True)))
+    assert side > 3.9 and top <= 2.0 + 1e-9
+
+
+SCATTER = ([0.0, 4.0, 0.0, 4.0], [0.0, 0.0, 3.0, 3.0])  # in, x out, y out, both out
+
+
+@pytest.mark.parametrize(
+    ("clip", "shown"),
+    [
+        (True, [True, False, False, False]),
+        ((False, True), [True, True, False, False]),
+        ((True, False), [True, False, True, False]),
+        ((False, False), [True, True, True, True]),
+        ((1.5, True), [True, True, False, False]),
+        ((True, 1.5), [True, False, True, False]),
+    ],
+)
+def test_cp3_a_scatter_hides_points_outside_a_clipped_axis_only(clip, shown):
+    markers = axes().scatter(*SCATTER, clip=clip)
+    assert [m.get_fill_opacity() > 0 for m in markers] == shown
+
+
+def test_cp4_a_pole_splits_with_y_unclipped():
+    with pytest.warns(mp.ManimPlotsWarning):
+        curve = axes().plot(lambda x: 1 / (x - 0.5), clip=(True, False))
+    assert len(pieces(curve)) == 2
+    top, side = extent(curve)
+    assert top > 2.0 and side <= 3.0 + 1e-9
+
+
+@pytest.mark.parametrize(
+    ("clip", "error"),
+    [
+        ((True,), ValueError),
+        ((True, True, True), ValueError),
+        ((True, "x"), TypeError),
+        ((None, True), TypeError),
+        ((True, np.inf), ValueError),
+        ((np.nan, True), ValueError),
+        ((-3.5, True), ValueError),  # x narrowed to nothing
+        ((True, -2.5), ValueError),  # y narrowed to nothing
+        ((False, -2.5), ValueError),
+    ],
+)
+def test_cp5_a_bad_pair_raises_naming_clip(clip, error):
+    with pytest.raises(error, match="clip"):
+        axes().plot(np.sin, clip=clip)
+    curve = axes().plot(np.sin)
+    before = np.array(curve.points)
+    with pytest.raises(error, match="clip"):
+        curve.set_clip(clip)
+    assert curve.get_clip() is True
+    np.testing.assert_array_equal(curve.points, before)
+
+
+@pytest.mark.parametrize("clip", [(-2.5, True), (-2.5, False), (True, -1.5)])
+def test_cp5_a_margin_that_leaves_something_on_each_clipped_axis_is_accepted(clip):
+    axes().plot(np.sin, clip=clip)
+
+
+def test_cp6_set_clip_takes_a_pair_and_reads_it_back_as_a_tuple():
+    curve = wide(True)
+    assert curve.set_clip([False, True]) is curve
+    assert curve.get_clip() == (False, True)
+    assert isinstance(curve.get_clip(), tuple)
+    np.testing.assert_array_equal(curve.points, wide((False, True)).points)
+
+
+def test_cp6_become_takes_a_pair_over():
+    ax = axes()
+    curve = ax.plot(tall())
+    curve.become(ax.plot(tall(), clip=(True, False)))
+    assert curve.get_clip() == (True, False)
+    assert extent(curve)[0] == pytest.approx(2.3, abs=5e-3)
