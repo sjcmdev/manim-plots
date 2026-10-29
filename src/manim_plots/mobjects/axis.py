@@ -175,6 +175,9 @@ class Axis(VGroup):
             else:
                 leaf._cache = points
             current[item.key] = leaf
+        # Cairo keeps dropped leaves in the play's initial moving family.
+        for key in previous.keys() - current.keys():
+            previous[key]._cache = np.empty((0, 3))
         self._tick_leaves = current
         self.ticks.submobjects = list(current.values())
         self._range_seen = self.range.version

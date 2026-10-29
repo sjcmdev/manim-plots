@@ -230,7 +230,7 @@ class CartesianAxes(VGroup):
         Returns
         -------
         FloatArray
-            Coordinates of shape (2,) or (2, n).
+            Coordinates of shape (2,) or (n, 2).
         """
         values = np.asarray(point, dtype=float)
         if values.ndim not in (1, 2) or values.shape[-1] != 3:
@@ -243,7 +243,7 @@ class CartesianAxes(VGroup):
         result = self._data.inverse(local[:, :2])
         if not np.isfinite(result).all():
             raise ValueError("point maps to non-finite coordinates")
-        return result[0] if values.ndim == 1 else result.T
+        return result[0] if values.ndim == 1 else result
 
     point_to_coords = p2c
 

@@ -451,6 +451,18 @@ class FrameLeaf(Leaf):
         """Exclude hidden lattice nodes from visible boundary queries."""
         return self._empty_anchors
 
+    def reduce_across_dimension(
+        self, reduce_func: Callable[[Iterable[float]], float], dim: int
+    ) -> None:
+        """Exclude the lattice from family width, height and depth measurements.
+
+        Parameters
+        ----------
+        reduce_func, dim
+            Native boundary reduction arguments, intentionally unused.
+        """
+        return None
+
     def suspend_updating(self, recursive: bool = True) -> Self:
         """Freeze external artists if the animation returns the frame to its start.
 

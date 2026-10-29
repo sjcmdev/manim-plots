@@ -119,10 +119,14 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VMobject.pointwise_become_partial,
     VGroup.add,
     Mobject.remove,
+    Mobject.reduce_across_dimension,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Mobject.reduce_across_dimension": (
+            "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
+        ),
         "Mobject.remove": (
             "b57f7a7caadb6f17c0e9a2211a2b3ed39f43c48949238387901aba2ab78b4aa8"
         ),
@@ -356,6 +360,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Mobject.reduce_across_dimension": (
+            "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
+        ),
         "Mobject.remove": (
             "0de58573f90f6468ac258de89cad2eae2b84cdeddc859a67f492333259864f5d"
         ),
