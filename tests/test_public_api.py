@@ -48,6 +48,11 @@ EXPECTED = {
     "NullFormatter",
     # task 09
     "CartesianAxes",
+    # task 11
+    "FunctionPlot",
+    "LinePlot",
+    "ScatterPlot",
+    "ParametricPlot",
 }
 
 

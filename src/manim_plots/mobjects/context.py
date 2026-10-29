@@ -793,10 +793,11 @@ def writer_context() -> WriterContext | None:
                     container = values["self"]
                     result = WriterContext(container, frozenset(container.get_family()))
                     if code is Mobject.shift.__code__:
-                        result.vector = values["total_vector"].copy()
+                        # Manim passes a tuple through when one tuple is given.
+                        result.vector = np.array(values["total_vector"], dtype=float)
                     else:
                         result.function = values["func"]
-                        result.pivot = values["about_point"].copy()
+                        result.pivot = np.array(values["about_point"], dtype=float)
                         result.matrix = affine_context()
                         outer = frame.f_back
                         try:
