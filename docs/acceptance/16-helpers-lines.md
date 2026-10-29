@@ -132,3 +132,10 @@ class CartesianAxes:
   `test_derivative_and_antiderivative`, each with a `__manim` twin on Manim's `Axes`.
 - A frame-cost reading: a sliding `T` label and a secant with a tracker `dx` on F-1001's
   axes, recorded in this table, not gated.
+
+## Frame-cost reading
+
+2026-10-29, Codex's run on the maintainer's machine: F-1001's four plots of 2 000 samples
+under an animated range, plus a sliding `T` label and a secant with a tracker `dx`:
+`update` p95 3.91 ms, frame p95 20.4 ms over 60 frames. Not gated; the helpers add about
+0.5-1 ms to F-1001's 2.9-3.4 ms, which a later performance pass may revisit.

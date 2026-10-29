@@ -79,9 +79,14 @@ def test_hb2_a_tracker_slides_a_t_label_with_no_always_redraw():
         scene.add(ax, graph, label)
         scene.play(t.animate.set_value(3.0), run_time=1)
 
-    xs = run(construct, lambda: float(ax.p2c(label.triangle.get_top())[0]))
-    assert xs[-1] == pytest.approx(3.0, abs=1e-6)
-    assert len({round(x, 6) for x in xs}) > 3
+    frames = run(
+        construct,
+        lambda: (t.get_value(), float(ax.p2c(label.triangle.get_top())[0])),
+    )
+    for value, x in frames:  # the probe's last frame comes before the play's end
+        assert x == pytest.approx(value, abs=1e-6)
+    assert len({round(x, 6) for _, x in frames}) > 3
+    assert float(ax.p2c(label.triangle.get_top())[0]) == pytest.approx(3.0, abs=1e-6)
 
 
 def test_hb2_a_callable_input_is_read_every_frame():
@@ -93,8 +98,10 @@ def test_hb2_a_callable_input_is_read_every_frame():
         scene.add(ax, line)
         scene.play(t.animate.set_value(2.0), run_time=1)
 
-    xs = run(construct, lambda: float(ax.p2c(ends(line)[0])[0]))
-    assert xs[-1] == pytest.approx(2.0, abs=1e-6)
+    frames = run(construct, lambda: (t.get_value(), float(ax.p2c(ends(line)[0])[0])))
+    for value, x in frames:
+        assert x == pytest.approx(value, abs=1e-6)
+    assert float(ax.p2c(ends(line)[0])[0]) == pytest.approx(2.0, abs=1e-6)
 
 
 def test_hb3_a_scene_point_is_held_in_data():
