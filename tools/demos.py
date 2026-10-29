@@ -32,6 +32,7 @@ from manim import (
     Rotate,
     Scene,
     Text,
+    Transform,
     Uncreate,
     ValueTracker,
     Wiggle,
@@ -121,18 +122,16 @@ def pole(scene: Scene) -> None:
 def lifecycle(scene: Scene) -> None:
     """Play Manim's animations on a bound curve.
 
-    `Wiggle`; `Uncreate`, a range change animated by a tracker, and `Create` drawing
-    the current curve (Manim would draw nothing); `Indicate(ax)` with the curve still;
-    `FadeOut` and `FadeIn`.
+    `Wiggle`; `Uncreate`, a range change by `ax.animate.set_x_range`, and `Create`
+    drawing the current curve (Manim would draw nothing); `Indicate(ax)` with the curve
+    still; `FadeOut` and `FadeIn`.
     """
     ax = mp.Axes(**SMALL)
     curve = ax.plot(np.cos, color=BLUE)
     scene.add(ax, curve)
     scene.play(Wiggle(curve))
     scene.play(Uncreate(curve))
-    left = ValueTracker(-3.0)
-    ax.x.range.bind(lambda: (left.get_value(), left.get_value() + 6))
-    scene.play(left.animate.set_value(-1.0))
+    scene.play(ax.animate.set_x_range((-1, 5)))
     scene.play(Create(curve))
     scene.play(Indicate(ax))
     scene.play(FadeOut(curve))
@@ -306,6 +305,35 @@ def axis_controls(scene: Scene) -> None:
     scene.wait(1.2)
 
 
+def animate_data(scene: Scene) -> None:
+    """Animate the data with Manim's own `.animate`, each call shown on screen.
+
+    `ax.animate.set_x_range` pans the range while the ticks and numbers keep their
+    identity; a plot parameter animates through `curve.animate.set_parameters`; data and
+    geometry chain into one animation; `Transform` turns one plot into another.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(
+        x_range=(-3, 3, 1),
+        y_range=(-3, 3, 1),
+        x_length=9,
+        y_length=5,
+        axis_config={"include_numbers": True},
+    ).shift(0.3 * DOWN)
+    wave = ax.plot(lambda x, a=1.0: a * np.sin(x), color=BLUE)
+    scene.add(ax, wave)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((0, 10)))")
+    scene.play(ax.animate.set_x_range((0, 10)), run_time=2)
+    show_call(scene, shown, "self.play(wave.animate.set_parameters(a=2.5))")
+    scene.play(wave.animate.set_parameters(a=2.5), run_time=1.5)
+    show_call(scene, shown, "self.play(ax.animate.scale(0.7).set_x_range((-6, 6)))")
+    scene.play(ax.animate.scale(0.7).set_x_range((-6, 6)), run_time=2)
+    parabola = ax.plot(lambda x: x**2 / 6 - 2, color=YELLOW)
+    show_call(scene, shown, "self.play(Transform(wave, parabola))")
+    scene.play(Transform(wave, parabola), run_time=1.5)
+    scene.wait(0.6)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -318,6 +346,7 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     legend_and_styles,
     legend_placement,
     axis_controls,
+    animate_data,
 ]
 
 
