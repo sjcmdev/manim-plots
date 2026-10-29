@@ -99,3 +99,59 @@ def test_morph_frames(visual):
         scene.play(mp.Morph(zigzag, sine), run_time=1)
 
     visual(construct, frames="all")
+
+
+def themed_scene(name: str):
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(
+            x_range=(0, 10, 2),
+            y_range=(0, 4, 1),
+            x_length=9,
+            y_length=5,
+            axis_config={"include_numbers": True, "font_size": 24},
+            theme=name,
+        )
+        xs = np.linspace(0.5, 9.5, 10)
+        scene.add(
+            ax,
+            ax.plot(lambda x: 2 + np.sin(x), label="sin"),
+            ax.plot(lambda x: 2 + np.cos(x) / 2, label="cos"),
+            ax.scatter(xs, 0.5 + xs / 4, label="data"),
+            ax.get_axis_labels("t", "y"),
+            ax.legend(),
+        )
+
+    return construct
+
+
+@pytest.mark.render
+def test_theme_manim(visual):
+    """Theme `manim`, today's defaults: axes through the origin, tips (task 20)."""
+    visual(themed_scene("manim"))
+
+
+@pytest.mark.render
+def test_theme_origin(visual):
+    """Theme `origin`, Origin's default graph: a box, ticks out, a framed legend upper
+    left (task 20)."""
+    visual(themed_scene("origin"))
+
+
+@pytest.mark.render
+def test_theme_base(visual):
+    """Theme `base`, the maintainer's Base-plot template: a box, the major grid, a
+    framed legend (task 20)."""
+    visual(themed_scene("base"))
+
+
+@pytest.mark.render
+def test_theme_paper(visual):
+    """Theme `paper`, black and white: ticks in on four sides, dashes and markers
+    cycling (task 20)."""
+    visual(themed_scene("paper"))
+
+
+@pytest.mark.render
+def test_theme_lab(visual):
+    """Theme `lab`, graph paper: ticks in, four minor ticks, both grids (task 20)."""
+    visual(themed_scene("lab"))
