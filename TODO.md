@@ -201,12 +201,12 @@ F-901-F-905, F-914-F-917, F-1004, F-1007; F-701 and F-702 begun.
 `mobjects/axis.py`, `mobjects/system.py`. F-408, F-411-F-413, F-505-F-508, F-601-F-609,
 F-921, F-1009 (constructor, `axis_config`, defaults).
 
-- [ ] Acceptance table: axis parts, label layout, `NumberPlane`
-- [ ] `tests/mobjects/test_axis.py`, `test_defaults.py` (every row of both defaults
+- [x] Acceptance table: axis parts, label layout, `NumberPlane`
+- [x] `tests/mobjects/test_axis.py`, `test_defaults.py` (every row of both defaults
       tables against Manim's own `Axes` and `NumberPlane`, style attributes included,
       under a changed `tempconfig` too), `test_number_plane.py`; visual baselines of
       axes and label layout
-- [ ] F-1001 with labels from a warm glyph cache
+- [ ] F-1001 with labels from a warm glyph cache — measured with task 13's benchmark
 
 ### task/11-artists-animate
 
