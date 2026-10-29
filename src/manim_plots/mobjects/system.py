@@ -162,6 +162,8 @@ class CartesianAxes(VGroup):
         Positive axis lengths, defaulting to Manim's frame-based defaults.
     axis_config, x_axis_config, y_axis_config
         Recursively merged NumberLine options; per-axis values take precedence.
+        An unknown key raises ValueError naming the key. A unit_size without an
+        explicit axis length sets the length; supplying both raises ValueError.
     tips
         Default for each axis's include_tip option.
     x_scale, y_scale
@@ -173,6 +175,31 @@ class CartesianAxes(VGroup):
         Adapt an omitted length or widen a range to satisfy the aspect ratio.
     **kwargs
         Native VGroup style and mobject options.
+
+    Notes
+    -----
+    Registered curves follow permanent changes of this system, including shifts,
+    scales and rotations. They stay still throughout animations that return the
+    frame to its start, including Indicate, Wiggle and ``Rotate(ax, TAU)``.
+    Animating both the axes and a curve's shift moves the curve twice. A geometric
+    operation on a VGroup containing both moves it once.
+
+    To determine whether a change is permanent, an animation runs on a copy first.
+    Its callbacks therefore run once more than in plain Manim; avoid relying on
+    callback side effects. After a non-affine deformation, the frame is a bilinear
+    approximation, exact at its lattice nodes. A singular frame refuses p2c and
+    operations on a curve that need the frame's inverse.
+
+    The invisible frame is the last family member. With Manim's default lag ratio,
+    ``Create(ax)`` finishes its visible leaves at 24/25 of the run. Use DrawAxes to
+    draw without that lag slot. Transform pairs ticks by locator key rather than
+    family position; unmatched ticks fade out or in. Changing scale type requires
+    FadeTransform.
+
+    Curves are clipped by default, plots use a colour cycle starting with white,
+    and overlapping number labels hide the later label. Tick locations are integer
+    multiples of the step, and scientific-notation steps count their exponent when
+    choosing decimal places. See plot and the Axis decoration methods for controls.
     """
 
     _color_index: int = 0
@@ -795,6 +822,13 @@ class CartesianAxes(VGroup):
         -------
         FloatArray
             Shape (3,), (3, n), or (n, 3), following the input convention.
+
+        Raises
+        ------
+        ValueError
+            If a coordinate is non-finite or outside its scale's domain, or the
+            configured data range is collapsed. Conversions raise instead of
+            returning NaN and never clamp a value into the domain.
         """
         values = np.asarray(coords, dtype=float)
         if not np.isfinite(values).all():
@@ -838,6 +872,19 @@ class CartesianAxes(VGroup):
         -------
         FloatArray
             Coordinates of shape (2,) or (n, 2).
+
+        Raises
+        ------
+        ValueError
+            If a point is non-finite, outside the frame's plane tolerance, or has
+            no valid inverse, including a singular frame or collapsed data range.
+            Invalid conversions raise rather than returning NaN or clamping.
+
+        Notes
+        -----
+        A point within 1e-6 times the frame size of the fitted plane is projected
+        onto it. For a non-affine frame, inversion returns the branch reached by
+        Newton iteration from the affine fit's guess; failure to converge raises.
         """
         values = np.asarray(point, dtype=float)
         if values.ndim not in (1, 2) or values.shape[-1] != 3:
@@ -1089,6 +1136,25 @@ class CartesianAxes(VGroup):
             Function, optional x_range and use_vectorized; or array xs and ys.
         **kwargs
             Named inputs, function parameters, native styles and sampling options.
+
+        Notes
+        -----
+        A callable creates a FunctionPlot; array inputs create a LinePlot. Callable
+        arguments after the input coordinate become versioned plot parameters,
+        with values or bindings supplied by keyword. A parameter whose name is a
+        native style keyword raises ValueError.
+
+        The function runs again on resampling. A lambda closing over a loop
+        variable sees its last value then: bind it with ``lambda x, k=k: k * x``
+        to preserve each iteration's value. The default also exposes k as a plot
+        parameter, which can be changed with ``curve.set_parameters(k=2)``.
+
+        Manim's x_range, use_vectorized, use_smoothing, discontinuities and dt keep
+        their meaning. A range step caps sample spacing independently of ticks.
+        Curves split at invalid samples and poles, and clip to the viewport by
+        default. Use ``clip=False`` to disable clipping or a numeric margin in
+        scene units to expand or narrow it. Uncoloured plots advance a cycle whose
+        first colour is white; an explicit colour does not advance it.
         """
         if args:
             function = args[0]
@@ -1391,6 +1457,14 @@ class CartesianAxes(VGroup):
         ----------
         *artists
             Artists with this system as their single owner.
+
+        Notes
+        -----
+        ``ax.add(curve)`` registers the curve without making it a submobject,
+        unlike Manim's add. Add both axes and curves to the Scene explicitly.
+        Registration makes the curve follow the system's placement and data.
+        Adding it again is harmless; binding it to another system raises until
+        it is unregistered with remove.
         """
         for artist in artists:
             if not isinstance(artist, (_CurvePlot, ScatterPlot)):
