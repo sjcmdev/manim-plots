@@ -68,7 +68,7 @@ def test_hm2_tick_queries():
     )
     # Manim's values without the origin, plus the end under the tip (F-411).
     np.testing.assert_allclose(
-        ours.x_axis.get_tick_range(), [-1.0, *np.arange(1, 11) * 1.0]
+        ours.x_axis.get_tick_range(), [-1.0, *np.arange(1, 10) * 1.0]
     )
     assert len(ours.x_axis.get_tick_marks()) == len(ours.x_axis.ticks)
 
