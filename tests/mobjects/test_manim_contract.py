@@ -155,6 +155,28 @@ ADDED_BY_TASK_11 = [
 # Task 13: the animation family walk reads Manim's cached family (PF-1).
 ADDED_BY_TASK_13 = ["Mobject.family_members_with_points"]
 
+# Task 16: the bound helpers match Manim's on default axes, so a change to Manim's own
+# helpers, or to the line and dash classes they build on, is a review step.
+ADDED_BY_TASK_16 = [
+    "CoordinateSystem.get_line_from_axis_to_point",
+    "CoordinateSystem.get_vertical_line",
+    "CoordinateSystem.get_horizontal_line",
+    "CoordinateSystem.get_lines_to_point",
+    "CoordinateSystem.get_vertical_lines_to_graph",
+    "CoordinateSystem.get_T_label",
+    "CoordinateSystem.angle_of_tangent",
+    "CoordinateSystem.slope_of_tangent",
+    "CoordinateSystem.get_secant_slope_group",
+    "CoordinateSystem.plot_derivative_graph",
+    "CoordinateSystem.plot_antiderivative_graph",
+    "DashedLine.__init__",
+    "DashedLine._calculate_num_dashes",
+    "DashedVMobject.__init__",
+    "TangentLine.__init__",
+    "Line.__init__",
+    "Line._account_for_buff",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -174,6 +196,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_11
         + ADDED_BY_TASK_12
         + ADDED_BY_TASK_13
+        + ADDED_BY_TASK_16
     )
 
 

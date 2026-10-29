@@ -275,8 +275,11 @@ Manim's drop lines and calculus helpers, bound: `get_vertical_line`,
 `angle_of_tangent`, `get_tangent_line`, `get_tangent_vector`, `get_secant_slope_group`,
 `plot_derivative_graph`, `plot_antiderivative_graph`.
 
-- [ ] Acceptance table: the bound-helper base, each helper's signature, the defects fixed
-- [ ] Implementation, tests against Manim's helpers, visual pairs, gate
+- [x] Acceptance table: the bound-helper base, each helper's signature, the defects fixed
+      — `docs/acceptance/16-helpers-lines.md`
+- [x] Implementation, tests against Manim's helpers, visual pairs, gate — 62 tests in
+      `tests/mobjects/test_helpers_lines.py`, three candidate pairs; 17 Manim symbols
+      pinned
 
 ### task/17-helpers-regions
 

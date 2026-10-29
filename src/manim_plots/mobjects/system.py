@@ -11,8 +11,13 @@ import numpy as np
 from manim import (
     BLUE_D,
     DEFAULT_DOT_RADIUS,
+    GREEN,
+    MED_SMALL_BUFF,
     PURE_YELLOW,
+    WHITE,
+    DashedLine,
     Dot,
+    Line,
     LinearBase,
     LogBase,
     Mobject,
@@ -74,6 +79,24 @@ from manim_plots.mobjects.context import (
     animation_context,
     data_interpolation,
     playback_context,
+)
+from manim_plots.mobjects.helpers import (
+    HelperGroup,
+    HelperLine,
+    _DerivedPlot,
+    _drop,
+    _DropOptions,
+    _graph,
+    _HelperOptions,
+    _number,
+    _parameter,
+    _reference,
+    _secant,
+    _SlopeOptions,
+    _t_label,
+    _tangent_helper,
+    _TangentOptions,
+    _verticals,
 )
 from manim_plots.mobjects.leaves import (
     BoundLabel,
@@ -1402,6 +1425,395 @@ class CartesianAxes(VGroup):
         return self.c2p(*self.i2gc(x, graph))
 
     input_to_graph_point = i2gp
+
+    def get_line_from_axis_to_point(
+        self,
+        index: int,
+        point: object,
+        line_func: type[Line] = DashedLine,
+        line_config: dict[str, Any] | None = None,
+        color: ParsableManimColor | None = None,
+        stroke_width: float = 2,
+    ) -> HelperLine:
+        """Draw a bound drop line from the axis where it is displayed.
+
+        Parameters
+        ----------
+        index, point, line_func, line_config, color, stroke_width
+            Manim's arguments; point also accepts a Mobject or scene-point callable.
+
+        Returns
+        -------
+        HelperLine
+            Registered plotting leaf, unlike Manim's Line or DashedLine. Static
+            scene points are held in data coordinates; the helper follows edits.
+        """
+        return _drop(
+            self,
+            index,
+            point,
+            line_func=line_func,
+            line_config=line_config,
+            color=color,
+            stroke_width=stroke_width,
+        )
+
+    def get_vertical_line(
+        self, point: object, **kwargs: Unpack[_DropOptions]
+    ) -> HelperLine:
+        """Draw a bound drop line from the displayed x axis.
+
+        Parameters
+        ----------
+        point, **kwargs
+            Scene point or live point, and get_line_from_axis_to_point options.
+
+        Returns
+        -------
+        HelperLine
+            A registered leaf following data and placement, unlike Manim's line.
+        """
+        return self.get_line_from_axis_to_point(0, point, **kwargs)
+
+    def get_horizontal_line(
+        self, point: object, **kwargs: Unpack[_DropOptions]
+    ) -> HelperLine:
+        """Draw a bound drop line from the displayed y axis.
+
+        Parameters
+        ----------
+        point, **kwargs
+            Scene point or live point, and get_line_from_axis_to_point options.
+
+        Returns
+        -------
+        HelperLine
+            A registered leaf following data and placement, unlike Manim's line.
+        """
+        return self.get_line_from_axis_to_point(1, point, **kwargs)
+
+    def get_lines_to_point(
+        self, point: object, **kwargs: Unpack[_DropOptions]
+    ) -> HelperGroup:
+        """Return horizontal then vertical bound drop lines, as in Manim.
+
+        Parameters
+        ----------
+        point, **kwargs
+            Scene point or live point, and drop-line options.
+
+        Returns
+        -------
+        HelperGroup
+            Named horizontal_line and vertical_line, following the system unlike
+            Manim's static group.
+        """
+        group = HelperGroup()
+        group.horizontal_line = self.get_horizontal_line(point, **kwargs)
+        group.vertical_line = self.get_vertical_line(point, **kwargs)
+        group.add(group.horizontal_line, group.vertical_line)
+        return group
+
+    def get_vertical_lines_to_graph(
+        self,
+        graph: _CurvePlot,
+        x_range: Sequence[object] | None = None,
+        num_lines: int = 20,
+        **kwargs: Unpack[_DropOptions],
+    ) -> HelperGroup:
+        """Draw equally spaced bound drops from the x axis to a graph.
+
+        Parameters
+        ----------
+        graph, x_range, num_lines, **kwargs
+            Manim's arguments; range endpoints also accept trackers or callables.
+
+        Returns
+        -------
+        HelperGroup
+            Registered lines that follow their graph and range, unlike Manim's.
+        """
+        return _verticals(self, graph, x_range, num_lines, **kwargs)
+
+    def axvline(
+        self,
+        x: object,
+        ymin: object = 0,
+        ymax: object = 1,
+        **style: Unpack[_HelperOptions],
+    ) -> HelperLine:
+        """Draw a vertical reference line with matplotlib's viewport fractions.
+
+        Parameters
+        ----------
+        x, ymin, ymax, **style
+            Data x, height fractions, and independently persistent artist style.
+            Numbers also accept trackers or zero-argument callables.
+
+        Returns
+        -------
+        HelperLine
+            Solid bound artist; Manim has no corresponding helper.
+        """
+        return _reference(self, 0, x, ymin, ymax, **style)
+
+    def axhline(
+        self,
+        y: object,
+        xmin: object = 0,
+        xmax: object = 1,
+        **style: Unpack[_HelperOptions],
+    ) -> HelperLine:
+        """Draw a horizontal reference line with matplotlib's viewport fractions.
+
+        Parameters
+        ----------
+        y, xmin, xmax, **style
+            Data y, width fractions, and independently persistent artist style.
+            Numbers also accept trackers or zero-argument callables.
+
+        Returns
+        -------
+        HelperLine
+            Solid bound artist; Manim has no corresponding helper.
+        """
+        return _reference(self, 1, y, xmin, xmax, **style)
+
+    def get_T_label(
+        self,
+        x_val: object,
+        graph: _CurvePlot,
+        label: object = None,
+        label_color: ParsableManimColor | None = None,
+        triangle_size: float = MED_SMALL_BUFF,
+        triangle_color: ParsableManimColor | None = WHITE,
+        line_func: type[Line] = Line,
+        line_color: ParsableManimColor = PURE_YELLOW,
+        *,
+        label_direction: ArrayLike = (0, -1, 0),
+        label_buff: float = MED_SMALL_BUFF,
+    ) -> HelperGroup:
+        """Return a sliding T label anchored to the displayed x axis.
+
+        Parameters
+        ----------
+        x_val, graph, label, label_color, triangle_size, triangle_color
+            Manim's arguments; x_val may be bound, and label may be f(x_val).
+        line_func, line_color, label_direction, label_buff
+            Line type and colour, and the label's side and scene-unit separation.
+
+        Returns
+        -------
+        HelperGroup
+            Named label (when supplied), triangle and line in Manim's order.
+            Unlike Manim, the triangle touches a relocated axis and all parts
+            follow the graph and system without always_redraw.
+        """
+        return _t_label(
+            self,
+            x_val,
+            graph,
+            label,
+            label_color,
+            triangle_size,
+            triangle_color,
+            line_func,
+            line_color,
+            label_direction,
+            label_buff,
+        )
+
+    def angle_of_tangent(
+        self, x: object, graph: _CurvePlot, dx: object = 1e-8
+    ) -> float:
+        """Return the data-space chord angle, with Manim's meaning.
+
+        Parameters
+        ----------
+        x, graph, dx
+            Input, bound graph and forward difference; numbers accept bindings.
+
+        Returns
+        -------
+        float
+            Angle in radians. Unlike Manim's sampled graph queries, source
+            queries are exact and independent of the displayed frame.
+        """
+        _graph(self, graph)
+        value = _number(_parameter(x, "x").value, "x")
+        delta = _number(_parameter(dx, "dx").value, "dx")
+        if delta == 0:
+            raise ValueError("dx must be nonzero")
+        a, b = graph.source.at([value, value + delta])
+        chord = b - a
+        return float(np.arctan2(chord[1], chord[0]))
+
+    def slope_of_tangent(
+        self, x: object, graph: _CurvePlot, **kwargs: Unpack[_SlopeOptions]
+    ) -> float:
+        """Return the tangent of the data-space angle, as in Manim.
+
+        Parameters
+        ----------
+        x, graph, **kwargs
+            Input, bound graph and angle_of_tangent options.
+
+        Returns
+        -------
+        float
+            Source slope; unlike Manim it uses exact source queries.
+        """
+        return float(np.tan(self.angle_of_tangent(x, graph, **kwargs)))
+
+    def get_tangent_line(
+        self,
+        x: object,
+        graph: _CurvePlot,
+        length: object = 1,
+        **style: Unpack[_TangentOptions],
+    ) -> HelperLine:
+        """Draw a centred tangent of a given scene length on the mapped curve.
+
+        Parameters
+        ----------
+        x, graph, length, **style
+            Bound input, graph, scene length and artist style.
+
+        Returns
+        -------
+        HelperLine
+            A bound tangent queried by x, unlike Manim's TangentLine queried
+            by path proportion. Central mapped differences handle log and warp.
+        """
+        return cast(HelperLine, _tangent_helper(self, x, graph, length, **style))
+
+    def get_tangent_vector(
+        self,
+        x: object,
+        graph: _CurvePlot,
+        length: object = 1,
+        **style: Unpack[_TangentOptions],
+    ) -> HelperGroup:
+        """Draw an arrow along the mapped tangent, starting on the graph.
+
+        Parameters
+        ----------
+        x, graph, length, **style
+            Bound input, graph, scene length or f(slope), and artist style.
+            tip_length and tip_width default to Manim's 0.35 scene units.
+
+        Returns
+        -------
+        HelperGroup
+            Named line and tip. Manim has no graph-bound counterpart.
+        """
+        return cast(
+            HelperGroup, _tangent_helper(self, x, graph, length, vector=True, **style)
+        )
+
+    def get_secant_slope_group(
+        self,
+        x: object,
+        graph: _CurvePlot,
+        dx: object = None,
+        dx_line_color: ParsableManimColor = PURE_YELLOW,
+        dy_line_color: ParsableManimColor | None = None,
+        dx_label: object = None,
+        dy_label: object = None,
+        include_secant_line: bool = True,
+        secant_line_color: ParsableManimColor = GREEN,
+        secant_line_length: object = 10,
+        *,
+        dx_label_direction: ArrayLike | None = None,
+        dy_label_direction: ArrayLike | None = None,
+    ) -> HelperGroup:
+        """Return bound secant legs, optional labels and an optional secant.
+
+        Parameters
+        ----------
+        x, graph, dx, dx_line_color, dy_line_color, dx_label, dy_label
+            Manim's inputs and part styles; x and dx accept bindings and labels
+            accept f(dx). Omitted dx is a tenth of the span at the call.
+        include_secant_line, secant_line_color, secant_line_length
+            Manim's secant visibility, colour and scene length.
+        dx_label_direction, dy_label_direction
+            Optional overrides for the sign-dependent sides of the labels.
+
+        Returns
+        -------
+        HelperGroup
+            Manim's part names and order. Unlike Manim, legs follow the system's
+            axes, inputs stay bound, and dx=0 gives the tangent limit.
+        """
+        return _secant(
+            self,
+            x,
+            graph,
+            dx,
+            dx_line_color,
+            dy_line_color,
+            dx_label,
+            dy_label,
+            include_secant_line,
+            secant_line_color,
+            secant_line_length,
+            dx_label_direction,
+            dy_label_direction,
+        )
+
+    def plot_derivative_graph(
+        self, graph: _CurvePlot, color: ParsableManimColor = GREEN, **kwargs: object
+    ) -> FunctionPlot:
+        """Plot the data derivative while following the parent graph.
+
+        Parameters
+        ----------
+        graph, color, **kwargs
+            Parent, Manim's default green, and ordinary plot options.
+
+        Returns
+        -------
+        FunctionPlot
+            Unlike Manim, uses central differences with step
+            cbrt(eps)*max(1, abs(x)) and follows the parent's parameters/source.
+        """
+        result = _DerivedPlot(self, graph, False, 0, color=color, **kwargs)
+        self.add(result)
+        return result
+
+    def plot_antiderivative_graph(
+        self,
+        graph: _CurvePlot,
+        y_intercept: float = 0,
+        samples: int = 50,
+        use_vectorized: bool = False,
+        **kwargs: object,
+    ) -> FunctionPlot:
+        """Plot a cached primitive following its parent graph.
+
+        Parameters
+        ----------
+        graph, y_intercept, samples, use_vectorized, **kwargs
+            Manim's arguments and plot options. samples is accepted but ignored;
+            cached evaluation supports scalar and vector queries alike.
+
+        Returns
+        -------
+        FunctionPlot
+            y_intercept plus the integral from zero. Unlike Manim, integrates
+            once per change; if zero is outside the parent's range/domain, the
+            anchor is the start of that range instead.
+        """
+        result = _DerivedPlot(
+            self,
+            graph,
+            True,
+            _number(y_intercept, "y_intercept"),
+            use_vectorized=use_vectorized,
+            **kwargs,
+        )
+        self.add(result)
+        return result
 
     def legend(
         self,
