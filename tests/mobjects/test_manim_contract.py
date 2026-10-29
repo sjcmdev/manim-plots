@@ -144,6 +144,14 @@ ADDED_BY_TASK_12 = [
     "Animation.interpolate_mobject",
 ]
 
+# Task 11 part B: Manim's scene caching hashes the play call (MX-3).
+ADDED_BY_TASK_11 = [
+    "get_json",
+    "get_hash_from_play_call",
+    "_CustomEncoder.default",
+    "_Memoizer._handle_already_processed",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -160,6 +168,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_ADR_0003
         + ADDED_BY_TASK_09
         + ADDED_BY_TASK_10
+        + ADDED_BY_TASK_11
         + ADDED_BY_TASK_12
     )
 

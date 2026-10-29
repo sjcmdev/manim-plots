@@ -80,7 +80,8 @@ ON_CURVE: dict[str, tuple[Make, bool]] = {
     "GrowFromCenter": (GrowFromCenter, True),
     "Uncreate": (Uncreate, False),
     "FadeOut": (FadeOut, False),
-    "ShrinkToCenter": (ShrinkToCenter, False),
+    # A transform to a copy of the curve, an artist target: adopted, so it rebuilds.
+    "ShrinkToCenter": (ShrinkToCenter, True),
     "ShowPassingFlash": (lambda m: ShowPassingFlash(m, time_width=0.5), False),
     "Indicate": (Indicate, True),
     "Wiggle": (Wiggle, True),
@@ -94,7 +95,8 @@ ON_CURVE: dict[str, tuple[Make, bool]] = {
     ),
     "MoveToTarget": (to_target, True),
     ".animate.shift": (lambda m: m.animate.shift(RIGHT), True),
-    "Homotopy": (lambda m: Homotopy(wave, m), True),
+    # No target: S with the final shape (ADR 0003 §5, rule 6), so it stays.
+    "Homotopy": (lambda m: Homotopy(wave, m), False),
 }
 
 
