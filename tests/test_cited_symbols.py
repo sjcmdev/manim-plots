@@ -20,6 +20,9 @@ DOCS = (
     Path(__file__).parents[1] / "docs" / "scope.md",
     Path(__file__).parents[1] / "docs" / "grill-log.md",
     *sorted((Path(__file__).parents[1] / "docs" / "adr").glob("*.md")),
+    # The acceptance tables and the parity survey cite Manim too (row SY-1, task 13).
+    *sorted((Path(__file__).parents[1] / "docs" / "acceptance").glob("*.md")),
+    Path(__file__).parents[1] / "docs" / "parity-survey.md",
 )
 
 # The Manim module each cited file name lives in. A citation names the file, because
@@ -45,7 +48,7 @@ MODULE_OF_FILE = {
 CITATION = re.compile(r"`(?:[a-z_]+/)*([a-z_]+\.py)::([A-Za-z_][A-Za-z0-9_.]*)`")
 
 # Prose describing the citation format itself, not a citation.
-PLACEHOLDERS = {("file.py", "Symbol")}
+PLACEHOLDERS = {("file.py", "Symbol"), ("module.py", "Symbol")}
 
 
 def citations() -> set[tuple[str, str]]:

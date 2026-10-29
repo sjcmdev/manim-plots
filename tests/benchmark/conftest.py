@@ -33,6 +33,8 @@ from manim.renderer.cairo_renderer import CairoRenderer
 
 ROOT = Path(__file__).parents[2]
 OUT = ROOT / ".benchmarks"
+# The readings the release ships with (row PF-4 of task 13), written with --record.
+RECORD = ROOT / "docs" / "benchmarks" / "0.1.json"
 CONFIG = {
     "pixel_width": 1920,
     "pixel_height": 1080,
@@ -152,6 +154,17 @@ def measure_frames(
             **asdict(stats),
         }
         out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+        if request.config.getoption("--record"):
+            kept = (
+                json.loads(RECORD.read_text(encoding="utf-8"))
+                if RECORD.exists()
+                else {"readings": {}}
+            )
+            kept["machine"] = record["machine"]
+            kept["when"] = record["when"]
+            kept["readings"][request.node.nodeid] = asdict(stats)
+            RECORD.parent.mkdir(parents=True, exist_ok=True)
+            RECORD.write_text(json.dumps(kept, indent=2) + "\n", encoding="utf-8")
         report.append(
             f"{request.node.name}: {stats.frames} frames, update p95 "
             f"{stats.update.p95:.2f} ms, frame p95 {stats.frame.p95:.2f} ms, setup "
