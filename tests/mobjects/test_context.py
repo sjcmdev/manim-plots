@@ -91,6 +91,37 @@ def test_wr2_a_container_holding_the_system_moves_the_curve_once(order):
     assert_same([*visible_leaves(ax), curve], reference.submobjects)
 
 
+def test_wr2_plain_tuples_are_vectors_and_pivots_as_in_manim():
+    ax, curve = system()
+    reference = VGroup(*twins(ax, curve))
+    VGroup(ax, curve).shift((1.0, -0.5, 0.0))
+    reference.shift((1.0, -0.5, 0.0))
+    assert_same([*visible_leaves(ax), curve], reference.submobjects)
+    alone, twin = VGroup(curve, Dot()), VGroup(plain(curve), Dot())
+    alone.shift((0.0, 1.0, 0.0))
+    twin.shift((0.0, 1.0, 0.0))
+    np.testing.assert_allclose(curve.points, twin[0].points, atol=1e-9)
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [
+        lambda m: m.rotate(0.4, about_point=np.array([1.0, 0.0, 0.0])),
+        lambda m: m.scale(2, about_point=np.array([1.0, -0.5, 0.0])),
+        lambda m: m.rotate(0.4, about_point=(1.0, 0.0, 0.0)),
+        lambda m: m.stretch(1.5, 0, about_point=np.array([-1.0, 0.0, 0.0])),
+    ],
+    ids=["rotate", "scale", "rotate, tuple pivot", "stretch"],
+)
+def test_wr3_a_container_operation_about_a_given_point(operation):
+    # Found in task 11: the explicit pivot of a container's operation was misplaced.
+    _ax, curve = system()
+    alone, twin = VGroup(curve, Dot()), VGroup(plain(curve), Dot())
+    operation(alone)
+    operation(twin)
+    np.testing.assert_allclose(curve.points, twin[0].points, atol=1e-9)
+
+
 def test_wr3_another_container_gives_the_curve_its_own_transform():
     _, curve = system()
     dot = Dot(RIGHT)
