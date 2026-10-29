@@ -334,6 +334,113 @@ def animate_data(scene: Scene) -> None:
     scene.wait(0.6)
 
 
+def clip_per_axis(scene: Scene) -> None:
+    """Clip one axis only: `clip=(True, False)` cuts at the sides, not the top.
+
+    The left curve clips on both axes, the right one on x only, so its peaks pass over
+    the axes while its ends stop at their sides; both follow an animated range.
+    """
+    a = ValueTracker(1.5)
+    small = {
+        "x_range": (-3, 3, 1),
+        "y_range": (-2, 2, 1),
+        "x_length": 5,
+        "y_length": 2.6,
+    }
+    for k, clip in enumerate([True, (True, False)]):
+        ax = mp.Axes(**small).move_to((2 * k - 1) * 3.4 * RIGHT + 0.5 * DOWN)
+        curve = ax.plot(
+            lambda x, a=1.5: a * np.sin(x), x_range=(-6, 6), a=a, clip=clip, color=BLUE
+        )
+        title = Text(f"clip={clip}", font="Consolas", font_size=24)
+        scene.add(ax, curve, title.next_to(ax, UP, buff=0.9))
+    scene.play(a.animate.set_value(2.8), run_time=2)
+    scene.play(a.animate.set_value(1.5), run_time=1.5)
+
+
+def t_label_slides(scene: Scene) -> None:
+    """Slide a T label and lines to the graph with a tracker, no `always_redraw`.
+
+    `get_T_label(t, graph, label=...)` takes the tracker itself, and the label is a
+    callable of the value; `get_lines_to_point` takes a callable point. Both follow the
+    axes when their range animates.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(-1, 6, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    graph = ax.plot(lambda x: x**2 / 4 + 0.5, color=BLUE)
+    t = ValueTracker(1.0)
+    label = ax.get_T_label(t, graph, label=lambda x: f"{x:.1f}")
+    lines = ax.get_lines_to_point(lambda: ax.i2gp(t.get_value(), graph), color=YELLOW)
+    scene.add(ax, graph, label, lines)
+    show_call(scene, shown, "self.play(t.animate.set_value(4))")
+    scene.play(t.animate.set_value(4.0), run_time=2.5)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((-1, 8)))")
+    scene.play(ax.animate.set_x_range((-1, 8)), run_time=2)
+    show_call(scene, shown, "self.play(t.animate.set_value(0.5))")
+    scene.play(t.animate.set_value(0.5), run_time=2)
+    scene.wait(0.5)
+
+
+def secant_to_tangent(scene: Scene) -> None:
+    """Close a secant into the tangent as `dx` goes to 0, then slide it along.
+
+    `get_secant_slope_group(x, graph, dx=dx)` takes trackers for `x` and `dx`; at
+    `dx = 0` the secant is the tangent. Its parts keep Manim's names and their styles.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(-1, 6, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    graph = ax.plot(lambda x: x**2 / 4 + 0.5, color=BLUE)
+    x, dx = ValueTracker(1.0), ValueTracker(2.0)
+    secant = ax.get_secant_slope_group(
+        x, graph, dx=dx, dx_label="dx", dy_label="dy", secant_line_length=7
+    )
+    scene.add(ax, graph, secant)
+    show_call(scene, shown, "self.play(dx.animate.set_value(0))")
+    scene.play(dx.animate.set_value(0.0), run_time=3)
+    show_call(scene, shown, "self.play(x.animate.set_value(3.5))")
+    scene.play(x.animate.set_value(3.5), run_time=2.5)
+    scene.wait(0.5)
+
+
+def riemann_refines(scene: Scene) -> None:
+    """Refine a Riemann sum as `dx` shrinks, over the area it approaches.
+
+    `get_riemann_rectangles(graph, dx=dx)` takes a tracker, so rectangles are added as
+    `dx` shrinks, with Manim's colours; `get_area` draws the exact area under them.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(-1, 6, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    graph = ax.plot(lambda x: x**2 / 4 + 0.5, color=BLUE)
+    dx = ValueTracker(1.0)
+    rects = ax.get_riemann_rectangles(graph, x_range=(0, 4), dx=dx, fill_opacity=0.7)
+    area = ax.get_area(graph, x_range=(0, 4), opacity=0.25)
+    scene.add(ax, area, rects, graph)
+    show_call(scene, shown, "self.play(dx.animate.set_value(0.05))")
+    scene.play(dx.animate.set_value(0.05), run_time=4)
+    scene.wait(0.5)
+
+
+def derived_graphs(scene: Scene) -> None:
+    """Let a derivative and an antiderivative follow their parent's parameter.
+
+    `plot_derivative_graph` and `plot_antiderivative_graph` follow the parent when its
+    amplitude, a parameter bound to a tracker, animates.
+    """
+    a = ValueTracker(1.0)
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(-3, 3, 1), x_length=10, y_length=5.5)
+    parent = ax.plot(lambda x, a=1.0: a * np.sin(x), a=a, color=BLUE, label="a sin x")
+    derivative = ax.plot_derivative_graph(parent, label="derivative")
+    integral = ax.plot_antiderivative_graph(
+        parent, color=YELLOW, label="antiderivative"
+    )
+    scene.add(ax, parent, derivative, integral, ax.legend(location="upper left"))
+    scene.play(a.animate.set_value(2.0), run_time=2)
+    scene.play(a.animate.set_value(0.6), run_time=2)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -347,6 +454,11 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     legend_placement,
     axis_controls,
     animate_data,
+    clip_per_axis,
+    t_label_slides,
+    secant_to_tangent,
+    riemann_refines,
+    derived_graphs,
 ]
 
 
