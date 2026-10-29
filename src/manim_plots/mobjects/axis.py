@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from collections.abc import Iterable, Sequence
 from enum import Enum
 from functools import partial
@@ -15,7 +16,7 @@ from manim import Line, LinearBase, LogBase, NumberLine, VGroup
 from manim.utils.color import ParsableManimColor
 from numpy.typing import ArrayLike
 
-from manim_plots.core import FloatArray
+from manim_plots.core import FloatArray, ManimPlotsWarning
 from manim_plots.core.formatters import (
     DecimalFormatter,
     Formatter,
@@ -33,11 +34,14 @@ from manim_plots.core.ticks import (
     Tick,
     as_locator,
     axis_ticks,
+    plan_pool,
 )
+from manim_plots.mobjects import leaves as leaf_state
 from manim_plots.mobjects.axis_labels import (
     _configure_labels,
     _configure_numbers,
     _Parts,
+    _restore_overlap,
 )
 from manim_plots.mobjects.leaves import (
     AxisLine,
@@ -109,6 +113,181 @@ def _scale_range(scale: Scale, value: ArrayLike) -> FloatArray:
     return np.array(
         scale.limit_range(float(limits[0]), float(limits[1]), MINPOS_UNKNOWN)
     )
+
+
+type _TickConfig = tuple[
+    Locator, Locator | None, FixedLocator | None, Literal["add", "replace"]
+]
+
+
+class _TickPool:
+    def __init__(self, axis: Axis, target: Axis, alphas: FloatArray) -> None:
+        self.start: _TickConfig = (
+            axis.locator,
+            axis.minor_locator,
+            axis._explicit,
+            axis._tick_mode,
+        )
+        self.target: _TickConfig = (
+            target.locator,
+            target.minor_locator,
+            target._explicit,
+            target._tick_mode,
+        )
+        self.same = all(
+            type(a) is type(b)
+            and repr(vars(a) if hasattr(a, "__dict__") else a)
+            == repr(vars(b) if hasattr(b, "__dict__") else b)
+            for a, b in zip(self.start, self.target, strict=True)
+        )
+        self.building = True
+        self.alpha = 0.0
+        self.fade = 4 / max(1, len(alphas) - 1)
+        self.active: dict[object, float] = {}
+        self.absent: dict[object, FloatArray] = {}
+        self.styles: dict[Leaf, tuple[FloatArray, FloatArray]] = {}
+        self.spares: dict[Level, list[TickLeaf]] = {"major": [], "minor": []}
+        start, end = axis.range.value, target.range.value
+        schedule: list[tuple[float, dict[object, Tick]]] = []
+
+        def ticks_at(alpha: float) -> tuple[Tick, ...]:
+            limits = (1 - alpha) * start + alpha * end
+            ticks = self._items(axis, limits, alpha)
+            schedule.append((alpha, {(t.level, t.key): t for t in ticks}))
+            return ticks
+
+        plan = plan_pool(ticks_at, [0.0, 1.0, *alphas])
+        by_key = {key: tick for _, items in schedule for key, tick in items.items()}
+        self.items = tuple(by_key[key] for key in plan.keys)
+        for key in plan.keys:
+            self.absent[key] = np.array(
+                [a for a, items in schedule if key not in items]
+            )
+        self.count = plan.spares
+
+    def _items(self, axis: Axis, limits: FloatArray, alpha: float) -> tuple[Tick, ...]:
+        def generate(
+            config: _TickConfig,
+        ) -> tuple[Tick, ...]:
+            major, minor, explicit, mode = config
+            return axis_ticks(
+                major,
+                minor,
+                float(limits[0]),
+                float(limits[1]),
+                axis._scale,
+                axis.max_ticks,
+                explicit=explicit,
+                mode=mode,
+            )
+
+        ticks = generate(self.start)
+        if self.same:
+            return ticks
+        left = {(t.level, t.key): t for t in ticks}
+        right = {(t.level, t.key): t for t in generate(self.target)}
+        result = []
+        for key in dict.fromkeys((*left, *right)):
+            a, b = left.get(key), right.get(key)
+            if a is not None and b is not None:
+                tick = Tick(
+                    (1 - alpha) * a.value + alpha * b.value, a.level, a.key, b.label
+                )
+            else:
+                remaining = a if b is None else b
+                assert remaining is not None
+                tick = remaining
+            result.append(tick)
+        return tuple(result)
+
+    def _opacity(self, key: object) -> float:
+        if not self.same:
+            return self.active.get(key, 0.0)
+        absent = self.absent.get(key)
+        if absent is None:
+            self.absent[key] = np.array([self.alpha])
+            return 1e-6
+        return (
+            max(1e-6, min(1.0, float(np.min(abs(absent - self.alpha))) / self.fade))
+            if len(absent)
+            else 1.0
+        )
+
+    def _update(self, axis: Axis) -> tuple[Tick, ...]:
+        ticks = self._items(axis, axis.range.value, self.alpha)
+        if self.same:
+            self.active = {(t.level, t.key): 1.0 for t in ticks}
+        else:
+            lo, hi = axis.range.value
+            left = axis_ticks(
+                self.start[0],
+                self.start[1],
+                float(lo),
+                float(hi),
+                axis._scale,
+                axis.max_ticks,
+                explicit=self.start[2],
+                mode=self.start[3],
+            )
+            right = axis_ticks(
+                self.target[0],
+                self.target[1],
+                float(lo),
+                float(hi),
+                axis._scale,
+                axis.max_ticks,
+                explicit=self.target[2],
+                mode=self.target[3],
+            )
+            self.active = {(t.level, t.key): 1 - self.alpha for t in left}
+            for t in right:
+                key = (t.level, t.key)
+                self.active[key] = min(1.0, self.active.get(key, 0.0) + self.alpha)
+        return ticks
+
+    def _take(self, axis: Axis, level: Level) -> TickLeaf | None:
+        if self.spares[level]:
+            return self.spares[level].pop()
+        if not axis._system._pool_warned and not leaf_state._SIMULATING:
+            axis._system._pool_warned = True
+            warnings.warn(
+                "tick pool exhausted its spare leaves during this play",
+                ManimPlotsWarning,
+                stacklevel=3,
+            )
+        return None
+
+    def _show(self, leaf: Leaf, opacity: float) -> None:
+        if leaf not in self.styles:
+            self.styles[leaf] = (
+                leaf.stroke_rgbas[:, 3].copy(),
+                leaf.fill_rgbas[:, 3].copy(),
+            )
+        stroke, fill = self.styles[leaf]
+        leaf.stroke_rgbas[:, 3] = stroke * opacity
+        leaf.fill_rgbas[:, 3] = fill * opacity
+        leaf._pool_visible = opacity > 0
+
+    def _apply(self, axis: Axis) -> None:
+        for level, leaves in (
+            ("major", axis._tick_leaves),
+            ("minor", axis._minor_leaves),
+        ):
+            for key, leaf in leaves.items():
+                pair = (level, key)
+                self._show(
+                    leaf,
+                    self._opacity(pair)
+                    if axis.include_ticks and pair in self.active
+                    else 0.0,
+                )
+        for key in axis._number_leaves:
+            opacity = self._opacity(key) if key in self.active else 0.0
+            for glyph in axis._number_members[key]:
+                self._show(glyph, opacity)
+        for spares in self.spares.values():
+            for leaf in spares:
+                self._show(leaf, 0.0)
 
 
 class _LogExponentLocator(LogLocator):
@@ -218,6 +397,7 @@ class Axis(VGroup):
         self._explicit: FixedLocator | None = None
         self._tick_mode: Literal["add", "replace"] = "add"
         self._items: tuple[Tick, ...] = ()
+        self._pool: _TickPool | None = None
         self._tick_styles: dict[Level, dict[str, Any]] = {"major": {}, "minor": {}}
         self._position: str | float = "origin"
         self._position_fraction: float | None = None
@@ -466,7 +646,9 @@ class Axis(VGroup):
             self.tip._cache = mapping.forward(self._tip_reference + offset)
         if self.tip_start is not None and self._tip_start_reference is not None:
             self.tip_start._cache = mapping.forward(self._tip_start_reference + offset)
-        self._items = self._tick_items()
+        self._items = (
+            self._tick_items() if self._pool is None else self._pool._update(self)
+        )
         for level in ("major", "minor"):
             self._configure_level(level)
         self._range_seen = self.range.version
@@ -503,6 +685,38 @@ class Axis(VGroup):
                     setattr(mirror, attr, target)
                     mirror.add(target)
             mirror._configure()
+        if self._pool is not None:
+            self._pool._apply(self)
+
+    def _prepare_pool(self, pool: _TickPool) -> None:
+        self._pool = pool
+        self._items = pool.items
+        for level in ("major", "minor"):
+            self._configure_level(level)
+            if level == "minor" and pool.start[1] is None and pool.target[1] is None:
+                continue
+            for _ in range(pool.count):
+                leaf = TickLeaf(np.zeros((4, 3)), self._system)
+                leaf.match_style(self.line)
+                style = self._tick_styles[level]
+                leaf.set_stroke(
+                    color=style.get("color", leaf.get_color()), width=style.get("width")
+                )
+                pool.spares[level].append(leaf)
+        if self.include_numbers or self._number_values is not None:
+            self._configure_numbers()
+            for label in self._number_leaves.values():
+                _restore_overlap(label)
+        self._configure_grid()
+        pool.building = False
+
+    def _finish_pool(self) -> None:
+        pool, self._pool = self._pool, None
+        if pool is not None:
+            for leaf, (stroke, fill) in pool.styles.items():
+                leaf.stroke_rgbas[:, 3] = stroke
+                leaf.fill_rgbas[:, 3] = fill
+                leaf._pool_visible = True
 
     def _configure_level(self, level: Level) -> None:
         system = self._system
@@ -551,21 +765,33 @@ class Axis(VGroup):
         for item, points in zip(items, placed, strict=True):
             leaf = previous.get(item.key)
             if leaf is None:
-                leaf = TickLeaf(points, system)
-                leaf.match_style(self.line)
-                leaf.set_stroke(
-                    color=style.get("color", leaf.get_color()), width=style.get("width")
-                )
+                if self._pool is not None and not self._pool.building:
+                    leaf = self._pool._take(self, level)
+                    if leaf is None:
+                        continue
+                    leaf._cache = points
+                    previous[item.key] = leaf
+                else:
+                    leaf = TickLeaf(points, system)
+                    leaf.match_style(self.line)
+                    leaf.set_stroke(
+                        color=style.get("color", leaf.get_color()),
+                        width=style.get("width"),
+                    )
             else:
                 leaf._cache = points
             current[item.key] = leaf
-        for key in previous.keys() - current.keys():
-            previous[key]._cache = np.empty((0, 3))
+        if self._pool is None:
+            for key in previous.keys() - current.keys():
+                previous[key]._cache = np.empty((0, 3))
+            retained = current
+        else:
+            retained = {**previous, **current}
         if level == "major":
-            self._tick_leaves = current
+            self._tick_leaves = retained
             self._ticks._replace(current if self.include_ticks else {})
         else:
-            self._minor_leaves = current
+            self._minor_leaves = retained
             self._minor_ticks._replace(current if self.include_ticks else {})
             if current and self._minor_ticks not in self.submobjects:
                 self.add(self._minor_ticks)
@@ -831,7 +1057,7 @@ class Axis(VGroup):
         crossing = other._cross_value()
         items = [
             item
-            for item in self._tick_items()
+            for item in (self._tick_items() if self._pool is None else self._items)
             if self._grid_visible.get(item.level, False)
             and not np.isclose(item.value, crossing, rtol=1e-12, atol=0)
         ]
@@ -854,9 +1080,16 @@ class Axis(VGroup):
                 leaf._cache = outline
             leaf.level, leaf.value = item.level, item.value
             current[key] = leaf
-        for old_key in self._grid_leaves.keys() - current.keys():
-            self._grid_leaves[old_key]._cache = np.empty((0, 3))
-        self._grid_leaves = current
+        if self._pool is None:
+            for old_key in self._grid_leaves.keys() - current.keys():
+                self._grid_leaves[old_key]._cache = np.empty((0, 3))
+            self._grid_leaves = current
+        else:
+            self._grid_leaves.update(current)
+            for grid_key, leaf in self._grid_leaves.items():
+                self._pool._show(
+                    leaf, self._pool._opacity(grid_key) if grid_key in current else 0.0
+                )
         self._grid._replace(current)
         if self._grid not in self.submobjects:
             self.add(self._grid)

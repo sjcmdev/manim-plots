@@ -92,7 +92,7 @@ def _configure_numbers(axis: Axis) -> None:
             for x in candidates
             if (
                 x not in axis.numbers_to_exclude
-                and lo <= x <= hi
+                and (lo <= x <= hi or (axis._pool is not None and axis._pool.building))
                 and (x != 0 or not axis.exclude_origin_tick)
             )
         ]
@@ -217,12 +217,15 @@ def _configure_numbers(axis: Axis) -> None:
         for glyph, local in zip(glyphs, local_points, strict=True):
             glyph._cache = placed[offset_index : offset_index + len(local)]
             offset_index += len(local)
-    for removed_key in axis._number_leaves.keys() - current.keys():
-        for glyph in axis._number_members.pop(removed_key):
-            glyph._cache = np.empty((0, 3))
-    axis._number_leaves = current
-    axis._number_offsets = {key: axis._number_offsets[key] for key in current}
-    axis._number_content = {key: axis._number_content[key] for key in current}
+    if axis._pool is None:
+        for removed_key in axis._number_leaves.keys() - current.keys():
+            for glyph in axis._number_members.pop(removed_key):
+                glyph._cache = np.empty((0, 3))
+        axis._number_leaves = current
+        axis._number_offsets = {key: axis._number_offsets[key] for key in current}
+        axis._number_content = {key: axis._number_content[key] for key in current}
+    else:
+        axis._number_leaves.update(current)
     axis._numbers._replace(current)
     _layout_overlap(axis, axis._numbers)
     if axis._numbers not in axis.submobjects:

@@ -10,8 +10,9 @@ from typing import TYPE_CHECKING, Any, NoReturn, Self, TypedDict, Unpack, cast
 import numpy as np
 from manim import Animation, MathTex, Mobject, Scene, Tex, VGroup, VMobject, config
 from manim.constants import CapStyleType, LineJointType, RendererType
-from manim.typing import Vector3DLike
+from manim.typing import PathFuncType, Vector3DLike
 from manim.utils.color import ParsableManimColor
+from manim.utils.paths import straight_path
 from numpy.typing import ArrayLike
 from PIL.Image import Image
 
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
     from manim_plots.mobjects.system import CartesianAxes
 
 _SIMULATING = False
+_STRAIGHT = straight_path()
 
 
 class _VMStyle(TypedDict, total=False):
@@ -127,6 +129,33 @@ def _synchronise(mobject: Mobject) -> None:
             mobject._poll()
 
 
+def _become_target(
+    subject: Mobject,
+    target: Mobject,
+    match_height: bool,
+    match_width: bool,
+    match_depth: bool,
+    match_center: bool,
+    stretch: bool,
+) -> Mobject:
+    if stretch or match_height or match_width or match_depth or match_center:
+        target = target.copy()
+        if stretch:
+            target.stretch_to_fit_height(subject.height)
+            target.stretch_to_fit_width(subject.width)
+            target.stretch_to_fit_depth(subject.depth)
+        else:
+            if match_height:
+                target.match_height(subject)
+            if match_width:
+                target.match_width(subject)
+            if match_depth:
+                target.match_depth(subject)
+        if match_center:
+            target.move_to(subject.get_center())
+    return target
+
+
 class Leaf(VMobject):
     """Expose a stable, writable cache to Manim.
 
@@ -146,6 +175,7 @@ class Leaf(VMobject):
     """
 
     _label_owner: BoundLabel | None = None
+    _pool_visible = True
 
     def __init__(
         self,
@@ -160,6 +190,7 @@ class Leaf(VMobject):
         self._system = system
         self._lifecycle = lc.Leaf()
         self._candidate: VMobject | None = None
+        self._alignment_locked = False
         self._dirty = True
         self._own = Chain(())
         self._shape: FloatArray | None = None
@@ -188,7 +219,12 @@ class Leaf(VMobject):
     @property
     def points(self) -> FloatArray:
         """Return the cache itself, rebuilding derived geometry only when dirty."""
-        if self._ready and not buffer_write():
+        if (
+            self._ready
+            and not self._alignment_locked
+            and self._lifecycle.state not in (lc.State.TRANSIENT, lc.State.REMOVED)
+            and not buffer_write()
+        ):
             self._ensure()
         return self._cache
 
@@ -197,6 +233,11 @@ class Leaf(VMobject):
         self._cache = np.asarray(value, dtype=float)
 
     def _ensure(self) -> None:
+        if self._alignment_locked or self._lifecycle.state in (
+            lc.State.TRANSIENT,
+            lc.State.REMOVED,
+        ):
+            return
         owner = self.__dict__.get("_label_owner")
         if owner is not None:
             owner._ensure()
@@ -228,6 +269,19 @@ class Leaf(VMobject):
                 self._save_shape(points)
             elif kind is lc.Kind.ADOPT and isinstance(action.ref, Leaf):
                 self._adopt(action.ref)
+            elif kind is lc.Kind.REBIND:
+                old, new = self._system, action.ref
+                assert old is not None
+                from manim_plots.mobjects.system import CartesianAxes
+
+                assert isinstance(new, CartesianAxes)
+                if self in old._artists:
+                    old._artists.remove(self)  # type: ignore[arg-type]
+                    new._artists.append(self)  # type: ignore[arg-type]
+                self._system = new
+                self._frozen_frame = None
+                self._frame_seen = -1
+                self._dirty = True
 
     def _rebuild(self) -> None:
         self._dirty = False
@@ -270,9 +324,73 @@ class Leaf(VMobject):
             if animation.is_introducer() and self._lifecycle.state is lc.State.REMOVED:
                 self.refresh()
             self._begin(animation)
+            self._alignment_locked = True
+            if isinstance(mobject, Leaf):
+                mobject._ensure()
+                mobject._alignment_locked = True
         super().align_data(mobject, skip_point_alignment)
         if isinstance(mobject, VMobject):
             self._candidate = mobject.copy()
+        return self
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Keep keyed decorations derived while Manim interpolates ordinary leaves.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native interpolation endpoints, progress and geometry path.
+        """
+        if self._system is None or not self._system._data_animation:
+            super().interpolate(mobject1, mobject2, alpha, path_func)
+        return self
+
+    def get_anchors(self) -> list[FloatArray]:
+        """Exclude inactive pool members from visible boundaries."""
+        return super().get_anchors() if self._pool_visible else self._empty_anchors
+
+    def reduce_across_dimension(
+        self, reduce_func: Callable[[Iterable[float]], float], dim: int
+    ) -> float | None:
+        """Measure active geometry, excluding hidden pool slots.
+
+        Parameters
+        ----------
+        reduce_func, dim
+            Native boundary reduction and coordinate index.
+        """
+        if not self._pool_visible:
+            return None
+        return super().reduce_across_dimension(reduce_func, dim)
+
+    def become(
+        self,
+        mobject: Mobject,
+        match_height: bool = False,
+        match_width: bool = False,
+        match_depth: bool = False,
+        match_center: bool = False,
+        stretch: bool = False,
+    ) -> Self:
+        """Adopt an artist's data or retain the local shape of a plain target.
+
+        Parameters
+        ----------
+        mobject, match_height, match_width, match_depth, match_center, stretch
+            Native target and size/placement preparation options.
+        """
+        target = _become_target(
+            self, mobject, match_height, match_width, match_depth, match_center, stretch
+        )
+        super().become(target)
+        self._event(lc.Become(target, isinstance(target, Leaf)))
+        self._candidate = None
         return self
 
     def _begin(self, animation: Animation) -> None:
@@ -335,6 +453,7 @@ class Leaf(VMobject):
                 )
                 if start is not None and not self._same_points(start):
                     ending = lc.Ending.ELSEWHERE
+            self._alignment_locked = False
             self._event(lc.Finish(animation, ending, target, animation.is_remover()))
             self._candidate = None
         super().resume_updating(recursive)
@@ -373,7 +492,9 @@ class Leaf(VMobject):
                 }
             else:
                 result.__dict__[key] = copy.deepcopy(value, memo)
-        if rebuilding:
+        aligned_copy = self._alignment_locked and animation_context(transform_only=True)
+        result._alignment_locked = bool(aligned_copy)
+        if rebuilding and not aligned_copy:
             result._restore()
         return result
 
@@ -795,6 +916,29 @@ class FrameLeaf(Leaf):
             Forwarded to Manim.
         """
         VMobject.align_data(self, mobject, skip_point_alignment)
+        return self
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Interpolate native placement, then publish the current data ranges.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native frame endpoints, progress and geometric interpolation path.
+        """
+        system = self._system
+        if system is None or not system._data_animation or system._channel_frame_moves:
+            VMobject.interpolate(self, mobject1, mobject2, alpha, path_func)
+        if system is not None and system._data_animation:
+            assert isinstance(mobject1, FrameLeaf) and mobject1._system is not None
+            assert isinstance(mobject2, FrameLeaf) and mobject2._system is not None
+            system._interpolate_data(mobject1._system, mobject2._system, alpha)
         return self
 
     def set_fill(
