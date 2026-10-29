@@ -29,6 +29,23 @@ EXPECTED = {
     "FunctionSource",
     "ArraySource",
     "ParametricSource",
+    # task 08
+    "Locator",
+    "MaxNLocator",
+    "MultipleLocator",
+    "LogLocator",
+    "SymLogLocator",
+    "FixedLocator",
+    "NullLocator",
+    "MinorCountLocator",
+    "Formatter",
+    "Labels",
+    "DecimalFormatter",
+    "FormatStrFormatter",
+    "ScientificFormatter",
+    "EngFormatter",
+    "FixedFormatter",
+    "NullFormatter",
 }
 
 
