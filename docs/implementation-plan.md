@@ -46,6 +46,11 @@ the process as well.
 A task that cannot pass the gate is not merged: its branch stays, and the blocker is
 written at the top of its acceptance table.
 
+Two tasks that do not depend on each other may run at once, the second in a git worktree
+beside the main checkout (`../manim-plots-NN`). The virtual environments install the main
+checkout, so every command in the worktree puts its own `src` first with `PYTHONPATH`.
+Benchmarks are read only when one agent runs, because two runs share the CPU.
+
 ## Rules both sides follow
 
 - **Layers** (ADR 0001 §1): nothing under `core/` imports `manim` or `manim_plots.mobjects`;

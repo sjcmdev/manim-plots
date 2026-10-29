@@ -104,11 +104,16 @@ class Box:
         points = _numeric(local, "local")
         if points.ndim != 2 or points.shape[1] not in (2, 3):
             raise ValueError("local must have shape (n, 2) or (n, 3)")
-        return (
-            np.isfinite(points).all(axis=1)
-            & (points[:, :2] >= self.lower).all(axis=1)
-            & (points[:, :2] <= self.upper).all(axis=1)
+        x, y = points[:, 0], points[:, 1]
+        inside: BoolArray = (
+            (x >= self.lower[0])
+            & (x <= self.upper[0])
+            & (y >= self.lower[1])
+            & (y <= self.upper[1])
         )
+        if points.shape[1] == 3:
+            inside &= np.isfinite(points[:, 2])
+        return inside
 
 
 @runtime_checkable
@@ -223,17 +228,25 @@ def _pieces(
 
 
 def _path(coords: FloatArray, labels: IntArray) -> Payload:
-    valid = np.isfinite(coords).all(axis=1)
+    finite = np.isfinite(coords)
+    valid = None if finite.all() else finite.all(axis=1)
     cuts = np.flatnonzero(labels[1:] != labels[:-1]) + 1
     edges = np.concatenate(([0], cuts, [len(coords)]))
     segments = np.column_stack((edges[:-1], edges[1:]))
     segments = segments[segments[:, 0] < segments[:, 1]]
-    return Payload(
+    return Payload._trusted(
         "path",
         coords,
-        split_segments(segments, valid),
-        valid=None if valid.all() else valid,
+        segments if valid is None else split_segments(segments, valid),
+        valid=valid,
     )
+
+
+def _sum_rows(values: FloatArray) -> FloatArray:
+    # Three coordinate columns add in the same order without a strided reduction.
+    if values.shape[1] == 3:
+        return values[:, 0] + values[:, 1] + values[:, 2]
+    return values.sum(axis=1)
 
 
 @dataclass(frozen=True)
@@ -351,24 +364,34 @@ class _AnalyticSource:
             if not len(indices) or len(t) >= MAX_SAMPLES:
                 break
             with np.errstate(all="ignore"):
-                mid = t[indices] / 2 + t[indices + 1] / 2
+                if active.all():
+                    left_t, right_t = t[:-1], t[1:]
+                    left, right = screen[:-1], screen[1:]
+                else:
+                    left_t, right_t = t[indices], t[indices + 1]
+                    left, right = screen[indices], screen[indices + 1]
+                mid = left_t / 2 + right_t / 2
                 points = self._evaluate(mid)
                 images = map.to_screen(points)
-                left, right = screen[indices], screen[indices + 1]
-                lv, rv = np.isfinite(left).all(axis=1), np.isfinite(right).all(axis=1)
-                mv = np.isfinite(images).all(axis=1)
                 chord = right - left
-                norm = np.sum(chord * chord, axis=1)
+                norm = _sum_rows(chord * chord)
                 fraction = np.divide(
-                    np.sum((images - left) * chord, axis=1),
+                    _sum_rows((images - left) * chord),
                     norm,
                     out=np.zeros(len(mid)),
                     where=norm != 0,
                 )
                 closest = left + np.clip(fraction, 0, 1)[:, None] * chord
-                error = np.linalg.norm(images - closest, axis=1)
-                refine = (lv != rv) | (lv & rv & (~mv | (error > CHORD_TOLERANCE)))
-                refine &= (mid > t[indices]) & (mid < t[indices + 1])
+                delta = images - closest
+                error = np.sqrt(_sum_rows(delta * delta))
+                if np.isfinite(screen).all() and np.isfinite(images).all():
+                    refine = error > CHORD_TOLERANCE
+                else:
+                    lv = np.isfinite(left).all(axis=1)
+                    rv = np.isfinite(right).all(axis=1)
+                    mv = np.isfinite(images).all(axis=1)
+                    refine = (lv != rv) | (lv & rv & (~mv | (error > CHORD_TOLERANCE)))
+                refine &= (mid > left_t) & (mid < right_t)
             chosen = np.flatnonzero(refine)[: MAX_SAMPLES - len(t)]
             if not len(chosen):
                 break
@@ -399,30 +422,28 @@ class _AnalyticSource:
         bounds: Bounds,
     ) -> Payload:
         with np.errstate(all="ignore"):
-            local = map.forward(coords)
-            finite = np.isfinite(coords).all(axis=1)
-            axes = (0, 1) if self._parametric else (1,)
-            candidates = np.zeros((len(t) - 1, 2), dtype=np.bool_)
-            for axis in axes:
-                candidates[:, axis] = (
-                    np.signbit(coords[:-1, axis]) != np.signbit(coords[1:, axis])
-                ) & (
-                    (
-                        (local[:-1, axis] < bounds.lower[axis])
-                        & (local[1:, axis] > bounds.upper[axis])
-                    )
-                    | (
-                        (local[1:, axis] < bounds.lower[axis])
-                        & (local[:-1, axis] > bounds.upper[axis])
-                    )
-                )
-            candidates &= (finite[:-1] & finite[1:] & (labels[:-1] == labels[1:]))[
-                :, None
-            ]
-            indices = np.flatnonzero(candidates.any(axis=1))
+            candidates = np.signbit(coords[:-1]) != np.signbit(coords[1:])
+            if not self._parametric:
+                candidates[:, 0] = False
+            indices = np.flatnonzero(
+                candidates.any(axis=1) & (labels[:-1] == labels[1:])
+            )
             if not len(indices):
                 return _path(coords, labels)
-            axis_ids = np.argmax(candidates[indices], axis=1)
+            ends = np.concatenate((coords[indices], coords[indices + 1]))
+            local = map.forward(ends)
+            left_local, right_local = local[: len(indices)], local[len(indices) :]
+            finite = np.isfinite(ends).all(axis=1)
+            candidates = candidates[indices] & (
+                ((left_local < bounds.lower) & (right_local > bounds.upper))
+                | ((right_local < bounds.lower) & (left_local > bounds.upper))
+            )
+            candidates &= (finite[: len(indices)] & finite[len(indices) :])[:, None]
+            keep = candidates.any(axis=1)
+            indices, candidates = indices[keep], candidates[keep]
+            if not len(indices):
+                return _path(coords, labels)
+            axis_ids = np.argmax(candidates, axis=1)
             rows = np.arange(len(indices))
             left, right = t[indices].copy(), t[indices + 1].copy()
             lc, rc = coords[indices].copy(), coords[indices + 1].copy()

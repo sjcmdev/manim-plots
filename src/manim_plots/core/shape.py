@@ -38,11 +38,17 @@ def _assemble(
 ) -> Payload:
     if not parts:
         return Payload.empty("path", dim)
-    sizes = [len(part) for part in parts] if lengths is None else lengths
-    edges = np.concatenate(([0], np.cumsum(sizes)))
-    return Payload(
-        "path", np.concatenate(parts), np.column_stack((edges[:-1], edges[1:]))
-    )
+    if len(parts) == 1:
+        coords = parts[0]
+        segments = np.array([[0, len(coords)]], dtype=np.intp)
+    else:
+        sizes = [len(part) for part in parts] if lengths is None else lengths
+        edges = np.concatenate(([0], np.cumsum(sizes)))
+        coords = np.concatenate(parts)
+        segments = np.column_stack((edges[:-1], edges[1:]))
+    # Finite anchors can still overflow while constructing handles.
+    build = Payload._trusted if np.isfinite(coords).all() else Payload
+    return build("path", coords, segments)
 
 
 def _handles(anchors: FloatArray) -> tuple[FloatArray, FloatArray]:
@@ -211,7 +217,11 @@ def _clip_curve(curve: FloatArray, box: Box) -> tuple[list[FloatArray], bool, bo
         return lp + rp, ls, re
     times, crossing = _crossings(curve, box)
     a, b = times[:-1], times[1:]
-    pieces = _restrict(np.repeat(curve[None], len(a), axis=0), a, b)
+    if len(times) == 3:
+        left, right = _split(curve[None], times[1:2])
+        pieces = np.concatenate((left, right))
+    else:
+        pieces = _restrict(np.repeat(curve[None], len(a), axis=0), a, b)
     pieces[:, 0, :2] = np.where(
         np.isfinite(crossing[:-1]), crossing[:-1], pieces[:, 0, :2]
     )
@@ -233,9 +243,10 @@ def _clip_curve(curve: FloatArray, box: Box) -> tuple[list[FloatArray], bool, bo
 def _clip_path(payload: Payload, box: Box) -> Payload:
     curves = _curves(payload)
     dim = payload.coords.shape[1]
-    inside = box.contains(payload.coords).reshape(-1, 4).all(axis=1)
+    inside = box.contains(payload.coords)
     if inside.all():
-        return Payload("path", payload.coords, payload.segments)
+        return Payload._trusted("path", payload.coords, payload.segments)
+    inside = inside.reshape(-1, 4).all(axis=1)
     parts: list[FloatArray] = []
     lengths: list[int] = []
 
@@ -281,14 +292,14 @@ def clip(payload: Payload, bounds: Bounds) -> Payload:
     """
     if not len(payload.coords):
         return Payload.empty(payload.kind, payload.coords.shape[1])
-    box = Box(bounds.lower, bounds.upper)
+    box = bounds if type(bounds) is Box else Box(bounds.lower, bounds.upper)
     if payload.kind == "path":
         return _clip_path(payload, box)
     valid = box.contains(payload.coords)
     if payload.valid is not None:
         valid &= payload.valid
     if payload.kind == "points":
-        return Payload.points(payload.coords, valid)
+        return Payload._trusted("points", payload.coords, payload.segments, valid=valid)
     topology = payload.topology
     if isinstance(topology, tuple):
         rows, cols = topology
@@ -299,7 +310,9 @@ def clip(payload: Payload, bounds: Bounds) -> Payload:
         assert topology is not None
         cells = topology
     cells = cells[valid[cells].all(axis=1)]
-    return Payload("region", payload.coords, payload.segments, cells, payload.valid)
+    return Payload._trusted(
+        "region", payload.coords, payload.segments, cells, payload.valid
+    )
 
 
 def _lengths(curves: FloatArray, end: FloatArray | None = None) -> FloatArray:
@@ -398,7 +411,7 @@ def dash(
         return Payload.empty(payload.kind, payload.coords.shape[1])
     curves = _curves(payload)
     if off == 0:
-        return Payload("path", payload.coords, payload.segments)
+        return Payload._trusted("path", payload.coords, payload.segments)
     parts: list[FloatArray] = []
     dim = payload.coords.shape[1]
     with np.errstate(all="ignore"):
@@ -418,6 +431,9 @@ def dash(
             ends = begins + on
             keep = (begins < total) & (ends > 0)
             begins, ends = np.maximum(begins[keep], 0), np.minimum(ends[keep], total)
+            # Quadrature roundoff must not turn an endpoint into another dash.
+            keep = begins < total - 8 * np.finfo(np.float64).eps * total
+            begins, ends = begins[keep], ends[keep]
             indices, times = _arc_parameters(
                 segment, sizes, np.column_stack((begins, ends)).ravel()
             )

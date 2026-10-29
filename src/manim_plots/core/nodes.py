@@ -8,7 +8,6 @@ from typing import Protocol, runtime_checkable
 
 import numpy as np
 from numpy.typing import ArrayLike
-from scipy.sparse import csr_matrix  # type: ignore[import-untyped]
 
 from manim_plots.core import BoolArray, FloatArray, IntArray
 from manim_plots.core.payload import Payload, split_segments
@@ -582,7 +581,13 @@ class Chain:
             A new array of transformed samples.
         """
         with np.errstate(all="ignore"):
-            result = np.array(x, dtype=np.float64, copy=True)
+            result = np.asarray(x, dtype=np.float64)
+            if not self.nodes or type(self.nodes[0]) not in (
+                AffineNode,
+                ScaleNode,
+                FunctionNode,
+            ):
+                result = result.copy()
             for node in self.nodes:
                 result = node.apply(result)
         return result
@@ -640,23 +645,44 @@ class Chain:
         Payload
             New payload retaining invalid rows and the original topology.
         """
-        current = payload.coords.copy()
-        mask = (
-            np.ones(len(current), dtype=np.bool_)
-            if payload.valid is None
-            else payload.valid.copy()
-        )
+        current = payload.coords
+        mask = None if payload.valid is None else payload.valid.copy()
+        trusted = payload.kind != "region"
+        if self.nodes and type(self.nodes[0]) not in (
+            AffineNode,
+            ScaleNode,
+            FunctionNode,
+        ):
+            current = current.copy()
         with np.errstate(all="ignore"):
             for node in self.nodes:
-                mask &= node.valid(current)
-                current = node.apply(current)
+                if type(node) is AffineNode:
+                    mapped = node.apply(current)
+                    if np.isfinite(mapped).all():
+                        current = mapped
+                        continue
+                    good = np.isfinite(mapped).all(axis=1)
+                    if mask is not None:
+                        good &= np.isfinite(current).all(axis=1)
+                else:
+                    trusted = False
+                    good = node.valid(current)
+                    mapped = node.apply(current)
+                if mask is None:
+                    if not good.all():
+                        mask = good
+                else:
+                    mask &= good
+                current = mapped
         segments = (
             split_segments(payload.segments, mask)
-            if payload.kind == "path"
+            if payload.kind == "path" and mask is not None
             else payload.segments
         )
-        valid = None if payload.valid is None and mask.all() else mask
-        return Payload(payload.kind, current, segments, payload.topology, valid)
+        valid = mask
+        # User nodes can disagree with valid(); region maps can change winding.
+        build = Payload._trusted if trusted else Payload
+        return build(payload.kind, current, segments, payload.topology, valid)
 
 
 class FrameMap:
@@ -683,6 +709,7 @@ class FrameMap:
         _finite(self.nodes, "nodes")
         with np.errstate(all="ignore"):
             self._span = self.upper - self.lower
+            self._cell_scale = (self.n - 1) / self._span
             uv = self.lattice(np.zeros(2), np.ones(2), self.n)[:, :2]
             design = np.column_stack((uv, np.ones(len(uv))))
             coefficients = np.linalg.lstsq(design, self.nodes, rcond=None)[0]
@@ -692,6 +719,10 @@ class FrameMap:
                 coefficients[2] = self.nodes[0]
             residual = np.linalg.norm(design @ coefficients - self.nodes, axis=1)
             self._is_affine = bool(np.max(residual) <= AFFINE_RTOL * self._size)
+            if not self._is_affine:
+                indices = np.arange(len(self.nodes) - self.n - 1)[:, None]
+                corners = np.array([0, 1, self.n, self.n + 1])
+                self._cell_nodes = self.nodes[indices + corners]
             self._basis = coefficients[:2] / self._span[:, None]
             self._origin = coefficients[2]
             self._is_singular = self.is_affine and _singular(self._basis)
@@ -758,21 +789,18 @@ class FrameMap:
         return self._is_singular
 
     def _cells(self, xy: FloatArray) -> tuple[IntArray, FloatArray]:
-        uv = (xy - self.lower) * ((self.n - 1) / self._span)
-        ij = np.floor(np.clip(uv, 0, self.n - 2)).astype(np.intp)
-        index = ij[:, 1] * self.n + ij[:, 0]
-        return index, uv - ij
+        u = (xy[:, 0] - self.lower[0]) * self._cell_scale[0]
+        v = (xy[:, 1] - self.lower[1]) * self._cell_scale[1]
+        i = np.floor(np.clip(u, 0, self.n - 2)).astype(np.intp)
+        j = np.floor(np.clip(v, 0, self.n - 2)).astype(np.intp)
+        return j * self.n + i, np.column_stack((u - i, v - j))
 
     def _bilinear(self, xy: FloatArray) -> FloatArray:
         index, fractions = self._cells(xy)
         u, v = fractions.T
-        indices = index[:, None] + [0, 1, self.n, self.n + 1]
         weights = np.column_stack(((1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v))
-        matrix = csr_matrix(
-            (weights.ravel(), indices.ravel(), np.arange(0, 4 * len(xy) + 1, 4)),
-            shape=(len(xy), len(self.nodes)),
-        )
-        return np.asarray(matrix @ self.nodes, dtype=np.float64)
+        result: FloatArray = np.einsum("ni,nij->nj", weights, self._cell_nodes[index])
+        return result
 
     def forward(self, local: FloatArray) -> FloatArray:
         """Map local samples through the affine fit or bilinear interpolant.
@@ -793,9 +821,10 @@ class FrameMap:
             local = np.asarray(local, dtype=np.float64)
         if local.ndim != 2 or local.shape[1] not in (2, 3):
             raise ValueError("local must have shape (m, 2) or (m, 3)")
-        result = np.full((len(local), 3), np.nan)
-        good = np.isfinite(local).all(axis=1)
-        points = local[good]
+        finite = np.isfinite(local)
+        all_finite = bool(finite.all())
+        good = None if all_finite else finite.all(axis=1)
+        points = local if good is None else local[good]
         with np.errstate(all="ignore"):
             mapped = (
                 (points[:, :2] - self.lower) @ self._basis + self._origin
@@ -804,8 +833,11 @@ class FrameMap:
             )
             if local.shape[1] == 3:
                 mapped += points[:, 2, None] * self._normal
+            if good is None:
+                return mapped
+            result = np.full((len(local), 3), np.nan)
             result[good] = mapped
-        return result
+            return result
 
     def _jacobian(self, xy: FloatArray) -> FloatArray:
         index, fractions = self._cells(xy)
@@ -974,6 +1006,8 @@ class SystemMap:
             Scene samples of shape ``(n, 3)``.
         """
         local = self.data.forward(data)
+        if self.own is None:
+            return self.frame.forward(local)
         padded = np.column_stack((local, np.zeros(len(local))))
-        placed = padded if self.own is None else self.own.forward(padded)
+        placed = self.own.forward(padded)
         return self.frame.forward(placed)
