@@ -65,9 +65,9 @@ def test_hb1_a_helper_line_is_a_registered_artist_without_a_label():
     line = ax.get_vertical_line(ax.c2p(2, 1))
     assert isinstance(line, mp.HelperLine)
     assert line in ax.artists
-    assert line not in ax.get_legend_handles_labels()[0]
+    assert ax.get_legend_handles_labels()[1] == []
     line.set_label("drop")
-    assert line in ax.get_legend_handles_labels()[0]
+    assert ax.get_legend_handles_labels()[1] == ["drop"]
 
 
 def test_hb2_a_tracker_slides_a_t_label_with_no_always_redraw():
@@ -476,8 +476,10 @@ def test_sc1_parts_in_manims_order_with_manims_names():
 
 def test_sc2_every_part_equals_manims_on_default_axes():
     ours, graph, theirs, twin = pair()
-    a = ours.get_secant_slope_group(1, graph, dx=1.5, dx_label="dx", dy_label="dy")
-    b = theirs.get_secant_slope_group(1, twin, dx=1.5, dx_label="dx", dy_label="dy")
+    # A secant short enough to stay inside the axes, which clip it (F-706).
+    options = {"dx": 1.5, "dx_label": "dx", "dy_label": "dy", "secant_line_length": 6}
+    a = ours.get_secant_slope_group(1, graph, **options)
+    b = theirs.get_secant_slope_group(1, twin, **options)
     for name in ("dx_line", "df_line", "secant_line"):
         theirs_part = getattr(b, name)
         np.testing.assert_allclose(
