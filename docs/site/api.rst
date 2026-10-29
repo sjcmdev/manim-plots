@@ -3,6 +3,8 @@ API
 
 .. currentmodule:: manim_plots
 
+.. autodata:: __version__
+
 Axes
 ----
 

@@ -24,7 +24,7 @@ It is not on PyPI yet; install it from the repository:
 
 .. code-block:: text
 
-   pip install git+https://github.com/sjcmdev/manim-plots
+   pip install "git+https://github.com/sjcmdev/manim-plots@dev"
 
 A first plot
 ------------
@@ -44,9 +44,10 @@ A first plot
            self.play(Create(ax), Create(curve))
            self.play(ax.animate.shift(2 * RIGHT))
 
-``mp.Axes`` takes Manim's arguments and draws Manim's picture. ``ax.plot`` returns a
-curve that belongs to the axes: when the axes move, rotate, scale or change their range,
-the curve follows on every frame, without a ``VGroup`` and without an updater.
+``mp.Axes`` keeps Manim's constructor arguments and axis defaults. ``ax.plot`` returns
+a curve that belongs to the axes: it follows permanent moves, rotations, scaling and
+range changes on every frame, without a ``VGroup`` or an updater. Temporary indications
+leave the curve still; see :doc:`differences` for the exact rules and fixed defaults.
 
 Animating the data
 ------------------
