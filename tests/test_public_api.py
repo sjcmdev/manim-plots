@@ -55,6 +55,7 @@ EXPECTED = {
     "ParametricPlot",
     # task 12
     "Legend",
+    "ErrorBars",
     "LineStyle",
     "Marker",
     "COLOR_CYCLE",

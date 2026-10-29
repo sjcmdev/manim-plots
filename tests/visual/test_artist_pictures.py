@@ -7,7 +7,21 @@ from typing import Any
 
 import numpy as np
 import pytest
-from manim import BLUE, RED, YELLOW, Axes, Scene, Star
+from manim import (
+    BLUE,
+    DOWN,
+    LEFT,
+    RED,
+    RIGHT,
+    UP,
+    YELLOW,
+    Axes,
+    Dot,
+    Line,
+    Scene,
+    Star,
+    VGroup,
+)
 
 import manim_plots as mp
 
@@ -100,5 +114,60 @@ def test_plot_line_graph__manim(visual):
     def construct(scene: Scene) -> None:
         ax = Axes(**RANGES)
         scene.add(ax, ax.plot_line_graph(*LINE_GRAPH))
+
+    visual(construct)
+
+
+ERR_X = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
+ERR_Y = np.array([0.5, 1.2, 0.8, -0.4, 0.3])
+YERR = np.array([[0.2, 0.3, 0.2, 0.4, 0.3], [0.4, 0.3, 0.5, 0.2, 0.3]])
+XERR = 0.25
+
+
+@pytest.mark.render
+def test_errorbars_in_x_and_y(visual):
+    """`ax.errorbar` with asymmetric y errors and symmetric x errors, caps 0.1 long,
+    in yellow (task 18)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(**RANGES)
+        scene.add(ax, ax.errorbar(ERR_X, ERR_Y, yerr=YERR, xerr=XERR, color=YELLOW))
+
+    visual(construct)
+
+
+@pytest.mark.render
+def test_errorbars_in_x_and_y__manim(visual):
+    """Plain Manim, the same bars built by hand from `Line`s and `Dot`s."""
+
+    def construct(scene: Scene) -> None:
+        ax = Axes(**RANGES)
+        parts = []
+        for i, (x, y) in enumerate(zip(ERR_X, ERR_Y, strict=True)):
+            lo, hi = YERR[0, i], YERR[1, i]
+            parts.append(Line(ax.c2p(x, y - lo), ax.c2p(x, y + hi), stroke_width=2))
+            parts.append(Line(ax.c2p(x - XERR, y), ax.c2p(x + XERR, y), stroke_width=2))
+            for end in (ax.c2p(x, y - lo), ax.c2p(x, y + hi)):
+                parts.append(
+                    Line(end + 0.05 * LEFT, end + 0.05 * RIGHT, stroke_width=2)
+                )
+            for end in (ax.c2p(x - XERR, y), ax.c2p(x + XERR, y)):
+                parts.append(Line(end + 0.05 * DOWN, end + 0.05 * UP, stroke_width=2))
+            parts.append(Dot(ax.c2p(x, y)))
+        scene.add(ax, VGroup(*parts).set_color(YELLOW))
+
+    visual(construct)
+
+
+@pytest.mark.render
+def test_errorbars_on_a_log_axis(visual):
+    """Error bars on a log y axis: the second point's lower end leaves the domain, so
+    its bar runs to the bottom and has no cap there (EB-3)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(x_range=(0, 5, 1), y_range=(1, 100, 1), y_scale="log")
+        xs = np.array([1.0, 2.0, 3.0, 4.0])
+        ys = np.array([5.0, 2.0, 30.0, 60.0])
+        scene.add(ax, ax.errorbar(xs, ys, yerr=[2.0, 5.0, 10.0, 30.0], color=BLUE))
 
     visual(construct)
