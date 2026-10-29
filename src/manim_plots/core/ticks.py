@@ -399,7 +399,8 @@ def _thin(
     if len(values) + zero <= max_ticks:
         return values
     if np.count_nonzero(decades == 0) + zero > max_ticks:
-        raise ValueError("max_ticks cannot accommodate the unthinnable decade k=0")
+        kept: FloatArray = values[decades == 0]  # max_ticks is only an estimate
+        return kept
     stride = 2
     while True:
         keep: BoolArray = decades % stride == 0

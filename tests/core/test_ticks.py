@@ -164,6 +164,11 @@ def test_l6_contains_agrees_with_values(lo, span, max_ticks):
             assert not locator.contains(probe, lo, hi, LIN, max_ticks)
 
 
+def test_l13_symlog_keeps_zero_and_decade_zero_past_max_ticks():
+    # Found by the gate's Hypothesis run: room for one label on [0, 1] used to raise.
+    assert SymLogLocator().values(0.0, 1.0, LIN, 1).tolist() == [0.0, 1.0]
+
+
 def test_l6_contains_respects_the_density():
     locator = MaxNLocator()
     assert locator.contains(1.0, 0.0, 10.0, LIN, 11)
