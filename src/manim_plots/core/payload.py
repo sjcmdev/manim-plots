@@ -91,6 +91,34 @@ class Payload:
     topology: IntArray | tuple[int, int] | None = None
     valid: BoolArray | None = None
 
+    @classmethod
+    def _trusted(
+        cls,
+        kind: Kind,
+        coords: FloatArray,
+        segments: IntArray,
+        topology: IntArray | tuple[int, int] | None = None,
+        valid: BoolArray | None = None,
+    ) -> Payload:
+        """Freeze core output whose dtype, coverage and validity are already known.
+
+        Callers must establish every constructor invariant, including finiteness
+        and region winding after a coordinate transform.
+        """
+        result = object.__new__(cls)
+        for name, value in (
+            ("kind", kind),
+            ("coords", coords),
+            ("segments", segments),
+            ("topology", topology),
+            ("valid", valid),
+        ):
+            if isinstance(value, np.ndarray):
+                value = value.view()
+                value.flags.writeable = False
+            object.__setattr__(result, name, value)
+        return result
+
     def __post_init__(self) -> None:
         if not isinstance(self.kind, str):
             raise TypeError("kind must be a str")

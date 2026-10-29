@@ -22,6 +22,13 @@ EXPECTED = {
     "FunctionScale",
     "Payload",
     "CompiledMap",
+    # task 07
+    "Bounds",
+    "Source",
+    "Shape",
+    "FunctionSource",
+    "ArraySource",
+    "ParametricSource",
 }
 
 
@@ -39,7 +46,7 @@ def test_a1_a_star_import_works():
     assert set(manim_plots.__all__) <= set(namespace)
 
 
-def test_a2_the_exports_after_task_06():
+def test_a2_the_exports_so_far():
     assert set(manim_plots.__all__) == EXPECTED
     assert len(manim_plots.__all__) == len(EXPECTED)
 
