@@ -263,8 +263,9 @@ are in `docs/implementation-plan.md`. Task 13's F-1001 closes before task 16.
 
 F-706 amended: `clip=(x, y)`, each a bool or a margin.
 
-- [ ] Acceptance table, scope row amended
-- [ ] Implementation, tests, gate
+- [x] Acceptance table, scope row amended — `docs/acceptance/15-clip-per-axis.md`
+- [x] Implementation, tests, gate — CP-1 to CP-6 in `tests/mobjects/test_style.py`, a
+      candidate baseline `test_clip_per_axis`
 
 ### task/16-helpers-lines
 
