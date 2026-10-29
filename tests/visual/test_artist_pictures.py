@@ -211,7 +211,7 @@ def test_three_y_axes(visual):
         third = ax.twinx(y_range=(-1, 1, 0.5))
         scene.add(
             ax,
-            ax.plot(lambda x: x / 10, color=YELLOW),
+            ax.plot(lambda x: (x / 10) ** 2, color=YELLOW),
             second.plot(lambda x: 5 * x, color=RED),
             third.plot(np.sin, color=BLUE),
         )

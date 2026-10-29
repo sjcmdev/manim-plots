@@ -95,6 +95,16 @@ def test_tw2_further_twins_are_offset_outward():
     assert line_x(third.y_axis) == pytest.approx(right(ax) + 0.9 + 1.5, abs=1e-9)
 
 
+def test_tw2_a_twins_axis_keeps_its_tick_at_zero():
+    # Nothing crosses a twin's own axis at its 0: the shared axis is drawn at the
+    # parent's crossing (found in the three-axes picture).
+    twin = axes().twinx(y_range=(-1, 1, 0.5))
+    values = sorted(
+        round(float(twin.p2c(t.get_center())[1]), 9) for t in twin.y_axis.ticks
+    )
+    assert values == [-1.0, -0.5, 0.0, 0.5, 1.0]
+
+
 def test_tw2_twiny_is_on_top_and_the_shared_axis_is_drawn_once():
     ax = axes()
     twin = ax.twiny(x_range=(0, 5, 1))
@@ -258,18 +268,21 @@ def test_tw9_twins_continue_the_colour_cycle():
     twin = ax.twinx(y_range=(0, 1))
     assert ax.plot(np.sin).get_color() == mp.COLOR_CYCLE[0]
     assert twin.plot(np.cos).get_color() == mp.COLOR_CYCLE[1]
-    assert ax.plot(np.tan).get_color() == mp.COLOR_CYCLE[2]
+    assert ax.plot(lambda x: x).get_color() == mp.COLOR_CYCLE[2]
 
 
 def test_tw10_the_parents_legend_collects_the_twins():
     ax = axes()
     twin = ax.twinx(y_range=(0, 1))
-    ax.plot(lambda x: 10 * x, label="a")
-    twin.plot(lambda x: x / 10, label="b")
-    ax.plot(lambda x: 5 * x, label="c")
+    # The registry holds artists weakly (task 11b): keep them alive.
+    curves = [
+        ax.plot(lambda x: 10 * x, label="a"),
+        twin.plot(lambda x: x / 10, label="b"),
+        ax.plot(lambda x: 5 * x, label="c"),
+    ]
     assert ax.get_legend_handles_labels()[1] == ["a", "b", "c"]
     assert twin.get_legend_handles_labels()[1] == ["b"]
-    assert len(ax.legend().entries) == 3
+    assert len(ax.legend().entries) == len(curves)
 
 
 def test_tw11_a_copy_copies_the_twins():
