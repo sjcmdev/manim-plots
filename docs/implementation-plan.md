@@ -267,7 +267,8 @@ and return types:
   Manim's meaning. `get_tangent_line(x, graph, length)` and `get_tangent_vector(x, graph)`
   are tangent to the drawn curve, so they are correct on a log scale and a warped frame;
 - `get_secant_slope_group`: legs along the system's axes. `dx` may be a tracker, so a
-  secant can close into the tangent. `dx=0` raises instead of falling back to the default;
+  secant can close into the tangent; at `dx = 0` the secant is the tangent, where Manim
+  falls back to its default `dx`;
 - `plot_derivative_graph` and `plot_antiderivative_graph`: derived sources that follow
   the parent's parameters. The antiderivative integrates once per rebuild over the
   sampled grid. `y_intercept` keeps Manim's meaning, the value at `x = 0`; where 0 is
