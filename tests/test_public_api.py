@@ -46,6 +46,8 @@ EXPECTED = {
     "EngFormatter",
     "FixedFormatter",
     "NullFormatter",
+    # task 09
+    "CartesianAxes",
 }
 
 

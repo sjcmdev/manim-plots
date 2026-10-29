@@ -189,11 +189,11 @@ F-920 (plan), F-903, F-905, F-907, F-919 (transitions).
 `artists.py` for one axis and one analytic artist. F-101, F-102, F-111, F-112,
 F-901-F-905, F-914-F-917, F-1004, F-1007; F-701 and F-702 begun.
 
-- [ ] `tests/mobjects/test_leaves.py` (cache identity, leaf types), `test_context.py`,
-      `test_copy.py`
-- [ ] Render tests: F-914 against the same scene without the frame; F-915 middle frames
+- [x] `tests/mobjects/test_leaves.py` (cache identity, leaf types), `test_context.py`,
+      `test_system.py`, `test_animations_basic.py` (copies: LF-6 in `test_leaves.py`)
+- [x] Render tests: F-914 against the same scene without the frame; F-915 middle frames
       on both versions and in both insertion orders
-- [ ] `tests/benchmark/test_f1001.py`: an end-to-end spike without labels — the first
+- [x] `tests/benchmark/test_f1001.py`: an end-to-end spike without labels — the first
       reading of the real gate
 
 ### task/10-axis-decoration

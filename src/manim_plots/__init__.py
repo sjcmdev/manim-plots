@@ -44,12 +44,15 @@ from manim_plots.core.ticks import (
     SymLogLocator,
 )
 from manim_plots.mobjects.context import check_pins
+from manim_plots.mobjects.system import Axes as Axes
+from manim_plots.mobjects.system import CartesianAxes
 
 __version__ = version("manim-plots")
 
 __all__ = [
     "ArraySource",
     "Bounds",
+    "CartesianAxes",
     "CompiledMap",
     "DecimalFormatter",
     "EngFormatter",

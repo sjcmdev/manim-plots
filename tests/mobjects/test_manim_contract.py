@@ -91,6 +91,17 @@ POC4_SYMBOLS = [
 ]
 
 ADDED_BY_ADR_0003 = ["DrawBorderThenFill.begin", "Mobject.get_family_updaters"]
+# The overrides the first Manim layer needs on its leaves and containers (task 09).
+ADDED_BY_TASK_09 = [
+    "Mobject.__getattr__",
+    "Mobject.remove",
+    "VGroup.add",
+    "VMobject.set_fill",
+    "VMobject.set_stroke",
+    "VMobject.interpolate_color",
+    "VMobject.pointwise_become_partial",
+    "Mobject.reduce_across_dimension",
+]
 
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -101,9 +112,11 @@ def names() -> list[str]:
     return [context.symbol_name(symbol) for symbol in context.SYMBOLS]
 
 
-def test_k1_the_inventory_is_poc4s_plus_adr_0003s():
+def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_task_09s():
     assert len(POC4_SYMBOLS) == 68
-    assert sorted(names()) == sorted(POC4_SYMBOLS + ADDED_BY_ADR_0003)
+    assert sorted(names()) == sorted(
+        POC4_SYMBOLS + ADDED_BY_ADR_0003 + ADDED_BY_TASK_09
+    )
 
 
 def test_k1_no_symbol_twice():
