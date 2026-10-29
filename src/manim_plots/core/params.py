@@ -186,9 +186,11 @@ class Param(Generic[T]):  # noqa: UP046
         self._default = default
         self._validate = validate
         self._name = ""
+        self._storage_key = "__manim_plots_parameter_"
 
     def __set_name__(self, owner: type[object], name: str) -> None:
         self._name = name
+        self._storage_key = f"__manim_plots_parameter_{name}"
 
     @overload
     def __get__(
@@ -207,7 +209,7 @@ class Param(Generic[T]):  # noqa: UP046
     ) -> Param[T] | Parameter[T]:
         if instance is None:
             return self
-        key = f"__manim_plots_parameter_{self._name}"
+        key = self._storage_key
         storage = vars(instance)
         if key not in storage:
             storage[key] = Parameter(

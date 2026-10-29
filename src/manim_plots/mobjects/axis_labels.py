@@ -260,9 +260,17 @@ def _layout_overlap(axis: axis_module.Axis, group: _Parts[Any]) -> None:
     outlines: list[FloatArray] = []
     sizes: list[int] = []
     for label in labels:
+        family = (
+            label.submobjects
+            if all(
+                isinstance(glyph, Leaf) and not glyph.submobjects
+                for glyph in label.submobjects
+            )
+            else label.get_family()
+        )
         parts = [
             glyph._cache
-            for glyph in label.get_family()
+            for glyph in family
             if isinstance(glyph, Leaf) and len(glyph._cache)
         ]
         outlines.extend(parts)

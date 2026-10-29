@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from math import isqrt
+from math import hypot, isqrt
 from typing import Protocol, runtime_checkable
 
 import numpy as np
@@ -788,7 +788,35 @@ class FrameMap:
                     self._separable = separable
             self._basis = coefficients[:2] / self._span[:, None]
             self._origin = coefficients[2]
+            residual_grid = (self.nodes - design @ coefficients).reshape(
+                self.n, self.n, 3
+            )
+            residual_slopes = np.array(
+                [
+                    np.max(np.abs(np.diff(residual_grid, axis=axis)), axis=(0, 1))
+                    * self._cell_scale[1 - axis]
+                    for axis in (1, 0)
+                ]
+            )
             self._is_singular = self.is_affine and _singular(self._basis)
+            self._error_coefficients = tuple(
+                (
+                    abs(float(self._basis[0, axis])),
+                    abs(float(self._basis[1, axis])),
+                    float(residual_slopes[0, axis]),
+                    float(residual_slopes[1, axis]),
+                )
+                for axis in range(3)
+            )
+            self._error_roundoff = (
+                64
+                * np.finfo(float).eps
+                * max(1.0, self._size, float(np.max(np.abs(self.nodes))))
+            )
+            self._error_weights = tuple(
+                float(np.sum(np.abs(self._basis[axis]) + residual_slopes[axis]))
+                for axis in range(2)
+            )
             row_sizes = np.linalg.norm(self._basis, axis=1)
             normalized = np.divide(
                 self._basis,
@@ -931,7 +959,10 @@ class FrameMap:
                 else self._bilinear(points[:, :2])
             )
             if local.shape[1] == 3:
-                mapped += points[:, 2, None] * self._normal
+                if self._normal[0] == 0 and self._normal[1] == 0:
+                    mapped[:, 2] += points[:, 2] * self._normal[2]
+                else:
+                    mapped += points[:, 2, None] * self._normal
             if good is None:
                 return mapped
             result = np.full((len(local), 3), np.nan)
@@ -1110,3 +1141,75 @@ class SystemMap:
         padded = np.column_stack((local, np.zeros(len(local))))
         placed = self.own.forward(padded)
         return self.frame.forward(placed)
+
+    def _straight_enough(
+        self,
+        evaluated: FloatArray,
+        count: int,
+        tolerance: float,
+        lower: FloatArray,
+        upper: FloatArray,
+        *,
+        parametric: bool,
+    ) -> tuple[bool, bool]:
+        """Certify midpoint error and a pole-free extent without screen arrays."""
+        if (
+            self.own is not None
+            or type(self.data) is not Chain
+            or type(self.frame) is not FrameMap
+            or not self.data.is_affine
+        ):
+            return False, False
+        frame = self.frame
+        scales, offsets = (1.0, 1.0), (0.0, 0.0)
+        if self.data.nodes:
+            node = self.data.nodes[0]
+            if type(node) is not AffineNode or node._diagonal is None:
+                return False, False
+            scales = float(node._diagonal[0]), float(node._diagonal[1])
+            offsets = float(node._matrix[0, 2]), float(node._matrix[1, 2])
+        errors: list[float] = []
+        spans: list[float] = []
+        contained = True
+        roundoff = frame._error_roundoff
+        with np.errstate(all="ignore"):
+            for axis, (scale, offset) in enumerate(zip(scales, offsets, strict=True)):
+                values = evaluated[:, axis]
+                anchors, middle = values[:count], values[count:]
+                error = float(
+                    np.max(np.abs(middle - anchors[:-1] / 2 - anchors[1:] / 2))
+                )
+                errors.append(error * abs(scale))
+                spans.append(
+                    (float(np.max(np.abs(anchors[1:] - anchors[:-1]))) / 2 + error)
+                    * abs(scale)
+                    if not frame.is_affine
+                    else 0.0
+                )
+                data_lo, data_hi = float(np.min(values)), float(np.max(values))
+                roundoff += (
+                    64
+                    * np.finfo(float).eps
+                    * (max(abs(data_lo), abs(data_hi)) * abs(scale) + abs(offset))
+                    * frame._error_weights[axis]
+                )
+                if not frame.is_affine or parametric or axis == 1:
+                    lo = data_lo * scale + offset
+                    hi = data_hi * scale + offset
+                    if scale < 0:
+                        lo, hi = hi, lo
+                    if (
+                        not frame.is_affine
+                        and not frame.lower[axis] <= lo <= hi <= frame.upper[axis]
+                    ):
+                        return False, False
+                    if parametric or axis == 1:
+                        contained &= bool(lower[axis] <= lo <= hi <= upper[axis])
+            # F = affine + R; bound R by its directional bilinear edge slopes.
+            bound = hypot(
+                *(
+                    errors[0] * a + errors[1] * b + spans[0] * c + spans[1] * d
+                    for a, b, c, d in frame._error_coefficients
+                )
+            )
+            return bool(bound + roundoff <= tolerance), contained
