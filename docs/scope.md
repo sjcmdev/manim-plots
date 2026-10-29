@@ -137,7 +137,7 @@ choosing it later breaks nothing.
 | F-408 | The locator is given a label-space estimate derived from rendered label size, so a density-aware locator is possible | **0.1** | mpl `get_tick_space`, defect 11 |
 | F-409 | A degenerate tick specification (zero or negative step, empty range) raises an error naming the parameter. During an animation an empty range is a transient state instead: no ticks, collapsed artists, and `p2c` raises in that frame *(ADR 0003)* | **0.1** | defect 15d, ADR 0003 |
 | F-410 | A locator filters out-of-domain candidates rather than raising: an axis overhanging its scale's domain simply has no ticks out there | **0.1** | D6 |
-| F-411 | Tick range and coordinate mapping are independent of whether an arrow tip is drawn | **0.1** | defect 2 |
+| F-411 | Coordinate mapping is independent of whether an arrow tip is drawn; the tick and number at an end with a tip are left out, as in Manim, unless `set_tips(tick_under_tip=True)` keeps them (maintainer's decision, 2026-10-29) | **0.1** | defect 2 |
 | F-412 | Changing the range, the scale, the locator or the formatter regenerates the affected ticks; nothing goes stale | **0.1** | defect 6 |
 | F-413 | Generated parts keep identity across rebuilds and through an animated range, keyed by the locator's `key(value)`. Two values yielding one key inside one locator is a defect in that locator and raises | **0.1** | D10, D25 |
 | F-414 | Tick spacing does not determine curve sampling density, and curve sampling does not determine tick spacing | **0.1** | defect 15b |
@@ -262,7 +262,7 @@ differs. This table is the oracle of the parity test against Manim's own `Axes`.
 | `tips` | `True` | same | parity |
 | A two-element range | step 1 | a `Multiple(1)` locator | parity |
 | Tick positions | multiples of the step from 0 when the range contains 0, otherwise `x_min + k * step`, so `[0.001, 6, 1]` ticks at 0.001, 1.001, … *(ADR 0003)* | integer multiples `k * step` (F-402), so keys stay stable across an animated range (F-413) | difference, in F-1008 *(ADR 0003)* |
-| The end tick under a tip | dropped | kept (F-411) | fix |
+| The end tick under a tip | dropped | dropped; `set_tips(tick_under_tip=True)` keeps it (F-411) | Manim's |
 | A tick and a number where the axes cross | none (`exclude_origin_tick`, `numbers_to_exclude=[0]`) | none | parity |
 | Tick shape | straddles the line, `tick_size=0.1`, `longer_tick_multiple=2` | same; direction configurable (F-604) | parity |
 | Numbers | off (`include_numbers=False`), `font_size=36` | same | parity |
