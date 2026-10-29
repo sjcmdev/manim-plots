@@ -26,11 +26,13 @@ CASES: dict[str, dict[str, Any]] = {
     "default": {},
     "numbers": {"axis_config": {"include_numbers": True}},
     "even steps": {"x_range": (0, 10, 2), "axis_config": {"include_numbers": True}},
+    # A range whose wider numbers do not collide: LL-1 hides a colliding one.
     "two places": {
+        "x_range": (-3, 3, 1),
         "axis_config": {
             "include_numbers": True,
             "decimal_number_config": {"num_decimal_places": 2},
-        }
+        },
     },
     "font size": {"axis_config": {"include_numbers": True, "font_size": 24}},
     "label up": {"x_axis_config": {"include_numbers": True, "label_direction": UP}},

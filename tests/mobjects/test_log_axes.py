@@ -18,6 +18,7 @@ import manim_plots as mp
 from .helpers import RUN
 
 
+# `axis_config` applies to both axes (AC-1), so y is logarithmic too: y = 1 is 10^0.
 def log_axes(**axis_config):
     config = {"scaling": LogBase(), **axis_config}
     with tempconfig(RUN):
@@ -30,7 +31,7 @@ def log_axes(**axis_config):
 def test_ac8_logbase_ranges_are_in_exponents_and_c2p_is_manims():
     ours, theirs = log_axes()
     for x in (0.01, 1.0, 100.0, 1e6):
-        np.testing.assert_allclose(ours.c2p(x, 0), theirs.c2p(x, 0), atol=1e-9)
+        np.testing.assert_allclose(ours.c2p(x, 1), theirs.c2p(x, 1), atol=1e-9)
 
 
 def test_ac8_ticks_sit_at_manims_decades_plus_the_one_under_the_tip():
@@ -56,10 +57,10 @@ def test_ac8_custom_labels_are_powers_of_ten():
 def test_ac8_p2c_inverts_c2p_where_manim_021_does_not():
     ours, theirs = log_axes()
     for x in (0.01, 3.0, 100.0, 5e4):
-        point = ours.c2p(x, 0)
+        point = ours.c2p(x, 1)
         np.testing.assert_allclose(ours.p2c(point)[0], x, rtol=1e-9)
     if manim.__version__ == "0.22.0":
-        point = theirs.c2p(100.0, 0)
+        point = theirs.c2p(100.0, 1)
         np.testing.assert_allclose(ours.p2c(point), theirs.p2c(point), rtol=1e-9)
 
 
