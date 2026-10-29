@@ -1,0 +1,54 @@
+"""The public surface: star exports collide with nothing in Manim (D12, ADR 0003 §8).
+
+Rows A-1 to A-3 and C-2 of `docs/acceptance/06-core-contracts.md`. ``EXPECTED`` is a
+decision regression: each task that adds a public name adds it here too.
+"""
+
+from __future__ import annotations
+
+import manim
+
+import manim_plots
+from manim_plots.core import ManimPlotsWarning
+from manim_plots.core.nodes import CompiledMap
+
+EXPECTED = {
+    "__version__",
+    "ManimPlotsWarning",
+    "Scale",
+    "LinearScale",
+    "LogScale",
+    "SymLogScale",
+    "FunctionScale",
+    "Payload",
+    "CompiledMap",
+}
+
+
+def test_a1_every_exported_name_exists_and_manim_lacks_it():
+    manim_names = set(dir(manim))
+    for name in manim_plots.__all__:
+        assert hasattr(manim_plots, name), name
+        if name != "__version__":
+            assert name not in manim_names, f"{name} collides with manim.{name}"
+
+
+def test_a1_a_star_import_works():
+    namespace: dict[str, object] = {}
+    exec("from manim_plots import *", namespace)
+    assert set(manim_plots.__all__) <= set(namespace)
+
+
+def test_a2_the_exports_after_task_06():
+    assert set(manim_plots.__all__) == EXPECTED
+    assert len(manim_plots.__all__) == len(EXPECTED)
+
+
+def test_a3_compiled_map_is_a_runtime_checkable_protocol():
+    assert manim_plots.CompiledMap is CompiledMap
+    assert not isinstance(object(), CompiledMap)
+
+
+def test_c2_the_warning_category():
+    assert manim_plots.ManimPlotsWarning is ManimPlotsWarning
+    assert issubclass(ManimPlotsWarning, UserWarning)
