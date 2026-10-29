@@ -44,8 +44,9 @@ def ends(mob) -> tuple[np.ndarray, np.ndarray]:
 
 
 def direction(start, end) -> np.ndarray:
-    v = np.asarray(end) - np.asarray(start)
-    return v / np.linalg.norm(v)
+    v = np.asarray(end, dtype=float) - np.asarray(start, dtype=float)
+    unit: np.ndarray = v / np.linalg.norm(v)
+    return unit
 
 
 def collapsed(mob) -> bool:

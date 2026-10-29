@@ -25,7 +25,12 @@ class HelperGroup(VGroup):  # mp.HelperGroup, not star-exported
 class CartesianAxes:
     # drop lines
     def get_line_from_axis_to_point(
-        self, index, point, line_func=DashedLine, line_config=None, color=None,
+        self,
+        index,
+        point,
+        line_func=DashedLine,
+        line_config=None,
+        color=None,
         stroke_width=2,
     ) -> HelperLine: ...
     def get_vertical_line(self, point, **kwargs) -> HelperLine: ...
@@ -39,19 +44,38 @@ class CartesianAxes:
 
     # calculus
     def get_T_label(
-        self, x_val, graph, label=None, label_color=None,
-        triangle_size=MED_SMALL_BUFF, triangle_color=WHITE, line_func=Line,
-        line_color=PURE_YELLOW, *, label_direction=DOWN, label_buff=MED_SMALL_BUFF,
+        self,
+        x_val,
+        graph,
+        label=None,
+        label_color=None,
+        triangle_size=MED_SMALL_BUFF,
+        triangle_color=WHITE,
+        line_func=Line,
+        line_color=PURE_YELLOW,
+        *,
+        label_direction=DOWN,
+        label_buff=MED_SMALL_BUFF,
     ) -> HelperGroup: ...
     def angle_of_tangent(self, x, graph, dx=1e-8) -> float: ...
     def slope_of_tangent(self, x, graph, **kwargs) -> float: ...
     def get_tangent_line(self, x, graph, length=1, **style) -> HelperLine: ...
     def get_tangent_vector(self, x, graph, length=1, **style) -> HelperGroup: ...
     def get_secant_slope_group(
-        self, x, graph, dx=None, dx_line_color=PURE_YELLOW, dy_line_color=None,
-        dx_label=None, dy_label=None, include_secant_line=True,
-        secant_line_color=GREEN, secant_line_length=10, *,
-        dx_label_direction=None, dy_label_direction=None,
+        self,
+        x,
+        graph,
+        dx=None,
+        dx_line_color=PURE_YELLOW,
+        dy_line_color=None,
+        dx_label=None,
+        dy_label=None,
+        include_secant_line=True,
+        secant_line_color=GREEN,
+        secant_line_length=10,
+        *,
+        dx_label_direction=None,
+        dy_label_direction=None,
     ) -> HelperGroup: ...
     def plot_derivative_graph(self, graph, color=GREEN, **kwargs) -> FunctionPlot: ...
     def plot_antiderivative_graph(
