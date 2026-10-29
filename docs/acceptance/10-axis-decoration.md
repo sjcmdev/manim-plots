@@ -129,7 +129,7 @@ class Axis(VGroup):
 | ID | Row |
 |---|---|
 | LB-1 | `set_locator(locator, minor=None)` takes any `Locator` or plain callable (`as_locator`, task 08); `set_formatter` any `Formatter` or callable (`as_formatter`); `set_ticks(entries, mode)` is sugar over `FixedLocator` with `axis_ticks`' modes (F-406, F-405). Each regenerates the affected parts and nothing else (F-412) |
-| LB-2 | Every part is addressable by value: `ax.x_axis.ticks.at(v)`, `.minor_ticks.at(v)`, `.numbers.at(v)`, `.grid.at(v)` return the part for the tick whose key is the locator's `key(v)`, or raise `KeyError`; `ax.x_axis.line` is the line (F-603) |
+| LB-2 | Every part is addressable by value: `ax.x_axis.ticks.at(v)`, `.minor_ticks.at(v)`, `.numbers.at(v)`, `.grid.at(v)` return the part for the tick whose key is the locator's `key(v)`, or raise `KeyError` — also for a value the locator does not emit, such as `3.5` on `MultipleLocator(1)`, which `key` alone would round to a neighbour; `ax.x_axis.line` is the line (F-603) |
 | LB-3 | Identity (F-413, D10): a part keeps its object across a rebuild while its key stays in the range — `ax.x.numbers.at(2.0).set_color(RED)` survives `ax.x.range = ...` that keeps 2 inside; a key that leaves and returns in a later, separate edit gets a fresh object (D10's ceiling) |
 | LB-4 | Changing the formatter relabels the same number objects in place (F-507): `numbers.at(v)` is the same object before and after `set_formatter` |
 | LB-5 | `max_ticks` (F-408) is the label space: `floor(length / (3 h))` on a horizontal axis and `floor(length / (2 h))` on a vertical one, `h` the height of the digit `0` at the axis's font size — matplotlib's `get_tick_space` factors *(default taken)* |
