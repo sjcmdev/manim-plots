@@ -6,6 +6,8 @@ Rows EB, ED and EL of `docs/acceptance/18-errorbar.md`. Bar ends are computed wi
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pytest
 from manim import DEGREES, GREEN, RED, Scene
@@ -15,6 +17,11 @@ import manim_plots as mp
 from .helpers import probe
 
 X, Y = np.array([-2.0, 0.0, 2.0]), np.array([1.0, 2.0, 1.0])
+
+
+def need[T](value: T | None) -> T:
+    assert value is not None
+    return value
 
 
 def segments(part) -> list[tuple[np.ndarray, np.ndarray]]:
@@ -29,7 +36,8 @@ def length(segment) -> float:
 
 def unit(v) -> np.ndarray:
     v = np.asarray(v, dtype=float)
-    return v / np.linalg.norm(v)
+    out: np.ndarray = v / np.linalg.norm(v)
+    return out
 
 
 def none_or_empty(part) -> bool:
@@ -85,7 +93,8 @@ def test_eb2_x_errors_are_horizontal_bars():
 @pytest.mark.parametrize("name", ["yerr", "xerr"])
 def test_eb2_a_negative_error_raises(name):
     with pytest.raises(ValueError, match=name):
-        mp.Axes().errorbar(X, Y, **{name: [0.1, -0.1, 0.1]})
+        errors: dict[str, Any] = {name: [0.1, -0.1, 0.1]}
+        mp.Axes().errorbar(X, Y, **errors)
 
 
 def test_eb2_a_nan_error_draws_no_bar_and_warns():
@@ -143,7 +152,7 @@ def test_eb5_parts_present_or_none():
     assert both.markers is None
     assert isinstance(both.line, mp.LinePlot)
     np.testing.assert_allclose(
-        np.asarray(both.line.points)[[0, -1]],
+        np.asarray(need(both.line).points)[[0, -1]],
         np.asarray(ax.c2p(X[[0, -1]], Y[[0, -1]])).T,
         atol=1e-9,
     )
@@ -152,22 +161,22 @@ def test_eb5_parts_present_or_none():
 def test_eb5_bar_styles():
     ax = mp.Axes()
     eb = ax.errorbar(X, Y, yerr=0.5, color=GREEN)
-    assert eb.ybars.get_color() == GREEN  # ecolor defaults to the markers' colour
-    assert eb.ybars.get_stroke_width() == 2
-    assert eb.ycaps.get_stroke_width() == 2
+    assert need(eb.ybars).get_color() == GREEN  # ecolor defaults to the markers' colour
+    assert need(eb.ybars).get_stroke_width() == 2
+    assert need(eb.ycaps).get_stroke_width() == 2
     styled = ax.errorbar(X, Y, yerr=0.5, ecolor=RED, elinewidth=4)
-    assert styled.ybars.get_color() == RED
-    assert styled.ycaps.get_stroke_width() == 4
+    assert need(styled.ybars).get_color() == RED
+    assert need(styled.ycaps).get_stroke_width() == 4
     thin = ax.errorbar(X, Y, yerr=0.5, elinewidth=4, capthick=1)
-    assert thin.ycaps.get_stroke_width() == 1
+    assert need(thin.ycaps).get_stroke_width() == 1
 
 
 def test_eb5_barsabove_orders_the_family():
     ax = mp.Axes()
     below = ax.errorbar(X, Y, yerr=0.5)
     above = ax.errorbar(X, Y, yerr=0.5, barsabove=True)
-    assert list(below).index(below.ybars) < list(below).index(below.markers)
-    assert list(above).index(above.ybars) > list(above).index(above.markers)
+    assert list(below).index(need(below.ybars)) < list(below).index(need(below.markers))
+    assert list(above).index(need(above.ybars)) > list(above).index(need(above.markers))
 
 
 @pytest.mark.parametrize(("every", "kept"), [(2, [0, 2, 4]), ((1, 2), [1, 3])])
@@ -184,16 +193,16 @@ def test_eb5_errorevery(every, kept):
 def test_eb5_a_style_on_a_part_survives_set_data():
     ax = mp.Axes()
     eb = ax.errorbar(X, Y, yerr=0.5)
-    eb.ybars.set_color(GREEN)
+    need(eb.ybars).set_color(GREEN)
     eb.set_data(X, Y + 1, yerr=0.2)
-    assert eb.ybars.get_color() == GREEN
+    assert need(eb.ybars).get_color() == GREEN
 
 
 def test_eb6_an_uncoloured_errorbar_takes_the_cycle():
     ax = mp.Axes()
     eb = ax.errorbar(X, Y, yerr=0.5)
-    assert eb.markers[0].get_color() == mp.COLOR_CYCLE[0]
-    assert eb.ybars.get_color() == mp.COLOR_CYCLE[0]
+    assert need(eb.markers)[0].get_color() == mp.COLOR_CYCLE[0]
+    assert need(eb.ybars).get_color() == mp.COLOR_CYCLE[0]
     assert ax.plot(np.sin).get_color() == mp.COLOR_CYCLE[1]
 
 

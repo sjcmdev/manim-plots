@@ -21,6 +21,7 @@ from manim import (
     Scene,
     Star,
     VGroup,
+    VMobject,
 )
 
 import manim_plots as mp
@@ -142,7 +143,7 @@ def test_errorbars_in_x_and_y__manim(visual):
 
     def construct(scene: Scene) -> None:
         ax = Axes(**RANGES)
-        parts = []
+        parts: list[VMobject] = []
         for i, (x, y) in enumerate(zip(ERR_X, ERR_Y, strict=True)):
             lo, hi = YERR[0, i], YERR[1, i]
             parts.append(Line(ax.c2p(x, y - lo), ax.c2p(x, y + hi), stroke_width=2))
