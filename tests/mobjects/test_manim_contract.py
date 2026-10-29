@@ -186,6 +186,9 @@ ADDED_BY_TASK_17 = [
     "VMobject.set_color",
 ]
 
+# Task 18: error bars read a scatter's markers through Manim's subpaths.
+ADDED_BY_TASK_18 = ["VMobject.get_subpaths"]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -207,6 +210,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_13
         + ADDED_BY_TASK_16
         + ADDED_BY_TASK_17
+        + ADDED_BY_TASK_18
     )
 
 

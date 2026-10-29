@@ -35,6 +35,9 @@ Artists
 .. autoclass:: ParametricPlot
    :members:
 
+.. autoclass:: ErrorBars
+   :members:
+
 Legend and style
 ----------------
 

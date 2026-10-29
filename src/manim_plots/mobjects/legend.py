@@ -11,6 +11,7 @@ from manim_plots.core.payload import Payload
 from manim_plots.core.shape import dash
 from manim_plots.core.sources import Box
 from manim_plots.mobjects.artists import ScatterPlot, _CurvePlot, _MarkerLeaf
+from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.leaves import Leaf
 
 
@@ -30,7 +31,20 @@ def _leaves(native: Mobject) -> VMobject:
     return group
 
 
-def _handle(artist: _CurvePlot | ScatterPlot) -> VMobject:
+def _handle(artist: _CurvePlot | ScatterPlot | ErrorBars) -> VMobject:
+    if isinstance(artist, ErrorBars):
+        parts: list[VMobject] = []
+        if artist.line is not None:
+            parts.append(_handle(artist.line))
+        bar = artist.ybars if artist.ybars is not None else artist.xbars
+        if bar is not None:
+            points = np.column_stack(
+                (np.zeros(4), np.linspace(-0.2, 0.2, 4), np.zeros(4))
+            )
+            parts.append(Leaf(points).match_style(bar, family=False))
+        if artist.markers is not None:
+            parts.append(_handle(artist.markers))
+        return VGroup(*parts)
     if isinstance(artist, ScatterPlot):
         native = (
             artist.submobjects[0] if artist.submobjects else artist._marker_template
@@ -70,7 +84,7 @@ class LegendEntry:
         Original artist and the two displayed mobjects.
     """
 
-    artist: _CurvePlot | ScatterPlot
+    artist: _CurvePlot | ScatterPlot | ErrorBars
     handle: VMobject
     label: VMobject
 
@@ -90,7 +104,7 @@ class Legend(VGroup):
 
     def __init__(
         self,
-        *artists: _CurvePlot | ScatterPlot,
+        *artists: _CurvePlot | ScatterPlot | ErrorBars,
         font_size: float = 24,
         buff: float = 0.25,
     ) -> None:
@@ -98,7 +112,7 @@ class Legend(VGroup):
         self.font_size, self.buff = font_size, buff
         self.entries: list[LegendEntry] = []
         for artist in artists:
-            if not isinstance(artist, (_CurvePlot, ScatterPlot)):
+            if not isinstance(artist, (_CurvePlot, ScatterPlot, ErrorBars)):
                 raise TypeError("artists must be plotting artists")
             text = artist.get_label()
             if text is None:

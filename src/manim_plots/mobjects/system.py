@@ -82,6 +82,7 @@ from manim_plots.mobjects.context import (
     data_interpolation,
     playback_context,
 )
+from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.helpers import (
     FilledRegion,
     HelperGroup,
@@ -150,9 +151,11 @@ _AXIS_KEYS = frozenset(
 
 class _ArtistRegistry:
     def __init__(self) -> None:
-        self._refs: list[weakref.ReferenceType[_CurvePlot | ScatterPlot]] = []
+        self._refs: list[
+            weakref.ReferenceType[_CurvePlot | ScatterPlot | ErrorBars]
+        ] = []
 
-    def __iter__(self) -> Iterator[_CurvePlot | ScatterPlot]:
+    def __iter__(self) -> Iterator[_CurvePlot | ScatterPlot | ErrorBars]:
         live = [artist for ref in self._refs if (artist := ref()) is not None]
         self._refs = [weakref.ref(artist) for artist in live]
         return iter(live)
@@ -160,11 +163,11 @@ class _ArtistRegistry:
     def __contains__(self, artist: object) -> bool:
         return any(ref() is artist for ref in self._refs)
 
-    def append(self, artist: _CurvePlot | ScatterPlot) -> None:
+    def append(self, artist: _CurvePlot | ScatterPlot | ErrorBars) -> None:
         list(self)
         self._refs.append(weakref.ref(artist))
 
-    def remove(self, artist: _CurvePlot | ScatterPlot) -> None:
+    def remove(self, artist: _CurvePlot | ScatterPlot | ErrorBars) -> None:
         self._refs = [ref for ref in self._refs if ref() is not artist]
 
 
@@ -728,10 +731,12 @@ class CartesianAxes(VGroup):
                 for leaf in artist.get_family():
                     if isinstance(leaf, Leaf):
                         leaf._event(lc.Rebind(target))
-                if isinstance(artist, ScatterPlot):
+                if isinstance(artist, (ScatterPlot, ErrorBars)):
                     self._artists.remove(artist)
                     target._artists.append(artist)
                     artist._system = target
+                    if isinstance(artist, ErrorBars) and artist.markers is not None:
+                        artist.markers._system = target
         return self
 
     @property
@@ -1316,6 +1321,78 @@ class CartesianAxes(VGroup):
         """
         artist = ScatterPlot(
             xs, self, ys, marker=marker, label=label, clip=clip, **kwargs
+        )
+        self.add(artist)
+        return artist
+
+    def errorbar(
+        self,
+        x: ArrayLike,
+        y: ArrayLike | None = None,
+        yerr: ArrayLike | None = None,
+        xerr: ArrayLike | None = None,
+        *,
+        marker: Mobject | Marker | None = Marker.DOT,
+        line: bool = False,
+        ecolor: ParsableManimColor | None = None,
+        elinewidth: float | None = None,
+        capsize: float = 0.1,
+        capthick: float | None = None,
+        barsabove: bool = False,
+        errorevery: int | tuple[int, int] = 1,
+        label: str | None = None,
+        clip: _ClipInput = True,
+        **style: Unpack[_VMStyle],
+    ) -> ErrorBars:
+        """Create and register error bars in x and y.
+
+        Parameters
+        ----------
+        x, y
+            Separate coordinate arrays, or pairs in x with y omitted.
+        yerr, xerr
+            Nonnegative scalar, n errors, or (2, n) lower and upper errors.
+        marker
+            Marker enum or native template; None omits markers.
+        line
+            Include a connecting line when true.
+        ecolor, elinewidth, capthick
+            Error colour, bar width (default 2), and cap width (default bar width).
+        capsize
+            Full cap length in scene units; zero omits caps.
+        barsabove
+            Draw bars after markers when true.
+        errorevery
+            Draw every kth error, or (start, k).
+        label
+            One legend entry for the entire artist.
+        clip
+            Boolean, scene-unit margin, or independent (x, y) policies.
+        **style
+            Native styles for markers and connecting line.
+
+        Returns
+        -------
+        ErrorBars
+            Registered artist with independently styleable named parts.
+        """
+        artist = ErrorBars(
+            x,
+            self,
+            y,
+            yerr,
+            xerr,
+            marker=marker,
+            line=line,
+            ecolor=ecolor,
+            elinewidth=elinewidth,
+            capsize=capsize,
+            capthick=capthick,
+            barsabove=barsabove,
+            errorevery=errorevery,
+            label=label,
+            clip=clip,
+            **style,
         )
         self.add(artist)
         return artist
@@ -2032,7 +2109,7 @@ class CartesianAxes(VGroup):
         return self
 
     @property
-    def artists(self) -> tuple[_CurvePlot | ScatterPlot, ...]:
+    def artists(self) -> tuple[_CurvePlot | ScatterPlot | ErrorBars, ...]:
         """Return registered artists in registration order, excluding copies."""
         return tuple(self._artists)
 
@@ -2053,7 +2130,7 @@ class CartesianAxes(VGroup):
         it is unregistered with remove.
         """
         for artist in artists:
-            if not isinstance(artist, (_CurvePlot, ScatterPlot)):
+            if not isinstance(artist, (_CurvePlot, ScatterPlot, ErrorBars)):
                 raise TypeError("artists must be plotting artists")
             if artist._system is not None and artist._system is not self:
                 raise ValueError("artist is bound to another system")
@@ -2061,6 +2138,10 @@ class CartesianAxes(VGroup):
                 if artist._system is None:
                     artist._system = self
                     for leaf in artist.get_family():
+                        if isinstance(artist, ErrorBars) and isinstance(
+                            leaf, ScatterPlot
+                        ):
+                            leaf._system = self
                         if isinstance(leaf, _CurvePlot):
                             leaf._system = self
                             leaf._frozen_frame = None
@@ -2081,8 +2162,10 @@ class CartesianAxes(VGroup):
         for artist in artists:
             if artist not in self._artists:
                 raise ValueError("artist is not registered with this system")
-            assert isinstance(artist, (_CurvePlot, ScatterPlot))
+            assert isinstance(artist, (_CurvePlot, ScatterPlot, ErrorBars))
             for leaf in artist.get_family():
+                if isinstance(artist, ErrorBars) and isinstance(leaf, ScatterPlot):
+                    leaf._system = None
                 if isinstance(leaf, _CurvePlot):
                     leaf._ensure()
                     leaf._system = None
