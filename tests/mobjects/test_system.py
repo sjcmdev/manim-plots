@@ -217,8 +217,8 @@ def test_ax7_round_trip_survives_geometric_operations(name):
     xs = np.linspace(-3, 9, 13)
     ys = np.linspace(-2, 2, 13)
     back = ax.p2c(np.asarray(ax.c2p(xs, ys)).T)
-    np.testing.assert_allclose(back[0], xs, rtol=0, atol=1e-9 * 12)
-    np.testing.assert_allclose(back[1], ys, rtol=0, atol=1e-9 * 4)
+    np.testing.assert_allclose(back[:, 0], xs, rtol=0, atol=1e-9 * 12)
+    np.testing.assert_allclose(back[:, 1], ys, rtol=0, atol=1e-9 * 4)
 
 
 # --- AX-8: ranges --------------------------------------------------------------------

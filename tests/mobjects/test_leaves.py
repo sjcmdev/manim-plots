@@ -49,7 +49,7 @@ def test_lf4_the_curve_lies_on_the_function_through_c2p():
     ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-2, 2, 1))
     curve = ax.plot(np.sin)
     anchors = curve.get_anchors()
-    x = ax.p2c(anchors)[0]
+    x = ax.p2c(anchors)[:, 0]
     np.testing.assert_allclose(anchors, np.asarray(ax.c2p(x, np.sin(x))).T, atol=1e-9)
     start, end = ax.p2c(curve.get_start())[0], ax.p2c(curve.get_end())[0]
     assert math.isclose(start, -3, abs_tol=1e-9) and math.isclose(end, 3, abs_tol=1e-9)

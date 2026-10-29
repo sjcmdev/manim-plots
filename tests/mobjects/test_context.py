@@ -70,7 +70,7 @@ def test_wr1_a_non_affine_function_bends_the_system_and_its_curve():
     unmoved = mp.Axes(x_range=(-3, 3, 1), y_range=(-2, 2, 1), x_length=6, y_length=4)
     ax.apply_function(wave)
     anchors = curve.get_anchors()
-    x = ax.p2c(anchors)[0]
+    x = ax.p2c(anchors)[:, 0]
     expected = np.array([wave(p) for p in np.asarray(unmoved.c2p(x, np.sin(x))).T])
     np.testing.assert_allclose(anchors, expected, atol=1e-2)
     assert reference is not curve

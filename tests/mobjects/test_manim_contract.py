@@ -100,6 +100,7 @@ ADDED_BY_TASK_09 = [
     "VMobject.set_stroke",
     "VMobject.interpolate_color",
     "VMobject.pointwise_become_partial",
+    "Mobject.reduce_across_dimension",
 ]
 
 SUPPORTED = {"0.21.0", "0.22.0"}
