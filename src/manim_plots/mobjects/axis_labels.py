@@ -64,7 +64,7 @@ class _Parts[T: VMobject](VGroup):
 
 
 def _configure_numbers(axis: Axis) -> None:
-    items = axis._items or axis._tick_items()
+    items = axis._items or axis._drawn_items()
     for old_label in axis._number_leaves.values():
         _restore_overlap(old_label)
     major = [item for item in items if item.level == "major"]
@@ -86,14 +86,18 @@ def _configure_numbers(axis: Axis) -> None:
             if item.level == "major" or item.label is not None
         ]
     lo, hi = sorted(axis.range.value)
+    hides_zero = axis._hides_zero()
+    excluded = axis.numbers_to_exclude
+    if axis._default_exclusion and not hides_zero:
+        excluded = tuple(x for x in excluded if x != 0)
     values = np.array(
         [
             float(x)
             for x in candidates
             if (
-                x not in axis.numbers_to_exclude
+                x not in excluded
                 and (lo <= x <= hi or (axis._pool is not None and axis._pool.building))
-                and (x != 0 or not axis.exclude_origin_tick)
+                and (x != 0 or not hides_zero)
             )
         ]
     )

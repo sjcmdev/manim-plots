@@ -152,7 +152,7 @@ class _TickPool:
 
         def ticks_at(alpha: float) -> tuple[Tick, ...]:
             limits = (1 - alpha) * start + alpha * end
-            ticks = self._items(axis, limits, alpha)
+            ticks = axis._uncovered(self._items(axis, limits, alpha), limits)
             schedule.append((alpha, {(t.level, t.key): t for t in ticks}))
             return ticks
 
@@ -379,12 +379,15 @@ class Axis(VGroup):
         self.scaling = native.scaling
         self.include_ticks = native.include_ticks
         self.include_tip = native.include_tip
+        self.tick_under_tip = False
         self.exclude_origin_tick = native.exclude_origin_tick
         self.tick_size = native.tick_size
         self.font_size = native.font_size
         self.label_direction = np.asarray(native.label_direction, dtype=float)
         self.line_to_number_buff = native.line_to_number_buff
         self.numbers_to_exclude = tuple(native.numbers_to_exclude)
+        # Manim's default exclusion of 0, which follows the crossing (_hides_zero).
+        self._default_exclusion = True
         self.numbers_to_include = self._config.get("numbers_to_include")
         self.include_numbers = self._config.get("include_numbers", False)
         self.decimal_number_config = self._config.get(
@@ -532,7 +535,7 @@ class Axis(VGroup):
         return result
 
     def _configure_ticks(self, native: NumberLine) -> None:
-        self._items = self._tick_items()
+        self._items = self._drawn_items()
         values = (item for item in self._items if item.level == "major")
         previous = self._tick_leaves
         current: dict[object, TickLeaf] = {}
@@ -585,6 +588,16 @@ class Axis(VGroup):
     def _versions(self) -> tuple[int, ...]:
         return tuple(parameter.version for parameter in self._parameters())
 
+    def _hides_zero(self) -> bool:
+        """Whether the tick and number at 0 are left out, as Manim leaves them out.
+
+        Manim's axes cross at the origin; once the other axis moves to a border or a
+        value, nothing crosses this axis at 0 and its tick and number come back.
+        """
+        other = self._system.get_axis(1 - self.index)
+        crossing = other._position == "origin" and other._position_fraction is None
+        return self.exclude_origin_tick and crossing
+
     def _cross_value(self) -> float:
         other = self._system.get_axis(1 - self.index)
         lo, hi = other.range.value
@@ -623,6 +636,25 @@ class Axis(VGroup):
             mode=self._tick_mode,
         )
 
+    def _drawn_items(self) -> tuple[Tick, ...]:
+        """Return the tick items without those at an end under a tip, as Manim's."""
+        return self._uncovered(self._tick_items(), self.range.value)
+
+    def _uncovered(
+        self, items: tuple[Tick, ...], limits: FloatArray
+    ) -> tuple[Tick, ...]:
+        """Leave out the items at an end of ``limits`` that carries a tip."""
+        source = self._mirror_of or self
+        tips = (self.tip_start, self.tip)
+        ends = [v for v, tip in zip(limits, tips, strict=True) if tip]
+        if source.tick_under_tip or not ends or not items:
+            return items
+        lo, hi, *covered = self._scale.forward([*limits, *ends])
+        values = self._scale.forward([item.value for item in items])
+        near = np.abs(values[:, None] - np.array(covered)[None, :])
+        keep = ~np.any(near <= 1e-9 * abs(hi - lo), axis=1)
+        return tuple(item for item, kept in zip(items, keep, strict=True) if kept)
+
     @property
     def max_ticks(self) -> int:
         """Return the label-space estimate passed to both locators."""
@@ -647,7 +679,9 @@ class Axis(VGroup):
         if self.tip_start is not None and self._tip_start_reference is not None:
             self.tip_start._cache = mapping.forward(self._tip_start_reference + offset)
         self._items = (
-            self._tick_items() if self._pool is None else self._pool._update(self)
+            self._drawn_items()
+            if self._pool is None
+            else self._uncovered(self._pool._update(self), self.range.value)
         )
         for level in ("major", "minor"):
             self._configure_level(level)
@@ -723,7 +757,7 @@ class Axis(VGroup):
         items = [
             item
             for item in self._items
-            if item.level == level and (item.value != 0 or not self.exclude_origin_tick)
+            if item.level == level and (item.value != 0 or not self._hides_zero())
         ]
         style = self._tick_styles[level]
         major_length = self._tick_styles["major"].get("length", 2 * self.tick_size)
@@ -744,7 +778,8 @@ class Axis(VGroup):
                     ]
                 )
                 local *= factors[:, None, None]
-        direction = style.get("direction", TickDirection.BOTH)
+        major = self._tick_styles["major"]
+        direction = style.get("direction", major.get("direction", TickDirection.BOTH))
         if direction is not TickDirection.BOTH:
             other = system.get_axis(1 - self.index)
             limits = other._scale.forward(other.range.value)
@@ -776,7 +811,7 @@ class Axis(VGroup):
                     leaf.match_style(self.line)
                     leaf.set_stroke(
                         color=style.get("color", leaf.get_color()),
-                        width=style.get("width"),
+                        width=style.get("width", self._default_width(level)),
                     )
             else:
                 leaf._cache = points
@@ -874,6 +909,9 @@ class Axis(VGroup):
     ) -> Self:
         """Style one tick level, measuring length as its full scene length.
 
+        A minor level takes the major level's direction until its own is set, half its
+        length and three quarters of its width.
+
         Parameters
         ----------
         level
@@ -904,8 +942,18 @@ class Axis(VGroup):
             leaf.set_stroke(
                 color=leaf.get_color() if color is None else color, width=width
             )
+        if level == "major" and "width" not in self._tick_styles["minor"]:
+            for leaf in self._minor_leaves.values():
+                leaf.set_stroke(width=self._default_width("minor"))
         self._regenerate()
         return self
+
+    def _default_width(self, level: Level) -> float | None:
+        """Return an unset width: the line's for major, 3/4 of major's for minor."""
+        if level == "major":
+            return None
+        major = self._tick_styles["major"].get("width", self.line.get_stroke_width())
+        return 0.75 * float(major)
 
     def set_position(
         self, where: str | float = "origin", *, fraction: float | None = None
@@ -933,18 +981,26 @@ class Axis(VGroup):
                 raise ValueError("fraction must be between zero and one")
         self._position, self._position_fraction = where, fraction
         self._regenerate()
+        self._system.get_axis(1 - self.index)._regenerate()
         return self
 
-    def set_tips(self, start: bool = False, end: bool = True) -> Self:
+    def set_tips(
+        self, start: bool = False, end: bool = True, *, tick_under_tip: bool = False
+    ) -> Self:
         """Show tips at either endpoint without changing the data mapping.
+
+        As in Manim, the tick and the number at an end with a tip are left out.
 
         Parameters
         ----------
         start, end
             Whether each endpoint carries an arrow tip.
+        tick_under_tip
+            Keep the tick and the number at an end with a tip.
         """
-        if not isinstance(start, bool) or not isinstance(end, bool):
-            raise TypeError("start and end must be bool")
+        if not all(isinstance(flag, bool) for flag in (start, end, tick_under_tip)):
+            raise TypeError("start, end and tick_under_tip must be bool")
+        self.tick_under_tip = tick_under_tip
         if self._tip_reference is None:
             template = NumberLine(
                 (0, self._reference_length, 1),
@@ -1255,14 +1311,13 @@ class Axis(VGroup):
         return self.rotate_about_number(0, angle, axis, **kwargs)
 
     def get_tick_range(self) -> FloatArray:
-        """Return locator values, retaining the tick beneath a tip."""
+        """Return the major tick values, without the one under a tip."""
         self._system._sync_data()
         return np.array(
             [
                 item.value
-                for item in self._tick_items()
-                if item.level == "major"
-                and (item.value != 0 or not self.exclude_origin_tick)
+                for item in self._drawn_items()
+                if item.level == "major" and (item.value != 0 or not self._hides_zero())
             ]
         )
 
@@ -1361,6 +1416,7 @@ class Axis(VGroup):
         self.include_numbers = True
         if excluding is not None:
             self.numbers_to_exclude = tuple(excluding)
+            self._default_exclusion = False
         self._number_options = dict(kwargs)
         if font_size is not None:
             self._number_options["font_size"] = font_size

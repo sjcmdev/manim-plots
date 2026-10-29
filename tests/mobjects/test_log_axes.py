@@ -34,19 +34,19 @@ def test_ac8_logbase_ranges_are_in_exponents_and_c2p_is_manims():
         np.testing.assert_allclose(ours.c2p(x, 1), theirs.c2p(x, 1), atol=1e-9)
 
 
-def test_ac8_ticks_sit_at_manims_decades_plus_the_one_under_the_tip():
+def test_ac8_ticks_sit_at_manims_decades():
     ours, theirs = log_axes()
     our_x = sorted(t.get_center()[0] for t in ours.x_axis.ticks)
     their_x = sorted(t.get_center()[0] for t in theirs.x_axis.ticks)
     assert all(np.isclose(our_x, x, atol=1e-9).any() for x in their_x)
-    assert len(our_x) == len(their_x) + 1
+    assert len(our_x) == len(their_x)
 
 
 def test_ac8_custom_labels_are_powers_of_ten():
     # Manim puts LogBase's custom labels in `labels`, through add_labels.
     ours, theirs = log_axes(include_numbers=True)
-    # Every one of Manim's, plus the one under the tip (F-411).
-    assert len(ours.x_axis.labels) == len(theirs.x_axis.labels) + 1
+    # Every one of Manim's and no other: none under the tip (F-411).
+    assert len(ours.x_axis.labels) == len(theirs.x_axis.labels)
     for manims in theirs.x_axis.labels:
         assert any(
             np.allclose(mine.get_center(), manims.get_center(), atol=1e-6)

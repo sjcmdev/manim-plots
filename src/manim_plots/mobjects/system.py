@@ -376,6 +376,9 @@ class CartesianAxes(VGroup):
             minors[1],
             configs[1],
         )
+        for axis, own in ((self.x_axis, x_axis_config), (self.y_axis, y_axis_config)):
+            given = (axis_config or {}, own or {})
+            axis._default_exclusion = not any("numbers_to_exclude" in c for c in given)
         self.axes = VGroup(self.x_axis, self.y_axis)
         self.x, self.y = self.x_axis, self.y_axis
         self.submobjects = [self.x_axis, self.y_axis, self.frame]

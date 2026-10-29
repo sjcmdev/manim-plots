@@ -41,7 +41,7 @@ def tick_values(ax, axis="x", level="ticks"):
 def test_lb1_a_locator_regenerates_the_ticks():
     ax = axes()
     ax.x.set_locator(MultipleLocator(2.5))
-    assert tick_values(ax) == [2.5, 5.0, 7.5, 10.0]
+    assert tick_values(ax) == [2.5, 5.0, 7.5]  # 10 is under the tip, as in Manim
 
 
 def test_lb1_a_plain_callable_is_a_locator():
@@ -147,6 +147,22 @@ def test_dp1_style_per_level():
     assert math.isclose(np.ptp(minor.points[:, 1]), major_length / 2, rel_tol=1e-9)
 
 
+def test_dp1_a_minor_level_follows_the_major_until_set():
+    ax = axes()
+    ax.x.set_position("bottom")
+    ax.x.set_locator(MultipleLocator(2), minor=MultipleLocator(1))
+    width = ax.x_axis.ticks.at(2.0).get_stroke_width()
+    assert ax.x_axis.minor_ticks.at(1.0).get_stroke_width() == 0.75 * width
+    ax.x.set_tick_style(direction=TickDirection.OUT, width=4)
+    minor = ax.x_axis.minor_ticks.at(1.0)
+    assert minor.get_stroke_width() == 3
+    line_y = ax.x_axis.line.get_center()[1]
+    assert math.isclose(minor.points[:, 1].max(), line_y, abs_tol=1e-9)
+    ax.x.set_tick_style("minor", direction=TickDirection.BOTH, width=1)
+    minor = ax.x_axis.minor_ticks.at(1.0)
+    assert minor.get_stroke_width() == 1 and minor.points[:, 1].max() > line_y
+
+
 @pytest.mark.parametrize(
     "where, expected",
     [("origin", 0.0), ("bottom", -2.0), ("top", 2.0), (1.5, 1.5)],
@@ -175,6 +191,25 @@ def test_dp2_an_axis_whose_range_excludes_zero_sits_at_the_edge():
     assert math.isclose(ax.x_axis.line.get_center()[1], ax.c2p(5, 1)[1], abs_tol=1e-9)
 
 
+def test_dp2_off_the_origin_the_zero_tick_and_number_come_back():
+    # Manim leaves out 0 where the axes cross; at a border nothing crosses there.
+    ax = mp.Axes(
+        x_range=(-2, 10, 2), y_range=(-1, 5, 1), axis_config={"include_numbers": True}
+    )
+    assert 0 not in tick_values(ax) and 0 not in tick_values(ax, "y")
+    ax.x.set_position("bottom")
+    ax.y.set_position("left")
+    assert 0 in tick_values(ax) and 0 in tick_values(ax, "y")
+    numbers = [round(ax.p2c(n.get_center())[0], 6) for n in ax.x_axis.numbers]
+    assert any(abs(x) < 0.5 for x in numbers)
+    ax.x.set_position("origin")
+    assert 0 not in tick_values(ax, "y")
+    kept = mp.Axes(axis_config={"include_numbers": True, "numbers_to_exclude": [0]})
+    kept.y.set_position("left")
+    assert 0 in tick_values(kept)
+    assert all(abs(kept.p2c(n.get_center())[0]) > 0.5 for n in kept.x_axis.numbers)
+
+
 def test_dp3_tips_at_either_end_change_no_mapping():
     ax = axes()
     before = ax.c2p(7, 1).copy()
@@ -183,6 +218,21 @@ def test_dp3_tips_at_either_end_change_no_mapping():
     assert ax.x_axis.tip is not None and ax.x_axis.tip_start is not None
     np.testing.assert_allclose(ax.c2p(7, 1), before)
     assert tick_values(ax) == ticks
+
+
+def test_dp3_the_tick_under_a_tip_is_left_out_unless_asked_for():
+    # As in Manim: an end with a tip has no tick and no number; without a tip it has.
+    ax = axes(axis_config={"include_numbers": True})
+    assert tick_values(ax)[-1] == 9
+    assert max(ax.p2c(n.get_center())[0] for n in ax.x_axis.numbers) < 9.5
+    ax.x.set_tips(end=True, tick_under_tip=True)
+    assert tick_values(ax)[-1] == 10
+    assert max(ax.p2c(n.get_center())[0] for n in ax.x_axis.numbers) > 9.5
+    ax.x.set_tips(end=True)
+    assert tick_values(ax)[-1] == 9
+    assert tick_values(axes(tips=False))[-1] == 10
+    with pytest.raises(TypeError):
+        ax.x.set_tips(tick_under_tip=1)
 
 
 def test_dp4_a_mirrored_axis_is_unlabelled_on_the_other_side():
