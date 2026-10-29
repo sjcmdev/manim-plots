@@ -20,6 +20,7 @@ classifiers = [
 dependencies = [
     "manim>=0.21,<0.23",
     "numpy>=2.5",
+    "scipy>=1.15",
 ]
 
 [project.urls]
@@ -57,6 +58,7 @@ select = [
     "RUF",
     "G",        # logging-format: lazy %-style arguments, never an f-string
     "LOG",      # flake8-logging
+    "TID251",   # banned imports: the core never imports Manim (ADR 0001 §1)
 ]
 # Off under the numpy convention; it catches a Parameters section left stale by a
 # rename to Manim's spelling (D17).
@@ -69,8 +71,14 @@ ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"manim".msg = "only mobjects/ imports Manim; core/ is NumPy, SciPy and the standard library (ADR 0001 §1)"
+
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "ANN"]
+"src/manim_plots/__init__.py" = ["TID251"]
+"src/manim_plots/mobjects/*" = ["TID251"]
+"tests/*" = ["D", "ANN", "TID251"]
+"tools/*" = ["TID251"]
 
 [tool.mypy]
 python_version = "3.12"
