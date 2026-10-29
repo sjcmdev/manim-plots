@@ -3,27 +3,44 @@
 from __future__ import annotations
 
 import copy
-import weakref
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, NoReturn, Self, Unpack
+from typing import Any, NoReturn, Self, Unpack, cast, overload
 
 import numpy as np
+from manim import (
+    DEFAULT_DOT_RADIUS,
+    PURE_YELLOW,
+    Dot,
+    Mobject,
+    VDict,
+    VGroup,
+    VMobject,
+    config,
+)
 from manim import Axes as NativeAxes
-from manim import Mobject, VGroup, VMobject, config
 from manim.constants import RendererType
+from manim.utils.color import ParsableManimColor
 from numpy.typing import ArrayLike
 
 from manim_plots.core import FloatArray
 from manim_plots.core.nodes import AffineNode, Chain, SystemMap
 from manim_plots.core.sources import Box
-from manim_plots.mobjects.artists import FunctionPlot
+from manim_plots.mobjects.artists import (
+    FunctionPlot,
+    LinePlot,
+    ParametricPlot,
+    ScatterPlot,
+    _CurvePlot,
+    _parameterize,
+)
 from manim_plots.mobjects.axis import Axis, _range
 from manim_plots.mobjects.context import playback_context
 from manim_plots.mobjects.leaves import (
     FrameLeaf,
-    _PlotOptions,
+    _ParametricOptions,
     _reported_updaters,
     _synchronise,
+    _VMStyle,
 )
 
 
@@ -72,7 +89,8 @@ class CartesianAxes(VGroup):
         for name, value in (("x_length", self.x_length), ("y_length", self.y_length)):
             if not np.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be positive and finite")
-        self._artists: weakref.WeakSet[FunctionPlot] = weakref.WeakSet()
+        self._artists: list[_CurvePlot | ScatterPlot] = []
+        self._moving_query: tuple[frozenset[Mobject], bool] | None = None
         self._actual_updaters: list[Callable[..., Any]] = []
         self._syncing = True
         self._data_version = 0
@@ -147,11 +165,6 @@ class CartesianAxes(VGroup):
             self._syncing = False
 
     def _poll(self) -> None:
-        if (
-            self.x_axis._range_parameter.tracker is None
-            and self.y_axis._range_parameter.tracker is None
-        ):
-            return
         token = playback_context()
         if token is not None and token == self._poll_token:
             return
@@ -159,9 +172,17 @@ class CartesianAxes(VGroup):
         self._token += 1
         self.x_axis._range_parameter.poll(self._token)
         self.y_axis._range_parameter.poll(self._token)
+        for artist in self._artists:
+            if isinstance(artist, _CurvePlot):
+                artist._poll()
         self._sync_data()
 
     def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
+        if self._moving_query is None or self._moving_query[0] is not moving:
+            self._moving_query = (moving, self._sync_needed(moving))
+        return self._moving_query[1]
+
+    def _sync_needed(self, moving: frozenset[Mobject]) -> bool:
         if not hasattr(self, "frame"):
             return False
         if self.frame in moving:
@@ -169,6 +190,9 @@ class CartesianAxes(VGroup):
         for axis in (self.x_axis, self.y_axis):
             tracker = axis.range.tracker
             if tracker is not None and (callable(tracker) or tracker in moving):
+                return True
+        for artist in self._artists:
+            if isinstance(artist, _CurvePlot) and artist._needs_sync(moving):
                 return True
         return False
 
@@ -272,29 +296,208 @@ class CartesianAxes(VGroup):
         self.y_axis.range = _range(y_range, "y_range")
         return self
 
+    @overload
     def plot(
         self,
         function: Callable[..., Any],
         x_range: Sequence[float] | None = None,
         use_vectorized: bool = False,
-        **kwargs: Unpack[_PlotOptions],
-    ) -> FunctionPlot:
-        """Create and register an analytic function plot.
+        **kwargs: object,
+    ) -> FunctionPlot: ...
+
+    @overload
+    def plot(
+        self, xs: ArrayLike, ys: ArrayLike | None = None, **kwargs: Unpack[_VMStyle]
+    ) -> LinePlot: ...
+
+    def plot(
+        self,
+        *args: object,
+        **kwargs: object,
+    ) -> FunctionPlot | LinePlot:
+        """Create and register a function plot or an array line.
+
+        Parameters
+        ----------
+        *args
+            Function, optional x_range and use_vectorized; or array xs and ys.
+        **kwargs
+            Named inputs, function parameters, native styles and sampling options.
+        """
+        if args:
+            function = args[0]
+        elif "function" in kwargs:
+            function = kwargs.pop("function")
+        else:
+            function = kwargs.pop("xs", None)
+        if callable(function):
+            if len(args) > 3:
+                raise TypeError("plot accepts function, x_range and use_vectorized")
+            function, _ = _parameterize(function, kwargs)
+            x_range = args[1] if len(args) > 1 else kwargs.pop("x_range", None)
+            use_vectorized = (
+                args[2] if len(args) > 2 else kwargs.pop("use_vectorized", False)
+            )
+            artist = FunctionPlot(
+                function,
+                self,
+                cast(Sequence[float] | None, x_range),
+                cast(bool, use_vectorized),
+                **cast(dict[str, Any], kwargs),
+            )
+            self.add(artist)
+            return artist
+        if len(args) > 2:
+            raise TypeError("plot accepts xs and ys for an array line")
+        ys = args[1] if len(args) > 1 else kwargs.pop("ys", None)
+        return self.line(
+            cast(ArrayLike, function),
+            cast(ArrayLike | None, ys),
+            **cast(_VMStyle, kwargs),
+        )
+
+    def line(
+        self, xs: ArrayLike, ys: ArrayLike | None = None, **kwargs: Unpack[_VMStyle]
+    ) -> LinePlot:
+        """Create and register a straight array line.
+
+        Parameters
+        ----------
+        xs, ys
+            Separate coordinates, or pairs in xs with ys omitted.
+        **kwargs
+            Native VMobject styles.
+        """
+        artist = LinePlot(xs, self, ys, **kwargs)
+        self.add(artist)
+        return artist
+
+    def scatter(
+        self,
+        xs: ArrayLike,
+        ys: ArrayLike | None = None,
+        *,
+        marker: Mobject | None = None,
+        **kwargs: Unpack[_VMStyle],
+    ) -> ScatterPlot:
+        """Create and register independent markers in input order.
+
+        Parameters
+        ----------
+        xs, ys
+            Separate coordinates, or pairs in xs with ys omitted.
+        marker
+            Native marker template, defaulting to Dot().
+        **kwargs
+            Native VMobject styles for the markers.
+        """
+        artist = ScatterPlot(xs, self, ys, marker=marker, **kwargs)
+        self.add(artist)
+        return artist
+
+    def plot_parametric_curve(
+        self,
+        function: Callable[..., Any],
+        use_vectorized: bool = False,
+        **kwargs: Unpack[_ParametricOptions],
+    ) -> ParametricPlot:
+        """Create and register a parameterized curve.
 
         Parameters
         ----------
         function
-            Scalar or vectorized analytic function.
-        x_range
-            Optional sampling interval and maximum spacing.
+            Callable returning coordinates or coordinate arrays.
         use_vectorized
-            Pass arrays to the callable when true.
+            Evaluate arrays instead of scalars when true.
         **kwargs
-            Native VMobject styles and Manim's sampling/shape options.
+            t_range (default (0, 1)), sampling options and native styles.
         """
-        artist = FunctionPlot(function, self, x_range, use_vectorized, **kwargs)
+        artist = ParametricPlot(function, self, use_vectorized, **kwargs)
         self.add(artist)
         return artist
+
+    def plot_line_graph(
+        self,
+        x_values: ArrayLike,
+        y_values: ArrayLike,
+        z_values: ArrayLike | None = None,
+        line_color: ParsableManimColor = PURE_YELLOW,
+        add_vertex_dots: bool = True,
+        vertex_dot_radius: float = DEFAULT_DOT_RADIUS,
+        vertex_dot_style: _VMStyle | None = None,
+        **kwargs: Unpack[_VMStyle],
+    ) -> VDict:
+        """Return Manim's named line and optional vertex-dot groups.
+
+        Parameters
+        ----------
+        x_values, y_values, z_values
+            Vertex coordinates; the optional z coordinate is ignored in 2D.
+        line_color
+            Line stroke color, defaulting to PURE_YELLOW.
+        add_vertex_dots
+            Include a ScatterPlot under vertex_dots when true.
+        vertex_dot_radius, vertex_dot_style
+            Native Dot radius and style options.
+        **kwargs
+            Native styles for the line.
+        """
+        options = kwargs.copy()
+        options["color"] = line_color
+        line = self.line(x_values, y_values, **options)
+        result = VDict([("line_graph", line)])
+        if add_vertex_dots:
+            marker = Dot(radius=vertex_dot_radius, **(vertex_dot_style or {}))
+            result.add(
+                [("vertex_dots", self.scatter(x_values, y_values, marker=marker))]
+            )
+        return result
+
+    def i2gc(self, x: float, graph: _CurvePlot) -> tuple[float, float]:
+        """Evaluate a bound graph's source exactly or by linear interpolation.
+
+        Parameters
+        ----------
+        x
+            Source input, independent of the sampled anchors.
+        graph
+            Function, array line or parametric artist bound to this system.
+
+        Returns
+        -------
+        tuple of float
+            The two data coordinates.
+        """
+        if not isinstance(graph, _CurvePlot) or graph._system is not self:
+            raise ValueError("graph must be bound to this system")
+        coords = graph.source.at(x)[0]
+        return float(coords[0]), float(coords[1])
+
+    input_to_graph_coords = i2gc
+
+    def i2gp(self, x: float, graph: _CurvePlot) -> FloatArray:
+        """Map an exact source query to a scene point.
+
+        Parameters
+        ----------
+        x
+            Source input.
+        graph
+            Artist bound to this system.
+
+        Returns
+        -------
+        FloatArray
+            Scene point of shape (3,).
+        """
+        return self.c2p(*self.i2gc(x, graph))
+
+    input_to_graph_point = i2gp
+
+    @property
+    def artists(self) -> tuple[_CurvePlot | ScatterPlot, ...]:
+        """Return registered artists in registration order, excluding copies."""
+        return tuple(self._artists)
 
     def add(self, *artists: Mobject | Iterable[VMobject]) -> Self:
         """Register artists without parenting them.
@@ -302,18 +505,24 @@ class CartesianAxes(VGroup):
         Parameters
         ----------
         *artists
-            Function plots with this system as their single owner.
+            Artists with this system as their single owner.
         """
         for artist in artists:
-            if not isinstance(artist, FunctionPlot):
-                raise TypeError("artists must be FunctionPlot objects")
+            if not isinstance(artist, (_CurvePlot, ScatterPlot)):
+                raise TypeError("artists must be plotting artists")
             if artist._system is not None and artist._system is not self:
                 raise ValueError("artist is bound to another system")
-            if artist._system is None:
-                artist._dirty = True
-                artist._frame_seen = -1
-            artist._system = self
-            self._artists.add(artist)
+            if artist not in self._artists:
+                if artist._system is None:
+                    artist._system = self
+                    for leaf in artist.get_family():
+                        if isinstance(leaf, _CurvePlot):
+                            leaf._system = self
+                            leaf._frozen_frame = None
+                            leaf._parameter_token = -1
+                            leaf._frame_seen = -1
+                            leaf.refresh()
+                self._artists.append(artist)
         return self
 
     def remove(self, *artists: Mobject | Iterable[VMobject]) -> Self:
@@ -325,18 +534,26 @@ class CartesianAxes(VGroup):
             Artists to unregister.
         """
         for artist in artists:
-            if isinstance(artist, FunctionPlot) and artist in self._artists:
-                self._artists.discard(artist)
-                artist._system = None
+            if artist not in self._artists:
+                raise ValueError("artist is not registered with this system")
+            assert isinstance(artist, (_CurvePlot, ScatterPlot))
+            for leaf in artist.get_family():
+                if isinstance(leaf, _CurvePlot):
+                    leaf._ensure()
+                    leaf._system = None
+            self._artists.remove(artist)
+            artist._system = None
         return self
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         result = type(self).__new__(type(self))
         memo[id(self)] = result
-        result._artists = weakref.WeakSet()
+        result._artists = []
         for key, value in self.__dict__.items():
             if key in {"bounds", "_data"}:
                 result.__dict__[key] = value
+            elif key == "_moving_query":
+                result.__dict__[key] = None
             elif key != "_artists":
                 result.__dict__[key] = copy.deepcopy(value, memo)
         return result

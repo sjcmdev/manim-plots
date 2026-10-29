@@ -43,6 +43,12 @@ from manim_plots.core.ticks import (
     NullLocator,
     SymLogLocator,
 )
+from manim_plots.mobjects.artists import (
+    FunctionPlot,
+    LinePlot,
+    ParametricPlot,
+    ScatterPlot,
+)
 from manim_plots.mobjects.context import check_pins
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
@@ -60,9 +66,11 @@ __all__ = [
     "FixedLocator",
     "FormatStrFormatter",
     "Formatter",
+    "FunctionPlot",
     "FunctionScale",
     "FunctionSource",
     "Labels",
+    "LinePlot",
     "LinearScale",
     "Locator",
     "LogLocator",
@@ -73,9 +81,11 @@ __all__ = [
     "MultipleLocator",
     "NullFormatter",
     "NullLocator",
+    "ParametricPlot",
     "ParametricSource",
     "Payload",
     "Scale",
+    "ScatterPlot",
     "ScientificFormatter",
     "Shape",
     "Source",
