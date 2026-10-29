@@ -70,12 +70,12 @@ LOG: dict[str, Any] = {
 
 @pytest.mark.render
 def test_logbase_axis(visual):
-    """Manim's `LogBase` in `axis_config`: exponent ranges, `10^k` labels, and a curve
-    through `c2p`."""
+    """Manim's `LogBase` in `axis_config`, on both axes: exponent ranges, `10^k` labels,
+    and `sqrt(x)` through `c2p`, a straight line on log-log axes."""
 
     def construct(scene: Scene) -> None:
         ax = mp.Axes(**LOG)
-        scene.add(ax, ax.plot(lambda x: np.log10(x) / 2))
+        scene.add(ax, ax.plot(np.sqrt))
 
     visual(construct)
 
@@ -86,7 +86,7 @@ def test_logbase_axis__manim(visual):
 
     def construct(scene: Scene) -> None:
         ax = Axes(**LOG)
-        scene.add(ax, ax.plot(lambda x: np.log10(x) / 2))
+        scene.add(ax, ax.plot(np.sqrt))
 
     visual(construct)
 

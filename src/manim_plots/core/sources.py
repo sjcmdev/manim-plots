@@ -244,6 +244,8 @@ def _path(coords: FloatArray, labels: IntArray) -> Payload:
 
 def _sum_rows(values: FloatArray) -> FloatArray:
     # Three coordinate columns add in the same order without a strided reduction.
+    if values.shape[1] == 2:
+        return values[:, 0] + values[:, 1]
     if values.shape[1] == 3:
         return values[:, 0] + values[:, 1] + values[:, 2]
     return values.sum(axis=1)
@@ -354,48 +356,73 @@ class _AnalyticSource:
                 remaining -= count
         if not ts:
             return Payload.empty("path", 2)
-        t, labels = np.concatenate(ts), np.concatenate(ids)
-        coords = self._evaluate(t)
-        screen = map.to_screen(coords)
-        depth = np.zeros(len(t) - 1, dtype=np.intp)
+        t = ts[0] if len(ts) == 1 else np.concatenate(ts)
+        labels = ids[0] if len(ids) == 1 else np.concatenate(ids)
+        depth: IntArray | None = None
         active = labels[1:] == labels[:-1]
+        probes = None
+        if 1 < len(t) < MAX_SAMPLES:
+            mid = t[:-1] / 2 + t[1:] / 2
+            mid = mid if active.all() else mid[active]
+            evaluated = self._evaluate(np.concatenate((t, mid)))
+            mapped = map.to_screen(evaluated)
+            coords, points = evaluated[: len(t)], evaluated[len(t) :]
+            screen, images = mapped[: len(t)], mapped[len(t) :]
+            probes = points, images
+        else:
+            coords = self._evaluate(t)
+            screen = map.to_screen(coords)
         for _ in range(MAX_DEPTH):
-            indices = np.flatnonzero(active)
-            if not len(indices) or len(t) >= MAX_SAMPLES:
+            if len(t) < 2 or len(t) >= MAX_SAMPLES:
+                break
+            indices = None if active.all() else np.flatnonzero(active)
+            if indices is not None and not len(indices):
                 break
             with np.errstate(all="ignore"):
-                if active.all():
+                if indices is None:
                     left_t, right_t = t[:-1], t[1:]
                     left, right = screen[:-1], screen[1:]
                 else:
                     left_t, right_t = t[indices], t[indices + 1]
                     left, right = screen[indices], screen[indices + 1]
                 mid = left_t / 2 + right_t / 2
-                points = self._evaluate(mid)
-                images = map.to_screen(points)
+                if probes is None:
+                    points = self._evaluate(mid)
+                    images = map.to_screen(points)
+                else:
+                    points, images = probes
+                    probes = None
+                # The chord midpoint is an admissible closest-point candidate.
+                delta = images - left / 2 - right / 2
+                if (_sum_rows(delta * delta) <= CHORD_TOLERANCE**2).all():
+                    break
                 chord = right - left
                 norm = _sum_rows(chord * chord)
+                delta = images - left
                 fraction = np.divide(
-                    _sum_rows((images - left) * chord),
+                    _sum_rows(delta * chord),
                     norm,
                     out=np.zeros(len(mid)),
                     where=norm != 0,
                 )
-                closest = left + np.clip(fraction, 0, 1)[:, None] * chord
-                delta = images - closest
-                error = np.sqrt(_sum_rows(delta * delta))
+                np.clip(fraction, 0, 1, out=fraction)
+                chord *= fraction[:, None]
+                delta -= chord
+                error = _sum_rows(delta * delta)
                 if np.isfinite(screen).all() and np.isfinite(images).all():
-                    refine = error > CHORD_TOLERANCE
+                    refine = error > CHORD_TOLERANCE**2
                 else:
                     lv = np.isfinite(left).all(axis=1)
                     rv = np.isfinite(right).all(axis=1)
                     mv = np.isfinite(images).all(axis=1)
-                    refine = (lv != rv) | (lv & rv & (~mv | (error > CHORD_TOLERANCE)))
+                    refine = (lv != rv) | (
+                        lv & rv & (~mv | (error > CHORD_TOLERANCE**2))
+                    )
                 refine &= (mid > left_t) & (mid < right_t)
             chosen = np.flatnonzero(refine)[: MAX_SAMPLES - len(t)]
             if not len(chosen):
                 break
-            edges = indices[chosen]
+            edges = chosen if indices is None else indices[chosen]
             insert = np.zeros(len(t) - 1, dtype=np.bool_)
             insert[edges] = True
             positions = np.arange(len(t)) + np.concatenate(([0], np.cumsum(insert)))
@@ -408,6 +435,8 @@ class _AnalyticSource:
             added = positions[edges] + 1
             new_t[added], new_coords[added] = mid[chosen], points[chosen]
             new_screen[added], new_labels[added] = images[chosen], labels[edges]
+            if depth is None:
+                depth = np.zeros(len(t) - 1, dtype=np.intp)
             depth = np.repeat(depth + insert, 1 + insert)
             active = np.repeat(insert, 1 + insert) & (depth < MAX_DEPTH)
             t, coords, screen, labels = new_t, new_coords, new_screen, new_labels

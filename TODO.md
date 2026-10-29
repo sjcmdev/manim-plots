@@ -236,7 +236,11 @@ F-1001 final, F-1002, F-1003, F-1005, F-1006 on every surface.
 
 - [ ] F-1001 on both frame paths, the 1.5x check against
       `tests/benchmark/test_plain_manim.py`, setup recorded; the JSON kept with the release
-- [ ] The full gate on both Manim versions
+      — 1.5x passes (1.17x); `update` p95 on a quiet machine 2026-10-29: tracker 3.9-4.4 ms,
+      `.animate` affine 4.0-4.4 ms, `.animate` bilinear 4.3-4.5 ms against 4 ms; a third
+      performance pass is next
+- [x] The full gate on both Manim versions
+- [x] Types resolve at runtime (TY-1 to TY-3); invalid input per F-1006 (IV-1 to IV-5)
 
 ### task/14-docs-release
 

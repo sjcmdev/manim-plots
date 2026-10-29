@@ -5,7 +5,7 @@ from __future__ import annotations
 import copy
 import re
 from collections.abc import Callable, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, NoReturn, Self, TypedDict, Unpack, cast
+from typing import Any, NoReturn, Self, TypedDict, Unpack, cast
 
 import numpy as np
 from manim import Animation, MathTex, Mobject, Scene, Tex, VGroup, VMobject, config
@@ -16,6 +16,7 @@ from manim.utils.paths import straight_path
 from numpy.typing import ArrayLike
 from PIL.Image import Image
 
+import manim_plots as mp
 from manim_plots.core import FloatArray
 from manim_plots.core import lifecycle as lc
 from manim_plots.core.nodes import FRAME_NODES, Chain, FrameMap
@@ -24,10 +25,6 @@ from manim_plots.mobjects.context import (
     buffer_write,
     moving_context,
 )
-
-if TYPE_CHECKING:
-    from manim_plots.mobjects.artists import FunctionPlot, LineStyle
-    from manim_plots.mobjects.system import CartesianAxes
 
 _SIMULATING = False
 _STRAIGHT = straight_path()
@@ -62,7 +59,7 @@ class _VMStyle(TypedDict, total=False):
 class _ArtistOptions(_VMStyle, total=False):
     label: str | None
     clip: bool | float
-    line_style: LineStyle
+    line_style: mp.LineStyle
     dash: tuple[float, float] | None
 
 
@@ -104,7 +101,7 @@ class _ParametricOptions(_PlotOptions, total=False):
 
 def _reported_updaters(
     actual: list[Callable[..., Any]],
-    system: CartesianAxes | None,
+    system: mp.CartesianAxes | None,
     leaf: Leaf | None = None,
 ) -> list[Callable[..., Any]]:
     if not actual or _synchronise not in actual:
@@ -122,7 +119,7 @@ def _reported_updaters(
 
 
 def _synchronise(mobject: Mobject) -> None:
-    system = cast("CartesianAxes | None", getattr(mobject, "_system", mobject))
+    system = cast("mp.CartesianAxes | None", getattr(mobject, "_system", mobject))
     if system is not None:
         system._poll()
         if isinstance(mobject, Leaf):
@@ -175,12 +172,13 @@ class Leaf(VMobject):
     """
 
     _label_owner: BoundLabel | None = None
+    _axis_local: FloatArray | None = None
     _pool_visible = True
 
     def __init__(
         self,
         points: ArrayLike | None = None,
-        system: CartesianAxes | None = None,
+        system: mp.CartesianAxes | None = None,
         **kwargs: Unpack[_VMStyle],
     ) -> None:
         if config.renderer == RendererType.OPENGL:
@@ -223,7 +221,6 @@ class Leaf(VMobject):
             self._ready
             and not self._alignment_locked
             and self._lifecycle.state not in (lc.State.TRANSIENT, lc.State.REMOVED)
-            and not buffer_write()
         ):
             self._ensure()
         return self._cache
@@ -239,9 +236,14 @@ class Leaf(VMobject):
         ):
             return
         owner = self.__dict__.get("_label_owner")
-        if owner is not None:
+        if owner is not None and not buffer_write():
             owner._ensure()
-        if self._system is not None and self._lifecycle.state is lc.State.ATTACHED:
+        if (
+            self._system is not None
+            and self._lifecycle.state is lc.State.ATTACHED
+            and self._system._data_dirty()
+            and not buffer_write()
+        ):
             self._system._sync_data()
 
     def _poll(self) -> None:
@@ -272,9 +274,7 @@ class Leaf(VMobject):
             elif kind is lc.Kind.REBIND:
                 old, new = self._system, action.ref
                 assert old is not None
-                from manim_plots.mobjects.system import CartesianAxes
-
-                assert isinstance(new, CartesianAxes)
+                assert isinstance(new, mp.CartesianAxes)
                 if self in old._artists:
                     old._artists.remove(self)  # type: ignore[arg-type]
                     new._artists.append(self)  # type: ignore[arg-type]
@@ -799,9 +799,9 @@ class BoundLabel(VGroup):
     def __init__(
         self,
         label: VGroup,
-        system: CartesianAxes,
+        system: mp.CartesianAxes,
         anchor: Callable[[], FloatArray] | None = None,
-        graph: FunctionPlot | None = None,
+        graph: mp.FunctionPlot | None = None,
     ) -> None:
         self._system = system
         self._actual_updaters: list[Callable[..., Any]] = []
@@ -885,7 +885,7 @@ class FrameLeaf(Leaf):
     """
 
     def __init__(
-        self, lower: FloatArray, upper: FloatArray, system: CartesianAxes
+        self, lower: FloatArray, upper: FloatArray, system: mp.CartesianAxes
     ) -> None:
         self.lower, self.upper = lower.copy(), upper.copy()
         self.version = 0

@@ -216,6 +216,10 @@ class AffineNode:
                 f"matrix last row at index {len(matrix) - 1} must be [0, ..., 0, 1]"
             )
         self._matrix = matrix
+        linear = matrix[:-1, :-1]
+        diagonal = np.diag(linear).copy()
+        self._diagonal = diagonal if np.array_equal(linear, np.diag(diagonal)) else None
+        self._singular: bool | None = None
 
     @classmethod
     def from_parts(cls, linear: FloatArray, offset: FloatArray) -> AffineNode:
@@ -276,7 +280,13 @@ class AffineNode:
         """
         x = _samples(x, self.dim, "x")
         with np.errstate(all="ignore"):
-            return x @ self._matrix[:-1, :-1].T + self._matrix[:-1, -1]
+            result = (
+                x * self._diagonal
+                if self._diagonal is not None
+                else x @ self._matrix[:-1, :-1].T
+            )
+            result += self._matrix[:-1, -1]
+            return result
 
     def inverse(self, y: FloatArray) -> FloatArray:
         """Solve the affine inverse, refusing singular linear parts.
@@ -298,9 +308,17 @@ class AffineNode:
         """
         y = _samples(y, self.dim, "y")
         linear = self._matrix[:-1, :-1]
-        if _singular(linear):
+        if self._singular is None:
+            if self._diagonal is None:
+                self._singular = _singular(linear)
+            else:
+                sizes = np.abs(self._diagonal)
+                self._singular = bool(sizes.min() <= SINGULAR_RTOL * sizes.max())
+        if self._singular:
             raise ValueError("matrix linear part is singular")
         with np.errstate(all="ignore"):
+            if self._diagonal is not None:
+                return (y - self._matrix[:-1, -1]) / self._diagonal
             return np.linalg.solve(linear, (y - self._matrix[:-1, -1]).T).T
 
     def valid(self, x: FloatArray) -> BoolArray:
@@ -707,6 +725,7 @@ class FrameMap:
         if self.n < 2 or self.n * self.n != len(self.nodes):
             raise ValueError("nodes length must be n*n for n >= 2")
         _finite(self.nodes, "nodes")
+        self._separable: list[tuple[int, FloatArray, float] | None] | None = None
         with np.errstate(all="ignore"):
             self._span = self.upper - self.lower
             self._cell_scale = (self.n - 1) / self._span
@@ -722,7 +741,51 @@ class FrameMap:
             if not self._is_affine:
                 indices = np.arange(len(self.nodes) - self.n - 1)[:, None]
                 corners = np.array([0, 1, self.n, self.n + 1])
-                self._cell_nodes = self.nodes[indices + corners]
+                cells = self.nodes[indices + corners]
+                cell_coefficients = (
+                    cells[:, 0],
+                    cells[:, 1] - cells[:, 0],
+                    cells[:, 2] - cells[:, 0],
+                    cells[:, 3] - cells[:, 2] - cells[:, 1] + cells[:, 0],
+                )
+                self._cell_coefficients = tuple(
+                    tuple(np.ascontiguousarray(c[:, axis]) for c in cell_coefficients)
+                    for axis in range(3)
+                )
+                self._cell_corners = (
+                    None
+                    if all(np.isfinite(c).all() for c in cell_coefficients)
+                    else cells
+                )
+                self._constant_coordinates = (self.nodes == self.nodes[0]).all(axis=0)
+                self._knots = tuple(
+                    np.linspace(self.lower[axis], self.upper[axis], self.n)
+                    for axis in range(2)
+                )
+                grid = self.nodes.reshape(self.n, self.n, 3)
+                separable: list[tuple[int, FloatArray, float] | None] = []
+                tolerance = 8 * np.finfo(float).eps * self._size
+                for axis in range(3):
+                    if self._constant_coordinates[axis]:
+                        separable.append(None)
+                        continue
+                    for along in range(2):
+                        values = grid[:, 0, axis] if along == 0 else grid[0, :, axis]
+                        ends = grid[0, :, axis] if along == 0 else grid[:, 0, axis]
+                        slope = float((ends[-1] - ends[0]) / self._span[along])
+                        linear = slope * (self._knots[along] - self.lower[along])
+                        fit = (
+                            values[:, None] + linear
+                            if along == 0
+                            else values + linear[:, None]
+                        )
+                        if np.max(np.abs(fit - grid[:, :, axis])) <= tolerance:
+                            separable.append((1 - along, values.copy(), slope))
+                            break
+                    else:
+                        break
+                if len(separable) == 3:
+                    self._separable = separable
             self._basis = coefficients[:2] / self._span[:, None]
             self._origin = coefficients[2]
             self._is_singular = self.is_affine and _singular(self._basis)
@@ -788,18 +851,54 @@ class FrameMap:
         """Return whether the affine in-plane part meets SINGULAR_RTOL."""
         return self._is_singular
 
-    def _cells(self, xy: FloatArray) -> tuple[IntArray, FloatArray]:
+    def _cells(self, xy: FloatArray) -> tuple[IntArray, FloatArray, FloatArray]:
         u = (xy[:, 0] - self.lower[0]) * self._cell_scale[0]
         v = (xy[:, 1] - self.lower[1]) * self._cell_scale[1]
         i = np.floor(np.clip(u, 0, self.n - 2)).astype(np.intp)
         j = np.floor(np.clip(v, 0, self.n - 2)).astype(np.intp)
-        return j * self.n + i, np.column_stack((u - i, v - j))
+        return j * self.n + i, u - i, v - j
 
     def _bilinear(self, xy: FloatArray) -> FloatArray:
-        index, fractions = self._cells(xy)
-        u, v = fractions.T
-        weights = np.column_stack(((1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v))
-        result: FloatArray = np.einsum("ni,nij->nj", weights, self._cell_nodes[index])
+        if self._separable is None:
+            return self._bilinear_general(xy)
+        result = np.empty((len(xy), 3))
+        for axis, component in enumerate(self._separable):
+            if component is None:
+                result[:, axis] = self.nodes[0, axis]
+            else:
+                index, values, slope = component
+                result[:, axis] = np.interp(xy[:, index], self._knots[index], values)
+                result[:, axis] += (xy[:, 1 - index] - self.lower[1 - index]) * slope
+        outside = (
+            (xy[:, 0] < self.lower[0])
+            | (xy[:, 0] > self.upper[0])
+            | (xy[:, 1] < self.lower[1])
+            | (xy[:, 1] > self.upper[1])
+        )
+        if outside.any():
+            result[outside] = self._bilinear_general(xy[outside])
+        return result
+
+    def _bilinear_general(self, xy: FloatArray) -> FloatArray:
+        index, u, v = self._cells(xy)
+        if self._cell_corners is not None:
+            # Differences of finite corners can overflow; retain weighted interpolation.
+            weights = np.column_stack(
+                ((1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v)
+            )
+            fallback: FloatArray = np.einsum(
+                "ni,nij->nj", weights, self._cell_corners[index]
+            )
+            return fallback
+        result = np.empty((len(xy), 3))
+        # Contiguous coefficient columns avoid gathering twelve values per point.
+        for axis, (a, b, c, d) in enumerate(self._cell_coefficients):
+            if self._constant_coordinates[axis]:
+                result[:, axis] = self.nodes[0, axis]
+            else:
+                result[:, axis] = (
+                    a[index] + u * b[index] + v * (c[index] + u * d[index])
+                )
         return result
 
     def forward(self, local: FloatArray) -> FloatArray:
@@ -840,8 +939,8 @@ class FrameMap:
             return result
 
     def _jacobian(self, xy: FloatArray) -> FloatArray:
-        index, fractions = self._cells(xy)
-        u, v = fractions.T[:, :, None]
+        index, u, v = self._cells(xy)
+        u, v = u[:, None], v[:, None]
         p00 = self.nodes[index]
         p10 = self.nodes[index + 1]
         p01 = self.nodes[index + self.n]

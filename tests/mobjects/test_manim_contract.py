@@ -152,6 +152,9 @@ ADDED_BY_TASK_11 = [
     "_Memoizer._handle_already_processed",
 ]
 
+# Task 13: the animation family walk reads Manim's cached family (PF-1).
+ADDED_BY_TASK_13 = ["Mobject.family_members_with_points"]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -170,6 +173,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_10
         + ADDED_BY_TASK_11
         + ADDED_BY_TASK_12
+        + ADDED_BY_TASK_13
     )
 
 

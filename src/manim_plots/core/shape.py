@@ -246,6 +246,13 @@ def _clip_path(payload: Payload, box: Box) -> Payload:
     inside = box.contains(payload.coords)
     if inside.all():
         return Payload._trusted("path", payload.coords, payload.segments)
+    outside = payload.coords[~inside, :2]
+    tolerance = 8 * np.spacing(np.maximum(np.abs(box.lower), np.abs(box.upper)))
+    if ((outside >= box.lower - tolerance) & (outside <= box.upper + tolerance)).all():
+        # An inverse/forward round trip at the viewport edge need not be bit-exact.
+        coords = payload.coords.copy()
+        coords[~inside, :2] = np.clip(outside, box.lower, box.upper)
+        return Payload._trusted("path", coords, payload.segments)
     inside = inside.reshape(-1, 4).all(axis=1)
     parts: list[FloatArray] = []
     lengths: list[int] = []

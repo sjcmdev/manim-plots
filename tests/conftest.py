@@ -22,6 +22,11 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         action="store_true",
         help="write a missing or changed visual baseline instead of failing",
     )
+    parser.addoption(
+        "--record",
+        action="store_true",
+        help="write each benchmark reading into docs/benchmarks/0.1.json",
+    )
 
 
 def pytest_configure(config: pytest.Config) -> None:

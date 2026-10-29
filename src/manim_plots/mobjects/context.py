@@ -170,6 +170,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VMobject.scale,
     VMobject.split,
     Animation.interpolate_mobject,
+    Mobject.family_members_with_points,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
@@ -522,6 +523,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "Mobject.get_family_updaters": (
             "37cd7d253aa5e9d4ccfaddd4e81677fadaf99600f4b9ba7b6d9d5717f71e86c8"
         ),
+        "Mobject.family_members_with_points": (
+            "fc69ac2726f2d19db2e5785f72daa86622157cd1efbe74fc91bd25e51dc38c26"
+        ),
     },
     "0.22.0": {
         "get_json": (
@@ -872,6 +876,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "Mobject.get_family_updaters": (
             "37cd7d253aa5e9d4ccfaddd4e81677fadaf99600f4b9ba7b6d9d5717f71e86c8"
         ),
+        "Mobject.family_members_with_points": (
+            "fc69ac2726f2d19db2e5785f72daa86622157cd1efbe74fc91bd25e51dc38c26"
+        ),
     },
 }
 
@@ -1026,6 +1033,19 @@ def animation_context(
                 return cast(Animation, frame.f_locals["self"])
             frame = frame.f_back
         return None
+    finally:
+        del frame
+
+
+def data_interpolation() -> bool:
+    """Identify a Transform's simultaneous derived-data interpolation query."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            if frame.f_code is Transform.get_all_families_zipped.__code__:
+                return bool(frame.f_locals["self"].lag_ratio == 0)
+            frame = frame.f_back
+        return False
     finally:
         del frame
 

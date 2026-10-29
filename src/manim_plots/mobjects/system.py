@@ -72,6 +72,7 @@ from manim_plots.mobjects.axis import (
 from manim_plots.mobjects.context import (
     _PlaybackToken,
     animation_context,
+    data_interpolation,
     playback_context,
 )
 from manim_plots.mobjects.leaves import (
@@ -428,6 +429,41 @@ class CartesianAxes(VGroup):
     def __getattr__(self, name: str) -> NoReturn:
         raise AttributeError(f"CartesianAxes has no attribute {name!r}")
 
+    def family_members_with_points(self) -> list[Mobject]:
+        """Return members with points, using the flat animation channel directly."""
+        if self._data_animation and all(isinstance(m, Leaf) for m in self.submobjects):
+            if data_interpolation():
+                # The frame publishes all derived geometry at the same alpha.
+                return [self.frame]
+            self._sync_data()
+            members: list[Mobject] = []
+            for leaf in cast(list[Leaf], self.submobjects):
+                if leaf._label_owner is not None:
+                    leaf._ensure()
+                if len(leaf._cache):
+                    members.append(leaf)
+            return members
+        return super().family_members_with_points()
+
+    def update(self, dt: float = 0, recursive: bool = True) -> Self:
+        """Update active channel leaves without traversing updater-free decorations.
+
+        Parameters
+        ----------
+        dt, recursive
+            Native updater elapsed time and family traversal flag.
+        """
+        if not self._data_animation:
+            return super().update(dt, recursive)
+        if self.updating_suspended:
+            return self
+        super().update(dt, recursive=False)
+        if recursive:
+            for member in self.submobjects:
+                if member.submobjects or member.updaters:
+                    member.update(dt, recursive=True)
+        return self
+
     def become(
         self,
         mobject: Mobject,
@@ -600,14 +636,21 @@ class CartesianAxes(VGroup):
                 (self.x, self.y), (start.x, start.y), (target.x, target.y), strict=True
             ):
                 limits = (1 - alpha) * a.range.value + alpha * b.range.value
-                limits.flags.writeable = False
-                axis._range_parameter._value = limits
-                axis._range_parameter._version += 1
+                if not isinstance(axis._scale, LinearScale):
+                    limits = np.array(
+                        axis._scale.limit_range(
+                            float(limits[0]), float(limits[1]), MINPOS_UNKNOWN
+                        )
+                    )
+                if not np.array_equal(limits, axis._range_parameter.value):
+                    limits.flags.writeable = False
+                    axis._range_parameter._value = limits
+                    axis._range_parameter._version += 1
                 assert axis._pool is not None
                 axis._pool.alpha = alpha
             self._compile()
-            self.x._configure()
-            self.y._configure()
+            for axis in (self.x, self.y):
+                axis._configure(only_crossing=axis._decoration_seen == axis._versions())
             self._configure_grid()
         finally:
             self._syncing = False
@@ -745,15 +788,16 @@ class CartesianAxes(VGroup):
         self.x_axis._resize(self.x_length)
         self.y_axis._resize(self.y_length)
 
+    def _data_dirty(self) -> bool:
+        return not self._syncing and (
+            self.x_axis._range_seen != self.x_axis._range_parameter.version
+            or self.y_axis._range_seen != self.y_axis._range_parameter.version
+            or self.x_axis._style_changed()
+            or self.y_axis._style_changed()
+        )
+
     def _sync_data(self) -> None:
-        if self._syncing:
-            return
-        if (
-            self.x_axis._range_seen == self.x_axis._range_parameter.version
-            and self.y_axis._range_seen == self.y_axis._range_parameter.version
-            and not self.x_axis._style_changed()
-            and not self.y_axis._style_changed()
-        ):
+        if not self._data_dirty():
             return
         axes = (self.x_axis, self.y_axis)
         range_changed = any(
@@ -767,7 +811,7 @@ class CartesianAxes(VGroup):
             if range_changed:
                 self._compile()
             for axis in axes if range_changed else changed:
-                axis._configure()
+                axis._configure(only_crossing=axis not in changed)
             self._configure_grid()
         finally:
             self._syncing = False
@@ -782,8 +826,7 @@ class CartesianAxes(VGroup):
         for parameter in parameters:
             parameter.poll(self._token)
         for artist in self._artists:
-            if isinstance(artist, _CurvePlot):
-                artist._poll()
+            artist._poll()
         self._sync_data()
 
     def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
@@ -847,6 +890,8 @@ class CartesianAxes(VGroup):
             data = np.column_stack((data, np.zeros(len(data))))
         data = data[:, :2]
         mapping = self._mapping()
+        if mapping.frame.is_singular:
+            raise ValueError("frame is singular")
         valid = mapping.valid(data)
         if not valid.all():
             sample_index = int(np.flatnonzero(~valid)[0])

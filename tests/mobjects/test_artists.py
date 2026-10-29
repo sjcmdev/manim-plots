@@ -154,7 +154,8 @@ def test_ar6_a_custom_marker_becomes_library_leaves():
 
 def test_ar6_a_point_outside_is_not_drawn_and_keeps_its_place():
     ax = axes()
-    scatter = ax.scatter([0.0, 10.0, 1.0], [0.0, 0.0, np.nan])
+    with pytest.warns(ManimPlotsWarning):  # IV-5 of task 13
+        scatter = ax.scatter([0.0, 10.0, 1.0], [0.0, 0.0, np.nan])
     assert len(scatter) == 3
     assert scatter[0].get_fill_opacity() > 0
     assert scatter[1].get_fill_opacity() == 0
