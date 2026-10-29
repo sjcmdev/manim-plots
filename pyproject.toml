@@ -87,7 +87,13 @@ files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
 module = "tests.*"
+# Tests are typed loosely on purpose: helpers may leave parameters unannotated, and a
+# local needs no annotation that the test does not care about. The public API's own
+# annotations are still checked at every call (F-1002).
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disable_error_code = ["var-annotated"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

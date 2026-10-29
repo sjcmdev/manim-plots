@@ -14,7 +14,14 @@ import warnings
 import numpy as np
 import pytest
 
-from manim_plots.core.nodes import AffineNode, Chain, FrameMap, ScaleNode, SystemMap
+from manim_plots.core.nodes import (
+    AffineNode,
+    Chain,
+    FrameMap,
+    Node,
+    ScaleNode,
+    SystemMap,
+)
 from manim_plots.core.payload import Payload
 from manim_plots.core.scales import LinearScale, LogScale
 from manim_plots.core.sources import (
@@ -38,7 +45,7 @@ def system(x=(-6.0, 6.0), y=(-4.0, 4.0), *, log_x=False, frame=None):
     x0, x1 = (math.log10(v) for v in x) if log_x else x
     y0, y1 = y
     sx, sy = (UPPER[0] - LOWER[0]) / (x1 - x0), (UPPER[1] - LOWER[1]) / (y1 - y0)
-    nodes = [ScaleNode(LogScale() if log_x else LinearScale(), 0, 2)]
+    nodes: list[Node] = [ScaleNode(LogScale() if log_x else LinearScale(), 0, 2)]
     nodes.append(
         AffineNode.from_parts(
             np.diag([sx, sy]), np.array([LOWER[0] - x0 * sx, LOWER[1] - y0 * sy])
@@ -320,7 +327,7 @@ def test_ps1_argument_checks():
     with pytest.raises(ValueError, match="t_range"):
         ParametricSource(circle, t_range=(1.0, 1.0))
     with pytest.raises(TypeError):
-        ParametricSource(5)
+        ParametricSource(5)  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(

@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import functools
 import math
+from typing import Any
 
 import numpy as np
 import pytest
 from manim.utils.bezier import get_smooth_cubic_bezier_handle_points
-from scipy.integrate import quad
+from scipy.integrate import quad  # type: ignore[import-untyped]
 
 from manim_plots.core import shape
 from manim_plots.core.nodes import AffineNode, Chain, FrameMap, ScaleNode, SystemMap
@@ -41,7 +42,7 @@ def curves_of(payload: Payload) -> list[np.ndarray]:
     ]
 
 
-def bezier(curve: np.ndarray, t) -> np.ndarray:
+def bezier(curve: np.ndarray, t: Any) -> Any:
     t = np.asarray(t, dtype=float)[:, None]
     p0, p1, p2, p3 = curve
     return (
@@ -62,7 +63,7 @@ def length_of(curve: np.ndarray) -> float:
         )
         return float(np.linalg.norm(d))
 
-    return quad(speed, 0.0, 1.0, epsabs=1e-14, epsrel=1e-13)[0]
+    return float(quad(speed, 0.0, 1.0, epsabs=1e-14, epsrel=1e-13)[0])
 
 
 def sampled(fn, lo: float, hi: float, n: int) -> Payload:
