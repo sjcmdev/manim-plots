@@ -2,7 +2,7 @@
 
 Rows AC-1 to AC-7, AC-9 and AC-10 of `docs/acceptance/10-axis-decoration.md`. The oracle
 of every comparison is Manim's `Axes`, built with the same arguments in the same test;
-the one difference asserted is the defaults table's fix, the tick under a tip.
+the tick under a tip is left out, as in Manim.
 """
 
 from __future__ import annotations
@@ -76,15 +76,14 @@ def assert_axis_matches(mine, manim_axis, *, tip: bool) -> None:
         assert match, f"no tick at {tick.get_center()}"
         assert_style(match[0], tick)
     if manim_ticks:
-        assert len(mine.ticks) == len(manim_ticks) + (1 if tip else 0)
+        assert len(mine.ticks) == len(manim_ticks)
     if tip:
         np.testing.assert_allclose(
             mine.tip.points, manim_axis.tip.points, rtol=0, atol=ATOL
         )
         assert_style(mine.tip, manim_axis.tip)
     manim_numbers = list(getattr(manim_axis, "numbers", []))
-    # Manim's numbers are all there; the one extra is under the tip, kept with its
-    # tick (F-411), and only when the numbers follow the ticks.
+    # Manim's numbers are all there, and no other: none under the tip (F-411).
     unmatched = [
         n
         for n in mine.numbers
@@ -93,9 +92,7 @@ def assert_axis_matches(mine, manim_axis, *, tip: bool) -> None:
             for t in manim_numbers
         )
     ]
-    assert len(unmatched) <= (1 if tip else 0)
-    for extra in unmatched:
-        assert np.linalg.norm(extra.get_center() - mine.line.get_end()) < 1.0
+    assert unmatched == []
     for theirs in manim_numbers:
         match = [
             n
