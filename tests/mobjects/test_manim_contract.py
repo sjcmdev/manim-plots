@@ -102,6 +102,41 @@ ADDED_BY_TASK_09 = [
     "VMobject.pointwise_become_partial",
     "Mobject.reduce_across_dimension",
 ]
+# Manim's own decoration code the axes reproduce, pinned so a change upstream is seen
+# (task 10).
+ADDED_BY_TASK_10 = [
+    "NumberLine.__init__",
+    "NumberLine.get_tick",
+    "NumberLine.get_tick_range",
+    "NumberLine.number_to_point",
+    "NumberLine.point_to_number",
+    "NumberLine.get_unit_size",
+    "NumberLine.get_unit_vector",
+    "NumberLine.get_number_mobject",
+    "NumberLine.add_numbers",
+    "NumberLine.add_labels",
+    "NumberLine._create_label_tex",
+    "NumberLine._decimal_places_from_step",
+    "Axes.__init__",
+    "Axes._create_axis",
+    "Axes._origin_shift",
+    "Axes.coords_to_point",
+    "Axes.point_to_coords",
+    "Axes.get_axis_labels",
+    "CoordinateSystem.add_coordinates",
+    "CoordinateSystem.get_x_axis_label",
+    "CoordinateSystem.get_y_axis_label",
+    "CoordinateSystem._get_axis_label",
+    "CoordinateSystem.get_graph_label",
+    "DecimalNumber._set_submobjects_from_number",
+    "DecimalNumber._get_num_string",
+    "DecimalNumber._get_formatter",
+    "NumberPlane.__init__",
+    "NumberPlane._init_background_lines",
+    "NumberPlane._get_lines",
+    "NumberPlane._get_lines_parallel_to_axis",
+    "LogBase.get_custom_labels",
+]
 
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -112,10 +147,10 @@ def names() -> list[str]:
     return [context.symbol_name(symbol) for symbol in context.SYMBOLS]
 
 
-def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_task_09s():
+def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
     assert len(POC4_SYMBOLS) == 68
     assert sorted(names()) == sorted(
-        POC4_SYMBOLS + ADDED_BY_ADR_0003 + ADDED_BY_TASK_09
+        POC4_SYMBOLS + ADDED_BY_ADR_0003 + ADDED_BY_TASK_09 + ADDED_BY_TASK_10
     )
 
 
