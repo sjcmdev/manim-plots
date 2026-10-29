@@ -20,6 +20,7 @@ from manim import (
     PURE_YELLOW,
     PURPLE,
     RED,
+    TAU,
     TEAL,
     WHITE,
     YELLOW,
@@ -335,8 +336,9 @@ def test_cl2_set_clip_rebuilds_and_reads_back():
 
 
 def wide(clip):
-    """2.3 sin x over x in (-5, 5): it leaves the rectangle on both axes."""
-    return axes().plot(tall(), x_range=(-5, 5), clip=clip)
+    """2.3 sin x over x in (-2 pi, 2 pi): it leaves the rectangle on both axes and
+    ends on y = 0, inside the y interval."""
+    return axes().plot(tall(), x_range=(-TAU, TAU), clip=clip)
 
 
 def test_cp1_y_unclipped_reaches_past_the_top_and_stays_within_the_sides():
@@ -347,7 +349,7 @@ def test_cp1_y_unclipped_reaches_past_the_top_and_stays_within_the_sides():
 
 def test_cp1_x_unclipped_reaches_past_the_sides_and_stays_within_the_top():
     top, side = extent(wide((False, True)))
-    assert side == pytest.approx(5.0, abs=1e-6)
+    assert side == pytest.approx(TAU, abs=1e-6)
     assert top <= 2.0 + 1e-9
 
 
@@ -356,7 +358,7 @@ def test_cp1_a_margin_on_one_axis_only():
     assert 3.1 < side <= 3.2 + 1e-9
     assert top == pytest.approx(2.3, abs=5e-3)
     top, side = extent(wide((False, 0.2)))
-    assert side == pytest.approx(5.0, abs=1e-6)
+    assert side == pytest.approx(TAU, abs=1e-6)
     assert 2.1 < top <= 2.2 + 1e-9
 
 
