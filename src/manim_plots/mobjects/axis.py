@@ -4,19 +4,41 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Iterable, Sequence
+from enum import Enum
 from functools import partial
-from itertools import pairwise
-from typing import TYPE_CHECKING, Any, Literal, NoReturn, Self, Unpack, cast
+from math import floor
+from numbers import Real
+from typing import TYPE_CHECKING, Any, Literal, NoReturn, Self, Unpack
 
 import numpy as np
-from manim import Line, LinearBase, LogBase, MathTex, NumberLine, Tex, VGroup, VMobject
+from manim import Line, LinearBase, LogBase, NumberLine, VGroup
+from manim.utils.color import ParsableManimColor
 from numpy.typing import ArrayLike
 
 from manim_plots.core import FloatArray
-from manim_plots.core.formatters import DecimalFormatter, decimal_places
+from manim_plots.core.formatters import (
+    DecimalFormatter,
+    Formatter,
+    as_formatter,
+    decimal_places,
+)
 from manim_plots.core.params import Param, Parameter
 from manim_plots.core.scales import MINPOS_UNKNOWN, LinearScale, Scale
-from manim_plots.core.ticks import Locator, LogLocator, MultipleLocator, axis_ticks
+from manim_plots.core.ticks import (
+    FixedLocator,
+    Level,
+    Locator,
+    LogLocator,
+    MultipleLocator,
+    Tick,
+    as_locator,
+    axis_ticks,
+)
+from manim_plots.mobjects.axis_labels import (
+    _configure_labels,
+    _configure_numbers,
+    _Parts,
+)
 from manim_plots.mobjects.leaves import (
     AxisLine,
     GridLeaf,
@@ -25,7 +47,7 @@ from manim_plots.mobjects.leaves import (
     TickLeaf,
     TipLeaf,
     _DecimalOptions,
-    _label,
+    _glyph,
     _NumberOptions,
     _NumberPlacement,
     _RotateOptions,
@@ -34,6 +56,38 @@ from manim_plots.mobjects.leaves import (
 
 if TYPE_CHECKING:
     from manim_plots.mobjects.system import CartesianAxes
+
+
+class TickDirection(Enum):
+    """Choose whether ticks straddle the axis or face its interior or exterior."""
+
+    IN = "in"
+    OUT = "out"
+    BOTH = "both"
+
+
+def _finite(value: object, name: str) -> float:
+    if not isinstance(value, Real) or isinstance(value, bool):
+        raise TypeError(f"{name} must be a real number")
+    result = float(value)
+    if not np.isfinite(result):
+        raise ValueError(f"{name} must be finite")
+    return result
+
+
+def _offset(value: ArrayLike) -> FloatArray:
+    result = np.asarray(value, dtype=float)
+    if result.shape != (2,) or not np.isfinite(result).all():
+        raise ValueError("offset must contain two finite scene distances")
+    return result
+
+
+def _choice(value: str, name: str, choices: tuple[str, ...]) -> str:
+    if not isinstance(value, str):
+        raise TypeError(f"{name} must be a string")
+    if value not in choices:
+        raise ValueError(f"{name} must be one of {choices}")
+    return value
 
 
 def _range(value: ArrayLike, name: str = "range") -> FloatArray:
@@ -77,6 +131,18 @@ class _LogExponentLocator(LogLocator):
         return scale.inverse(exponents)
 
 
+class _LogMinorLocator(LogLocator):
+    def values(self, lo: float, hi: float, scale: Scale, max_ticks: int) -> FloatArray:
+        """Budget minor subdivisions by the space available for major decades.
+
+        Parameters
+        ----------
+        lo, hi, scale, max_ticks
+            Data limits, logarithmic scale and major label-space estimate.
+        """
+        return super().values(lo, hi, scale, max_ticks * len(self.subs))
+
+
 class Axis(VGroup):
     """Group an axis line, keyed ticks, numbers, labels and a grid.
 
@@ -99,6 +165,16 @@ class Axis(VGroup):
     """
 
     range: Param[FloatArray] = Param((-1.0, 1.0), validate=_range)
+    rotation: Param[float] = Param(0.0, validate=partial(_finite, name="rotation"))
+    offset: Param[FloatArray] = Param((0.0, 0.0), validate=_offset)
+    justify: Param[str] = Param(
+        "center",
+        validate=partial(_choice, name="justify", choices=("center", "left", "right")),
+    )
+    overlap: Param[str] = Param(
+        "hide",
+        validate=partial(_choice, name="overlap", choices=("hide", "drop", "rotate")),
+    )
 
     def __init__(
         self,
@@ -135,9 +211,26 @@ class Axis(VGroup):
         self.decimal_number_config = self._config.get(
             "decimal_number_config", {"num_decimal_places": decimal_places(self._step)}
         )
-        self.formatter = DecimalFormatter(
+        self.formatter: Formatter = DecimalFormatter(
             self.decimal_number_config.get("num_decimal_places", 0)
         )
+        self._formatter_custom = False
+        self._explicit: FixedLocator | None = None
+        self._tick_mode: Literal["add", "replace"] = "add"
+        self._items: tuple[Tick, ...] = ()
+        self._tick_styles: dict[Level, dict[str, Any]] = {"major": {}, "minor": {}}
+        self._position: str | float = "origin"
+        self._position_fraction: float | None = None
+        self._mirrors: list[Axis] = []
+        self._mirror_of: Axis | None = None
+        self._decoration_seen: tuple[int, ...] = ()
+        self._number_content: dict[object, tuple[str, bool]] = {}
+        self._number_members: dict[object, list[Leaf]] = {}
+        self._label_style_seen: tuple[int, ...] | None = None
+        self._label_offsets: dict[object, list[FloatArray]] = {}
+        self._label_content: dict[object, object] = {}
+        self._custom_style_seen: tuple[int, ...] | None = None
+        self._grid_leaves: dict[object, GridLeaf] = {}
         self._number_values: tuple[float, ...] | None = None
         self._number_options: dict[str, Any] = {}
         self._number_leaves: dict[object, NumberLabel] = {}
@@ -147,24 +240,35 @@ class Axis(VGroup):
         self._minor_leaves: dict[object, TickLeaf] = {}
         self._grid_styles: dict[str, dict[str, Any]] = {}
         self._grid_visible: dict[str, bool] = {}
+        self._digit_height: float | None = None
+        self._digit_font: float | None = None
+        self._rotation_parameter = self.rotation
+        self._offset_parameter = self.offset
+        self._justify_parameter = self.justify
+        self._overlap_parameter = self.overlap
+        self._style_seen: tuple[int, ...] = (0, 0, 0, 0)
         self._range_seen = self.range.version
         self._native = native
         self._line_reference = native.points.copy()
+        self._start_reference = native.get_start().copy()
+        self._end_reference = native.get_end().copy()
+        self._tip_start_reference: FloatArray | None = None
         self._reference_length = native.get_length()
         cross_value = float(np.clip(0, native.x_min, native.x_max))
         self._crossing_reference = native.number_to_point(cross_value).copy()
-        tick = native.get_tick(cross_value, native.tick_size)
+        tick = native.get_tick(cross_value, 1.0)
         self._tick_reference = tick.points - self._crossing_reference
         self._tip_reference = native.tip.points.copy() if native.has_tip() else None
         self._tick_leaves: dict[object, TickLeaf] = {}
         self.line = AxisLine(native.points, system)
         self.line.match_style(native, family=False)
-        self.ticks = VGroup()
-        self.minor_ticks = VGroup()
-        self.numbers = VGroup()
-        self.labels = VGroup()
-        self.grid = VGroup()
+        self.ticks = _Parts[TickLeaf](self)
+        self.minor_ticks = _Parts[TickLeaf](self, "minor")
+        self.numbers = _Parts[NumberLabel](self, None)
+        self.labels = _Parts[VGroup](self)
+        self.grid = _Parts[GridLeaf](self, None)
         self.tip: TipLeaf | None = None
+        self.tip_start: TipLeaf | None = None
         if native.has_tip():
             self.tip = TipLeaf(native.tip.points, system)
             self.tip.match_style(native.tip)
@@ -178,57 +282,61 @@ class Axis(VGroup):
             self.add(self.minor_ticks)
 
     @property
-    def ticks(self) -> VGroup:
+    def ticks(self) -> _Parts[TickLeaf]:
         """Return the current major tick family, updating a changed range lazily."""
         self._system._sync_data()
         return self._ticks
 
     @ticks.setter
-    def ticks(self, value: VGroup) -> None:
+    def ticks(self, value: _Parts[TickLeaf]) -> None:
         self._ticks = value
 
     @property
-    def numbers(self) -> VGroup:
+    def numbers(self) -> _Parts[NumberLabel]:
         """Return the current numbers family."""
         self._system._sync_data()
         return self._numbers
 
     @numbers.setter
-    def numbers(self, value: VGroup) -> None:
+    def numbers(self, value: _Parts[NumberLabel]) -> None:
         self._numbers = value
 
     @property
-    def minor_ticks(self) -> VGroup:
+    def minor_ticks(self) -> _Parts[TickLeaf]:
         """Return the current minor ticks family."""
         self._system._sync_data()
         return self._minor_ticks
 
     @minor_ticks.setter
-    def minor_ticks(self, value: VGroup) -> None:
+    def minor_ticks(self, value: _Parts[TickLeaf]) -> None:
         self._minor_ticks = value
 
     @property
-    def grid(self) -> VGroup:
+    def grid(self) -> _Parts[GridLeaf]:
         """Return the current grid family."""
         self._system._sync_data()
         return self._grid
 
     @grid.setter
-    def grid(self, value: VGroup) -> None:
+    def grid(self, value: _Parts[GridLeaf]) -> None:
         self._grid = value
 
     @property
-    def labels(self) -> VGroup:
+    def labels(self) -> _Parts[Any]:
         """Return the current labels family."""
         self._system._sync_data()
         return self._labels
 
     @labels.setter
-    def labels(self, value: VGroup) -> None:
+    def labels(self, value: _Parts[Any]) -> None:
         self._labels = value
 
     def __getattr__(self, name: str) -> NoReturn:
         raise AttributeError(f"Axis has no attribute {name!r}")
+
+    def get_scale(self) -> Scale:
+        """Return the numeric scale without shadowing Manim's geometric scale."""
+        return self._scale
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         result = type(self).__new__(type(self))
@@ -244,10 +352,8 @@ class Axis(VGroup):
         return result
 
     def _configure_ticks(self, native: NumberLine) -> None:
-        lo, hi = self.range.value
-        values = axis_ticks(
-            self.locator, None, float(lo), float(hi), self._scale, 10000
-        )
+        self._items = self._tick_items()
+        values = (item for item in self._items if item.level == "major")
         previous = self._tick_leaves
         current: dict[object, TickLeaf] = {}
         for item in values:
@@ -267,7 +373,7 @@ class Axis(VGroup):
                 leaf._cache = template.points.copy()
             current[key] = leaf
         self._tick_leaves = current
-        self.ticks.submobjects = list(current.values())
+        self._ticks._replace(current)
 
     def _resize(self, length: float) -> None:
         delta = length - self._reference_length
@@ -278,81 +384,417 @@ class Axis(VGroup):
         self._line_reference[:, self.index] += delta * (fractions - 0.5)
         if self._tip_reference is not None:
             self._tip_reference[:, self.index] += delta / 2
+        self._start_reference[self.index] -= delta / 2
+        self._end_reference[self.index] += delta / 2
+        if self._tip_start_reference is not None:
+            self._tip_start_reference[:, self.index] -= delta / 2
         self._reference_length = length
+
+    def _parameters(self) -> tuple[Parameter[Any], ...]:
+        return (self.range, self.rotation, self.offset, self.justify, self.overlap)
+
+    def _style_changed(self) -> bool:
+        seen = self._style_seen
+        return (
+            self._rotation_parameter.version != seen[0]
+            or self._offset_parameter.version != seen[1]
+            or self._justify_parameter.version != seen[2]
+            or self._overlap_parameter.version != seen[3]
+        )
+
+    def _versions(self) -> tuple[int, ...]:
+        return tuple(parameter.version for parameter in self._parameters())
+
+    def _cross_value(self) -> float:
+        other = self._system.get_axis(1 - self.index)
+        lo, hi = other.range.value
+        fraction = self._position_fraction
+        where = self._position
+        if self._mirror_of is not None:
+            original = self._mirror_of
+            transformed = other._scale.forward([lo, hi, original._cross_value()])
+            position = (transformed[2] - transformed[0]) / (
+                transformed[1] - transformed[0]
+            )
+            fraction = 0.0 if position > 0.5 else 1.0
+        if fraction is not None:
+            limits = other._scale.forward([lo, hi])
+            return float(
+                other._scale.inverse(limits[0] + fraction * (limits[1] - limits[0]))
+            )
+        if where == "origin":
+            return float(np.clip(0, min(lo, hi), max(lo, hi)))
+        if where in ("bottom", "left"):
+            return float(lo)
+        if where in ("top", "right"):
+            return float(hi)
+        return float(where)
+
+    def _tick_items(self) -> tuple[Tick, ...]:
+        lo, hi = self.range.value
+        return axis_ticks(
+            self.locator,
+            self.minor_locator,
+            float(lo),
+            float(hi),
+            self._scale,
+            self.max_ticks,
+            explicit=self._explicit,
+            mode=self._tick_mode,
+        )
+
+    @property
+    def max_ticks(self) -> int:
+        """Return the label-space estimate passed to both locators."""
+        if self._digit_height is None or self._digit_font != self.font_size:
+            self._digit_height = _glyph("0", self.font_size).height
+            self._digit_font = self.font_size
+        height = self._digit_height
+        factor = 3 if self.index == 0 else 2
+        return max(0, floor(self.get_length() / (factor * height))) if height else 0
 
     def _configure(self) -> None:
         system = self._system
-        limits = self.range.value
-        other = system.y_axis if self.index == 0 else system.x_axis
-        cross = float(np.clip(0, min(other.range.value), max(other.range.value)))
-        coords = np.array(
-            [[system.x_axis.range.value[0], system.y_axis.range.value[0]]]
-        )
-        coords[0, 1 - self.index] = cross
-        origin = np.column_stack((system._data.forward(coords), np.zeros(1)))[0]
+        coords = np.array([[self.range.value[0], self.range.value[0]]])
+        coords[0, 1 - self.index] = self._cross_value()
+        origin = np.append(system._data.forward(coords)[0], 0)
         offset = origin - self._crossing_reference
-        # Range changes move the crossing, but preserve line and tip dimensions.
         offset[self.index] = 0
         mapping = system.frame.mapping
         self.line._cache = mapping.forward(self._line_reference + offset)
         if self.tip is not None and self._tip_reference is not None:
             self.tip._cache = mapping.forward(self._tip_reference + offset)
-        previous, current = self._tick_leaves, {}
-        items = tuple(
+        if self.tip_start is not None and self._tip_start_reference is not None:
+            self.tip_start._cache = mapping.forward(self._tip_start_reference + offset)
+        self._items = self._tick_items()
+        for level in ("major", "minor"):
+            self._configure_level(level)
+        self._range_seen = self.range.version
+        self._decoration_seen = self._versions()
+        self._style_seen = self._decoration_seen[1:]
+        if self._mirror_of is None:
+            if (
+                self._number_values is not None
+                or self.include_numbers
+                or any(item.label is not None for item in self._items)
+            ):
+                self._configure_numbers()
+            if self._label_values:
+                self._configure_labels()
+        for mirror in self._mirrors:
+            mirror.locator, mirror.minor_locator = self.locator, self.minor_locator
+            mirror._explicit, mirror._tick_mode = self._explicit, self._tick_mode
+            mirror._tick_styles = self._tick_styles
+            mirror._line_reference = self._line_reference
+            mirror._start_reference = self._start_reference
+            mirror._end_reference = self._end_reference
+            mirror._reference_length = self._reference_length
+            mirror._tip_reference = self._tip_reference
+            mirror._tip_start_reference = self._tip_start_reference
+            for attr in ("tip", "tip_start"):
+                source = getattr(self, attr)
+                target = getattr(mirror, attr)
+                if source is None and target is not None:
+                    mirror.remove(target)
+                    setattr(mirror, attr, None)
+                elif source is not None and target is None:
+                    target = TipLeaf(source._cache, system)
+                    target.match_style(source)
+                    setattr(mirror, attr, target)
+                    mirror.add(target)
+            mirror._configure()
+
+    def _configure_level(self, level: Level) -> None:
+        system = self._system
+        items = [
             item
-            for item in axis_ticks(
-                self.locator,
-                None,
-                float(limits[0]),
-                float(limits[1]),
-                self._scale,
-                10000,
-            )
-            if item.value != 0 or not self.exclude_origin_tick
+            for item in self._items
+            if item.level == level and (item.value != 0 or not self.exclude_origin_tick)
+        ]
+        style = self._tick_styles[level]
+        major_length = self._tick_styles["major"].get("length", 2 * self.tick_size)
+        length = style.get(
+            "length", major_length / 2 if level == "minor" else major_length
         )
-        positions = np.full((len(items), 2), cross)
+        local = np.tile(self._tick_reference, (len(items), 1, 1))
+        local *= length / 2
+        if level == "major":
+            elongated = tuple(self._native.numbers_with_elongated_ticks)
+            if elongated:
+                factors = np.array(
+                    [
+                        self._native.longer_tick_multiple
+                        if np.any(np.isclose(item.value, elongated))
+                        else 1
+                        for item in items
+                    ]
+                )
+                local *= factors[:, None, None]
+        direction = style.get("direction", TickDirection.BOTH)
+        if direction is not TickDirection.BOTH:
+            other = system.get_axis(1 - self.index)
+            limits = other._scale.forward(other.range.value)
+            cross = float(other._scale.forward(self._cross_value()))
+            outward = -1 if (cross - limits[0]) / (limits[1] - limits[0]) <= 0.5 else 1
+            if direction is TickDirection.IN:
+                outward *= -1
+            local[:, :, 1 - self.index] += (
+                outward * np.ptp(local[:, :, 1 - self.index], axis=1)[:, None] / 2
+            )
+        positions = np.full((len(items), 2), self._cross_value())
         positions[:, self.index] = [item.value for item in items]
         centers = system._data.forward(positions)
-        local = np.tile(self._tick_reference, (len(items), 1, 1))
-        elongated = self._native.numbers_with_elongated_ticks
-        if tuple(elongated):
-            factors = np.array(
-                [
-                    self._native.longer_tick_multiple
-                    if np.any(np.isclose(item.value, tuple(elongated)))
-                    else 1
-                    for item in items
-                ]
-            )
-            local *= factors[:, None, None]
         local[:, :, :2] += centers[:, None, :]
-        placed = mapping.forward(local.reshape(-1, 3)).reshape(local.shape)
+        placed = system.frame.mapping.forward(local.reshape(-1, 3)).reshape(local.shape)
+        previous = self._tick_leaves if level == "major" else self._minor_leaves
+        current: dict[object, TickLeaf] = {}
         for item, points in zip(items, placed, strict=True):
             leaf = previous.get(item.key)
             if leaf is None:
                 leaf = TickLeaf(points, system)
                 leaf.match_style(self.line)
+                leaf.set_stroke(
+                    color=style.get("color", leaf.get_color()), width=style.get("width")
+                )
             else:
                 leaf._cache = points
             current[item.key] = leaf
-        # Cairo keeps dropped leaves in the play's initial moving family.
         for key in previous.keys() - current.keys():
             previous[key]._cache = np.empty((0, 3))
-        self._tick_leaves = current
-        self.ticks.submobjects = list(current.values()) if self.include_ticks else []
-        self._range_seen = self.range.version
-        if self.minor_locator is not None:
-            self._configure_minor()
-        if self._number_values is not None or self.include_numbers:
-            self._configure_numbers()
-        if self._label_values:
-            self._configure_labels()
+        if level == "major":
+            self._tick_leaves = current
+            self._ticks._replace(current if self.include_ticks else {})
+        else:
+            self._minor_leaves = current
+            self._minor_ticks._replace(current if self.include_ticks else {})
+            if current and self._minor_ticks not in self.submobjects:
+                self.add(self._minor_ticks)
+
+    def _regenerate(self) -> None:
+        system = self._system
+        system._sync_data()
+        system._syncing = True
+        try:
+            self._configure()
+            system._configure_grid()
+        finally:
+            system._syncing = False
+
+    def set_locator(self, locator: object, minor: object = None) -> Self:
+        """Replace the tick generators and regenerate keyed decorations.
+
+        Parameters
+        ----------
+        locator, minor
+            Locator protocol objects or two-endpoint callables; None disables minors.
+        """
+        major = as_locator(locator)
+        minor_locator = None if minor is None else as_locator(minor)
+        self.locator, self.minor_locator = major, minor_locator
+        self._explicit, self._tick_mode = None, "add"
+        self._regenerate()
+        return self
+
+    def set_formatter(self, formatter: object) -> Self:
+        """Relabel existing number objects using a formatter or callable.
+
+        Parameters
+        ----------
+        formatter
+            Whole-list formatter or a per-value callable.
+        """
+        self.formatter = as_formatter(formatter)
+        self._formatter_custom = True
+        self._system._sync_data()
+        self._configure_numbers()
+        return self
+
+    def set_ticks(
+        self,
+        entries: Iterable[float | tuple[object, ...]],
+        mode: Literal["replace", "add"] = "replace",
+    ) -> Self:
+        """Replace or supplement generated ticks with fixed entries.
+
+        Parameters
+        ----------
+        entries
+            Values or tuples of value, label and optional tick level.
+        mode
+            Replace generated ticks or add entries, overriding matching keys.
+        """
+        if mode not in ("replace", "add"):
+            raise ValueError("mode must be replace or add")
+        fixed = FixedLocator(entries)
+        if mode == "replace":
+            self.locator = fixed
+            self.minor_locator = (
+                fixed.minor
+                if any(item.level == "minor" for item in fixed.entries)
+                else None
+            )
+        self._explicit, self._tick_mode = fixed, mode
+        self._regenerate()
+        return self
+
+    def set_tick_style(
+        self,
+        level: Level = "major",
+        *,
+        direction: TickDirection | None = None,
+        length: float | None = None,
+        width: float | None = None,
+        color: ParsableManimColor | None = None,
+    ) -> Self:
+        """Style one tick level, measuring length as its full scene length.
+
+        Parameters
+        ----------
+        level
+            Major or minor ticks.
+        direction
+            Both sides of the line, toward the interior, or toward the exterior.
+        length, width, color
+            Total tick length, native stroke width and native colour.
+        """
+        if level not in ("major", "minor"):
+            raise ValueError("level must be major or minor")
+        if direction is not None and not isinstance(direction, TickDirection):
+            raise TypeError("direction must be a TickDirection")
+        options: dict[str, Any] = {}
+        for name, value in (("length", length), ("width", width)):
+            if value is not None:
+                checked = _finite(value, name)
+                if checked < 0:
+                    raise ValueError(f"{name} must be nonnegative")
+                options[name] = checked
+        if direction is not None:
+            options["direction"] = direction
+        if color is not None:
+            options["color"] = color
+        self._tick_styles[level].update(options)
+        leaves = self._tick_leaves if level == "major" else self._minor_leaves
+        for leaf in leaves.values():
+            leaf.set_stroke(
+                color=leaf.get_color() if color is None else color, width=width
+            )
+        self._regenerate()
+        return self
+
+    def set_position(
+        self, where: str | float = "origin", *, fraction: float | None = None
+    ) -> Self:
+        """Move only this axis's decoration across the other coordinate range.
+
+        Parameters
+        ----------
+        where
+            Origin, an appropriate border name, or a data value of the other axis.
+        fraction
+            Optional fraction of the other axis's transformed range, from zero to one.
+        """
+        if isinstance(where, str):
+            sides = ("bottom", "top") if self.index == 0 else ("left", "right")
+            _choice(where, "where", ("origin", *sides))
+        else:
+            where = _finite(where, "where")
+            other = self._system.get_axis(1 - self.index)
+            if not np.isfinite(other._scale.forward(where)).all():
+                raise ValueError("where must be inside the other scale's domain")
+        if fraction is not None:
+            fraction = _finite(fraction, "fraction")
+            if not 0 <= fraction <= 1:
+                raise ValueError("fraction must be between zero and one")
+        self._position, self._position_fraction = where, fraction
+        self._regenerate()
+        return self
+
+    def set_tips(self, start: bool = False, end: bool = True) -> Self:
+        """Show tips at either endpoint without changing the data mapping.
+
+        Parameters
+        ----------
+        start, end
+            Whether each endpoint carries an arrow tip.
+        """
+        if not isinstance(start, bool) or not isinstance(end, bool):
+            raise TypeError("start and end must be bool")
+        if self._tip_reference is None:
+            template = NumberLine(
+                (0, self._reference_length, 1),
+                length=self._reference_length,
+                include_ticks=False,
+                include_tip=True,
+                tip_shape=self._config.get("tip_shape"),
+                tip_width=self._native.tip_width,
+                tip_height=self._native.tip_height,
+            )
+            template.rotate(self.index * np.pi / 2)
+            template.shift((self._start_reference + self._end_reference) / 2)
+            self._tip_reference = template.tip.points.copy()
+        center = (self._start_reference + self._end_reference) / 2
+        self._tip_start_reference = 2 * center - self._tip_reference
+        # Arrow tips start at their point; the base is the farthest axial inset.
+        unit = (self._end_reference - self._start_reference) / self._reference_length
+        inset = float(np.max((self._end_reference - self._tip_reference) @ unit))
+        endpoints = np.array(
+            [
+                self._start_reference + (inset * unit if start else 0),
+                self._end_reference - (inset * unit if end else 0),
+            ]
+        )
+        self._line_reference = endpoints[0] + np.linspace(0, 1, 4)[:, None] * (
+            endpoints[1] - endpoints[0]
+        )
+        for attr, visible, reference in (
+            ("tip", end, self._tip_reference),
+            ("tip_start", start, self._tip_start_reference),
+        ):
+            leaf = getattr(self, attr)
+            if visible and leaf is None:
+                leaf = TipLeaf(reference, self._system)
+                leaf.set_fill(self.line.get_color(), opacity=1).set_stroke(
+                    self.line.get_color(), width=self.line.get_stroke_width()
+                )
+                setattr(self, attr, leaf)
+                self.add(leaf)
+            elif not visible and leaf is not None:
+                self.remove(leaf)
+                setattr(self, attr, None)
+        self.include_tip = end
+        self._regenerate()
+        return self
+
+    def mirror(self) -> Axis:
+        """Return an unlabelled, opposite-side axis sharing this axis's data."""
+        system = self._system
+        system._sync_data()
+        mirror = Axis(
+            system,
+            self.index,
+            self.range.value.tolist(),
+            self._native,
+            self._scale,
+            self.locator,
+            self.minor_locator,
+            self._config,
+        )
+        mirror.__dict__["__manim_plots_parameter_range"] = self.range
+        mirror._range_parameter = self.range
+        mirror._mirror_of = self
+        mirror._line_reference = self._line_reference.copy()
+        mirror._tip_reference = (
+            None if self._tip_reference is None else self._tip_reference.copy()
+        )
+        mirror.include_numbers = False
+        mirror.line.match_style(self.line)
+        self._mirrors.append(mirror)
+        self.add(mirror)
+        self._regenerate()
+        return mirror
 
     def set_grid(
-        self,
-        level: Literal["major", "minor"] = "major",
-        visible: bool = True,
-        **style: Unpack[_VMStyle],
+        self, level: Level = "major", visible: bool = True, **style: Unpack[_VMStyle]
     ) -> Self:
         """Configure grid lines across the other axis's range.
 
@@ -368,7 +810,15 @@ class Axis(VGroup):
         if level not in ("major", "minor"):
             raise ValueError("level must be major or minor")
         self._grid_visible[level] = visible
-        self._grid_styles.setdefault(level, {}).update(style)
+        normalized: dict[str, Any] = dict(style)
+        color = normalized.pop("color", None)
+        if color is not None:
+            normalized.setdefault("stroke_color", color)
+            normalized.setdefault("fill_color", color)
+        self._grid_styles.setdefault(level, {}).update(normalized)
+        for leaf in self._grid_leaves.values():
+            if leaf.level == level:
+                leaf.set_style(**self._grid_styles[level])
         self._system._sync_data()
         self._system._configure_grid()
         return self
@@ -378,49 +828,68 @@ class Axis(VGroup):
             return
         system = self._system
         other = system.get_axis(1 - self.index)
-        lo, hi = self.range.value
-        crossing = float(np.clip(0, min(lo, hi), max(lo, hi)))
-        items = axis_ticks(
-            self.locator, self.minor_locator, float(lo), float(hi), self._scale, 10000
+        crossing = other._cross_value()
+        items = [
+            item
+            for item in self._tick_items()
+            if self._grid_visible.get(item.level, False)
+            and not np.isclose(item.value, crossing, rtol=1e-12, atol=0)
+        ]
+        endpoints = np.zeros((len(items), 2, 2))
+        endpoints[:, :, self.index] = np.array([item.value for item in items])[:, None]
+        endpoints[:, :, 1 - self.index] = other.range.value
+        local = system._data.forward(endpoints.reshape(-1, 2)).reshape(-1, 2, 2)
+        points = local[:, :1] + np.linspace(0, 1, 4)[None, :, None] * (
+            local[:, 1:] - local[:, :1]
         )
-        lines: list[VMobject] = []
-        for item in items:
-            if not self._grid_visible.get(item.level, False) or np.isclose(
-                item.value, crossing, rtol=0, atol=1e-12
-            ):
-                continue
-            endpoints = np.zeros((2, 2))
-            endpoints[:, self.index] = item.value
-            endpoints[:, 1 - self.index] = other.range.value
-            local = system._data.forward(endpoints)
-            template = Line(np.append(local[0], 0), np.append(local[1], 0))
-            line = GridLeaf(system.frame.mapping.forward(template.points), system)
-            line.level, line.value = item.level, item.value
-            line.set_style(**self._grid_styles.get(item.level, {}))
-            lines.append(line)
-        self.grid.submobjects = lines
-        if self.grid not in self.submobjects:
-            self.add(self.grid)
-
-    def _configure_minor(self) -> None:
-        assert self.minor_locator is not None
-        lo, hi = self.range.value
-        items = axis_ticks(
-            self.locator, self.minor_locator, float(lo), float(hi), self._scale, 10000
-        )
-        current: dict[object, TickLeaf] = {}
-        for item in items:
-            if item.level != "minor":
-                continue
-            tick = self.get_tick(item.value, self.tick_size / 2)
-            leaf = self._minor_leaves.get(item.key)
+        placed = system.frame.mapping.forward(points.reshape(-1, 2)).reshape(-1, 4, 3)
+        current: dict[object, GridLeaf] = {}
+        for item, outline in zip(items, placed, strict=True):
+            key = (item.level, item.key)
+            leaf = self._grid_leaves.get(key)
             if leaf is None:
-                leaf = tick
+                leaf = GridLeaf(outline, system)
+                leaf.set_style(**self._grid_styles.get(item.level, {}))
             else:
-                leaf._cache = tick.points
-            current[item.key] = leaf
-        self._minor_leaves = current
-        self.minor_ticks.submobjects = list(current.values())
+                leaf._cache = outline
+            leaf.level, leaf.value = item.level, item.value
+            current[key] = leaf
+        for old_key in self._grid_leaves.keys() - current.keys():
+            self._grid_leaves[old_key]._cache = np.empty((0, 3))
+        self._grid_leaves = current
+        self._grid._replace(current)
+        if self._grid not in self.submobjects:
+            self.add(self._grid)
+
+    def set_label_style(
+        self,
+        *,
+        rotation: float = 0.0,
+        offset: ArrayLike = (0, 0),
+        justify: str = "center",
+        overlap: str = "hide",
+    ) -> Self:
+        """Set label rotation, local scene offsets, justification and overlap.
+
+        Parameters
+        ----------
+        rotation
+            Angle in radians relative to the axis's initial label orientation.
+        offset
+            Scene distances along and across the axis.
+        justify
+            Center, left or right edge of the label at its anchor.
+        overlap
+            Hide later overlaps, drop alternating labels, or rotate by 45 degrees.
+        """
+        checked_rotation = _finite(rotation, "rotation")
+        checked_offset = _offset(offset)
+        checked_justify = _choice(justify, "justify", ("center", "left", "right"))
+        checked_overlap = _choice(overlap, "overlap", ("hide", "drop", "rotate"))
+        self.rotation, self.offset = checked_rotation, checked_offset
+        self.justify, self.overlap = checked_justify, checked_overlap
+        self._regenerate()
+        return self
 
     @property
     def x_range(self) -> FloatArray:
@@ -434,7 +903,11 @@ class Axis(VGroup):
 
     def get_start(self) -> FloatArray:
         """Return the first endpoint of the axis."""
-        return self.line.get_start()
+        return (
+            self.line.get_start()
+            if self.tip_start is None
+            else self.tip_start.get_start()
+        )
 
     def get_end(self) -> FloatArray:
         """Return the endpoint, including the tip when present."""
@@ -551,9 +1024,14 @@ class Axis(VGroup):
     def get_tick_range(self) -> FloatArray:
         """Return locator values, retaining the tick beneath a tip."""
         self._system._sync_data()
-        lo, hi = self.range.value
-        values = self.locator.values(float(lo), float(hi), self._scale, 10000)
-        return values[values != 0] if self.exclude_origin_tick else values
+        return np.array(
+            [
+                item.value
+                for item in self._tick_items()
+                if item.level == "major"
+                and (item.value != 0 or not self.exclude_origin_tick)
+            ]
+        )
 
     def get_tick(self, x: float, size: float | None = None) -> TickLeaf:
         """Return a positioned tick.
@@ -653,97 +1131,13 @@ class Axis(VGroup):
         self._number_options = dict(kwargs)
         if font_size is not None:
             self._number_options["font_size"] = font_size
-        self._number_leaves = {}
-        self._number_offsets = {}
         self._configure_numbers()
         if self.numbers not in self.submobjects:
             self.add(self.numbers)
         return self
 
     def _configure_numbers(self) -> None:
-        candidates = (
-            self.get_tick_range()
-            if self._number_values is None
-            else self._number_values
-        )
-        lo, hi = sorted(self.range.value)
-        values = [
-            float(x)
-            for x in candidates
-            if x not in self.numbers_to_exclude and lo <= x <= hi
-        ]
-        system = self._system
-        other = system.y_axis if self.index == 0 else system.x_axis
-        cross = float(np.clip(0, min(other.range.value), max(other.range.value)))
-        positions = np.full((len(values), 2), cross)
-        positions[:, self.index] = values
-        # One data and frame evaluation per family, including the affine inverse.
-        anchors = system._data.forward(positions)
-        anchors = np.column_stack((anchors, np.zeros(len(anchors))))
-        mapping = system.frame.mapping
-        points = mapping.forward(anchors)
-        current: dict[object, NumberLabel] = {}
-        glyphs: list[Leaf] = []
-        local_points: list[FloatArray] = []
-        for x, anchor, point in zip(values, anchors, points, strict=True):
-            key = self.locator.key(x)
-            label = self._number_leaves.get(key)
-            if label is None:
-                if isinstance(self.scaling, LogBase) and self.scaling.custom_labels:
-                    exponent = float(self._scale.forward(x))
-                    places = self.decimal_number_config.get("num_decimal_places", 0)
-                    label = NumberLabel(
-                        self.scaling.base,
-                        font_size=48,
-                        num_decimal_places=0,
-                        unit="^{" + f"{exponent:.{places}f}" + "}",
-                    )
-                    label.font_size = self.font_size
-                    label.next_to(
-                        point,
-                        direction=self.label_direction,
-                        buff=self.line_to_number_buff,
-                    )
-                else:
-                    label = self.get_number_mobject(x, **self._number_options)
-                members = [
-                    cast(Leaf, member) for member in label.family_members_with_points()
-                ]
-                counts = [len(member._cache) for member in members]
-                local = (
-                    mapping.inverse(
-                        np.concatenate([member._cache for member in members])
-                    )
-                    - anchor
-                )
-                breaks = np.cumsum([0, *counts])
-                self._number_offsets[key] = [
-                    local[start:stop] for start, stop in pairwise(breaks)
-                ]
-            for glyph, offset in zip(
-                label.family_members_with_points(),
-                self._number_offsets[key],
-                strict=True,
-            ):
-                leaf = cast(Leaf, glyph)
-                leaf._system = system
-                glyphs.append(leaf)
-                local_points.append(offset + anchor)
-            current[key] = label
-        if local_points:
-            placed = mapping.forward(np.concatenate(local_points))
-            offset_index = 0
-            for glyph, local in zip(glyphs, local_points, strict=True):
-                glyph._cache = placed[offset_index : offset_index + len(local)]
-                offset_index += len(local)
-        for key in self._number_leaves.keys() - current.keys():
-            for glyph in self._number_leaves[key].family_members_with_points():
-                cast(Leaf, glyph)._cache = np.empty((0, 3))
-        self._number_leaves = current
-        self._number_offsets = {key: self._number_offsets[key] for key in current}
-        self.numbers.submobjects = list(current.values())
-        if isinstance(self.scaling, LogBase) and self.scaling.custom_labels:
-            self.labels = self.numbers
+        _configure_numbers(self)
 
     def add_labels(
         self,
@@ -773,27 +1167,4 @@ class Axis(VGroup):
         return self
 
     def _configure_labels(self) -> None:
-        labels: list[VMobject] = []
-        for x, value in self._label_values.items():
-            size = self._label_options["font_size"]
-            constructor = self._label_options["label_constructor"]
-            if constructor is not None and not isinstance(value, VMobject):
-                if constructor is MathTex and isinstance(value, str):
-                    constructor = Tex
-                if not callable(constructor):
-                    raise TypeError("label_constructor must be callable")
-                value = constructor(str(value))
-            if isinstance(value, VMobject):
-                if not hasattr(value, "font_size"):
-                    raise AttributeError("label is not compatible with add_labels")
-                cast(Any, value).font_size = size
-            label = _label(value, text_mode=isinstance(value, str), font_size=size)
-            label.next_to(
-                self.n2p(x),
-                direction=self._label_options["direction"],
-                buff=self._label_options["buff"],
-            )
-            for member in label.family_members_with_points():
-                cast(Leaf, member)._system = self._system
-            labels.append(label)
-        self.labels.submobjects = labels
+        _configure_labels(self)

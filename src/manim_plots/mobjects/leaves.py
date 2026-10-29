@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import re
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, NoReturn, Self, TypedDict, Unpack, cast
 
@@ -429,6 +430,78 @@ def _script_zero_advance(font_size: float) -> float:
     return _SCRIPTS[key][1]
 
 
+def _formatted_glyphs(
+    text: str, font_size: float, *, text_mode: bool = False
+) -> VGroup:
+    # Tokenize commands and scripts, so a new label never compiles a whole string.
+    result = VGroup()
+    tokens = re.findall(r"\\[a-zA-Z]+|\\.|.", text)
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        i += 1
+        if token in ("{", "}", "$", r"\left", r"\right"):
+            continue
+        if token in ("^", "_") and not text_mode:
+            script: list[str] = []
+            if i < len(tokens) and tokens[i] == "{":
+                i += 1
+                depth = 1
+                while i < len(tokens) and depth:
+                    part = tokens[i]
+                    i += 1
+                    depth += (part == "{") - (part == "}")
+                    if depth:
+                        script.append(part)
+            elif i < len(tokens):
+                script.append(tokens[i])
+                i += 1
+            small = _formatted_glyphs("".join(script), font_size * 0.7)
+            small.next_to(result, direction=(1, 0, 0), buff=0.02)
+            small.shift((0, (0.35 if token == "^" else -0.2) * font_size / 48, 0))
+            result.add(*small.submobjects)
+            continue
+        if (
+            token in (r"\text", r"\mathrm", r"\operatorname")
+            and i < len(tokens)
+            and tokens[i] == "{"
+        ):
+            i += 1
+            run: list[str] = []
+            while i < len(tokens) and tokens[i] != "}":
+                run.append(tokens[i])
+                i += 1
+            i += 1
+            for char in "".join(run):
+                glyph = _glyph(char, font_size, Tex)
+                if result.submobjects:
+                    glyph.next_to(
+                        result,
+                        direction=(1, 0, 0),
+                        buff=0.001 * font_size,
+                        aligned_edge=(0, -1, 0),
+                    )
+                result.add(glyph)
+            continue
+        if token.isspace() or token in (r"\,", r"\;", r"\!"):
+            continue
+        glyph = _glyph(token, font_size, Tex if text_mode else None)
+        if result.submobjects:
+            glyph.next_to(
+                result,
+                direction=(1, 0, 0),
+                buff=0.001 * font_size,
+                aligned_edge=(0, -1, 0),
+            )
+        result.add(glyph)
+    result.center()
+    if text.startswith("-") and len(result) > 1:
+        result[0].align_to(result[1], (0, 1, 0)).shift(
+            result[1].height * np.array([0, -0.5, 0])
+        )
+    return result
+
+
 class NumberLabel(VGroup):
     """Lay out cached glyphs using DecimalNumber's spacing and alignment.
 
@@ -467,6 +540,7 @@ class NumberLabel(VGroup):
         text = format(number, f"{'+' if sign else ''}{',' if commas else ''}.{places}f")
         if text.startswith("-") and np.round(number, places) == 0:
             text = ("+" if sign else "") + text[1:]
+        self.text = text
         super().__init__(*(_glyph(c, font_size, label_constructor) for c in text))
         if ellipsis:
             self.add(_glyph(r"\dots", font_size))
@@ -501,6 +575,14 @@ class NumberLabel(VGroup):
         if background:
             # Convert even the optional background to a library-owned leaf.
             self.add_to_back(_label(self.copy().add_background_rectangle()[0]))
+
+    def _set_text(self, text: str, *, text_mode: bool = False) -> None:
+        style = self.get_style()
+        glyphs = _formatted_glyphs(text, self._font_size, text_mode=text_mode)
+        self.submobjects = glyphs.submobjects
+        self.text = text
+        self.initial_height = self.height or 1.0
+        self.set_style(**style)
 
     def __getattr__(self, name: str) -> NoReturn:
         raise AttributeError(f"NumberLabel has no attribute {name!r}")

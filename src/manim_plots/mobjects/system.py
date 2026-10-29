@@ -40,7 +40,12 @@ from manim_plots.core.ticks import (
     SymLogLocator,
 )
 from manim_plots.mobjects.artists import FunctionPlot
-from manim_plots.mobjects.axis import Axis, _LogExponentLocator, _range
+from manim_plots.mobjects.axis import (
+    Axis,
+    _LogExponentLocator,
+    _LogMinorLocator,
+    _range,
+)
 from manim_plots.mobjects.context import playback_context
 from manim_plots.mobjects.leaves import (
     BoundLabel,
@@ -200,7 +205,7 @@ class CartesianAxes(VGroup):
                     locators[i] = LogLocator(base=tick_base)
                     subs = tuple(value for value in range(2, 10) if value < tick_base)
                     if subs:
-                        minors[i] = LogLocator(base=tick_base, subs=subs)
+                        minors[i] = _LogMinorLocator(base=tick_base, subs=subs)
                 elif isinstance(scale, SymLogScale):
                     locators[i] = SymLogLocator(
                         base=scale.base, linthresh=scale.linthresh
@@ -320,6 +325,8 @@ class CartesianAxes(VGroup):
         for axis in (self.x_axis, self.y_axis):
             if axis.include_numbers or axis.numbers_to_include is not None:
                 axis.add_numbers(axis.numbers_to_include)
+        for axis in (self.x_axis, self.y_axis):
+            axis._decoration_seen = axis._versions()
         self._syncing = False
         if any(not isinstance(scale, LinearScale) for scale in scales):
             self._syncing = True
@@ -420,30 +427,38 @@ class CartesianAxes(VGroup):
         if (
             self.x_axis._range_seen == self.x_axis._range_parameter.version
             and self.y_axis._range_seen == self.y_axis._range_parameter.version
+            and not self.x_axis._style_changed()
+            and not self.y_axis._style_changed()
         ):
+            return
+        axes = (self.x_axis, self.y_axis)
+        range_changed = any(
+            axis._range_seen != axis._range_parameter.version for axis in axes
+        )
+        changed = [axis for axis in axes if axis._decoration_seen != axis._versions()]
+        if not range_changed and not changed:
             return
         self._syncing = True
         try:
-            self._compile()
-            self.x_axis._configure()
-            self.y_axis._configure()
+            if range_changed:
+                self._compile()
+            for axis in axes if range_changed else changed:
+                axis._configure()
             self._configure_grid()
         finally:
             self._syncing = False
 
     def _poll(self) -> None:
-        if (
-            self.x_axis._range_parameter.tracker is None
-            and self.y_axis._range_parameter.tracker is None
-        ):
+        parameters = (*self.x_axis._parameters(), *self.y_axis._parameters())
+        if all(parameter.tracker is None for parameter in parameters):
             return
         token = playback_context()
         if token is not None and token == self._poll_token:
             return
         self._poll_token = token
         self._token += 1
-        self.x_axis._range_parameter.poll(self._token)
-        self.y_axis._range_parameter.poll(self._token)
+        for parameter in parameters:
+            parameter.poll(self._token)
         self._sync_data()
 
     def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
@@ -452,9 +467,10 @@ class CartesianAxes(VGroup):
         if self.frame in moving:
             return True
         for axis in (self.x_axis, self.y_axis):
-            tracker = axis.range.tracker
-            if tracker is not None and (callable(tracker) or tracker in moving):
-                return True
+            for parameter in axis._parameters():
+                tracker = parameter.tracker
+                if tracker is not None and (callable(tracker) or tracker in moving):
+                    return True
         return False
 
     def _mapping(self) -> SystemMap:
@@ -954,7 +970,7 @@ class NumberPlane(CartesianAxes):
             negative = [
                 -k * step for k in range(1, max(1, int(np.ceil(-negative_stop / step))))
             ]
-            grid: list[VMobject] = []
+            grid: dict[object, GridLeaf] = {}
             axis_major = []
             for values in ([0.0], positive, negative):
                 for k, value in enumerate(values):
@@ -963,28 +979,41 @@ class NumberPlane(CartesianAxes):
                     endpoints[:, index] = cross + value
                     endpoints[:, 1 - index] = parallel.range.value
                     points = self._data.forward(endpoints)
-                    native = VMobject().set_points_as_corners(
-                        np.column_stack((points, np.zeros(2)))
+                    local = points[0] + np.linspace(0, 1, 4)[:, None] * (
+                        points[1] - points[0]
                     )
-                    leaf = GridLeaf(mapping.forward(native.points), self)
+                    locator = (
+                        perpendicular.minor_locator
+                        if level == "minor"
+                        else perpendicular.locator
+                    )
+                    key = (
+                        level,
+                        (locator or perpendicular.locator).key(float(cross + value)),
+                    )
+                    leaf = perpendicular._grid_leaves.get(key)
+                    if leaf is None:
+                        leaf = GridLeaf(mapping.forward(local), self)
+                        leaf.set_style(
+                            **(
+                                self.background_line_style
+                                if level == "major"
+                                else (self.faded_line_style or {})
+                            )
+                        )
+                        leaf.set_style(**perpendicular._grid_styles.get(level, {}))
+                    else:
+                        leaf._cache = mapping.forward(local)
                     leaf.level = level
                     leaf.value = cross + value
-                    leaf.set_style(
-                        **(
-                            self.background_line_style
-                            if level == "major"
-                            else (self.faded_line_style or {})
-                        )
-                    )
-                    leaf.set_style(**perpendicular._grid_styles.get(level, {}))
                     if not perpendicular._grid_visible.get(level, True):
-                        leaf.set_opacity(0)
+                        continue
                     (major if level == "major" else minor).append(leaf)
-                    if value != 0:
-                        grid.append(leaf)
+                    grid[key] = leaf
                     if level == "major":
                         axis_major.append(leaf)
-            perpendicular.grid.submobjects = grid
+            perpendicular._grid_leaves = grid
+            perpendicular._grid._replace(grid)
             if index == 1:
                 self.x_lines = VGroup(*axis_major)
             else:

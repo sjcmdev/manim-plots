@@ -43,6 +43,7 @@ from manim_plots.core.ticks import (
     NullLocator,
     SymLogLocator,
 )
+from manim_plots.mobjects.axis import TickDirection as TickDirection
 from manim_plots.mobjects.context import check_pins
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
