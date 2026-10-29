@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, NoReturn, Self, TypedDict, Unpack, cast
 
 import numpy as np
-from manim import Animation, Mobject, Scene, VMobject, config
+from manim import Animation, MathTex, Mobject, Scene, Tex, VGroup, VMobject, config
 from manim.constants import CapStyleType, LineJointType, RendererType
 from manim.typing import Vector3DLike
 from manim.utils.color import ParsableManimColor
@@ -24,6 +24,7 @@ from manim_plots.mobjects.context import (
 )
 
 if TYPE_CHECKING:
+    from manim_plots.mobjects.artists import FunctionPlot
     from manim_plots.mobjects.system import CartesianAxes
 
 _SIMULATING = False
@@ -59,6 +60,32 @@ class _PlotOptions(_VMStyle, total=False):
     use_smoothing: bool
     discontinuities: Iterable[float] | None
     dt: float
+
+
+class _DecimalOptions(_VMStyle, total=False):
+    num_decimal_places: int
+    include_sign: bool
+    group_with_commas: bool
+    digit_buff_per_font_unit: float
+    show_ellipsis: bool
+    unit: str | None
+    unit_buff_per_font_unit: float
+    include_background_rectangle: bool
+    edge_to_fix: Vector3DLike
+
+
+class _NumberPlacement(_DecimalOptions, total=False):
+    direction: ArrayLike | None
+    buff: float | None
+
+
+class _NumberOptions(_NumberPlacement, total=False):
+    font_size: float | None
+    label_constructor: object
+
+
+class _RotateOptions(TypedDict, total=False):
+    about_edge: Vector3DLike | None
 
 
 def _reported_updaters(
@@ -97,6 +124,8 @@ class Leaf(VMobject):
     Animation ownership and detachment are reduced by core.lifecycle. Reads of a
     clean buffer take a fast path without allocating a lifecycle event.
     """
+
+    _label_owner: BoundLabel | None = None
 
     def __init__(
         self,
@@ -148,6 +177,9 @@ class Leaf(VMobject):
         self._cache = np.asarray(value, dtype=float)
 
     def _ensure(self) -> None:
+        owner = self.__dict__.get("_label_owner")
+        if owner is not None:
+            owner._ensure()
         if self._system is not None and self._lifecycle.state is lc.State.ATTACHED:
             self._system._sync_data()
 
@@ -326,6 +358,275 @@ class TickLeaf(Leaf):
 
 class TipLeaf(Leaf):
     """Carry a filled native arrow tip's cubic path."""
+
+
+class GlyphLeaf(Leaf):
+    """Carry one cached glyph's colour-independent outline."""
+
+
+class GridLeaf(Leaf):
+    """Carry one major or minor grid line."""
+
+    level: str = "major"
+    value: float = 0
+
+
+_GLYPHS: dict[tuple[str, float, object], FloatArray] = {}
+_SCRIPTS: dict[tuple[str, float], tuple[FloatArray, float]] = {}
+
+
+def _glyph(text: str, font_size: float, label_constructor: object = None) -> GlyphLeaf:
+    constructor = MathTex if label_constructor is None else label_constructor
+    if not callable(constructor):
+        raise TypeError("label_constructor must be callable")
+    key = (text, font_size, constructor)
+    if key not in _GLYPHS:
+        native = constructor(text)
+        if not isinstance(native, VMobject) or not hasattr(native, "font_size"):
+            raise TypeError("label_constructor must produce a font_size-aware VMobject")
+        cast(Any, native).font_size = font_size
+        outline = native.get_all_points().copy()
+        outline.flags.writeable = False
+        _GLYPHS[key] = outline
+    return GlyphLeaf(_GLYPHS[key], stroke_width=0, fill_opacity=1)
+
+
+def _superscript(text: str, font_size: float) -> VGroup:
+    result = VGroup()
+    position = 0.0
+    for char in text:
+        key = (char, font_size)
+        if key not in _SCRIPTS:
+            # The two zeros retain TeX's glyph bearings, baseline and advance.
+            native = MathTex("^{0" + char + "0}", font_size=font_size)
+            glyphs = native.family_members_with_points()
+            first, middle, last = glyphs
+            advance_zero = _script_zero_advance(font_size)
+            outline = middle.points - first.get_left() - [advance_zero, 0, 0]
+            advance = float(last.get_left()[0] - first.get_left()[0]) - advance_zero
+            outline.flags.writeable = False
+            _SCRIPTS[key] = outline, advance
+        outline, advance = _SCRIPTS[key]
+        result.add(
+            GlyphLeaf(
+                outline + np.array([position, 0, 0]), stroke_width=0, fill_opacity=1
+            )
+        )
+        position += advance
+    result.center()
+    return result
+
+
+def _script_zero_advance(font_size: float) -> float:
+    key = ("0", font_size)
+    if key not in _SCRIPTS:
+        native = MathTex("^{000}", font_size=font_size)
+        first, middle, last = native.family_members_with_points()
+        advance = float(last.get_left()[0] - first.get_left()[0]) / 2
+        outline = middle.points - first.get_left() - [advance, 0, 0]
+        outline.flags.writeable = False
+        _SCRIPTS[key] = outline, advance
+    return _SCRIPTS[key][1]
+
+
+class NumberLabel(VGroup):
+    """Lay out cached glyphs using DecimalNumber's spacing and alignment.
+
+    Parameters
+    ----------
+    number
+        Finite numeric value.
+    font_size
+        Size of the cached math glyphs.
+    label_constructor
+        Optional native glyph constructor, defaulting to MathTex.
+    **kwargs
+        DecimalNumber formatting and VMobject style options.
+    """
+
+    def __init__(
+        self,
+        number: float,
+        font_size: float = 36,
+        label_constructor: object = None,
+        **kwargs: Unpack[_DecimalOptions],
+    ) -> None:
+        options: dict[str, Any] = dict(kwargs)
+        places = options.pop("num_decimal_places", 2)
+        sign = options.pop("include_sign", False)
+        commas = options.pop("group_with_commas", True)
+        spacing = options.pop("digit_buff_per_font_unit", 0.001) * font_size
+        ellipsis = options.pop("show_ellipsis", False)
+        unit = options.pop("unit", None)
+        unit_buff = options.pop("unit_buff_per_font_unit", 0) * font_size
+        background = options.pop("include_background_rectangle", False)
+        options.pop("edge_to_fix", None)
+        self.number = number
+        self._font_size = font_size
+        self.num_decimal_places = places
+        text = format(number, f"{'+' if sign else ''}{',' if commas else ''}.{places}f")
+        if text.startswith("-") and np.round(number, places) == 0:
+            text = ("+" if sign else "") + text[1:]
+        super().__init__(*(_glyph(c, font_size, label_constructor) for c in text))
+        if ellipsis:
+            self.add(_glyph(r"\dots", font_size))
+        self.arrange(buff=spacing, aligned_edge=np.array([0.0, -1.0, 0.0]))
+        if unit is not None:
+            # Units are annotations; numeric digits always use the glyph cache.
+            unit_mob = (
+                _superscript(unit[2:-1], font_size)
+                if unit.startswith("^{") and unit.endswith("}")
+                else _label(unit, font_size=font_size)
+            )
+            unit_mob.next_to(self, buff=unit_buff + spacing, aligned_edge=(0, -1, 0))
+            self.add(unit_mob)
+        self.move_to(np.zeros(3))
+        for i, char in enumerate(text):
+            if char == "-" and i + 1 < len(text):
+                self[i].align_to(self[i + 1], (0, 1, 0))
+                self[i].shift(self[i + 1].height * np.array([0, -0.5, 0]))
+            elif char == ",":
+                self[i].shift(self[i].height * np.array([0, -0.5, 0]))
+        if unit is not None and unit.startswith("^"):
+            unit_mob.align_to(self, (0, 1, 0))
+        if unit is not None:
+            self.submobjects = [*self.submobjects[:-1], *unit_mob.submobjects]
+        self.initial_height = self.height
+        style = {"stroke_width": 0, "fill_opacity": 1, **options}
+        color = style.pop("color", None)
+        if color is not None:
+            style.setdefault("stroke_color", color)
+            style.setdefault("fill_color", color)
+        self.set_style(**style)
+        if background:
+            # Convert even the optional background to a library-owned leaf.
+            self.add_to_back(_label(self.copy().add_background_rectangle()[0]))
+
+    def __getattr__(self, name: str) -> NoReturn:
+        raise AttributeError(f"NumberLabel has no attribute {name!r}")
+
+    @property
+    def font_size(self) -> float:
+        """Return the current size using DecimalNumber's height convention."""
+        return self._font_size * self.height / self.initial_height
+
+    @font_size.setter
+    def font_size(self, value: float) -> None:
+        if value <= 0:
+            raise ValueError("font_size must be positive")
+        self.scale(value / self.font_size)
+
+    def get_value(self) -> float:
+        """Return the represented numeric value."""
+        return self.number
+
+
+def _label(value: object, *, text_mode: bool = False, font_size: float = 48) -> VGroup:
+    if isinstance(value, NumberLabel):
+        return value
+    if not isinstance(value, VMobject):
+        value = (Tex if text_mode else MathTex)(str(value), font_size=font_size)
+    result = VGroup()
+    result.match_style(value, family=False)
+    for member in value.family_members_with_points():
+        leaf = GlyphLeaf(member.points)
+        leaf.match_style(cast(VMobject, member), family=False)
+        result.add(leaf)
+    return result
+
+
+class BoundLabel(VGroup):
+    """Bind label outlines to a system's frame and optional data anchor.
+
+    Parameters
+    ----------
+    label
+        Positioned library glyphs.
+    system
+        Owning coordinate system.
+    anchor
+        Optional callable returning a local anchor after a range edit.
+    graph
+        Optional source of a graph-bound anchor.
+    """
+
+    dot: VMobject
+
+    def __init__(
+        self,
+        label: VGroup,
+        system: CartesianAxes,
+        anchor: Callable[[], FloatArray] | None = None,
+        graph: FunctionPlot | None = None,
+    ) -> None:
+        self._system = system
+        self._actual_updaters: list[Callable[..., Any]] = []
+        self._graph = graph
+        self._source_seen = None if graph is None else graph.source
+        self._own_seen = None if graph is None else graph._own
+        super().__init__(*label.submobjects)
+        self.match_style(label, family=False)
+        self._anchor = anchor
+        self._data_seen = system._data_version
+        self._frame_seen = system.frame.version
+        self._placing = False
+        leaves = [m for m in self.get_family() if isinstance(m, Leaf)]
+        self._leaves = leaves
+        self._local = [system.frame.mapping.inverse(m.points) for m in leaves]
+        self._anchor_seen = None if anchor is None else anchor()
+        for leaf in leaves:
+            leaf._label_owner = self
+        self.add_updater(_synchronise)
+
+    def __getattr__(self, name: str) -> NoReturn:
+        raise AttributeError(f"BoundLabel has no attribute {name!r}")
+
+    @property
+    def updaters(self) -> list[Callable[..., Any]]:
+        """Report synchronisation to plays that move the system or graph."""
+        moving = moving_context()
+        if moving is not None and self._graph is not None and self._graph in moving:
+            return self._actual_updaters
+        return _reported_updaters(self._actual_updaters, self._system)
+
+    @updaters.setter
+    def updaters(self, value: list[Callable[..., Any]]) -> None:
+        self._actual_updaters = value
+
+    def _poll(self) -> None:
+        self._system._poll()
+        self._ensure()
+
+    def _ensure(self) -> None:
+        if self._placing:
+            return
+        self._placing = True
+        try:
+            system = self._system
+            system._sync_data()
+            graph = self._graph
+            changed = self._data_seen != system._data_version
+            if graph is not None:
+                changed |= (
+                    graph.source is not self._source_seen
+                    or graph._own is not self._own_seen
+                )
+            if changed and self._anchor is not None and self._anchor_seen is not None:
+                anchor = self._anchor()
+                delta = anchor - self._anchor_seen
+                self._local = [points + delta for points in self._local]
+                self._anchor_seen = anchor
+            if changed or self._frame_seen != system.frame.version:
+                mapping = system.frame.mapping
+                for leaf, local in zip(self._leaves, self._local, strict=True):
+                    leaf._cache = mapping.forward(local)
+                self._frame_seen = system.frame.version
+                self._data_seen = system._data_version
+                if graph is not None:
+                    self._source_seen = graph.source
+                    self._own_seen = graph._own
+        finally:
+            self._placing = False
 
 
 class FrameLeaf(Leaf):

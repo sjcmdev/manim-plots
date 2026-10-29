@@ -46,6 +46,7 @@ from manim_plots.core.ticks import (
 from manim_plots.mobjects.context import check_pins
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
+from manim_plots.mobjects.system import NumberPlane as NumberPlane
 
 __version__ = version("manim-plots")
 

@@ -16,9 +16,14 @@ import numpy as np
 from manim import (
     Animation,
     AnimationGroup,
+    Axes,
+    CoordinateSystem,
+    DecimalNumber,
     FadeOut,
+    LogBase,
     Mobject,
     MoveAlongPath,
+    NumberLine,
     NumberPlane,
     PhaseFlow,
     Scene,
@@ -42,6 +47,37 @@ from manim.renderer.cairo_renderer import CairoRenderer
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    NumberLine.__init__,
+    NumberLine.get_tick,
+    NumberLine.get_tick_range,
+    NumberLine.number_to_point,
+    NumberLine.point_to_number,
+    NumberLine.get_unit_size,
+    NumberLine.get_unit_vector,
+    NumberLine.get_number_mobject,
+    NumberLine.add_numbers,
+    NumberLine.add_labels,
+    NumberLine._create_label_tex,
+    NumberLine._decimal_places_from_step,
+    Axes.__init__,
+    Axes._create_axis,
+    Axes._origin_shift,
+    Axes.coords_to_point,
+    Axes.point_to_coords,
+    Axes.get_axis_labels,
+    CoordinateSystem.add_coordinates,
+    CoordinateSystem.get_x_axis_label,
+    CoordinateSystem.get_y_axis_label,
+    CoordinateSystem._get_axis_label,
+    CoordinateSystem.get_graph_label,
+    DecimalNumber._set_submobjects_from_number,
+    DecimalNumber._get_num_string,
+    DecimalNumber._get_formatter,
+    NumberPlane.__init__,
+    NumberPlane._init_background_lines,
+    NumberPlane._get_lines,
+    NumberPlane._get_lines_parallel_to_axis,
+    LogBase.get_custom_labels,
     Mobject.rotate,
     Mobject.scale,
     Mobject.stretch,
@@ -124,6 +160,99 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "NumberLine.__init__": (
+            "009ac481d80c22e2859219dfb574bfb554c9dcb029980de5097076ca01098b8b"
+        ),
+        "NumberLine.get_tick": (
+            "657a50c4eb02d7a777299f3797143fbf1d954cd19e962934f1fc7ee040bf3c98"
+        ),
+        "NumberLine.get_tick_range": (
+            "038e6d4154a1459f85b5c3179c5dac62140687f499f464edcdb3131e6a662a64"
+        ),
+        "NumberLine.number_to_point": (
+            "32c1849884ab85687754a14e6b0ed60b733f14e8ab7c3d5ec160406af03346a2"
+        ),
+        "NumberLine.point_to_number": (
+            "afd72e45e8ed16aad8b45e60692f30f36e001e93f10b4ec9accfa00e036d6d6b"
+        ),
+        "NumberLine.get_unit_size": (
+            "914414aea7e3ae8f81bdac76e2197a89e37b70040cae21f1e4f5228107aa031e"
+        ),
+        "NumberLine.get_unit_vector": (
+            "9606242fc88ed1e75138f7ca2bcd2d3d4b71cc4f0fd566fae54356cdcd3d4d54"
+        ),
+        "NumberLine.get_number_mobject": (
+            "27f88fb21d4212b024cc3718f5e0b20346ad67478c287b362a09860cca144be5"
+        ),
+        "NumberLine.add_numbers": (
+            "14bfde7e479edcceae448457a60a1a2cc55e68d96b8d49bd0748fed6228d1dcd"
+        ),
+        "NumberLine.add_labels": (
+            "42dc9735756061afaada6aae089d35f5d7c2aa787da6df5485b5df51ffee8028"
+        ),
+        "NumberLine._create_label_tex": (
+            "786c70857fd0172d7da86c9ed8dc487174dc0cb8fac601427bd5a65efd51c190"
+        ),
+        "NumberLine._decimal_places_from_step": (
+            "f0d11aaf66140c5b6c2c0f44d73d2105251d95cccab66532620b407715855633"
+        ),
+        "Axes.__init__": (
+            "e28c172944e9412f15465f44684c6275381e395fc1b79ce1764c7a6599a6ce23"
+        ),
+        "Axes._create_axis": (
+            "a2341426a116935894bedb7d649632bfc4897bcfa8a0f67e61c3be7eba5aab36"
+        ),
+        "Axes._origin_shift": (
+            "09850bdcba2b1bb775dcae0f38ebb1d77cacf2ba0ef3618f34e013aef1dbd254"
+        ),
+        "Axes.coords_to_point": (
+            "9ea620816d0ab8e55620fd277504fb3a2558a400afdb1c46ddb560111823139d"
+        ),
+        "Axes.point_to_coords": (
+            "e26c9b825c9315b444ecb7ae755ee594d471b87d3c8d2e3c40d20015b7a4834f"
+        ),
+        "Axes.get_axis_labels": (
+            "91b177522bb84d93481e3e5c9db628eb61f75247c6f77c85a047c05f9196061b"
+        ),
+        "CoordinateSystem.add_coordinates": (
+            "114651538830075b663f08d5b49bc1597ad9e3d254e19d6d348f591b5f16bf11"
+        ),
+        "CoordinateSystem.get_x_axis_label": (
+            "914e181b3fb7b98e75cfae4a7e46faa79628f0d14f2f857318388412ae7e6fe3"
+        ),
+        "CoordinateSystem.get_y_axis_label": (
+            "2cdfc799f218b08f46e638e2cfbec45f3e22f060d592d0493399d2dec5d6a3a2"
+        ),
+        "CoordinateSystem._get_axis_label": (
+            "7caef98d9da34e8068d0cacded98ed11d66afa87d62986ea6dc5373b5177404f"
+        ),
+        "CoordinateSystem.get_graph_label": (
+            "85b36b3439d0f908acee5d2efa1b8a1d1901a06ef19088cbf4138e50a810cad3"
+        ),
+        "DecimalNumber._set_submobjects_from_number": (
+            "70e08296f775e5f7585a3eb28a42717842812b2aafe8268c417584377b345609"
+        ),
+        "DecimalNumber._get_num_string": (
+            "f4f4b1da599a62bade405dd85546db63377b9767364d4e82bd7f4903f8c41c11"
+        ),
+        "DecimalNumber._get_formatter": (
+            "d16c844a43a9c5f8e569f7a1fbf8f3738361d043fbe85605f3f92181788fe9f6"
+        ),
+        "NumberPlane.__init__": (
+            "ddf180e3a3253a7c68ac1bbf745bc5a30533cb6fbe5572c3fac0a19370fcd68c"
+        ),
+        "NumberPlane._init_background_lines": (
+            "002687c99d845acab6a9b470c50260b81b8357c655552f2ec46d9a08e74339fd"
+        ),
+        "NumberPlane._get_lines": (
+            "953654c1ac8bea9da7878170bd569cfb8604a5c4e178262b6b183d78b1da510b"
+        ),
+        "NumberPlane._get_lines_parallel_to_axis": (
+            "03fde9988571dc6dc28ba3ff8ff4914e1774159e09040be502da40cc68e34c5b"
+        ),
+        "LogBase.get_custom_labels": (
+            "d92f86ca4ffedbb5c4844c8657003d9d9f06c8ad66f76eb128e8a4a4f1415c36"
+        ),
         "Mobject.reduce_across_dimension": (
             "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
         ),
@@ -360,6 +489,99 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "NumberLine.__init__": (
+            "009ac481d80c22e2859219dfb574bfb554c9dcb029980de5097076ca01098b8b"
+        ),
+        "NumberLine.get_tick": (
+            "657a50c4eb02d7a777299f3797143fbf1d954cd19e962934f1fc7ee040bf3c98"
+        ),
+        "NumberLine.get_tick_range": (
+            "038e6d4154a1459f85b5c3179c5dac62140687f499f464edcdb3131e6a662a64"
+        ),
+        "NumberLine.number_to_point": (
+            "32c1849884ab85687754a14e6b0ed60b733f14e8ab7c3d5ec160406af03346a2"
+        ),
+        "NumberLine.point_to_number": (
+            "82ad8de92c7eefc5be9a45b86bbc7056e302c05d516a2873f9e3ca7324b4d763"
+        ),
+        "NumberLine.get_unit_size": (
+            "914414aea7e3ae8f81bdac76e2197a89e37b70040cae21f1e4f5228107aa031e"
+        ),
+        "NumberLine.get_unit_vector": (
+            "9606242fc88ed1e75138f7ca2bcd2d3d4b71cc4f0fd566fae54356cdcd3d4d54"
+        ),
+        "NumberLine.get_number_mobject": (
+            "27f88fb21d4212b024cc3718f5e0b20346ad67478c287b362a09860cca144be5"
+        ),
+        "NumberLine.add_numbers": (
+            "14bfde7e479edcceae448457a60a1a2cc55e68d96b8d49bd0748fed6228d1dcd"
+        ),
+        "NumberLine.add_labels": (
+            "42dc9735756061afaada6aae089d35f5d7c2aa787da6df5485b5df51ffee8028"
+        ),
+        "NumberLine._create_label_tex": (
+            "786c70857fd0172d7da86c9ed8dc487174dc0cb8fac601427bd5a65efd51c190"
+        ),
+        "NumberLine._decimal_places_from_step": (
+            "f0d11aaf66140c5b6c2c0f44d73d2105251d95cccab66532620b407715855633"
+        ),
+        "Axes.__init__": (
+            "e28c172944e9412f15465f44684c6275381e395fc1b79ce1764c7a6599a6ce23"
+        ),
+        "Axes._create_axis": (
+            "a2341426a116935894bedb7d649632bfc4897bcfa8a0f67e61c3be7eba5aab36"
+        ),
+        "Axes._origin_shift": (
+            "09850bdcba2b1bb775dcae0f38ebb1d77cacf2ba0ef3618f34e013aef1dbd254"
+        ),
+        "Axes.coords_to_point": (
+            "9ea620816d0ab8e55620fd277504fb3a2558a400afdb1c46ddb560111823139d"
+        ),
+        "Axes.point_to_coords": (
+            "e26c9b825c9315b444ecb7ae755ee594d471b87d3c8d2e3c40d20015b7a4834f"
+        ),
+        "Axes.get_axis_labels": (
+            "91b177522bb84d93481e3e5c9db628eb61f75247c6f77c85a047c05f9196061b"
+        ),
+        "CoordinateSystem.add_coordinates": (
+            "114651538830075b663f08d5b49bc1597ad9e3d254e19d6d348f591b5f16bf11"
+        ),
+        "CoordinateSystem.get_x_axis_label": (
+            "914e181b3fb7b98e75cfae4a7e46faa79628f0d14f2f857318388412ae7e6fe3"
+        ),
+        "CoordinateSystem.get_y_axis_label": (
+            "2cdfc799f218b08f46e638e2cfbec45f3e22f060d592d0493399d2dec5d6a3a2"
+        ),
+        "CoordinateSystem._get_axis_label": (
+            "7caef98d9da34e8068d0cacded98ed11d66afa87d62986ea6dc5373b5177404f"
+        ),
+        "CoordinateSystem.get_graph_label": (
+            "85b36b3439d0f908acee5d2efa1b8a1d1901a06ef19088cbf4138e50a810cad3"
+        ),
+        "DecimalNumber._set_submobjects_from_number": (
+            "70e08296f775e5f7585a3eb28a42717842812b2aafe8268c417584377b345609"
+        ),
+        "DecimalNumber._get_num_string": (
+            "f4f4b1da599a62bade405dd85546db63377b9767364d4e82bd7f4903f8c41c11"
+        ),
+        "DecimalNumber._get_formatter": (
+            "d16c844a43a9c5f8e569f7a1fbf8f3738361d043fbe85605f3f92181788fe9f6"
+        ),
+        "NumberPlane.__init__": (
+            "ddf180e3a3253a7c68ac1bbf745bc5a30533cb6fbe5572c3fac0a19370fcd68c"
+        ),
+        "NumberPlane._init_background_lines": (
+            "002687c99d845acab6a9b470c50260b81b8357c655552f2ec46d9a08e74339fd"
+        ),
+        "NumberPlane._get_lines": (
+            "953654c1ac8bea9da7878170bd569cfb8604a5c4e178262b6b183d78b1da510b"
+        ),
+        "NumberPlane._get_lines_parallel_to_axis": (
+            "03fde9988571dc6dc28ba3ff8ff4914e1774159e09040be502da40cc68e34c5b"
+        ),
+        "LogBase.get_custom_labels": (
+            "d92f86ca4ffedbb5c4844c8657003d9d9f06c8ad66f76eb128e8a4a4f1415c36"
+        ),
         "Mobject.reduce_across_dimension": (
             "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
         ),
