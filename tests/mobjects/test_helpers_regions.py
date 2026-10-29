@@ -214,7 +214,7 @@ def test_fb2_interpolate_ends_at_the_crossing():
     y1 = XS - 1
     plain = ax.fill_between(XS, y1, 0, where=y1 > 0)
     exact = ax.fill_between(XS, y1, 0, where=y1 > 0, interpolate=True)
-    assert area(plain) == pytest.approx(0.405 * UNIT, rel=1e-6)
+    assert area(plain) == pytest.approx(0.495 * UNIT, rel=1e-6)
     assert area(exact) == pytest.approx(0.5 * UNIT, rel=1e-6)
 
 

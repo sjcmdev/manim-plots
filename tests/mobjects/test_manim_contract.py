@@ -177,6 +177,15 @@ ADDED_BY_TASK_16 = [
     "Line._account_for_buff",
 ]
 
+# Task 17: the regions match Manim's get_area and get_riemann_rectangles, colours too.
+ADDED_BY_TASK_17 = [
+    "CoordinateSystem.get_area",
+    "CoordinateSystem.get_riemann_rectangles",
+    "color_gradient",
+    "invert_color",
+    "VMobject.set_color",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -197,6 +206,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_12
         + ADDED_BY_TASK_13
         + ADDED_BY_TASK_16
+        + ADDED_BY_TASK_17
     )
 
 

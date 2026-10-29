@@ -105,3 +105,11 @@ the border or value the axis was moved to.
   `test_fill_between_where` alone (Manim has no `fill_between`).
 - A frame-cost reading: an area with a tracker end and a Riemann sum with a tracker `dx`
   on F-1001's axes, recorded in this table, not gated.
+
+## Frame-cost reading
+
+2026-10-29, Codex's run: F-1001's four plots under an animated range, plus an area whose
+end is a tracker (2 to 4) and a Riemann sum whose `dx` is a tracker (0.5 to 0.25):
+`update` p95 10.4 ms, frame p95 99.6 ms over 60 frames. Not gated, but far above the
+plots alone (2.9-3.4 ms): re-deriving a region and the rectangles every frame is the
+cost to cut in task 23's performance pass.
