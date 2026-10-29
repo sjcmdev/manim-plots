@@ -25,6 +25,8 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/sjcmdev/manim-plots"
+Documentation = "https://github.com/sjcmdev/manim-plots/blob/main/README.md#documentation"
+Issues = "https://github.com/sjcmdev/manim-plots/issues"
 
 [dependency-groups]
 dev = [

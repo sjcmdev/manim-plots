@@ -2,10 +2,10 @@
 
 Correct, extensible plotting primitives for [Manim](https://www.manim.community/).
 
-> **Status: pre-alpha.** No library code yet. The 0.1 scope and the architecture are
-> frozen (`docs/scope.md`, `docs/adr/0001-architecture.md`); implementation starts next.
-> The public API may change without notice until 1.0, except the contracts ADR 0001
-> freezes.
+> **Status: pre-alpha, 0.1.0.dev0.** The coordinate-system engine, four plot artists,
+> axis decoration, legends and animations are implemented. The first release awaits
+> maintainer review. The API may change before 1.0 except for the frozen
+> [0.1 contracts](https://github.com/sjcmdev/manim-plots/blob/main/docs/scope.md).
 
 ## What this is
 
@@ -24,6 +24,62 @@ follow what matplotlib and gnuplot established.
 
 - Python >= 3.12
 - Manim Community Edition 0.21.0 or 0.22.0, Cairo renderer
+- NumPy >= 2.5
+
+OpenGL is not supported; constructing a library mobject with that renderer raises an
+error naming Cairo. Other Manim versions require review of the library's integration.
+
+## Install and draw a first plot
+
+The package is not on PyPI yet. Install the development branch into an environment
+with [Manim's system dependencies](https://docs.manim.community/en/stable/installation.html):
+
+```sh
+python -m pip install "git+https://github.com/sjcmdev/manim-plots@dev"
+```
+
+Save this as `first_plot.py`:
+
+```python
+import numpy as np
+from manim import BLUE, RIGHT, Create, Scene
+
+import manim_plots as mp
+
+
+class FirstPlot(Scene):
+    def construct(self):
+        ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-2, 2, 1))
+        curve = ax.plot(np.sin, color=BLUE)
+        self.play(Create(ax), Create(curve))
+        self.play(ax.animate.shift(2 * RIGHT))
+```
+
+Render it with Cairo:
+
+```sh
+manim -ql --renderer cairo first_plot.py FirstPlot
+```
+
+The curve follows the axes when they move or their range changes. Add axes and curves
+to a scene separately; `ax.add(curve)` registers a curve without parenting it.
+
+## Documentation
+
+The [user documentation](https://github.com/sjcmdev/manim-plots/blob/main/docs/site/index.rst)
+contains a first plot, a
+[Coming from Manim guide](https://github.com/sjcmdev/manim-plots/blob/main/docs/site/coming-from-manim.rst),
+the [differences from Manim](https://github.com/sjcmdev/manim-plots/blob/main/docs/site/differences.rst),
+a [gallery with runnable scenes](https://github.com/sjcmdev/manim-plots/blob/main/docs/site/gallery.rst)
+and the [API reference source](https://github.com/sjcmdev/manim-plots/blob/main/docs/site/api.rst).
+Until the site is hosted, build the rendered API and guides locally:
+
+```sh
+uv run --group docs sphinx-build -W --keep-going -b html docs/site docs/site/_build/html
+```
+
+Open `docs/site/_build/html/index.html`. Release preparation is recorded in the
+[changelog](https://github.com/sjcmdev/manim-plots/blob/main/CHANGELOG.md).
 
 ## Development
 
@@ -35,8 +91,9 @@ uv run mypy
 uv run python tools/check.py    # all checks, across the supported matrix
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the project conventions and
-[TODO.md](TODO.md) for the task plan.
+See [CONTRIBUTING.md](https://github.com/sjcmdev/manim-plots/blob/main/CONTRIBUTING.md)
+for the project conventions and
+[TODO.md](https://github.com/sjcmdev/manim-plots/blob/main/TODO.md) for the task plan.
 
 ## Repository layout
 
@@ -50,4 +107,4 @@ poc/               four proofs of concept behind ADR 0001; frozen evidence, neve
 
 ## Licence
 
-[MIT](LICENSE)
+[MIT](https://github.com/sjcmdev/manim-plots/blob/main/LICENSE)
