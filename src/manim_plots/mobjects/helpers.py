@@ -1,11 +1,11 @@
-"""Bound line and calculus helpers, sharing the ordinary artist lifecycle."""
+"""Bound line, calculus and region helpers with the ordinary artist lifecycle."""
 
 from __future__ import annotations
 
 import copy
 from collections.abc import Callable, Iterable, Sequence
 from numbers import Real
-from typing import Any, TypedDict, Unpack, cast
+from typing import Any, Self, TypedDict, Unpack, cast
 
 import numpy as np
 from manim import (
@@ -21,25 +21,31 @@ from manim import (
     VGroup,
     VMobject,
 )
-from manim.utils.color import ParsableManimColor
+from manim.utils.color import (
+    ManimColor,
+    ParsableManimColor,
+    color_gradient,
+    invert_color,
+)
 from numpy.typing import ArrayLike
 
 import manim_plots as mp
 from manim_plots.core import FloatArray
 from manim_plots.core import lifecycle as lc
-from manim_plots.core.nodes import FrameMap
+from manim_plots.core.nodes import FrameMap, SystemMap
 from manim_plots.core.params import Parameter, _same
 from manim_plots.core.payload import Payload
-from manim_plots.core.shape import _assemble, arc_length, corners
+from manim_plots.core.shape import _assemble, arc_length, clip_region, corners, smooth
 from manim_plots.core.shape import clip as clip_path
 from manim_plots.core.shape import dash as dash_path
-from manim_plots.core.sources import ArraySource, _CalculusSource
+from manim_plots.core.sources import ArraySource, Box, _CalculusSource
 from manim_plots.mobjects.artists import (
     FunctionPlot,
     LineStyle,
     _clip_axes,
     _clip_box,
     _CurvePlot,
+    _cycle_style,
     _dash_pattern,
     _unclipped_box,
 )
@@ -428,6 +434,645 @@ class HelperGroup(VGroup):
     dx_label: VGroup
     df_label: VGroup
     secant_line: HelperLine
+
+
+class _RegionBinding(_Binding):
+    def __init__(
+        self,
+        system: mp.CartesianAxes,
+        derive: Callable[[_Binding], None],
+        inputs: dict[str, object],
+        graphs: Sequence[_CurvePlot],
+    ) -> None:
+        super().__init__(system, derive, inputs, graphs[0] if graphs else None)
+        self._others = [_Binding(system, lambda b: None, {}, g) for g in graphs[1:]]
+        self._other_seen: tuple[int, ...] = ()
+        self.boundaries: dict[str, list[tuple[FloatArray, FloatArray]]] = {}
+        self.colors: list[ManimColor] = []
+        self.rectangle_style: dict[str, object] = {}
+        self.rectangle_blend = False
+
+    def local(self, points: ArrayLike) -> FloatArray:
+        coords = np.asarray(points, dtype=float)
+        # An excluded scale-domain tail still fills up to the viewport edge.
+        for index, axis in enumerate((self.system.x_axis, self.system.y_axis)):
+            invalid = np.isfinite(coords[:, index]) & ~np.isfinite(
+                axis._scale.forward(coords[:, index])
+            )
+            if invalid.any():
+                coords = coords.copy()
+                lo, hi = sorted(axis.range.value)
+                coords[invalid, index] = np.clip(coords[invalid, index], lo, hi)
+        return super().local(coords)
+
+    def poll(self) -> None:
+        super().poll()
+        for other in self._others:
+            other.poll()
+
+    def needs_sync(self, moving: frozenset[Mobject]) -> bool:
+        return super().needs_sync(moving) or any(
+            other.needs_sync(moving) for other in self._others
+        )
+
+    def ensure(self) -> None:
+        for other in self._others:
+            other.ensure()
+        seen = tuple(other.version for other in self._others)
+        if seen != self._other_seen:
+            self._seen = None
+            self._other_seen = seen
+        super().ensure()
+
+
+class FilledRegion(_CurvePlot):
+    """Draw a registered filled region with persistent, independent style.
+
+    Parameters
+    ----------
+    binding, part
+        Shared boundary derivation and its part name.
+    **style
+        VMobject style and ordinary artist clipping options. Colour sequences
+        produce Manim's gradient.
+
+    Notes
+    -----
+    Unlike Manim's Polygon, this leaf follows graphs and bound inputs. It uses
+    sampled, smoothed boundaries, splits crossing lobes and clips closed fills.
+    Re-derivation only replaces geometry, preserving later style changes.
+    """
+
+    def __init__(self, binding: _RegionBinding, part: str, **style: object) -> None:
+        self._binding, self._part = binding, part
+        self._binding_seen = -1
+        self._region_styling = True
+        self._fill_color_set = self._stroke_color_set = False
+        super().__init__(
+            ArraySource(np.empty((0, 2))),
+            binding.system,
+            use_smoothing=False,
+            **cast(dict[str, Any], style),
+        )
+        color = style.get("color")
+        if isinstance(color, (tuple, list)):
+            self.set_color(cast(ParsableManimColor, color))
+            if style.get("fill_color") is not None:
+                self.set_fill(cast(ParsableManimColor, style["fill_color"]))
+            if style.get("stroke_color") is not None:
+                self.set_stroke(cast(ParsableManimColor, style["stroke_color"]))
+        self._region_styling = False
+        binding.system.add(self)
+
+    def set_fill(
+        self,
+        color: ParsableManimColor | None = None,
+        opacity: float | None = None,
+        family: bool = True,
+    ) -> Self:
+        """Set fill style, preserving an explicit colour across derivations.
+
+        Parameters
+        ----------
+        color, opacity, family
+            Manim's colour, opacity and family propagation options.
+
+        Notes
+        -----
+        Matches Manim's styling; an explicit colour overrides future Riemann
+        gradient defaults while an opacity change leaves those defaults active.
+        """
+        if color is not None and not self._region_styling:
+            self._fill_color_set = True
+        return super().set_fill(color, opacity, family)
+
+    def set_stroke(
+        self,
+        color: ParsableManimColor | None = None,
+        width: float | None = None,
+        opacity: float | None = None,
+        background: bool = False,
+        family: bool = True,
+    ) -> Self:
+        """Set stroke style, preserving an explicit colour across derivations.
+
+        Parameters
+        ----------
+        color, width, opacity, background, family
+            Manim's stroke style and propagation options.
+
+        Notes
+        -----
+        Matches Manim's styling; an explicit foreground colour also overrides
+        future Riemann blend defaults, independently of width and opacity.
+        """
+        if color is not None and not background and not self._region_styling:
+            self._stroke_color_set = True
+        return super().set_stroke(
+            cast(ParsableManimColor, color), width, opacity, background, family
+        )
+
+    def _poll(self) -> None:
+        self._binding.poll()
+
+    def _needs_sync(self, moving: frozenset[Mobject]) -> bool:
+        return self._binding.needs_sync(moving)
+
+    def _ensure(self) -> None:
+        if self._lifecycle.state is lc.State.ATTACHED and not self._alignment_locked:
+            self._binding.ensure()
+            if self._binding_seen != self._binding.version:
+                self._dirty = True
+        super()._ensure()
+
+    def _adopt(self, other: Leaf) -> None:
+        if isinstance(other, FilledRegion):
+            self._binding, self._part = other._binding, other._part
+            self._binding_seen = -1
+        self._region_styling = True
+        try:
+            super()._adopt(other)
+        finally:
+            self._region_styling = False
+        if isinstance(other, FilledRegion):
+            self._fill_color_set = other._fill_color_set
+            self._stroke_color_set = other._stroke_color_set
+
+    def _rebuild(self) -> None:
+        binding = self._binding
+        binding.ensure()
+        system = self._system
+        if system is None:
+            return
+        bounds = _clip_box(system, self._clip)
+        axes = _clip_axes(self._clip)
+        parts: list[FloatArray] = []
+        if binding.valid:
+            for upper, lower in binding.boundaries.get(self._part, []):
+                payload = clip_region(
+                    upper,
+                    lower,
+                    bounds,
+                    clip_x=axes[0] is not False,
+                    clip_y=axes[1] is not False,
+                )
+                parts.extend(payload.coords[a:b] for a, b in payload.segments)
+        self._geometry_payload = _assemble(parts, 2)
+        self._place(self._frame())
+        self._binding_seen = binding.version
+        self._data_seen = system._data_version
+        self._dirty = False
+
+
+def _graph_boundary(system: mp.CartesianAxes, graph: _CurvePlot) -> list[FloatArray]:
+    limits = _limits(system, graph)
+    ends = system._data.forward(
+        np.column_stack((limits, np.full(2, system.x_axis._cross_value())))
+    )[:, 0]
+    lower, upper = system.bounds.lower.copy(), system.bounds.upper.copy()
+    lower[0], upper[0] = min(lower[0], min(ends)), max(upper[0], max(ends))
+    bounds = Box(lower, upper)
+    payload = system._data.apply_payload(
+        graph.source.sample(SystemMap(system._data, system.frame.mapping), bounds)
+    )
+    payload = (smooth if graph.use_smoothing else corners)(payload, bounds)
+    parts = []
+    t = np.linspace(0, 1, 17)[:, None]
+    weights = np.column_stack(
+        ((1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t**2, t**3)
+    )
+    for start, stop in payload.segments:
+        curves = payload.coords[start:stop].reshape(-1, 4, 2)
+        points = np.einsum("tk,nkd->ntd", weights, curves).reshape(-1, 2)
+        if graph._own.nodes:
+            points = graph._own.forward(
+                np.column_stack((points, np.zeros(len(points))))
+            )[:, :2]
+        points = points[np.argsort(points[:, 0], kind="stable")]
+        parts.append(points[np.r_[True, np.diff(points[:, 0]) > 0]])
+    return parts
+
+
+def _paired_boundaries(
+    upper: list[FloatArray], lower: list[FloatArray], limits: FloatArray
+) -> list[tuple[FloatArray, FloatArray]]:
+    result = []
+    for a in upper:
+        for b in lower:
+            if len(a) < 2 or len(b) < 2:
+                continue
+            lo, hi = (
+                max(limits[0], a[0, 0], b[0, 0]),
+                min(limits[1], a[-1, 0], b[-1, 0]),
+            )
+            if lo >= hi:
+                continue
+            x = np.unique(np.r_[lo, a[:, 0], b[:, 0], hi])
+            x = x[(x >= lo) & (x <= hi)]
+            result.append(
+                (
+                    np.column_stack((x, np.interp(x, a[:, 0], a[:, 1]))),
+                    np.column_stack((x, np.interp(x, b[:, 0], b[:, 1]))),
+                )
+            )
+    return result
+
+
+def _region_range(
+    binding: _Binding, graph: _CurvePlot, bounded_graph: object, explicit: bool
+) -> tuple[float, float]:
+    system = binding.system
+    a, b = (
+        (
+            _number(binding.parameters["x_range[0]"].value, "x_range[0]"),
+            _number(binding.parameters["x_range[1]"].value, "x_range[1]"),
+        )
+        if explicit
+        else _limits(system, graph)
+    )
+    if isinstance(bounded_graph, _CurvePlot):
+        lo, hi = _limits(system, bounded_graph)
+        if lo > b:
+            if binding.version:
+                binding.valid = False
+                return a, a
+            raise ValueError(f"Ranges not matching: {lo} < {b}")
+        if hi < a:
+            if binding.version:
+                binding.valid = False
+                return a, a
+            raise ValueError(f"Ranges not matching: {hi} > {a}")
+        a, b = max(a, lo), min(b, hi)
+    if explicit:
+        lo, hi = sorted(_limits(system, graph))
+        for name in ("x_range[0]", "x_range[1]"):
+            parameter = binding.parameters[name]
+            value = binding.number(name)
+            valid = lo <= value <= hi
+            if parameter.tracker is not None:
+                axis_lo, axis_hi = sorted(system.x.range.value)
+                valid &= axis_lo <= value <= axis_hi
+            if not valid:
+                if not binding.version:
+                    raise ValueError(
+                        f"{name} must be inside the graph domain and axis range"
+                    )
+                binding.valid = False
+    return a, b
+
+
+def _range_inputs(x_range: Sequence[object] | None) -> dict[str, object]:
+    if x_range is None:
+        return {}
+    if len(x_range) not in (2, 3):
+        raise ValueError("x_range must have length 2 or 3")
+    return {"x_range[0]": x_range[0], "x_range[1]": x_range[1]}
+
+
+def _area(
+    system: mp.CartesianAxes,
+    graph: _CurvePlot,
+    x_range: Sequence[object] | None,
+    color: object,
+    opacity: float,
+    bounded_graph: _CurvePlot | float | None,
+    **style: object,
+) -> FilledRegion:
+    _graph(system, graph)
+    graphs = [graph]
+    if isinstance(bounded_graph, _CurvePlot):
+        _graph(system, bounded_graph)
+        graphs.append(bounded_graph)
+    elif bounded_graph is not None:
+        _number(bounded_graph, "bounded_graph")
+
+    def derive(base: _Binding) -> None:
+        binding = cast(_RegionBinding, base)
+        a, b = _region_range(binding, graph, bounded_graph, x_range is not None)
+        ends = binding.local(
+            [[a, system.x_axis._cross_value()], [b, system.x_axis._cross_value()]]
+        )
+        limits = np.sort(ends[:, 0])
+        top = _graph_boundary(system, graph)
+        if isinstance(bounded_graph, _CurvePlot):
+            bottom = _graph_boundary(system, bounded_graph)
+        else:
+            baseline = (
+                system.x_axis._cross_value() if bounded_graph is None else bounded_graph
+            )
+            bottom = [binding.local([[a, baseline], [b, baseline]])]
+            bottom[0] = bottom[0][np.argsort(bottom[0][:, 0])]
+        binding.boundaries["area"] = _paired_boundaries(top, bottom, limits)
+
+    binding = _RegionBinding(system, derive, _range_inputs(x_range), graphs)
+    style.setdefault("color", color)
+    style.setdefault("fill_opacity", opacity)
+    style.setdefault("stroke_opacity", opacity)
+    return FilledRegion(binding, "area", **style)
+
+
+def _fill_between(
+    system: mp.CartesianAxes,
+    x: ArrayLike,
+    y1: object,
+    y2: object,
+    where: ArrayLike | None,
+    interpolate: bool,
+    **style: object,
+) -> FilledRegion:
+    xs = np.array(x, dtype=float, copy=True)
+    if xs.ndim != 1:
+        raise ValueError("x must be one-dimensional")
+    invalid = np.flatnonzero(~np.isfinite(xs))
+    if len(invalid):
+        raise ValueError(f"x[{invalid[0]}] must be finite")
+    mask = (
+        np.ones(len(xs), dtype=bool)
+        if where is None
+        else np.array(where, dtype=bool, copy=True)
+    )
+    if mask.shape != xs.shape:
+        raise ValueError("where must have the same length as x")
+    xs.flags.writeable = mask.flags.writeable = False
+    fixed: dict[str, FloatArray] = {}
+    for name, boundary in (("y1", y1), ("y2", y2)):
+        if not isinstance(boundary, _CurvePlot) and not callable(boundary):
+            fixed[name] = np.array(boundary, dtype=float, copy=True)
+            fixed[name].flags.writeable = False
+    graphs = [y for y in (y1, y2) if isinstance(y, _CurvePlot)]
+    for graph in graphs:
+        _graph(system, graph)
+
+    def values(y: object, name: str) -> FloatArray:
+        if isinstance(y, _CurvePlot):
+            result = y.source.at(xs)[:, 1]
+        elif callable(y):
+            result = np.array([y(float(v)) for v in xs], dtype=float)
+        else:
+            result = fixed[name]
+        if result.ndim == 0:
+            result = np.full(len(xs), result)
+        if result.shape != xs.shape:
+            raise ValueError(f"{name} must be scalar or have the same length as x")
+        return result
+
+    def derive(base: _Binding) -> None:
+        binding = cast(_RegionBinding, base)
+        a, b = values(y1, "y1"), values(y2, "y2")
+        valid = mask & np.isfinite(a) & np.isfinite(b)
+        edges = np.diff(np.r_[False, valid, False].astype(int))
+        pairs = []
+        for start, stop in zip(
+            map(int, np.flatnonzero(edges == 1)),
+            map(int, np.flatnonzero(edges == -1)),
+            strict=True,
+        ):
+            grid, top, bottom = xs[start:stop], a[start:stop], b[start:stop]
+            if interpolate:
+                for left, right, prepend in (
+                    (max(0, start - 1), start, True),
+                    (stop - 1, min(len(xs) - 1, stop), False),
+                ):
+                    d0, d1 = a[left] - b[left], a[right] - b[right]
+                    if left != right and d0 * d1 <= 0 and d0 != d1:
+                        t = d0 / (d0 - d1)
+                        cross_x = xs[left] + t * (xs[right] - xs[left])
+                        cross_y = a[left] + t * (a[right] - a[left])
+                        grid = np.r_[cross_x, grid] if prepend else np.r_[grid, cross_x]
+                        top = np.r_[cross_y, top] if prepend else np.r_[top, cross_y]
+                        bottom = (
+                            np.r_[cross_y, bottom]
+                            if prepend
+                            else np.r_[bottom, cross_y]
+                        )
+            if len(grid) < 2:
+                continue
+            upper = binding.local(np.column_stack((grid, top)))
+            lower = binding.local(np.column_stack((grid, bottom)))
+            for boundary, source in ((upper, y1), (lower, y2)):
+                if isinstance(source, _CurvePlot) and source._own.nodes:
+                    boundary[:] = source._own.forward(
+                        np.column_stack((boundary, np.zeros(len(boundary))))
+                    )[:, :2]
+            order = np.argsort(upper[:, 0], kind="stable")
+            if np.array_equal(upper[:, 0], lower[:, 0]):
+                pairs.append((upper, lower))
+            else:
+                limits = binding.local(
+                    [
+                        [min(grid), system.x_axis._cross_value()],
+                        [max(grid), system.x_axis._cross_value()],
+                    ]
+                )[:, 0]
+                pairs.extend(
+                    _paired_boundaries(
+                        [upper[order]],
+                        [lower[np.argsort(lower[:, 0], kind="stable")]],
+                        np.sort(limits),
+                    )
+                )
+        binding.boundaries["area"] = pairs
+
+    binding = _RegionBinding(system, derive, {}, graphs)
+    _cycle_style(system, cast(_VMStyle, style), scatter=True)
+    style.setdefault("fill_opacity", 0.3)
+    style.setdefault("stroke_width", 0)
+    return FilledRegion(binding, "area", **style)
+
+
+def _update_riemann(group: Mobject) -> None:
+    assert isinstance(group, _RiemannGroup)
+    group._binding.poll()
+    group._ensure_regions()
+
+
+class _RiemannGroup(HelperGroup):
+    def __init__(
+        self, binding: _RegionBinding, blend: bool, style: dict[str, object]
+    ) -> None:
+        self._binding, self._blend, self._region_style = binding, blend, style
+        binding.rectangle_style, binding.rectangle_blend = style, blend
+        self._region_ready = False
+        self._binding_seen = -1
+        self._cache = np.empty((0, 3))
+        super().__init__()
+        self._region_ready = True
+        self._ensure_regions()
+        self.add_updater(_update_riemann)
+
+    @property
+    def points(self) -> FloatArray:
+        if self._region_ready:
+            self._ensure_regions()
+        return self._cache
+
+    @points.setter
+    def points(self, value: ArrayLike) -> None:
+        self._cache = np.asarray(value, dtype=float)
+
+    def __len__(self) -> int:
+        self._ensure_regions()
+        return len(self.submobjects)
+
+    def _ensure_regions(self) -> None:
+        if not self._region_ready or self.updating_suspended:
+            return
+        if self.submobjects:
+            first = self.submobjects[0]
+            if (
+                isinstance(first, FilledRegion)
+                and first._binding.derive is not self._binding.derive
+                and all(
+                    isinstance(rect, FilledRegion)
+                    and rect._binding.derive is first._binding.derive
+                    for rect in self.submobjects
+                )
+            ):
+                # Transform adopts leaves separately; restore their shared derivation.
+                self._binding = first._binding
+                self._region_style = self._binding.rectangle_style
+                self._blend = self._binding.rectangle_blend
+                self._binding_seen = -1
+                for i, member in enumerate(self.submobjects):
+                    rect = cast(FilledRegion, member)
+                    rect._binding, rect._part = self._binding, str(i)
+                    rect._binding_seen = -1
+        binding = self._binding
+        binding.ensure()
+        if self._binding_seen == binding.version:
+            return
+        self._binding_seen = binding.version
+        count = len(binding.colors)
+        for removed in self.submobjects[count:]:
+            if removed in binding.system.artists:
+                binding.system.remove(removed)
+        del self.submobjects[count:]
+        for i, color in enumerate(binding.colors):
+            if i == len(self.submobjects):
+                style = {"color": color, "fill_color": color, **self._region_style}
+                if self._blend:
+                    style["stroke_color"] = style["fill_color"]
+                rect = FilledRegion(binding, str(i), **style)
+                self.submobjects.append(rect)
+            else:
+                rect = cast(FilledRegion, self.submobjects[i])
+                rect._region_styling = True
+                try:
+                    if (
+                        "fill_color" not in self._region_style
+                        and not rect._fill_color_set
+                    ):
+                        rect.set_fill(color)
+                    if self._blend and not rect._stroke_color_set:
+                        rect.set_stroke(rect.get_fill_color())
+                finally:
+                    rect._region_styling = False
+
+
+def _riemann(
+    system: mp.CartesianAxes,
+    graph: _CurvePlot,
+    x_range: Sequence[object] | None,
+    dx: object,
+    input_sample_type: str | Callable[[float, float], float],
+    stroke_width: float,
+    stroke_color: object,
+    fill_opacity: float,
+    color: object,
+    show_signed_area: bool,
+    bounded_graph: _CurvePlot | float | None,
+    blend: bool,
+    width_scale_factor: float,
+    **style: object,
+) -> HelperGroup:
+    _graph(system, graph)
+    if not callable(input_sample_type) and input_sample_type not in (
+        "left",
+        "right",
+        "center",
+    ):
+        raise ValueError("Invalid input sample type")
+    graphs = [graph]
+    if isinstance(bounded_graph, _CurvePlot):
+        _graph(system, bounded_graph)
+        graphs.append(bounded_graph)
+    elif bounded_graph is not None:
+        _number(bounded_graph, "bounded_graph")
+    palette = color if isinstance(color, (list, tuple)) else [color]
+
+    def derive(base: _Binding) -> None:
+        binding = cast(_RegionBinding, base)
+        step = binding.number("dx")
+        if step <= 0:
+            raise ValueError("dx must be finite and positive")
+        a, b = _region_range(binding, graph, bounded_graph, x_range is not None)
+        count = max(0, int(np.ceil((b - a) / step - 1e-9)))
+        xs = a + np.arange(count) * step
+        if callable(input_sample_type):
+            samples = np.array(
+                [
+                    _number(
+                        input_sample_type(float(x), float(x + step)),
+                        "input_sample_type",
+                    )
+                    for x in xs
+                ]
+            )
+        else:
+            fraction = {"left": 0, "right": 1, "center": 0.5}[input_sample_type]
+            samples = xs + fraction * step
+        tops = graph.source.at(samples)
+        local_top = binding.local(tops)
+        if graph._own.nodes:
+            local_top = graph._own.forward(
+                np.column_stack((local_top, np.zeros(count)))
+            )[:, :2]
+        if isinstance(bounded_graph, _CurvePlot):
+            bottoms = binding.local(bounded_graph.source.at(samples))
+            if bounded_graph._own.nodes:
+                bottoms = bounded_graph._own.forward(
+                    np.column_stack((bottoms, np.zeros(count)))
+                )[:, :2]
+        else:
+            baseline = (
+                system.x_axis._cross_value() if bounded_graph is None else bounded_graph
+            )
+            bottoms = binding.local(
+                np.column_stack((samples, np.full(count, baseline)))
+            )
+        ends = binding.local(
+            np.column_stack(
+                (
+                    np.r_[xs, xs + width_scale_factor * step],
+                    np.full(2 * count, system.x_axis._cross_value()),
+                )
+            )
+        )[:, 0]
+        binding.boundaries = {}
+        binding.colors = color_gradient(cast(list[ParsableManimColor], palette), count)
+        for i in range(count):
+            x = np.sort(ends[[i, i + count]])
+            top, bottom = local_top[i, 1], bottoms[i, 1]
+            if np.isfinite([*x, top, bottom]).all():
+                binding.boundaries[str(i)] = [
+                    (
+                        np.column_stack((x, [top, top])),
+                        np.column_stack((x, [bottom, bottom])),
+                    )
+                ]
+            if top < bottom and show_signed_area:
+                binding.colors[i] = invert_color(binding.colors[i])
+
+    binding = _RegionBinding(
+        system, derive, {**_range_inputs(x_range), "dx": dx}, graphs
+    )
+    style = {
+        "stroke_width": stroke_width,
+        "stroke_color": stroke_color,
+        "fill_opacity": fill_opacity,
+        **style,
+    }
+    return _RiemannGroup(binding, blend, style)
 
 
 class _HelperShape(HelperLine):

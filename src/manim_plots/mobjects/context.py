@@ -48,6 +48,7 @@ from manim.animation.transform import ShrinkToCenter, _MethodAnimation
 from manim.camera.camera import Camera
 from manim.mobject.mobject import _AnimationBuilder
 from manim.renderer.cairo_renderer import CairoRenderer
+from manim.utils.color import color_gradient, invert_color
 from manim.utils.hashing import (
     _CustomEncoder,
     _Memoizer,
@@ -96,6 +97,11 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     CoordinateSystem.get_secant_slope_group,
     CoordinateSystem.plot_derivative_graph,
     CoordinateSystem.plot_antiderivative_graph,
+    CoordinateSystem.get_area,
+    CoordinateSystem.get_riemann_rectangles,
+    color_gradient,
+    invert_color,
+    VMobject.set_color,
     DashedLine.__init__,
     DashedLine._calculate_num_dashes,
     DashedVMobject.__init__,
@@ -196,6 +202,21 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "CoordinateSystem.get_area": (
+            "4b24b4037cd9abe31a566691d25d1844e1e41f01a04da9d2b9f9ab17531af970"
+        ),
+        "CoordinateSystem.get_riemann_rectangles": (
+            "0c7e7662dcc6a231c7f571c5e631324a2ad8eece108342758c48950ec05cce05"
+        ),
+        "color_gradient": (
+            "c6b28da6e0eda69ca481272eabe9917bf50143c9bdcc4d549e28d31bab4b2fe3"
+        ),
+        "invert_color": (
+            "7ac36a3cd0299d60d53fb2030eab37ba79b38478f1fc67dd4d433b722fe72a9d"
+        ),
+        "VMobject.set_color": (
+            "2acb9bb456271e1b4451beee65b5c1ae692e775ff8538646fe3f11f6c6b7000b"
+        ),
         "DashedVMobject.__init__": (
             "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
         ),
@@ -600,6 +621,21 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "CoordinateSystem.get_area": (
+            "4b24b4037cd9abe31a566691d25d1844e1e41f01a04da9d2b9f9ab17531af970"
+        ),
+        "CoordinateSystem.get_riemann_rectangles": (
+            "0c7e7662dcc6a231c7f571c5e631324a2ad8eece108342758c48950ec05cce05"
+        ),
+        "color_gradient": (
+            "c6b28da6e0eda69ca481272eabe9917bf50143c9bdcc4d549e28d31bab4b2fe3"
+        ),
+        "invert_color": (
+            "7ac36a3cd0299d60d53fb2030eab37ba79b38478f1fc67dd4d433b722fe72a9d"
+        ),
+        "VMobject.set_color": (
+            "2acb9bb456271e1b4451beee65b5c1ae692e775ff8538646fe3f11f6c6b7000b"
+        ),
         "DashedVMobject.__init__": (
             "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
         ),

@@ -9,6 +9,8 @@ from typing import Any, Literal, NoReturn, Self, Unpack, cast, overload
 
 import numpy as np
 from manim import (
+    BLACK,
+    BLUE,
     BLUE_D,
     DEFAULT_DOT_RADIUS,
     GREEN,
@@ -81,16 +83,20 @@ from manim_plots.mobjects.context import (
     playback_context,
 )
 from manim_plots.mobjects.helpers import (
+    FilledRegion,
     HelperGroup,
     HelperLine,
+    _area,
     _DerivedPlot,
     _drop,
     _DropOptions,
+    _fill_between,
     _graph,
     _HelperOptions,
     _number,
     _parameter,
     _reference,
+    _riemann,
     _secant,
     _SlopeOptions,
     _t_label,
@@ -1814,6 +1820,118 @@ class CartesianAxes(VGroup):
         )
         self.add(result)
         return result
+
+    def get_area(
+        self,
+        graph: _CurvePlot,
+        x_range: Sequence[object] | None = None,
+        color: ParsableManimColor | Iterable[ParsableManimColor] = (BLUE, GREEN),
+        opacity: float = 0.3,
+        bounded_graph: _CurvePlot | float | None = None,
+        **kwargs: object,
+    ) -> FilledRegion:
+        """Fill between a graph and the drawn x axis or another boundary.
+
+        Parameters
+        ----------
+        graph, x_range, color, opacity, bounded_graph, **kwargs
+            Manim's inputs and VMobject style, plus artist clipping options.
+            Range ends accept trackers or zero-argument callables. The default
+            range follows the graph, intersected with a bounded graph's range.
+
+        Returns
+        -------
+        FilledRegion
+            Unlike Manim's Polygon, stays bound, clips closed fills and follows
+            the sampled, smoothed curve. A numeric bounded_graph is constant;
+            otherwise the baseline is the x axis wherever it is drawn.
+        """
+        return _area(self, graph, x_range, color, opacity, bounded_graph, **kwargs)
+
+    def fill_between(
+        self,
+        x: ArrayLike,
+        y1: object,
+        y2: object = 0,
+        *,
+        where: ArrayLike | None = None,
+        interpolate: bool = False,
+        **style: object,
+    ) -> FilledRegion:
+        """Fill between two polylines with matplotlib's sampling semantics.
+
+        Parameters
+        ----------
+        x, y1, y2
+            One-dimensional x samples and scalar or matching y arrays. Graphs
+            from this system and callables may also supply either boundary.
+        where, interpolate
+            Boolean sample mask; optionally extend kept stretches to crossings.
+        **style
+            VMobject style and artist clipping. Defaults are the next cycle
+            colour, fill_opacity=0.3 and stroke_width=0.
+
+        Returns
+        -------
+        FilledRegion
+            Bound, clipped closed pieces. Manim has no fill_between verb.
+        """
+        return _fill_between(self, x, y1, y2, where, interpolate, **style)
+
+    def get_riemann_rectangles(
+        self,
+        graph: _CurvePlot,
+        x_range: Sequence[object] | None = None,
+        dx: object = 0.1,
+        input_sample_type: str | Callable[[float, float], float] = "left",
+        stroke_width: float = 1,
+        stroke_color: ParsableManimColor = BLACK,
+        fill_opacity: float = 1,
+        color: ParsableManimColor | Iterable[ParsableManimColor] = (BLUE, GREEN),
+        show_signed_area: bool = True,
+        bounded_graph: _CurvePlot | float | None = None,
+        blend: bool = False,
+        width_scale_factor: float = 1.001,
+        **style: object,
+    ) -> HelperGroup:
+        """Return bound Riemann rectangles ordered and paired by index.
+
+        Parameters
+        ----------
+        graph, x_range, dx, input_sample_type
+            Manim's graph, interval, positive width and left/right/center sample.
+            Width and range ends also accept trackers and callables.
+            A sample callable f(left, right) supplies a custom input per bin.
+        stroke_width, stroke_color, fill_opacity, color
+            Manim's rectangle style and gradient defaults.
+        show_signed_area, bounded_graph, blend, width_scale_factor
+            Invert negative fills, choose the base, blend borders and scale width.
+        **style
+            Additional VMobject style and artist clipping options.
+
+        Returns
+        -------
+        HelperGroup
+            Individually styleable FilledRegion parts. Unlike Manim, counts
+            tolerate endpoint roundoff, both graphs use the selected sample,
+            and quadrilaterals follow the system's map, frame and inputs.
+        """
+        return _riemann(
+            self,
+            graph,
+            x_range,
+            dx,
+            input_sample_type,
+            stroke_width,
+            stroke_color,
+            fill_opacity,
+            color,
+            show_signed_area,
+            bounded_graph,
+            blend,
+            width_scale_factor,
+            **style,
+        )
 
     def legend(
         self,
