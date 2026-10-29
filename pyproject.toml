@@ -33,6 +33,10 @@ dev = [
     "pytest>=9.1",
     "ruff>=0.16",
 ]
+docs = [
+    "numpydoc>=1.9",
+    "sphinx>=8.2",
+]
 
 [build-system]
 requires = ["uv_build>=0.10.4,<0.11.0"]
@@ -97,10 +101,11 @@ disable_error_code = ["var-annotated"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers --strict-config -m 'not render and not benchmark'"
+addopts = "--strict-markers --strict-config -m 'not render and not benchmark and not release'"
 # A library warning is a test failure (ADR 0003 §3); a test that expects one says so.
 filterwarnings = ["error::manim_plots.ManimPlotsWarning"]
 markers = [
     "render: needs a full Manim render; excluded by default, run with `pytest -m render`",
     "benchmark: measures frame cost (F-1001); excluded by default, run with `pytest -m benchmark`",
+    "release: builds and installs the package; excluded by default, run by `tools/check.py --release`",
 ]

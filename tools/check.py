@@ -5,6 +5,7 @@ no hosted CI; this script is the gate a task branch passes before it merges into
 
     uv run python tools/check.py           # the merge gate, render tests included
     uv run python tools/check.py --fast    # a quick local run without them
+    uv run python tools/check.py --release # also build, install and import the package
 
 The render-marked tests, the visual baselines among them, run in every cell: they are
 the only check of the frame staying invisible (F-914) and of a bound artist not
@@ -57,6 +58,19 @@ def main() -> int:
                     (*env, "python", "-m", tool, *args),
                 )
             )
+
+    # The user documentation builds without a warning (row DO-1 of task 14).
+    checks.append(
+        (
+            "docs",
+            (
+                "uv", "run", "--group", "docs", "python", "-m", "sphinx", "-W",
+                "--keep-going", "-q", "-b", "html", "docs/site", "docs/site/_build/html",
+            ),
+        )
+    )
+    if "--release" in sys.argv[1:]:
+        checks.append(("release", ("uv", "run", "python", "-m", "pytest", "-m", "release")))
 
     failed = [label for label, cmd in checks if not run(label, *cmd)]
     print("\n" + ("FAILED: " + ", ".join(failed) if failed else "All checks passed."))
