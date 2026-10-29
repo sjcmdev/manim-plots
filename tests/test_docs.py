@@ -102,9 +102,7 @@ def test_do3_each_difference_is_stated_where_users_meet_it(name):
 
 # --- DO-4 ----------------------------------------------------------------------------
 
-BLOCK = re.compile(
-    r"^\.\. code-block:: python\n((?:\n|[ \t]+.*\n)+)", re.MULTILINE
-)
+BLOCK = re.compile(r"^\.\. code-block:: python\n((?:\n|[ \t]+.*\n)+)", re.MULTILINE)
 
 
 def blocks() -> list[tuple[str, int, str]]:

@@ -64,13 +64,27 @@ def main() -> int:
         (
             "docs",
             (
-                "uv", "run", "--group", "docs", "python", "-m", "sphinx", "-W",
-                "--keep-going", "-q", "-b", "html", "docs/site", "docs/site/_build/html",
+                "uv",
+                "run",
+                "--group",
+                "docs",
+                "python",
+                "-m",
+                "sphinx",
+                "-W",
+                "--keep-going",
+                "-q",
+                "-b",
+                "html",
+                "docs/site",
+                "docs/site/_build/html",
             ),
         )
     )
     if "--release" in sys.argv[1:]:
-        checks.append(("release", ("uv", "run", "python", "-m", "pytest", "-m", "release")))
+        checks.append(
+            ("release", ("uv", "run", "python", "-m", "pytest", "-m", "release"))
+        )
 
     failed = [label for label, cmd in checks if not run(label, *cmd)]
     print("\n" + ("FAILED: " + ", ".join(failed) if failed else "All checks passed."))
