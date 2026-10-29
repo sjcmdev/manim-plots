@@ -304,7 +304,19 @@ class Leaf(VMobject):
         self._dirty = True
 
     def refresh(self) -> Self:
-        """Reattach and regenerate this leaf from its current data."""
+        """Reattach and regenerate this leaf from its current data.
+
+        A bare in-place edit of points lasts until the next pipeline rebuild.
+        Call refresh() to replace that edit with derived points immediately.
+        A leaf detached by a remover, or retaining a plain Transform target,
+        returns to following its source and coordinate system. During an
+        animation, the refresh is deferred until the animation releases the leaf.
+
+        Returns
+        -------
+        Self
+            This leaf, ready to rebuild from its current data.
+        """
         self._dirty = True
         self._event(lc.Refresh())
         return self

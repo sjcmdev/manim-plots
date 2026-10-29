@@ -248,6 +248,14 @@ class MultipleLocator(_LocatorBase):
     ----------
     step
         Finite positive spacing, independent of the range and label budget.
+
+    Notes
+    -----
+    Every tick is computed as an integer multiple k * step, without accumulated
+    floating-point addition. Manim anchors at x_min when a range excludes zero:
+    for (0.001, 6, 1), Manim places ticks at 0.001, 1.001, ...; this locator places
+    them at 1, 2, ..., 6. Keys are the integer indices and stay stable through an
+    animated range. Axis decoration may omit the endpoint tick under an arrow tip.
     """
 
     _rounded_keys = False
