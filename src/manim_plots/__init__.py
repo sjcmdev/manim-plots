@@ -5,9 +5,31 @@ import os
 from collections.abc import Mapping
 from importlib.metadata import version
 
+from manim_plots.core import ManimPlotsWarning
+from manim_plots.core.nodes import CompiledMap
+from manim_plots.core.payload import Payload
+from manim_plots.core.scales import (
+    FunctionScale,
+    LinearScale,
+    LogScale,
+    Scale,
+    SymLogScale,
+)
+from manim_plots.mobjects.context import check_pins
+
 __version__ = version("manim-plots")
 
-__all__ = ["__version__"]
+__all__ = [
+    "CompiledMap",
+    "FunctionScale",
+    "LinearScale",
+    "LogScale",
+    "ManimPlotsWarning",
+    "Payload",
+    "Scale",
+    "SymLogScale",
+    "__version__",
+]
 
 
 def _configure_logging(log: logging.Logger, environ: Mapping[str, str]) -> None:
@@ -40,3 +62,5 @@ def _configure_logging(log: logging.Logger, environ: Mapping[str, str]) -> None:
 _log = logging.getLogger(__name__)
 _log.addHandler(logging.NullHandler())
 _configure_logging(_log, os.environ)
+
+check_pins()
