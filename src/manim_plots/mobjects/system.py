@@ -19,6 +19,7 @@ from manim import (
 )
 from manim import Axes as NativeAxes
 from manim.constants import RendererType
+from manim.typing import Point3DLike, Vector3DLike
 from manim.utils.color import ParsableManimColor
 from numpy.typing import ArrayLike
 
@@ -28,6 +29,7 @@ from manim_plots.core.sources import Box
 from manim_plots.mobjects.artists import (
     FunctionPlot,
     LinePlot,
+    Marker,
     ParametricPlot,
     ScatterPlot,
     _CurvePlot,
@@ -37,11 +39,13 @@ from manim_plots.mobjects.axis import Axis, _range
 from manim_plots.mobjects.context import playback_context
 from manim_plots.mobjects.leaves import (
     FrameLeaf,
+    _ArtistOptions,
     _ParametricOptions,
     _reported_updaters,
     _synchronise,
     _VMStyle,
 )
+from manim_plots.mobjects.legend import Legend, _handle
 
 
 class CartesianAxes(VGroup):
@@ -56,6 +60,8 @@ class CartesianAxes(VGroup):
     tips
         Whether to draw the native filled triangle tips.
     """
+
+    _color_index: int = 0
 
     def __init__(
         self,
@@ -307,7 +313,10 @@ class CartesianAxes(VGroup):
 
     @overload
     def plot(
-        self, xs: ArrayLike, ys: ArrayLike | None = None, **kwargs: Unpack[_VMStyle]
+        self,
+        xs: ArrayLike,
+        ys: ArrayLike | None = None,
+        **kwargs: Unpack[_ArtistOptions],
     ) -> LinePlot: ...
 
     def plot(
@@ -353,11 +362,14 @@ class CartesianAxes(VGroup):
         return self.line(
             cast(ArrayLike, function),
             cast(ArrayLike | None, ys),
-            **cast(_VMStyle, kwargs),
+            **cast(_ArtistOptions, kwargs),
         )
 
     def line(
-        self, xs: ArrayLike, ys: ArrayLike | None = None, **kwargs: Unpack[_VMStyle]
+        self,
+        xs: ArrayLike,
+        ys: ArrayLike | None = None,
+        **kwargs: Unpack[_ArtistOptions],
     ) -> LinePlot:
         """Create and register a straight array line.
 
@@ -377,7 +389,9 @@ class CartesianAxes(VGroup):
         xs: ArrayLike,
         ys: ArrayLike | None = None,
         *,
-        marker: Mobject | None = None,
+        marker: Mobject | Marker | None = None,
+        label: str | None = None,
+        clip: bool | float = True,
         **kwargs: Unpack[_VMStyle],
     ) -> ScatterPlot:
         """Create and register independent markers in input order.
@@ -387,11 +401,17 @@ class CartesianAxes(VGroup):
         xs, ys
             Separate coordinates, or pairs in xs with ys omitted.
         marker
-            Native marker template, defaulting to Dot().
+            Marker enum or native template, defaulting to Dot().
+        label
+            Legend entry text, or None to omit this artist.
+        clip
+            True, False, or a clipping margin in scene units.
         **kwargs
             Native VMobject styles for the markers.
         """
-        artist = ScatterPlot(xs, self, ys, marker=marker, **kwargs)
+        artist = ScatterPlot(
+            xs, self, ys, marker=marker, label=label, clip=clip, **kwargs
+        )
         self.add(artist)
         return artist
 
@@ -425,7 +445,7 @@ class CartesianAxes(VGroup):
         add_vertex_dots: bool = True,
         vertex_dot_radius: float = DEFAULT_DOT_RADIUS,
         vertex_dot_style: _VMStyle | None = None,
-        **kwargs: Unpack[_VMStyle],
+        **kwargs: Unpack[_ArtistOptions],
     ) -> VDict:
         """Return Manim's named line and optional vertex-dot groups.
 
@@ -449,7 +469,17 @@ class CartesianAxes(VGroup):
         if add_vertex_dots:
             marker = Dot(radius=vertex_dot_radius, **(vertex_dot_style or {}))
             result.add(
-                [("vertex_dots", self.scatter(x_values, y_values, marker=marker))]
+                [
+                    (
+                        "vertex_dots",
+                        self.scatter(
+                            x_values,
+                            y_values,
+                            marker=marker,
+                            clip=kwargs.get("clip", True),
+                        ),
+                    )
+                ]
             )
         return result
 
@@ -493,6 +523,104 @@ class CartesianAxes(VGroup):
         return self.c2p(*self.i2gc(x, graph))
 
     input_to_graph_point = i2gp
+
+    def legend(
+        self,
+        location: str = "upper right",
+        *,
+        font_size: float = 24,
+        buff: float = 0.25,
+    ) -> Legend:
+        """Create a bound legend for labelled artists in registration order.
+
+        Parameters
+        ----------
+        location
+            One of upper right, upper left, lower left or lower right.
+        font_size, buff
+            Native text size and entry/corner spacing in scene units.
+
+        Returns
+        -------
+        Legend
+            The newly created legend, attached to this system's family.
+        """
+        locations = {
+            "upper right": (1, 1),
+            "upper left": (-1, 1),
+            "lower left": (-1, -1),
+            "lower right": (1, -1),
+        }
+        if location not in locations:
+            raise ValueError(
+                "location must be upper right, upper left, lower left or lower right"
+            )
+        artists = [a for a in self._artists if a.get_label() is not None]
+        if not artists:
+            raise ValueError("legend requires an artist with a label")
+        legend = Legend(*artists, font_size=font_size, buff=buff)
+        corner = np.array([*locations[location], 0.0], dtype=float)
+        local = np.where(corner[:2] > 0, self.bounds.upper, self.bounds.lower)
+        legend.shift(
+            self.frame.mapping.forward(local[None])[0]
+            - corner * buff
+            - legend.get_corner(corner)
+        )
+        previous = self.get_legend()
+        if previous is not None:
+            self.submobjects.remove(previous)
+        self.submobjects.append(legend)
+        self._legend = legend
+        return legend
+
+    def get_legend(self) -> Legend | None:
+        """Return the last legend created by this system, or None."""
+        return getattr(self, "_legend", None)
+
+    def get_legend_handles_labels(self) -> tuple[list[Mobject], list[str]]:
+        """Return independent handles and labels in registration order."""
+        artists = [a for a in self._artists if a.get_label() is not None]
+        return (
+            [_handle(a) for a in artists],
+            [cast(str, a.get_label()) for a in artists],
+        )
+
+    def scale(
+        self,
+        scale_factor: float,
+        scale_stroke: bool = False,
+        *,
+        about_point: Point3DLike | None = None,
+        about_edge: Vector3DLike | None = None,
+    ) -> Self:
+        """Scale the frame and optionally all registered artists' strokes.
+
+        Parameters
+        ----------
+        scale_factor, scale_stroke, about_point, about_edge
+            Native VMobject scaling options.
+        """
+        super().scale(
+            scale_factor,
+            scale_stroke=scale_stroke,
+            about_point=about_point,
+            about_edge=about_edge,
+        )
+        if scale_stroke:
+            for artist in self._artists:
+                for leaf in artist.get_family():
+                    if isinstance(leaf, VMobject):
+                        leaf.set_stroke(
+                            width=abs(scale_factor) * leaf.get_stroke_width(),
+                            family=False,
+                        )
+                        leaf.set_stroke(
+                            width=abs(scale_factor)
+                            * leaf.get_stroke_width(background=True),
+                            background=True,
+                            family=False,
+                        )
+        return self
 
     @property
     def artists(self) -> tuple[_CurvePlot | ScatterPlot, ...]:

@@ -366,14 +366,33 @@ def _arc_parameters(
     target = positions - cumulative[indices]
     lo, hi = np.zeros(len(positions)), np.ones(len(positions))
     selected = curves[indices]
-    for _ in range(48):
-        mid = (lo + hi) / 2
-        below = _lengths(selected, mid) < target
-        lo = np.where(below, mid, lo)
-        hi = np.where(below, hi, mid)
-    result = (lo + hi) / 2
+    sizes = lengths[indices]
+    endpoints = (target <= 0) | (target >= sizes - 1e-12 * np.maximum(sizes, 1.0))
+    result = np.clip(np.divide(target, sizes, out=lo.copy(), where=sizes > 0), 0, 1)
+    delta = 3 * np.diff(selected, axis=1)
+    for _ in range(40):
+        error = _lengths(selected, result) - target
+        done = endpoints | (np.abs(error) <= 1e-12 * np.maximum(sizes, 1.0))
+        if done.all():
+            break
+        lo = np.where(error < 0, result, lo)
+        hi = np.where(error >= 0, result, hi)
+        t = result[:, None]
+        speed = np.linalg.norm(
+            (1 - t) ** 2 * delta[:, 0]
+            + 2 * (1 - t) * t * delta[:, 1]
+            + t**2 * delta[:, 2],
+            axis=1,
+        )
+        candidate = result - np.divide(
+            error, speed, out=np.zeros_like(error), where=speed > 0
+        )
+        candidate = np.where(
+            (candidate > lo) & (candidate < hi), candidate, (lo + hi) / 2
+        )
+        result = np.where(done, result, candidate)
     result[target <= 0] = 0
-    result[target >= lengths[indices]] = 1
+    result[target >= sizes - 1e-12 * np.maximum(sizes, 1.0)] = 1
     return indices, result
 
 
@@ -415,7 +434,14 @@ def dash(
     parts: list[FloatArray] = []
     dim = payload.coords.shape[1]
     with np.errstate(all="ignore"):
-        lengths = _lengths(curves)
+        chord = np.linalg.norm(curves[:, 3] - curves[:, 0], axis=1)
+        polygon = np.linalg.norm(np.diff(curves, axis=1), axis=2).sum(axis=1)
+        # These bound the true arc length; dense paths need no quadrature.
+        lengths = (
+            (chord + polygon) / 2
+            if np.sum(polygon - chord) <= 1e-4
+            else _lengths(curves)
+        )
         period = on + off
         offset = phase % period
         for start, stop in payload.segments // 4:
@@ -434,16 +460,29 @@ def dash(
             # Quadrature roundoff must not turn an endpoint into another dash.
             keep = begins < total - 8 * np.finfo(np.float64).eps * total
             begins, ends = begins[keep], ends[keep]
+            if not len(begins):
+                continue
             indices, times = _arc_parameters(
                 segment, sizes, np.column_stack((begins, ends)).ravel()
             )
-            for (first, last), (a, b) in zip(
-                indices.reshape(-1, 2), times.reshape(-1, 2), strict=True
-            ):
-                selected = segment[first : last + 1].copy()
-                low, high = np.zeros(len(selected)), np.ones(len(selected))
-                low[0], high[-1] = a, b
-                parts.append(_restrict(selected, low, high).reshape(-1, dim))
+            first, last = indices[::2], indices[1::2]
+            counts = last - first + 1
+            dash_ids = np.repeat(np.arange(len(first)), counts)
+            offsets = np.r_[0, np.cumsum(counts)]
+            curve_ids = (
+                np.arange(offsets[-1])
+                - np.repeat(offsets[:-1], counts)
+                + first[dash_ids]
+            )
+            low, high = np.zeros(len(curve_ids)), np.ones(len(curve_ids))
+            low[offsets[:-1]], high[offsets[1:] - 1] = times[::2], times[1::2]
+            divided_curves = segment[curve_ids].copy()
+            boundary = (low > 0) | (high < 1)
+            divided_curves[boundary] = _restrict(
+                divided_curves[boundary], low[boundary], high[boundary]
+            )
+            divided = divided_curves.reshape(-1, dim)
+            parts.extend(np.split(divided, offsets[1:-1] * 4))
     return _assemble(parts, dim)
 
 
@@ -477,4 +516,69 @@ def densify(payload: Payload, bounds: Bounds, *, pieces: int) -> Payload:
         divided = _restrict(np.repeat(curves, pieces, axis=0), lo, hi)
     return Payload(
         "path", divided.reshape(-1, payload.coords.shape[1]), payload.segments * pieces
+    )
+
+
+def resample_pair(payload: Payload, target: Payload) -> tuple[Payload, Payload]:
+    """Subdivide two paths at the union of their anchors' arc fractions.
+
+    Parameters
+    ----------
+    payload
+        Source cubic geometry, with nondegenerate continuous pieces.
+    target
+        Second cubic path with the same number of continuous pieces.
+
+    Returns
+    -------
+    tuple of Payload
+        Both paths with matching lattices, preserving their original geometry.
+
+    Raises
+    ------
+    ValueError
+        If piece counts differ or a curve is degenerate.
+    """
+    source_curves, target_curves = _curves(payload), _curves(target)
+    if len(payload.segments) != len(target.segments) or not len(source_curves):
+        raise ValueError("Morph paths must have the same nonzero number of pieces")
+    source_parts, target_parts = [], []
+    for (a, b), (c, d) in zip(payload.segments // 4, target.segments // 4, strict=True):
+        curves, lattice = source_curves[a:b], target_curves[c:d]
+        lengths, target_lengths = _lengths(curves), _lengths(lattice)
+        if np.any(lengths <= 1e-12) or np.any(target_lengths <= 1e-12):
+            raise ValueError("Morph cannot resample degenerate or repeated points")
+        cumulative = np.r_[0.0, np.cumsum(lengths)]
+        target_cumulative = np.r_[0.0, np.cumsum(target_lengths)]
+        # Merge quadrature roundoff at shared anchors without tiny extra curves.
+        fractions = np.unique(
+            np.round(
+                np.r_[
+                    cumulative / cumulative[-1],
+                    target_cumulative / target_cumulative[-1],
+                ],
+                9,
+            )
+        ).astype(np.float64)
+        source_parts.append(_subdivide_at_fractions(curves, lengths, fractions))
+        target_parts.append(_subdivide_at_fractions(lattice, target_lengths, fractions))
+    return (
+        _assemble(source_parts, payload.coords.shape[1]),
+        _assemble(target_parts, target.coords.shape[1]),
+    )
+
+
+def _subdivide_at_fractions(
+    curves: FloatArray, lengths: FloatArray, fractions: FloatArray
+) -> FloatArray:
+    cumulative = np.r_[0.0, np.cumsum(lengths)]
+    positions = fractions * cumulative[-1]
+    # Keep original joins exact despite rounding the shared fractions.
+    positions[np.searchsorted(fractions, np.round(cumulative / cumulative[-1], 9))] = (
+        cumulative
+    )
+    indices, parameters = _arc_parameters(curves, lengths, positions)
+    upper = np.where(indices[1:] == indices[:-1], parameters[1:], 1.0)
+    return _restrict(curves[indices[:-1]], parameters[:-1], upper).reshape(
+        -1, curves.shape[2]
     )

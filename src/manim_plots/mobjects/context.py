@@ -120,10 +120,22 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VGroup.add,
     Mobject.remove,
     Mobject.reduce_across_dimension,
+    VMobject.scale,
+    VMobject.split,
+    Animation.interpolate_mobject,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "VMobject.scale": (
+            "a49555af84f1592f2649dfc9bd89f8b91331b3193ff00162185d462b40a54a37"
+        ),
+        "VMobject.split": (
+            "ed5b27ee300e1e74e5ad8a3d30b6c0ac0e60cbba3604d275577272f6c1d04371"
+        ),
+        "Animation.interpolate_mobject": (
+            "6df42ab42e168d57a38584100dd57cc87b474fcee5a2531ca3d0c4465b28bb66"
+        ),
         "Mobject.reduce_across_dimension": (
             "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
         ),
@@ -360,6 +372,15 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "VMobject.scale": (
+            "a49555af84f1592f2649dfc9bd89f8b91331b3193ff00162185d462b40a54a37"
+        ),
+        "VMobject.split": (
+            "ed5b27ee300e1e74e5ad8a3d30b6c0ac0e60cbba3604d275577272f6c1d04371"
+        ),
+        "Animation.interpolate_mobject": (
+            "6df42ab42e168d57a38584100dd57cc87b474fcee5a2531ca3d0c4465b28bb66"
+        ),
         "Mobject.reduce_across_dimension": (
             "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
         ),

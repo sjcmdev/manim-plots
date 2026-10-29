@@ -53,6 +53,15 @@ EXPECTED = {
     "LinePlot",
     "ScatterPlot",
     "ParametricPlot",
+    # task 12
+    "Legend",
+    "LineStyle",
+    "Marker",
+    "COLOR_CYCLE",
+    "DrawAxes",
+    "TraceCurve",
+    "ShowPoints",
+    "Morph",
 }
 
 

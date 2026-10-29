@@ -102,6 +102,12 @@ ADDED_BY_TASK_09 = [
     "VMobject.pointwise_become_partial",
     "Mobject.reduce_across_dimension",
 ]
+# Stroke scaling, dash splitting and the library's animations (task 12).
+ADDED_BY_TASK_12 = [
+    "VMobject.scale",
+    "VMobject.split",
+    "Animation.interpolate_mobject",
+]
 
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -115,7 +121,7 @@ def names() -> list[str]:
 def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_task_09s():
     assert len(POC4_SYMBOLS) == 68
     assert sorted(names()) == sorted(
-        POC4_SYMBOLS + ADDED_BY_ADR_0003 + ADDED_BY_TASK_09
+        POC4_SYMBOLS + ADDED_BY_ADR_0003 + ADDED_BY_TASK_09 + ADDED_BY_TASK_12
     )
 
 
