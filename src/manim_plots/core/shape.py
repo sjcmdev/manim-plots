@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from functools import lru_cache
+from itertools import pairwise
 from numbers import Real
 
 import numpy as np
@@ -142,6 +143,96 @@ def corners(payload: Payload, bounds: Bounds) -> Payload:
         Cubic path with four points per curve and no validity mask.
     """
     return _from_anchors(payload, smoothing=False)
+
+
+def clip_region(
+    upper: FloatArray,
+    lower: FloatArray,
+    bounds: Bounds,
+    *,
+    clip_x: bool = True,
+    clip_y: bool = True,
+) -> Payload:
+    """Close paired boundary polylines, clipping without opening their fill.
+
+    Parameters
+    ----------
+    upper, lower
+        Boundary points with matching x coordinates, in traversal order.
+    bounds
+        Viewport in local coordinates.
+    clip_x, clip_y
+        Restrict x and clamp each boundary's y independently.
+
+    Returns
+    -------
+    Payload
+        Closed cubic paths, split at crossings and invisible stretches.
+        Unlike Manim's area polygon, clipping preserves the filled interior.
+    """
+    dim = upper.shape[1]
+    if len(upper) < 2:
+        return Payload.empty("path", dim)
+    parameter = np.arange(len(upper), dtype=float)
+    events = [parameter]
+    differences = [upper[:, 1] - lower[:, 1]]
+    if clip_x:
+        differences.extend(
+            upper[:, 0] - edge for edge in (bounds.lower[0], bounds.upper[0])
+        )
+    if clip_y:
+        differences.extend(
+            boundary[:, 1] - edge
+            for boundary in (upper, lower)
+            for edge in (bounds.lower[1], bounds.upper[1])
+        )
+    for values in differences:
+        crossing = ((values[:-1] < 0) & (values[1:] > 0)) | (
+            (values[:-1] > 0) & (values[1:] < 0)
+        )
+        a, b = values[:-1][crossing], values[1:][crossing]
+        scale = np.maximum(np.abs(a), np.abs(b))
+        a, b = a / scale, b / scale
+        events.append(parameter[:-1][crossing] + a / (a - b))
+    grid = np.unique(np.concatenate(events))
+    a, b = (
+        np.column_stack([np.interp(grid, parameter, p[:, i]) for i in range(dim)])
+        for p in (upper, lower)
+    )
+    middle_x = a[:-1, 0] / 2 + a[1:, 0] / 2
+    keep = (
+        (middle_x >= bounds.lower[0]) & (middle_x <= bounds.upper[0])
+        if clip_x
+        else np.ones(len(grid) - 1, dtype=bool)
+    )
+    if clip_x:
+        a[:, 0] = np.clip(a[:, 0], bounds.lower[0], bounds.upper[0])
+        b[:, 0] = a[:, 0]
+    if clip_y:
+        middle_a = a[:-1, 1] / 2 + a[1:, 1] / 2
+        middle_b = b[:-1, 1] / 2 + b[1:, 1] / 2
+        keep &= (np.maximum(middle_a, middle_b) >= bounds.lower[1]) & (
+            np.minimum(middle_a, middle_b) <= bounds.upper[1]
+        )
+        a[:, 1] = np.clip(a[:, 1], bounds.lower[1], bounds.upper[1])
+        b[:, 1] = np.clip(b[:, 1], bounds.lower[1], bounds.upper[1])
+    # Each lobe has consistent winding; opposite lobes cannot cancel its fill.
+    delta = a[:, 1] - b[:, 1]
+    signs = np.sign(delta[:-1] + delta[1:])
+    cuts = np.r_[
+        0,
+        np.flatnonzero((signs[1:] != signs[:-1]) | (keep[1:] != keep[:-1])) + 1,
+        len(grid) - 1,
+    ]
+    parts = []
+    for start, stop in pairwise(cuts):
+        if not keep[start] or (signs[start] == 0 and np.any(signs[keep])):
+            continue
+        top, bottom = a[start : stop + 1], b[start : stop + 1]
+        if signs[start] < 0:
+            top, bottom = bottom, top
+        parts.append(np.concatenate((top, bottom[::-1], top[:1])))
+    return corners(_assemble(parts, dim), bounds)
 
 
 def smooth(payload: Payload, bounds: Bounds) -> Payload:

@@ -285,8 +285,9 @@ Manim's drop lines and calculus helpers, bound: `get_vertical_line`,
 
 `fill_between`, `get_area`, `get_riemann_rectangles`; clipping a filled region.
 
-- [ ] Acceptance table
-- [ ] Implementation, exact-area tests, visual pairs, gate
+- [x] Acceptance table — `docs/acceptance/17-helpers-regions.md`
+- [x] Implementation, exact-area tests, visual pairs, gate — a frame with a tracker-bound
+      area and Riemann sum costs 10.4 ms, for task 23's performance pass
 
 ### task/18-errorbar
 
