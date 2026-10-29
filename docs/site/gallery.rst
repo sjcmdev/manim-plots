@@ -138,7 +138,7 @@ Manim LogBase ranges
                x_range=(-2, 4, 1),
                axis_config={"scaling": LogBase(), "include_numbers": True},
            )
-           self.add(ax, ax.plot(lambda x: np.log10(x) / 2))
+           self.add(ax, ax.plot(np.sqrt))
 
 A number plane
 --------------
