@@ -150,6 +150,41 @@ def test_sh4_a_line_crossing_the_box_is_cut_at_its_sides():
     np.testing.assert_allclose(curves[0, -1], [3, 0], atol=1e-9 * SIZE)
 
 
+SECANT_BOX = Box(np.array([-4.5, -2.5]), np.array([4.5, 2.5]))
+# Straight cubics from the secant demo, whose cubic and quadratic terms are rounding
+# noise: the root solve found the crossing at t = 0.5, or not at all, and the line
+# flickered past the axes for a frame.
+STRAIGHT = [
+    [
+        [-4.524473674849413, -2.131309409174665],
+        [-2.284308747445003, -1.478541806982563],
+        [-0.04414382004059281, -0.8257742047904609],
+        [2.1960211073638174, -0.17300660259835876],
+    ],
+    [
+        [-4.6682007011651185, -2.109755851343566],
+        [-2.416311273696219, -1.4986597452373147],
+        [-0.16442184622731926, -0.8875636391310634],
+        [2.0874675812415804, -0.2764675330248121],
+    ],
+]
+
+
+@pytest.mark.parametrize("curve", STRAIGHT, ids=["crossing-at-half", "no-crossing"])
+def test_sh4_a_straight_cubic_is_cut_where_it_crosses(curve):
+    points = np.array(curve)
+    p0, p3 = points[0], points[-1]
+    crossing = p0 + (-4.5 - p0[0]) / (p3[0] - p0[0]) * (p3 - p0)
+    for given in (
+        Payload(kind="path", coords=points, segments=np.array([[0, 4]])),
+        corners(path(p0, p3), SECANT_BOX),
+    ):
+        (curves,) = curves_of(clip(given, SECANT_BOX))
+        assert curves.shape == (1, 4, 2)
+        np.testing.assert_allclose(curves[0, 0], crossing, atol=1e-9)
+        np.testing.assert_allclose(curves[0, -1], p3, atol=1e-12)
+
+
 def test_sh4_a_curve_inside_is_kept_whole():
     inside = smooth(path((-1, 0), (0, 1), (1, 0)), BOX)
     out = clip(inside, BOX)
