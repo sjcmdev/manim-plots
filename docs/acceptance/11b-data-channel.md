@@ -11,7 +11,8 @@ Modules: `src/manim_plots/mobjects/system.py`, `axis.py`, `artists.py`, `leaves.
 
 ```python
 class CartesianAxes:
-    def set_x_range(self, x_range) -> Self: ...  # task 09; under .animate, the data channel
+    # task 09; under .animate, the data channel
+    def set_x_range(self, x_range) -> Self: ...
     def set_y_range(self, y_range) -> Self: ...
 
 

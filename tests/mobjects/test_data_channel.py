@@ -36,7 +36,7 @@ from manim_plots.mobjects.axis import Axis
 
 from .helpers import assert_same_curve, probe
 
-LENGTHS = {"x_length": 6, "y_length": 4}
+LENGTHS: dict[str, Any] = {"x_length": 6, "y_length": 4}
 Y = (-2, 2, 1)
 TOL = 2 * CHORD_TOLERANCE
 FPS = 6  # helpers.RUN

@@ -65,11 +65,12 @@ def wave(x: float, y: float, z: float, t: float) -> tuple[float, float, float]:
 
 def to_target(mob: Mobject) -> MoveToTarget:
     mob.generate_target()
+    assert mob.target is not None
     mob.target.shift(UP)
     return MoveToTarget(mob)
 
 
-Make = Callable[[Mobject], Any]
+Make = Callable[..., Any]
 
 # name: (animation on one mobject, does the curve still follow its data afterwards)
 ON_CURVE: dict[str, tuple[Make, bool]] = {
@@ -149,7 +150,7 @@ def test_mx1_an_animation_on_the_curve_ends_as_on_its_twin(name):
         np.testing.assert_array_equal(curve.points, before)
 
 
-def leaves_of(ax) -> list[Mobject]:
+def leaves_of(ax) -> list[Any]:
     """Every family member of ``ax`` with points, the frame included, in family order:
     the order Manim's animations walk.
     """
