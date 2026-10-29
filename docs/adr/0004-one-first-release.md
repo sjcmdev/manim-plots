@@ -85,6 +85,25 @@ the reading is not gated.
 A mirrored axis and the axis of a twin system have no tip by default; `set_tips` gives
 them one *(default taken)*. This answers the open question of the stage 2 page.
 
+### 9. Customisation
+
+Added the same day, on the maintainer's word: wide customisation is the point of the
+library, which exists to do these things properly where Manim hard-codes them. Every task
+of §2 therefore holds to four rules, and its acceptance table has a row that shows each:
+
+- **Every part is addressable and styleable on its own.** A helper's parts have names, in
+  Manim's vocabulary where it has one (`dx_line`, `df_line`, `secant_line`, the
+  rectangles of a Riemann sum, a bar's caps), as F-603 does for an axis, and each takes
+  its own style keywords.
+- **Every default is a keyword.** Manim's defaults and a theme's are starting values,
+  never locks: a colour, a size, a direction, a placement or a count that the helper
+  chooses can also be passed.
+- **Presets only set defaults.** A theme (task 20) fills keywords a call did not pass,
+  and an explicit keyword or a later call always wins.
+- **A hook where a rule decides.** Where the library would apply a fixed rule — a
+  label's text or placement, a colour by value, a sample point — it also accepts a
+  callable.
+
 ## Consequences
 
 - The release moves back by tasks 15-23, and the public API it freezes has been

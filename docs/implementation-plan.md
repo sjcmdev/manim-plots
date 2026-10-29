@@ -223,8 +223,10 @@ The merge of `dev` into `main` and its tag moved to task 23 (ADR 0004).
 
 ADR 0004 joins 0.1 and 0.2 into one release. The loop, the roles and the rules above stay.
 The tasks below use the same three headings and add a fourth, **Manim defects**: the
-defects each task fixes, probed on 0.21.0. Task 13's F-1001 closes before task 16
-(ADR 0004 §7). Tasks 17 and 18 may run side by side in a worktree, and so may task 21
+defects each task fixes, probed on 0.21.0. Every acceptance table of stage 3 has a
+customisation row that shows ADR 0004 §9's four rules for its parts: addressable and
+styleable, every default a keyword, presets only defaults, a hook where a rule decides.
+Task 13's F-1001 closes before task 16 (ADR 0004 §7). Tasks 17 and 18 may run side by side in a worktree, and so may task 21
 beside tasks 19 and 20.
 
 ### 15 — clipping per axis
