@@ -293,8 +293,9 @@ Manim's drop lines and calculus helpers, bound: `get_vertical_line`,
 
 `ax.errorbar` with x and y errors, symmetric and asymmetric, correct on log scales.
 
-- [ ] Acceptance table
-- [ ] Implementation, tests, visual pair, gate
+- [x] Acceptance table — `docs/acceptance/18-errorbar.md`
+- [x] Implementation, tests, visual pair, gate — 200 points under an animated range cost
+      36.7 ms a frame, the scatter's markers: for task 23's performance pass
 
 ### task/19-twin-axes
 
