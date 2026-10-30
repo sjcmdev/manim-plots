@@ -462,3 +462,42 @@ defaults, round trips, clipping at the rim, an animated radius; visual pairs.
   with its Manim twin.
 - The parity survey's verdicts moved; the changelog.
 - Then the maintainer merges into `main` and tags `v0.1.0`.
+
+## Stage 4 — three dimensions (ADR 0006)
+
+After the 0.1.0 tag. Each task: acceptance table and tests first, then code.
+
+### 24 — the 3D system
+
+**Modules.** `core/nodes.py`, `core/sources.py`, `core/shape.py` (by dimension),
+`mobjects/system.py`, `mobjects/axis.py`, `mobjects/artists.py`, `mobjects/three_d.py`
+(new).
+
+**Settles.**
+- The system generalized by dimension: scale nodes and the affine node at `dim=3`, boxes
+  for bounds, three `Axis` decorations, every 0/1 path a loop over the axes; 2D
+  unchanged, F-1001 unchanged.
+- `mp.ThreeDAxes` with Manim's signature and defaults; `get_z_axis`,
+  `get_z_axis_label`, `get_axis_labels(x, y, z)`; `plot` in `z = 0`;
+  `plot_parametric_curve` in 3D; `scatter` and `line` in 3D; `c2p`, `p2c`, `i2gp`.
+- Following: affine moves of the axes; changed and animated ranges on all three axes;
+  scales on all three; clipping to the box per axis; themes.
+- `apply_function` on a `ThreeDAxes` refused; twins, secondary axes and polar refused.
+
+**Tests.** `tests/mobjects/test_three_d.py`: Manim parity on defaults (axis endpoints,
+ticks, `c2p`), round trips, a log z axis, a helix clipped at the box, an animated
+`set_z_range`, a rotated system followed; visual pairs beside Manim's `ThreeDAxes` under
+a fixed camera; F-1001 unchanged.
+
+### 25 — surfaces
+
+`plot_surface` as a field artist (ADR 0006 §6): faces keyed by cell, clipped to the box
+in data space, following ranges and parameters, Manim's `resolution`, `colorscale`,
+`colorscale_axis`; parametric surfaces; a frame-cost reading for a 32×32 surface under
+an animated z range.
+
+### 26 — 3D polish and 0.2 documentation
+
+Camera-facing numbers and labels (ADR 0006 §4); `marker="sphere"`; demos; the gallery's
+3D tab; *Coming from Manim* and *Differences* for 3D; the parity survey's *3D* section
+moved; the 0.2 changelog.

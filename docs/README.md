@@ -27,6 +27,7 @@ a choice.
 | [`adr/0003-final-review-closure.md`](adr/0003-final-review-closure.md) | Frozen | The final reviews' decisions: payload and protocols, core numerics, lifecycle precedence, closeness to Manim; amends scope and ADR 0001 in place |
 | [`adr/0004-one-first-release.md`](adr/0004-one-first-release.md) | Frozen | 0.1 and 0.2 joined into one release; what joins it, what stays after it, bound helpers, names |
 | [`adr/0005-inward-ticks-and-top-axis.md`](adr/0005-inward-ticks-and-top-axis.md) | Accepted | Ticks at a border point inward unless set; an independent top axis (task 19b) |
+| [`adr/0006-three-dimensions.md`](adr/0006-three-dimensions.md) | Proposed | `ThreeDAxes` as the same system in three dimensions; surfaces as a field artist (tasks 24-26) |
 | [`grill-log.md`](grill-log.md) | Living | Decisions D1-D27 with reasoning and rejected alternatives; a later decision says which earlier one it supersedes |
 | [`plan.md`](plan.md) | Living | The design rationale and mechanism in prose: pipeline, `.animate`, containers, API, the 0.1 gate, risks |
 
