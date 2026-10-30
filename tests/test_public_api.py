@@ -86,6 +86,9 @@ EXPECTED = {
     "colormaps",
     "ColorMapping",
     "Colorbar",
+    # task 26
+    "PlanePlot",
+    "AxLinePlot",
 }
 
 

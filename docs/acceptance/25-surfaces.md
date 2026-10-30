@@ -6,7 +6,7 @@ and stand unless vetoed. Contracts: ADR 0006 §2, §3, §8; ADR 0004 §9 (custom
 task 24 (the 3D system, clipping to the box, panes). Coordinates (`coords=`) are task
 26; morphing and growing are task 29; occlusion is task 30.
 
-Modules: `mobjects/surfaces.py` (new: the surface artists, contours), `core/colormaps.py`
+Modules: `mobjects/surfaces.py` (new: the surface artists, contours), `mobjects/colormaps.py`
 (new: `Colormap`, `ColorMapping`, the named tables), `mobjects/colorbar.py` (new),
 `mobjects/three_d.py` (the methods), `mobjects/fields.py` (`color_mapping`, CB-4),
 `src/manim_plots/__init__.py`.
