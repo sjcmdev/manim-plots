@@ -419,6 +419,11 @@ class CartesianAxes(VGroup):
         self._channel_frame_moves = False
         self._pool_warned = False
         self._channel_roots: list[VMobject] = []
+        self._has_mirrors = False
+        self._has_secondary_axes = False
+        self._channel_decorations: tuple[Axis, ...] = ()
+        self._channel_decoration_versions: tuple[int, ...] = ()
+        self._channel_decoration_leaves: tuple[Leaf, ...] = ()
         self._moving_query: tuple[frozenset[Mobject], bool] | None = None
         self._actual_updaters: list[Callable[..., Any]] = []
         self._syncing = True
@@ -563,6 +568,152 @@ class CartesianAxes(VGroup):
         """
         return self._twin(0, x_range, x_scale, x_axis_config, offset)
 
+    def twin(
+        self,
+        x: Axis | CartesianAxes | None = None,
+        y: Axis | CartesianAxes | None = None,
+    ) -> CartesianAxes:
+        """Return the unique system of two existing axes in this family.
+
+        Parameters
+        ----------
+        x, y
+            An existing x or y axis, or a system supplying that axis. None keeps
+            the calling system's axis. Mirrors and secondary axes are decorations
+            and cannot supply a map.
+
+        Returns
+        -------
+        CartesianAxes
+            The existing system of this pair, or a new twin drawing no axes.
+
+        Raises
+        ------
+        ValueError
+            If x or y is not a map axis of the requested direction in this family.
+        TypeError
+            If x or y is neither an axis, a system nor None.
+
+        Examples
+        --------
+        The four corners share one frame and bind plots to any pair of axes:
+
+        >>> right = ax.twinx(y_range=(0, 1))  # bottom x, right y
+        >>> top = ax.twiny(x_range=(0, 50))  # top x, left y
+        >>> corner = ax.twin(x=top, y=right)  # top x, right y
+        >>> curve = corner.plot(lambda x: x / 50)
+        """
+        root = self.parent if self.parent is not None else self
+        axes = []
+        for index, value in enumerate((x, y)):
+            name = "x" if index == 0 else "y"
+            if value is None:
+                axis = self.get_axis(index)
+            elif isinstance(value, CartesianAxes):
+                axis = value.get_axis(index)
+            elif isinstance(value, Axis):
+                axis = value
+            else:
+                raise TypeError(f"{name} must be an Axis or CartesianAxes")
+            if not any(axis is s.get_axis(index) for s in root._systems()):
+                raise ValueError(f"{name} must be a map axis of this family")
+            axes.append(axis)
+        for system in root._systems():
+            if system.x is axes[0] and system.y is axes[1]:
+                return system
+        pair = CartesianAxes(
+            axes[0].range.value.tolist(),
+            axes[1].range.value.tolist(),
+            root.x_length,
+            root.y_length,
+            x_scale=axes[0]._scale,
+            y_scale=axes[1]._scale,
+            theme=replace(root.theme, box=False, grid=()),
+            cycle=root._cycle,
+        )
+        pair.x = pair.x_axis = axes[0]
+        pair.y = pair.y_axis = axes[1]
+        pair.axes = VGroup(*axes)
+        pair.submobjects = []
+        root._attach_twin(pair, -1)
+        return pair
+
+    def secondary_xaxis(
+        self,
+        location: str = "top",
+        functions: tuple[
+            Callable[[FloatArray], ArrayLike], Callable[[FloatArray], ArrayLike]
+        ]
+        | None = None,
+        *,
+        offset: float | None = None,
+        **axis_config: object,
+    ) -> Axis:
+        """Add an x decoration whose ticks use converted units.
+
+        Parameters
+        ----------
+        location
+            Top or bottom border.
+        functions
+            Vectorised forward and inverse conversions, or None for identity.
+            They must be finite, strictly monotonic and inverse on the base range.
+        offset
+            Nonnegative outward distance in scene units.
+        **axis_config
+            NumberLine options for this axis alone; numbers default to enabled.
+
+        Returns
+        -------
+        Axis
+            A styleable decoration following this system's x range and scale.
+
+        Raises
+        ------
+        ValueError
+            If location, offset or the conversions on the base range are invalid.
+            Invalid conversions also refuse later ranges before they are applied.
+        """
+        return self.x._secondary(location, functions, offset, axis_config)
+
+    def secondary_yaxis(
+        self,
+        location: str = "right",
+        functions: tuple[
+            Callable[[FloatArray], ArrayLike], Callable[[FloatArray], ArrayLike]
+        ]
+        | None = None,
+        *,
+        offset: float | None = None,
+        **axis_config: object,
+    ) -> Axis:
+        """Add a y decoration whose ticks use converted units.
+
+        Parameters
+        ----------
+        location
+            Left or right border.
+        functions
+            Vectorised forward and inverse conversions, or None for identity.
+            They must be finite, strictly monotonic and inverse on the base range.
+        offset
+            Nonnegative outward distance in scene units.
+        **axis_config
+            NumberLine options for this axis alone; numbers default to enabled.
+
+        Returns
+        -------
+        Axis
+            A styleable decoration following this system's y range and scale.
+
+        Raises
+        ------
+        ValueError
+            If location, offset or the conversions on the base range are invalid.
+            Invalid conversions also refuse later ranges before they are applied.
+        """
+        return self.y._secondary(location, functions, offset, axis_config)
+
     def _twin(
         self,
         index: int,
@@ -605,28 +756,35 @@ class CartesianAxes(VGroup):
         twin.theme = root.theme
         own = twin.get_axis(index)
         own._label_direction_custom = "label_direction" in (options or {})
+        if index == 1:
+            twin.x = twin.x_axis = self.x
+        else:
+            twin.y = twin.y_axis = self.y
+        twin.axes = VGroup(twin.x, twin.y)
+        twin.submobjects = [own]
+        previous = [t.get_axis(index) for t in root.twins if t._twin_axis == index]
+        outward = previous[-1]._position_offset + distance if previous else 0.0
+        root._attach_twin(twin, index)
+        own.set_position("top" if index == 0 else "right", offset=outward)
+        return twin
+
+    def _attach_twin(self, twin: CartesianAxes, index: int) -> None:
+        root = self
+        twin.theme = root.theme
         twin.parent, twin._twin_axis = root, index
         twin._artists._clock = root._artists._clock
         twin.frame = twin._channel_frame = root.frame
         twin.bounds = root.bounds
-        if index == 1:
-            twin.x = twin.x_axis = root.x
-        else:
-            twin.y = twin.y_axis = root.y
-        twin.axes = VGroup(twin.x, twin.y)
-        twin.submobjects = [own]
         twin._compile()
-        previous = [t.get_axis(index) for t in root.twins if t._twin_axis == index]
-        outward = previous[-1]._position_offset + distance if previous else 0.0
-        own.set_position("top" if index == 0 else "right", offset=outward)
         root._twins.append(twin)
         root.submobjects.insert(root.submobjects.index(root.frame), twin)
-        return twin
 
     def _systems(self) -> tuple[CartesianAxes, ...]:
         return (self, *self._twins)
 
     def _owned_axes(self) -> tuple[Axis, ...]:
+        if self._twin_axis == -1:
+            return ()
         return (
             (self.x, self.y)
             if self._twin_axis is None
@@ -634,8 +792,59 @@ class CartesianAxes(VGroup):
         )
 
     def _channel_axes(self) -> tuple[Axis, ...]:
+        root = self.parent if self.parent is not None else self
+        if not root._has_secondary_axes:
+            if self._twin_axis == -1:
+                return self.x, self.y
+            if not self._twins:
+                return self._owned_axes()
+            return tuple(
+                axis for system in self._systems() for axis in system._owned_axes()
+            )
+        if self._twin_axis == -1:
+            return tuple(
+                a for base in (self.x, self.y) for a in (base, *base._secondaries)
+            )
         return tuple(
-            axis for system in self._systems() for axis in system._owned_axes()
+            decoration
+            for system in self._systems()
+            for axis in system._owned_axes()
+            for decoration in (axis, *axis._secondaries)
+        )
+
+    def _refresh_mirrors(self) -> None:
+        root = self.parent if self.parent is not None else self
+        if not root._has_mirrors:
+            return
+        axes = [a for s in root._systems() for a in s._owned_axes()]
+        for base in axes:
+            for mirror in base._mirrors:
+                hidden = root._mirror_occupied(mirror)
+                if hidden != mirror._mirror_suppressed:
+                    mirror._mirror_suppressed = hidden
+                    mirror._regenerate()
+
+    def _mirror_occupied(self, mirror: Axis) -> bool:
+        root = self.parent if self.parent is not None else self
+        if not root._twins and not root._has_secondary_axes:
+            return False
+        occupants = [a for s in root.twins for a in s._owned_axes()]
+        occupants.extend(
+            a
+            for s in root._systems()
+            for base in s._owned_axes()
+            for a in base._secondaries
+        )
+        other = mirror._system.get_axis(1 - mirror.index)
+        side = (("bottom", "top") if mirror.index == 0 else ("left", "right"))[
+            int(mirror._cross_value() == other.range.value[1])
+        ]
+        return any(
+            a.index == mirror.index
+            and a._position == side
+            and a._position_fraction is None
+            and a._position_offset == 0
+            for a in occupants
         )
 
     def family_members_with_points(self) -> list[Mobject]:
@@ -649,6 +858,8 @@ class CartesianAxes(VGroup):
                 # The frame publishes all derived geometry at the same alpha.
                 return [self._channel_frame]
             self._sync_data()
+            if self._channel_decorations:
+                self._sync_channel_decorations()
             members: list[Mobject] = []
             for leaf in cast(list[Leaf], self.submobjects):
                 if leaf._label_owner is not None:
@@ -713,6 +924,12 @@ class CartesianAxes(VGroup):
         ] != [s._twin_axis for s in target._systems()]:
             raise ValueError("become requires corresponding twins")
         parent = self.parent
+        shared = {}
+        if parent is not None and target.parent is not None:
+            source_axes = target.parent._channel_axes()
+            for index, axis in enumerate((target.x, target.y)):
+                if axis not in target._owned_axes():
+                    shared[index] = parent._channel_axes()[source_axes.index(axis)]
         pairs = dict(zip(target._systems(), self._systems(), strict=True))
         for new, old in pairs.items():
             artists = old._artists
@@ -738,10 +955,10 @@ class CartesianAxes(VGroup):
         if parent is not None:
             self.parent, self.frame = parent, parent.frame
             self._channel_frame = self.frame
-            if self._twin_axis == 1:
-                self.x = self.x_axis = parent.x
-            else:
-                self.y = self.y_axis = parent.y
+            if 0 in shared:
+                self.x = self.x_axis = shared[0]
+            if 1 in shared:
+                self.y = self.y_axis = shared[1]
             self.axes = VGroup(self.x, self.y)
             self._compile()
             for axis in self._owned_axes():
@@ -843,7 +1060,60 @@ class CartesianAxes(VGroup):
             families[1].append(b)
         self.submobjects = [*families[0], self._channel_frame]
         mobject.submobjects = [*families[1], mobject._channel_frame]
+        for system in (self, mobject):
+            root = system.parent if system.parent is not None else system
+            if not root._has_mirrors and not root._has_secondary_axes:
+                continue
+            system._channel_decorations = tuple(
+                dict.fromkeys(
+                    member
+                    for axis in system._channel_axes()
+                    for member in axis.get_family()
+                    if isinstance(member, Axis)
+                    and (
+                        member._mirror_of is not None
+                        or member._secondary_of is not None
+                    )
+                )
+            )
+            system._sync_channel_decorations()
         return self
+
+    def _sync_channel_decorations(self) -> None:
+        if not self._channel_decorations:
+            return
+        versions = tuple(axis._parts_version for axis in self._channel_decorations)
+        if versions == self._channel_decoration_versions:
+            return
+        current = tuple(
+            dict.fromkeys(
+                leaf
+                for axis in self._channel_decorations
+                for leaf in axis.get_family()
+                if isinstance(leaf, Leaf)
+            )
+        )
+        previous = self._channel_decoration_leaves
+        self._channel_decoration_versions = versions
+        self._channel_decoration_leaves = current
+        if not previous or current == previous:
+            return
+        old, new = set(previous), set(current)
+        for leaf in old - new:
+            # The renderer can still hold a reference captured at animation start.
+            leaf._cache = np.empty((0, 3))
+        members: list[VMobject] = []
+        inserted = False
+        for member in self.submobjects:
+            if member in old:
+                if not inserted:
+                    members.extend(current)
+                    inserted = True
+            elif member not in new:
+                members.append(member)
+        if not inserted:
+            members[-1:-1] = current
+        self.submobjects = members
 
     def _channel_roles(self) -> dict[object, Leaf]:
         roles: dict[object, Leaf] = {}
@@ -891,7 +1161,12 @@ class CartesianAxes(VGroup):
                 target._channel_axes(),
                 strict=True,
             ):
-                limits = (1 - alpha) * a.range.value + alpha * b.range.value
+                assert axis._pool is not None
+                limits = (
+                    a.range.value
+                    if axis._pool.fixed_range
+                    else (1 - alpha) * a.range.value + alpha * b.range.value
+                )
                 if not isinstance(axis._scale, LinearScale):
                     limits = np.array(
                         axis._scale.limit_range(
@@ -899,17 +1174,31 @@ class CartesianAxes(VGroup):
                         )
                     )
                 if not np.array_equal(limits, axis._range_parameter.value):
+                    if axis._secondaries:
+                        axis._validate_range(limits)
                     limits.flags.writeable = False
                     axis._range_parameter._value = limits
                     axis._range_parameter._version += 1
-                assert axis._pool is not None
                 axis._pool.alpha = alpha
             for system in self._systems():
-                system._compile()
+                if (
+                    system._twin_axis != -1
+                    or system._range_versions
+                    != (system.x.range.version, system.y.range.version)
+                    or (
+                        system.parent is not None
+                        and system.bounds is not system.parent.bounds
+                    )
+                ):
+                    system._compile()
             for axis in self._channel_axes():
+                if self.parent is not None and axis._system is not self:
+                    axis._system._sync_data()
                 axis._configure(only_crossing=axis._decoration_seen == axis._versions())
             for system in self._systems():
                 system._configure_grid()
+            if self._channel_decorations:
+                self._sync_channel_decorations()
         finally:
             self._syncing = False
 
@@ -925,6 +1214,9 @@ class CartesianAxes(VGroup):
         super().resume_updating(recursive)
         if self._data_animation:
             self._data_animation = False
+            self._channel_decorations = ()
+            self._channel_decoration_versions = ()
+            self._channel_decoration_leaves = ()
             self.submobjects = self._channel_roots
             del self._channel_roots
             self._channel_frame = self.frame
@@ -1072,8 +1364,8 @@ class CartesianAxes(VGroup):
             (self.parent is not None and self.bounds is not self.parent.bounds)
             or self._range_versions[0] != self.x._range_parameter.version
             or self._range_versions[1] != self.y._range_parameter.version
-            or (self._twin_axis != 1 and self.x._style_changed())
-            or (self._twin_axis != 0 and self.y._style_changed())
+            or (self._twin_axis in (None, 0) and self.x._style_changed())
+            or (self._twin_axis in (None, 1) and self.y._style_changed())
         )
 
     def _sync_data(self) -> None:
@@ -1469,6 +1761,9 @@ class CartesianAxes(VGroup):
     def _configure_grid(self) -> None:
         for axis in self._owned_axes():
             axis._configure_grid()
+            if axis._mirrors or axis._secondaries:
+                for decoration in (*axis._mirrors, *axis._secondaries):
+                    decoration._configure_grid()
 
     @overload
     def plot(

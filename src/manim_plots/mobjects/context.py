@@ -102,6 +102,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     color_gradient,
     invert_color,
     VMobject.set_color,
+    Mobject.set_color,
     DashedLine.__init__,
     DashedLine._calculate_num_dashes,
     DashedVMobject.__init__,
@@ -178,6 +179,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     _AnimationBuilder.__getattr__,
     always_redraw,
     Scene.get_moving_mobjects,
+    Scene.get_moving_and_static_mobjects,
     Scene.should_update_mobjects,
     Scene.update_to_time,
     Scene.play_internal,
@@ -185,6 +187,8 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     Scene.add_mobjects_from_animations,
     CairoRenderer.play,
     Camera.set_cairo_context_path,
+    Camera.set_cairo_context_color,
+    Camera.apply_fill,
     DrawBorderThenFill.begin,
     Mobject.get_family_updaters,
     Mobject.__getattr__,
@@ -220,6 +224,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.set_color": (
             "2acb9bb456271e1b4451beee65b5c1ae692e775ff8538646fe3f11f6c6b7000b"
+        ),
+        "Mobject.set_color": (
+            "606032a80b1946464607d0018644c5170aa1180282d033cec67a51c96d93e3b9"
         ),
         "DashedVMobject.__init__": (
             "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
@@ -572,6 +579,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "always_redraw": (
             "f725d6d9c3fbbe1ec63f06926d17055b8946d171e7e71b6bf9e7cc069a7317cf"
         ),
+        "Scene.get_moving_and_static_mobjects": (
+            "c72dd989507bf3295850382bd0e57a6d101b774c387bbdf884ae63c209ccc113"
+        ),
         "Scene.get_moving_mobjects": (
             "26646c79589a5fe64a66bb69a6fbe5437d367490f871ae156a7a651ca0a194c9"
         ),
@@ -592,6 +602,12 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "CairoRenderer.play": (
             "4cad6da1e0bcec34dacad1b8c35388d3df6a8e787e5a27544e6a0fa6deb4a4b3"
+        ),
+        "Camera.set_cairo_context_color": (
+            "2c53d3a7c71e425077321fd329431338ea8db489e0de870b21e6c3758ac46d4c"
+        ),
+        "Camera.apply_fill": (
+            "021a92466cd3f4930fb15d40785b9171da1db5b8d2acfd67a6dd1f3558f882bd"
         ),
         "Camera.set_cairo_context_path": (
             "0e53e5837e78857d20178931c265487d10db6d8eb57c6784b6dee9feb4375dbf"
@@ -642,6 +658,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.set_color": (
             "2acb9bb456271e1b4451beee65b5c1ae692e775ff8538646fe3f11f6c6b7000b"
+        ),
+        "Mobject.set_color": (
+            "606032a80b1946464607d0018644c5170aa1180282d033cec67a51c96d93e3b9"
         ),
         "DashedVMobject.__init__": (
             "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
@@ -994,6 +1013,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "always_redraw": (
             "f725d6d9c3fbbe1ec63f06926d17055b8946d171e7e71b6bf9e7cc069a7317cf"
         ),
+        "Scene.get_moving_and_static_mobjects": (
+            "c72dd989507bf3295850382bd0e57a6d101b774c387bbdf884ae63c209ccc113"
+        ),
         "Scene.get_moving_mobjects": (
             "d78d2af73679041f74533e42fea88d80c16ae9bf954de2216106b7f1fa69e0b2"
         ),
@@ -1014,6 +1036,12 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "CairoRenderer.play": (
             "5affbe0f311d60998ea09f67f9bf8c9b5355c04df1aff90808c3be85ea64e4a8"
+        ),
+        "Camera.set_cairo_context_color": (
+            "2c53d3a7c71e425077321fd329431338ea8db489e0de870b21e6c3758ac46d4c"
+        ),
+        "Camera.apply_fill": (
+            "021a92466cd3f4930fb15d40785b9171da1db5b8d2acfd67a6dd1f3558f882bd"
         ),
         "Camera.set_cairo_context_path": (
             "0e53e5837e78857d20178931c265487d10db6d8eb57c6784b6dee9feb4375dbf"

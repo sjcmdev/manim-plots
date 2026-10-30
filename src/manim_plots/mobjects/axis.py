@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 import warnings
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from enum import Enum
 from functools import partial
 from math import floor
@@ -13,7 +13,8 @@ from typing import Any, Literal, NoReturn, Self, Unpack
 
 import numpy as np
 from manim import Line, LinearBase, LogBase, NumberLine, VGroup
-from manim.utils.color import ParsableManimColor
+from manim.utils.color import ManimColor, ParsableManimColor
+from manim.utils.config_ops import merge_dicts_recursively
 from numpy.typing import ArrayLike
 
 import manim_plots as mp
@@ -149,6 +150,7 @@ class _TickPool:
         self._opacities: dict[Leaf, float] = {}
         self.spares: dict[Level, list[TickLeaf]] = {"major": [], "minor": []}
         start, end = axis.range.value, target.range.value
+        self.fixed_range = np.array_equal(start, end)
         schedule: list[tuple[float, dict[object, Tick]]] = []
 
         def ticks_at(alpha: float) -> tuple[Tick, ...]:
@@ -170,17 +172,7 @@ class _TickPool:
         def generate(
             config: _TickConfig,
         ) -> tuple[Tick, ...]:
-            major, minor, explicit, mode = config
-            return axis_ticks(
-                major,
-                minor,
-                float(limits[0]),
-                float(limits[1]),
-                axis._scale,
-                axis.max_ticks,
-                explicit=explicit,
-                mode=mode,
-            )
+            return axis._locate(config, limits)
 
         ticks = generate(self.start)
         if self.same:
@@ -219,27 +211,8 @@ class _TickPool:
         if self.same:
             self.active = {(t.level, t.key): 1.0 for t in ticks}
         else:
-            lo, hi = axis.range.value
-            left = axis_ticks(
-                self.start[0],
-                self.start[1],
-                float(lo),
-                float(hi),
-                axis._scale,
-                axis.max_ticks,
-                explicit=self.start[2],
-                mode=self.start[3],
-            )
-            right = axis_ticks(
-                self.target[0],
-                self.target[1],
-                float(lo),
-                float(hi),
-                axis._scale,
-                axis.max_ticks,
-                explicit=self.target[2],
-                mode=self.target[3],
-            )
+            left = axis._locate(self.start, axis.range.value)
+            right = axis._locate(self.target, axis.range.value)
             self.active = {(t.level, t.key): 1 - self.alpha for t in left}
             for t in right:
                 key = (t.level, t.key)
@@ -412,7 +385,24 @@ class Axis(VGroup):
         self._position_offset = 0.0
         self._position_outward = False
         self._mirrors: list[Axis] = []
+        self._parts_version = 0
         self._mirror_of: Axis | None = None
+        self._mirror_suppressed = False
+        self._mirror_overrides: set[str] = set()
+        self._decoration_color: ParsableManimColor | None = None
+        self._mirror_tick_styles: dict[Level, dict[str, Any]] = {
+            "major": {},
+            "minor": {},
+        }
+        self._applied_tick_styles: dict[Level, dict[str, Any]] = {}
+        self._secondaries: list[Axis] = []
+        self._secondary_of: Axis | None = None
+        self._secondary_geometry: tuple[int, float, float] | None = None
+        self._secondary_grid_dirty = True
+        self._functions: (
+            tuple[Callable[[FloatArray], ArrayLike], Callable[[FloatArray], ArrayLike]]
+            | None
+        ) = None
         self._decoration_seen: tuple[int, ...] = ()
         self._number_content: dict[object, tuple[str, bool]] = {}
         self._number_members: dict[object, list[Leaf]] = {}
@@ -549,7 +539,72 @@ class Axis(VGroup):
                 result.__dict__[key] = memo[id(value)]
             else:
                 result.__dict__[key] = copy.deepcopy(value, memo)
+        if self._secondaries:
+            result._range_parameter._validate = result._validate_range
         return result
+
+    def _validate_range(self, value: ArrayLike) -> FloatArray:
+        limits = _scale_range(self._scale, value)
+        for secondary in self._secondaries:
+            secondary._validate_functions(limits)
+        return limits
+
+    def _validate_functions(self, limits: FloatArray) -> None:
+        if self._functions is None:
+            return
+        forward, inverse = self._functions
+        x = np.linspace(float(limits[0]), float(limits[1]), 64)
+        try:
+            with np.errstate(all="ignore"):
+                values = np.asarray(forward(x), dtype=float)
+                restored = np.asarray(inverse(values), dtype=float)
+                back = np.asarray(
+                    inverse(np.linspace(float(values[0]), float(values[-1]), 64)),
+                    dtype=float,
+                )
+            if any(
+                v.shape != x.shape or not np.isfinite(v).all()
+                for v in (values, restored, back)
+            ):
+                raise ValueError("nonfinite or nonvectorised conversion")
+            for v in (values, back):
+                delta = np.diff(v)
+                if not (np.all(delta > 0) or np.all(delta < 0)):
+                    raise ValueError("conversion must be strictly monotonic")
+            if not np.all(np.abs(restored - x) <= 1e-9 * abs(limits[1] - limits[0])):
+                raise ValueError("conversions must be inverse")
+        except Exception as error:
+            raise ValueError(
+                "functions must be finite monotonic inverses on the range"
+            ) from error
+
+    def _tick_limits(self, limits: FloatArray | None = None) -> FloatArray:
+        limits = self.range.value if limits is None else limits
+        if self._functions is None:
+            return limits if self._secondary_of is None else np.sort(limits)
+        return np.sort(np.asarray(self._functions[0](limits), dtype=float))
+
+    def _data_values(self, values: ArrayLike) -> FloatArray:
+        array = np.asarray(values, dtype=float)
+        return (
+            array
+            if self._functions is None
+            else np.asarray(self._functions[1](array), dtype=float)
+        )
+
+    def _locate(self, config: _TickConfig, limits: FloatArray) -> tuple[Tick, ...]:
+        lo, hi = limits if self._secondary_of is None else self._tick_limits(limits)
+        major, minor, explicit, mode = config
+        return axis_ticks(
+            major,
+            minor,
+            float(lo),
+            float(hi),
+            self._scale if self._secondary_of is None else LinearScale(),
+            self.max_ticks,
+            explicit=explicit,
+            mode=mode,
+        )
 
     def _configure_ticks(self, native: NumberLine) -> None:
         self._items = self._drawn_items()
@@ -617,6 +672,8 @@ class Axis(VGroup):
         Manim's axes cross at the origin; once the other axis moves to a border or a
         value, nothing crosses this axis at 0 and its tick and number come back.
         """
+        if self._secondary_of is not None:
+            return False
         other = self._system.get_axis(1 - self.index)
         if other._system is not self._system:  # a twin's own axis: nothing crosses at 0
             return False
@@ -655,16 +712,9 @@ class Axis(VGroup):
         return offset
 
     def _tick_items(self) -> tuple[Tick, ...]:
-        lo, hi = self.range.value
-        return axis_ticks(
-            self.locator,
-            self.minor_locator,
-            float(lo),
-            float(hi),
-            self._scale,
-            self.max_ticks,
-            explicit=self._explicit,
-            mode=self._tick_mode,
+        return self._locate(
+            (self.locator, self.minor_locator, self._explicit, self._tick_mode),
+            self.range.value,
         )
 
     def _drawn_items(self) -> tuple[Tick, ...]:
@@ -675,15 +725,22 @@ class Axis(VGroup):
         self, items: tuple[Tick, ...], limits: FloatArray
     ) -> tuple[Tick, ...]:
         """Leave out the items at an end of ``limits`` that carries a tip."""
-        source = self._mirror_of or self
+        source = (
+            self._mirror_of
+            if self._mirror_of is not None and "locator" not in self._mirror_overrides
+            else self
+        )
         # A mirror shares the original's tick set even without its own tips.
         tips = (self.tip_start or source.tip_start, self.tip or source.tip)
         ends = [v for v, tip in zip(limits, tips, strict=True) if tip]
         if source.tick_under_tip or not ends or not items:
             return items
         lo, hi, *covered = self._scale.forward([*limits, *ends])
-        values = self._scale.forward([item.value for item in items])
-        near = np.abs(values[:, None] - np.array(covered)[None, :])
+        values = [item.value for item in items]
+        scaled = self._scale.forward(
+            values if self._functions is None else self._data_values(values)
+        )
+        near = np.abs(scaled[:, None] - np.array(covered)[None, :])
         keep = ~np.any(near <= 1e-9 * abs(hi - lo), axis=1)
         return tuple(item for item, kept in zip(items, keep, strict=True) if kept)
 
@@ -698,7 +755,25 @@ class Axis(VGroup):
         return max(0, floor(self.get_length() / (factor * height))) if height else 0
 
     def _configure(self, *, only_crossing: bool = False) -> None:
+        if self._mirror_of is not None:
+            self._inherit_decoration()
+            self._mirror_suppressed = self._system._mirror_occupied(self)
+        if self._mirror_suppressed:
+            for member in self.get_family():
+                if isinstance(member, Leaf):
+                    member._cache = np.empty((0, 3))
+            return
         system = self._system
+        geometry = None
+        if self._secondary_of is not None:
+            geometry = (system.frame.version, system.x_length, system.y_length)
+            if (
+                only_crossing
+                and self._decoration_seen == self._versions()
+                and self._secondary_geometry == geometry
+                and (self._pool is None or self._pool.same)
+            ):
+                return
         coords = np.array([[self.range.value[0], self.range.value[0]]])
         coords[0, 1 - self.index] = self._cross_value()
         origin = np.append(system._data.forward(coords)[0], 0) + self._outward_offset()
@@ -727,6 +802,8 @@ class Axis(VGroup):
             and self._crossing_frame == system.frame.version
             and self._style_seen == self._versions()[1:]
             and not self._mirrors
+            and not self._secondaries
+            and self._secondary_of is None
             and not self._label_values
             and self._tick_styles["major"].get("direction", TickDirection.BOTH)
             is TickDirection.BOTH
@@ -745,6 +822,8 @@ class Axis(VGroup):
             and (stable_items or self._decoration_seen == self._versions())
             and self._crossing_frame == system.frame.version
             and not self._mirrors
+            and not self._secondaries
+            and self._secondary_of is None
             and (self._pool is None or self._pool.same)
         ):
             # The other range moves this decoration only across its own direction.
@@ -795,24 +874,33 @@ class Axis(VGroup):
         self._range_seen = self.range.version
         self._decoration_seen = self._versions()
         self._style_seen = self._decoration_seen[1:]
-        if self._mirror_of is None:
-            if (
-                self._number_values is not None
-                or self.include_numbers
-                or any(item.label is not None for item in self._items)
-            ):
-                self._configure_numbers()
-            if self._label_values:
-                self._configure_labels()
-        for mirror in self._mirrors:
-            mirror.locator, mirror.minor_locator = self.locator, self.minor_locator
-            mirror._explicit, mirror._tick_mode = self._explicit, self._tick_mode
-            mirror._tick_styles = self._tick_styles
-            mirror._resize(self._reference_length)
-            mirror._configure()
+        if self._secondary_of is not None:
+            self._secondary_geometry = geometry
+            self._secondary_grid_dirty = True
+        if (
+            self._number_values is not None
+            or self.include_numbers
+            or any(item.label is not None for item in self._items)
+        ):
+            self._configure_numbers()
+        if self._label_values:
+            self._configure_labels()
+        if self._mirrors or self._secondaries:
+            for decoration in (*self._mirrors, *self._secondaries):
+                decoration._resize(self._reference_length)
+                decoration._configure(
+                    only_crossing=decoration._secondary_of is not None
+                    and decoration._decoration_seen == decoration._versions()
+                )
         if self._pool is not None:
             self._pool._apply(self)
-        if tick_config is None or self._mirrors or self._mirror_of is not None:
+        if (
+            tick_config is None
+            or self._mirrors
+            or self._secondaries
+            or self._mirror_of is not None
+            or self._secondary_of is not None
+        ):
             self._crossing_frame = -1
             return
         self._crossing_leaves = [
@@ -888,6 +976,24 @@ class Axis(VGroup):
             if item.level == level and (item.value != 0 or not self._hides_zero())
         ]
         style = self._tick_styles[level]
+        stroke: dict[str, Any] | None = None
+        if self._mirror_of is not None:
+            applied = {
+                "color": ManimColor(style.get("color", self.line.get_color())),
+                "width": style.get(
+                    "width",
+                    self._default_width(level)
+                    if level == "minor"
+                    else self.line.get_stroke_width(),
+                ),
+            }
+            previous_style = self._applied_tick_styles.get(level, {})
+            stroke = {
+                k: v
+                for k, v in applied.items()
+                if k not in previous_style or previous_style[k] != v
+            }
+            self._applied_tick_styles[level] = applied
         major_length = self._tick_styles["major"].get("length", 2 * self.tick_size)
         length = style.get(
             "length", major_length / 2 if level == "minor" else major_length
@@ -931,7 +1037,10 @@ class Axis(VGroup):
                 outward * np.ptp(local[:, :, 1 - self.index], axis=1)[:, None] / 2
             )
         positions = np.full((len(items), 2), self._cross_value())
-        positions[:, self.index] = [item.value for item in items]
+        values = [item.value for item in items]
+        positions[:, self.index] = (
+            values if self._functions is None else self._data_values(values)
+        )
         centers = system._data.forward(positions)
         local[:, :, :2] += centers[:, None, :]
         local += self._outward_offset()
@@ -956,6 +1065,8 @@ class Axis(VGroup):
                     )
             else:
                 leaf._cache = points
+                if stroke:
+                    leaf.set_stroke(**stroke)
             leaf._axis_local = outline
             current[item.key] = leaf
         if self._pool is None:
@@ -993,6 +1104,7 @@ class Axis(VGroup):
         """
         major = as_locator(locator)
         minor_locator = None if minor is None else as_locator(minor)
+        self._mirror_overrides.add("locator")
         self.locator, self.minor_locator = major, minor_locator
         self._explicit, self._tick_mode = None, "add"
         self._regenerate()
@@ -1008,8 +1120,8 @@ class Axis(VGroup):
         """
         self.formatter = as_formatter(formatter)
         self._formatter_custom = True
-        self._system._sync_data()
-        self._configure_numbers()
+        self._mirror_overrides.add("formatter")
+        self._regenerate()
         return self
 
     def set_ticks(
@@ -1029,6 +1141,7 @@ class Axis(VGroup):
         if mode not in ("replace", "add"):
             raise ValueError("mode must be replace or add")
         fixed = FixedLocator(entries)
+        self._mirror_overrides.add("locator")
         if mode == "replace":
             self.locator = fixed
             self.minor_locator = (
@@ -1079,6 +1192,8 @@ class Axis(VGroup):
         if color is not None:
             options["color"] = color
         self._tick_styles[level].update(options)
+        if self._mirror_of is not None:
+            self._mirror_tick_styles[level].update(options)
         leaves = self._tick_leaves if level == "major" else self._minor_leaves
         for leaf in leaves.values():
             leaf.set_stroke(
@@ -1163,6 +1278,7 @@ class Axis(VGroup):
             self._label_style_seen = None
             self._custom_style_seen = None
         self._crossing_frame = -1
+        self._system._refresh_mirrors()
         self._regenerate()
         self._system.get_axis(1 - self.index)._regenerate()
         return self
@@ -1230,33 +1346,177 @@ class Axis(VGroup):
         self._regenerate()
         return self
 
-    def mirror(self) -> Axis:
-        """Return an unlabelled, opposite-side axis sharing this axis's data."""
-        system = self._system
-        system._sync_data()
-        mirror = Axis(
-            system,
+    def _decoration(self, axis_config: dict[str, Any]) -> Axis:
+        from manim_plots.mobjects.system import _AXIS_KEYS
+
+        for key in axis_config:
+            if key not in _AXIS_KEYS:
+                raise ValueError(f"unknown axis_config key {key!r}")
+        options = merge_dicts_recursively(
+            self._config,
+            {"include_numbers": False, "include_tip": False},
+            axis_config,
+        )
+        native = NumberLine(
+            self._native.x_range.tolist(),
+            length=self._reference_length,
+            **{**options, "include_numbers": False, "numbers_to_include": None},
+        )
+        native.rotate(self.index * np.pi / 2)
+        native.shift(self._start_reference - native.get_start())
+        decoration = Axis(
+            self._system,
             self.index,
-            self.range.value.tolist(),
-            self._native,
+            (*self.range.value, self._step),
+            native,
             self._scale,
             self.locator,
             self.minor_locator,
-            self._config,
+            axis_config=options,
         )
-        mirror.__dict__["__manim_plots_parameter_range"] = self.range
-        mirror._range_parameter = self.range
+        decoration.__dict__["__manim_plots_parameter_range"] = self.range
+        decoration._range_parameter = self.range
+        decoration._default_exclusion = "numbers_to_exclude" not in axis_config
+        decoration._label_direction_custom = "label_direction" in axis_config
+        if not decoration._label_direction_custom:
+            decoration.label_direction = np.eye(3)[1 - self.index]
+        if decoration.numbers_to_include is not None:
+            decoration._number_values = tuple(decoration.numbers_to_include)
+            decoration.include_numbers = True
+        return decoration
+
+    def _secondary(
+        self,
+        location: str,
+        functions: tuple[
+            Callable[[FloatArray], ArrayLike], Callable[[FloatArray], ArrayLike]
+        ]
+        | None,
+        offset: float | None,
+        axis_config: dict[str, Any],
+    ) -> Axis:
+        sides = ("bottom", "top") if self.index == 0 else ("left", "right")
+        if location not in sides:
+            raise ValueError(f"location must be one of {sides}")
+        if functions is not None and (
+            not isinstance(functions, (tuple, list))
+            or len(functions) != 2
+            or not all(callable(f) for f in functions)
+        ):
+            raise TypeError("functions must contain two vectorised callables")
+        if offset is not None and _finite(offset, "offset") < 0:
+            raise ValueError("offset must be nonnegative")
+        secondary = self._decoration({"include_numbers": True, **axis_config})
+        secondary._secondary_of = self
+        secondary._functions = functions
+        secondary._validate_functions(self.range.value)
+        secondary.locator, secondary.minor_locator = MaxNLocator(), None
+        if "num_decimal_places" not in axis_config.get("decimal_number_config", {}):
+            secondary.formatter = DecimalFormatter(
+                group_with_commas=secondary.decimal_number_config.get(
+                    "group_with_commas", True
+                )
+            )
+            secondary._formatter_custom = True
+        secondary.set_position(location, offset=offset)
+        self._secondaries.append(secondary)
+        self._range_parameter._validate = self._validate_range
+        root = self._system.parent or self._system
+        root._has_secondary_axes = True
+        self.add(secondary)
+        self._crossing_frame = -1
+        self._system._refresh_mirrors()
+        return secondary
+
+    def _inherit_decoration(self) -> None:
+        original = self._mirror_of
+        assert original is not None
+        if "locator" not in self._mirror_overrides:
+            self.locator, self.minor_locator = original.locator, original.minor_locator
+            self._explicit, self._tick_mode = original._explicit, original._tick_mode
+        if "formatter" not in self._mirror_overrides:
+            self.formatter = original.formatter
+            self._formatter_custom = original._formatter_custom
+        for level in ("major", "minor"):
+            self._tick_styles[level] = {
+                **original._tick_styles[level],
+                **self._mirror_tick_styles[level],
+            }
+        if not self._label_direction_custom:
+            other = self._system.get_axis(1 - self.index)
+            sign = 1 if self._cross_value() == other.range.value[1] else -1
+            self.label_direction = sign * np.eye(3)[1 - self.index]
+
+    def set_color(self, color: ParsableManimColor, family: bool = True) -> Self:  # type: ignore[override]
+        """Colour this axis while preserving independently styled decorations.
+
+        Parameters
+        ----------
+        color
+            Native Manim colour.
+        family
+            Apply the colour to this axis's parts and inheriting mirrors.
+        """
+        self._mirror_overrides.add("color")
+        if self._mirror_of is not None and family:
+            for level in ("major", "minor"):
+                self._mirror_tick_styles[level]["color"] = color
+        self._color_parts(color, family)
+        return self
+
+    def _color_parts(self, color: ParsableManimColor, family: bool) -> None:
+        super().set_color(color, family=False)
+        if family:
+            self._decoration_color = color
+            for member in self.submobjects:
+                if isinstance(member, Axis):
+                    if (
+                        member._mirror_of is self
+                        and "color" not in member._mirror_overrides
+                    ):
+                        member._color_parts(color, family)
+                else:
+                    member.set_color(color)
+
+    def mirror(self, **axis_config: object) -> Axis:
+        """Return an opposite-side axis sharing the range and unset decoration.
+
+        Parameters
+        ----------
+        **axis_config
+            NumberLine options for the mirror alone. Numbers and tips default to
+            disabled. Later decoration calls override only the settings they set.
+
+        Returns
+        -------
+        Axis
+            A mirror whose unset tick styles, locator and formatter keep following
+            this axis.
+        """
+        system = self._system
+        system._sync_data()
+        mirror = self._decoration(axis_config)
         mirror._mirror_of = self
-        mirror._line_reference = self._line_reference.copy()
-        mirror._tip_reference = (
-            None if self._tip_reference is None else self._tip_reference.copy()
-        )
-        mirror.include_numbers = False
-        mirror.set_tips(end=False)
         mirror.line.match_style(self.line)
+        if self._decoration_color is not None:
+            mirror._color_parts(self._decoration_color, True)
+        if "color" in axis_config:
+            mirror.set_color(mirror._config["color"])
+        if "stroke_width" in axis_config:
+            mirror.line.set_stroke(width=mirror._config["stroke_width"])
+            mirror._mirror_tick_styles["major"]["width"] = mirror._config[
+                "stroke_width"
+            ]
+        if "tick_size" in axis_config:
+            mirror._mirror_tick_styles["major"]["length"] = (
+                2 * mirror._config["tick_size"]
+            )
         self._mirrors.append(mirror)
+        root = system.parent or system
+        root._has_mirrors = True
         self.add(mirror)
         self._regenerate()
+        system._refresh_mirrors()
         return mirror
 
     def set_grid(
@@ -1276,6 +1536,7 @@ class Axis(VGroup):
         if level not in ("major", "minor"):
             raise ValueError("level must be major or minor")
         self._grid_visible[level] = visible
+        self._secondary_grid_dirty = True
         normalized: dict[str, Any] = dict(style)
         color = normalized.pop("color", None)
         if color is not None:
@@ -1290,6 +1551,12 @@ class Axis(VGroup):
         return self
 
     def _configure_grid(self) -> None:
+        if self._mirror_suppressed:
+            for hidden_leaf in self._grid_leaves.values():
+                hidden_leaf._cache = np.empty((0, 3))
+            return
+        if self._secondary_of is not None and not self._secondary_grid_dirty:
+            return
         if not self._grid_visible:
             return
         system = self._system
@@ -1302,7 +1569,10 @@ class Axis(VGroup):
             and not np.isclose(item.value, crossing, rtol=1e-12, atol=0)
         ]
         endpoints = np.zeros((len(items), 2, 2))
-        endpoints[:, :, self.index] = np.array([item.value for item in items])[:, None]
+        values = np.array([item.value for item in items])
+        endpoints[:, :, self.index] = (
+            values if self._functions is None else self._data_values(values)
+        )[:, None]
         endpoints[:, :, 1 - self.index] = other.range.value
         local = system._data.forward(endpoints.reshape(-1, 2)).reshape(-1, 2, 2)
         points = local[:, :1] + np.linspace(0, 1, 4)[None, :, None] * (
@@ -1333,6 +1603,7 @@ class Axis(VGroup):
         self._grid._replace(current)
         if self._grid not in self.submobjects:
             self.add(self._grid)
+        self._secondary_grid_dirty = False
 
     def set_label_style(
         self,
@@ -1405,7 +1676,9 @@ class Axis(VGroup):
         """
         self._system._sync_data()
         values = np.asarray(number, dtype=float)
-        scaled = self._scale.forward(values)
+        scaled = self._scale.forward(
+            values if self._functions is None else self._data_values(values)
+        )
         if not np.isfinite(scaled).all():
             raise ValueError("number must be finite and inside the scale domain")
         limits = self._scale.forward(self.range.value)
@@ -1440,6 +1713,8 @@ class Axis(VGroup):
         proportion = (values - start) @ delta / squared
         limits = self._scale.forward(self.range.value)
         result = self._scale.inverse(limits[0] + proportion * (limits[1] - limits[0]))
+        if self._functions is not None:
+            result = np.asarray(self._functions[0](result), dtype=float)
         if not np.isfinite(result).all():
             raise ValueError("point maps to a non-finite number")
         return float(result) if result.ndim == 0 else result
@@ -1610,7 +1885,8 @@ class Axis(VGroup):
         return self
 
     def _configure_numbers(self) -> None:
-        _configure_numbers(self)
+        if not self._mirror_suppressed:
+            _configure_numbers(self)
 
     def add_labels(
         self,
@@ -1640,4 +1916,5 @@ class Axis(VGroup):
         return self
 
     def _configure_labels(self) -> None:
-        _configure_labels(self)
+        if not self._mirror_suppressed:
+            _configure_labels(self)
