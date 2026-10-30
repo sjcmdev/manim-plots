@@ -34,7 +34,9 @@ from manim import (
     Indicate,
     Rotate,
     Scene,
+    Square,
     Text,
+    TracedPath,
     Transform,
     Uncreate,
     ValueTracker,
@@ -573,26 +575,55 @@ def swirl(point: np.ndarray) -> np.ndarray:
 
 
 def field_flow(scene: Scene) -> None:
-    """Carry dots along an arrow field with `Flow`, then zoom the axes under it.
+    """Carry dots and shapes along an arrow field with `Flow`, then zoom the axes.
 
-    `ax.get_vector_field(swirl)` maps each arrow through the system, so it stays right
-    on unequal units; `Flow(field, dots)` advects with RK4 and leaves no updater behind.
-    Animating the range resamples the field on every frame.
+    `Flow(field, dots)` with a group of dots moves each dot along its own path.
+    A shape is one object: `Flow(field, square)` moves it rigidly, and the point that
+    follows the field is its centre, marked red with its trace. `pointwise=True` moves
+    every point of the shape instead, so it bends with the flow. Animating the range
+    resamples the field on every frame.
     """
     shown: list[Text] = []
     ax = mp.NumberPlane(x_range=(-6, 6, 1), y_range=(-3, 3, 1), x_length=12, y_length=6)
     ax.shift(0.4 * DOWN)
-    field = ax.get_vector_field(swirl)
-    dots = VGroup(
-        *(Dot(ax.c2p(x, y), color=YELLOW) for x in (-4, -1, 2) for y in (-1, 1))
-    )
+    field = ax.get_vector_field(swirl, opacity=0.6)
     show_call(scene, shown, "field = ax.get_vector_field(swirl)")
     scene.play(Create(ax), FadeIn(field), run_time=1.5)
-    scene.add(dots)
-    show_call(scene, shown, "self.play(Flow(field, dots, run_time=4))")
+
+    dots = VGroup(
+        *(
+            Dot(ax.c2p(x, y), color=YELLOW)
+            for x in (-5, -3, -1, 1, 3, 5)
+            for y in (-2, 0, 2)
+        )
+    )
+    show_call(scene, shown, "self.play(Flow(field, dots))  # each dot on its own path")
+    scene.play(FadeIn(dots), run_time=0.5)
     scene.play(mp.Flow(field, dots, run_time=4))
+    scene.play(FadeOut(dots), run_time=0.5)
+
+    square = Square(0.8, color=BLUE, fill_opacity=0.4).move_to(ax.c2p(-4.5, 1))
+    centre = Dot(square.get_center(), color=RED, radius=0.06)
+    trace = TracedPath(centre.get_center, stroke_color=RED, stroke_width=2)
+    show_call(
+        scene, shown, "self.play(Flow(field, square, centre))  # rigid, by its centre"
+    )
+    scene.play(FadeIn(square), FadeIn(centre), run_time=0.5)
+    scene.add(trace)
+    scene.play(mp.Flow(field, square, centre, run_time=4))
+    scene.play(FadeOut(square), FadeOut(centre), FadeOut(trace), run_time=0.5)
+
+    blob = Square(1.2, color=GREEN, fill_opacity=0.4).move_to(ax.c2p(-4.5, 1))
+    blob.insert_n_curves(40)
+    show_call(
+        scene, shown, "self.play(Flow(field, square, pointwise=True))  # every point"
+    )
+    scene.play(FadeIn(blob), run_time=0.5)
+    scene.play(mp.Flow(field, blob, pointwise=True, run_time=4))
+    scene.play(FadeOut(blob), run_time=0.5)
+
     show_call(scene, shown, "self.play(ax.animate.set_x_range((-3, 3)))")
-    scene.play(FadeOut(dots), ax.animate.set_x_range((-3, 3)), run_time=2)
+    scene.play(ax.animate.set_x_range((-3, 3)), run_time=2)
     scene.wait(0.5)
 
 

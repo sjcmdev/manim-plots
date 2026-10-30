@@ -118,7 +118,7 @@ class CartesianAxes:
 |---|---|
 | SL-1 | Manim's signature and defaults, plus `system` and `use_vectorized`. Start points on the grid of `x_range` and `y_range` with `n_repeats` copies, offset by `noise_factor` noise from a seeded generator *(default taken: seed 0, so a scene renders the same twice)*; each line integrates with FS-3 for `virtual_time` in steps of `dt` and stops when it leaves the viewport grown by `padding` data steps on every side, the same on every side |
 | SL-2 | Each line is an artist clipped to the viewport (F-706), smoothed through at most `max_anchors_per_line` anchors, coloured along its length by `color_scheme` of the field at its points (a stroke gradient) unless `color` is given; `stream_lines[i]` is line `i`, styleable on its own |
-| SL-3 | `create(lag_ratio, run_time)`, `start_animation(...)` and `end_animation()` keep Manim's meaning and defaults; the flow of `start_animation` moves at `flow_speed` times the field's magnitude along each line |
+| SL-3 | `create(lag_ratio, run_time)`, `start_animation(...)` and `end_animation()` keep Manim's meaning and defaults; after `play(lines.create())` the scene holds the field, not its loose lines, so a later `start_animation` is seen (found at review); the flow of `start_animation` moves at `flow_speed` times the field's magnitude along each line |
 | SL-4 | The lines follow the system: a changed or animated range re-integrates them from the same start points in data space |
 
 ## FL — flow and nudging
@@ -126,7 +126,7 @@ class CartesianAxes:
 | ID | Row |
 |---|---|
 | FL-1 | `field.nudge(mob, dt=1, substeps=1, pointwise=False)` moves `mob`'s centre (or with `pointwise=True` every point) along the field by `dt`, in `substeps` RK4 steps (FS-3), converting scene points to data with the system's `p2c` and back with `c2p`, as Manim's moves them in scene coordinates; `nudge_submobjects`, `get_nudge_updater(speed, pointwise)`, `start_submobject_movement` and `stop_submobject_movement` keep Manim's meaning |
-| FL-2 | `Flow(field, *mobjects, speed=1, pointwise=False, run_time=...)` is an animation that advects each mobject for `speed * run_time` of field time, frame by frame through FS-3, so `self.play(Flow(field, dots))` moves dots along the stream lines with no updater left behind |
+| FL-2 | `Flow(field, *mobjects, speed=1, pointwise=False, run_time=...)` is an animation that advects each mobject for `speed * run_time` of field time, frame by frame through FS-3, so `self.play(Flow(field, dots))` moves dots along the stream lines with no updater left behind. A plain `VGroup` or `Group` is a collection: each member follows its own path (found at review: the group moved rigidly by its centre). A mobject with points of its own (a `Dot`, a `Square`, a `Text`'s glyphs as one `Text`) moves rigidly, its centre the point that follows the field; with `pointwise=True` every point follows the field and the shape deforms |
 | FL-3 | A point that leaves the viewport keeps moving by the field, and stops where the field is not finite |
 
 ## GV — `get_vector`, `plot_implicit_curve`

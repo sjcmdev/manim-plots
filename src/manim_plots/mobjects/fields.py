@@ -14,7 +14,9 @@ from manim import (
     AnimationGroup,
     Arrow,
     Create,
+    Group,
     Mobject,
+    Scene,
     ShowPassingFlash,
     Transform,
     Vector,
@@ -985,7 +987,8 @@ class StreamLines(_Field):
         lines = self.stream_lines
         lag = duration / 2 / max(1, len(lines)) if lag_ratio is None else lag_ratio
         order = np.random.default_rng(self.seed).permutation(len(lines))
-        return AnimationGroup(
+        return _CreateLines(
+            self,
             *(
                 Create(lines[i], run_time=duration, **cast(dict[str, Any], kwargs))
                 for i in order
@@ -1149,6 +1152,25 @@ class StreamLines(_Field):
         return _EndFlow(self)
 
 
+class _CreateLines(AnimationGroup):
+    def __init__(
+        self, field: StreamLines, *animations: Animation, lag_ratio: float
+    ) -> None:
+        self.field = field
+        super().__init__(*animations, lag_ratio=lag_ratio)
+
+    def clean_up_from_scene(self, scene: Scene) -> None:
+        """Leave the field itself in the scene, so a later flow animation shows.
+
+        Parameters
+        ----------
+        scene
+            Scene the lines were created in; adding the field takes its lines out.
+        """
+        super().clean_up_from_scene(scene)
+        scene.add(self.field)
+
+
 class _EndFlow(AnimationGroup):
     def __init__(self, field: StreamLines) -> None:
         self.field = field
@@ -1178,7 +1200,8 @@ class Flow(Animation):
     field
         ArrowVectorField or StreamLines supplying the data-space velocity.
     *mobjects
-        Mobjects to advect for ``speed * run_time`` of field time.
+        Mobjects to advect for ``speed * run_time`` of field time; a plain
+        VGroup or Group moves member by member, each along its own path.
     speed, pointwise
         Signed field time per second and pointwise movement mode.
     **kwargs
@@ -1216,7 +1239,15 @@ class Flow(Animation):
         dt = (current - self._last_time) * self.speed
         self._last_time = current
         for mob in self.targets:
-            self.field.nudge(mob, dt, pointwise=self.pointwise)
+            for part in [mob] if self.pointwise else _members(mob):
+                self.field.nudge(part, dt, pointwise=self.pointwise)
+
+
+def _members(mob: Mobject) -> list[Mobject]:
+    # A plain group is a collection: each member follows its own trajectory.
+    if type(mob) in (VGroup, Group) and mob.submobjects:
+        return [part for sub in mob.submobjects for part in _members(sub)]
+    return [mob]
 
 
 class _VectorGroup(_HelperShape, HelperGroup):

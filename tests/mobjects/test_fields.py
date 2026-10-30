@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from manim import RED, Dot, Scene, ValueTracker
+from manim import RED, Dot, Scene, Square, ValueTracker, VGroup
 
 import manim_plots as mp
 
@@ -214,6 +214,77 @@ def test_fl2_flow_moves_a_dot_round_the_circle():
     )
     np.testing.assert_allclose(radii, 1.0, atol=1e-3)
     np.testing.assert_allclose(dot.get_center(), ax.c2p(-1, 0), atol=1e-3)
+
+
+def round_axes():
+    return mp.Axes(x_range=(-2, 2, 1), y_range=(-2, 2, 1), x_length=6, y_length=6)
+
+
+def play_flow(ax, *mobjects, **kwargs) -> None:
+    field = ax.get_vector_field(rotation)
+
+    def construct(scene: Scene) -> None:
+        scene.add(ax, *mobjects)
+        scene.play(mp.Flow(field, *mobjects, run_time=np.pi / 2, **kwargs))
+
+    probe(construct, lambda: None)
+
+
+def test_fl2_a_group_of_dots_flows_dot_by_dot():
+    """`Flow(field, dots)`: each dot of a plain group follows its own path (here a
+    quarter turn about the origin), not the group's centre."""
+    ax = round_axes()
+    starts = [(1.0, 0.0), (0.0, 1.5), (-0.5, -0.5)]
+    dots = VGroup(*(Dot(ax.c2p(x, y)) for x, y in starts))
+    play_flow(ax, dots)
+    for dot, (x, y) in zip(dots, starts, strict=True):
+        np.testing.assert_allclose(dot.get_center(), ax.c2p(-y, x), atol=1e-3)
+
+
+def test_fl2_a_shape_moves_as_one_by_its_centre():
+    """A mobject with points of its own moves rigidly: its centre follows the field."""
+    ax = round_axes()
+    square = Square(side_length=0.5).move_to(ax.c2p(1, 0))
+    width = square.width
+    play_flow(ax, square)
+    np.testing.assert_allclose(square.get_center(), ax.c2p(0, 1), atol=1e-3)
+    assert square.width == pytest.approx(width)
+
+
+def test_fl2_pointwise_moves_every_point():
+    """`pointwise=True` moves each point of a shape along the field: a corner of a
+    square a quarter turn about the origin lands where the rotation puts it, not where
+    a rigid shift of the centre would."""
+    ax = round_axes()
+    square = Square(side_length=0.5).move_to(ax.c2p(1, 0))
+    index = int(np.argmax(square.points[:, 0] + square.points[:, 1]))
+    x, y = ax.p2c(square.points[index])[:2]
+    play_flow(ax, square, pointwise=True)
+    np.testing.assert_allclose(square.points[index], ax.c2p(-y, x), atol=1e-3)
+
+
+def test_sl3_create_leaves_the_field_in_the_scene_for_the_flow():
+    """After `play(lines.create())` the scene holds the field, not its loose lines,
+    so `start_animation` shows its flashes instead of the full lines."""
+    ax = axes()
+    lines = ax.get_stream_lines(rotation, x_range=(-2, 2, 1), y_range=(-1, 1, 1))
+    full = sum(len(line.points) for line in lines.stream_lines)
+    held: list[bool] = []
+
+    def construct(scene: Scene) -> None:
+        scene.add(ax)
+        scene.play(lines.create(run_time=1))
+        held.append(lines in scene.mobjects)
+        held.append(not any(line in scene.mobjects for line in lines.stream_lines))
+        lines.start_animation(warm_up=False)
+        scene.wait(0.5)
+
+    drawn = probe(
+        construct,
+        lambda: sum(len(m.points) for m in lines.family_members_with_points()),
+    )
+    assert held == [True, True]
+    assert drawn[-1] < full
 
 
 def test_fl1_the_nudge_updater_and_submobject_movement():
