@@ -216,7 +216,7 @@ def test_pa4_artists_bind_to_the_pair():
     assert curve in corner.artists
     assert curve not in ax.artists and curve not in right_.artists
     assert curve not in top_.artists
-    np.testing.assert_allclose(dots.markers[0].get_center(), ax.c2p(5, 50), atol=1e-9)
+    np.testing.assert_allclose(dots[0].get_center(), ax.c2p(5, 50), atol=1e-9)
 
 
 def test_pa4_artists_follow_each_axis_range():
@@ -241,7 +241,7 @@ def test_pa4_an_animated_top_range_moves_the_pair_on_every_frame():
     frames = probe(
         construct,
         lambda: (
-            float(mark.markers[0].get_center()[0]),
+            float(mark[0].get_center()[0]),
             float(corner.c2p(1, 0.5)[0]),
             float(top_.x.range.value[1]),
         ),
@@ -249,7 +249,7 @@ def test_pa4_an_animated_top_range_moves_the_pair_on_every_frame():
     for at, expected, _ in frames:
         assert at == pytest.approx(expected, abs=1e-6)
     assert len({end for *_, end in frames}) > 2
-    np.testing.assert_allclose(mark.markers[0].get_center(), ax.c2p(5, 50), atol=1e-6)
+    np.testing.assert_allclose(mark[0].get_center(), ax.c2p(5, 50), atol=1e-6)
 
 
 def test_pa4_the_pair_follows_the_roots_geometry():
@@ -425,6 +425,70 @@ def test_sa4_an_animated_range_carries_the_secondary_axis():
         np.testing.assert_allclose(at, expected, atol=1e-6)
     assert len({len(values) for values, *_ in frames}) > 1
     assert max(secondary.get_tick_range()) == pytest.approx(460, abs=1e-9)
+
+
+def drawn_numbers(axis) -> list[tuple[float, float]]:
+    """The value and the centre x of every number of the axis that has points."""
+    return [
+        (float(n.number), float(n.get_center()[0]))
+        for n in axis.numbers
+        if any(len(m.points) for m in n.get_family())
+    ]
+
+
+def test_sa4_the_numbers_follow_an_animated_range_on_every_frame():
+    ax = celsius()
+    secondary = ax.secondary_xaxis(functions=KELVIN)
+    secondary.set_locator(mp.MultipleLocator(20))
+
+    def construct(scene: Scene) -> None:
+        scene.add(ax)
+        scene.play(ax.animate.set_x_range((0, 200)), run_time=1)
+
+    frames = probe(
+        construct,
+        lambda: [
+            (at, float(ax.c2p(value - 273.15, 0)[0]))
+            for value, at in drawn_numbers(secondary)
+        ],
+    )
+    for frame in frames:
+        assert len(frame) >= 3
+        for at, expected in frame:
+            assert at == pytest.approx(expected, abs=1e-6)
+    values = sorted(value for value, _ in drawn_numbers(secondary))
+    assert values[-1] == pytest.approx(460, abs=1e-9)
+
+
+@pytest.mark.parametrize("kind", ["secondary", "mirror"])
+def test_sa4_mi2_new_parts_are_rendered_on_every_frame(kind):
+    """A decoration whose ticks change during an animated range draws every part it
+    has: the renderer's members hold each of its leaves with points."""
+    ax = mp.Axes(
+        x_range=(400, 800, 100),
+        y_range=(0, 1, 0.25),
+        axis_config={"include_numbers": True},
+    )
+    ax.x.set_position("bottom")
+    if kind == "secondary":
+        decoration = ax.secondary_xaxis("top", functions=ELECTRONVOLT)
+    else:
+        decoration = ax.x.mirror(include_numbers=True)
+    decoration.set_locator(mp.MaxNLocator(6))
+
+    def construct(scene: Scene) -> None:
+        scene.add(ax)
+        scene.play(ax.animate.set_x_range((500, 600)), run_time=1)
+
+    def record() -> tuple[int, int]:
+        rendered = {id(m) for m in ax.family_members_with_points()}
+        parts = [
+            m for m in decoration.get_family() if len(m.points) and not m.submobjects
+        ]
+        return len(parts), sum(id(m) in rendered for m in parts)
+
+    for parts, rendered in probe(construct, record):
+        assert rendered == parts > 0
 
 
 def test_sa4_a_border_axis_without_a_tip_and_ticks_in():
