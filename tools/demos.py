@@ -750,6 +750,51 @@ def z_range_3d(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def flow_3d(scene: Scene) -> None:
+    """Move points and a shape along a field in 3D: stream lines, dots, a square.
+
+    `ax.get_vector_field` on `mp.ThreeDAxes` samples a 3D grid of flat arrows that turn
+    to face the camera; `ax.get_stream_lines` integrates in 3D; `mp.Flow` advects dots
+    each along its own path and, with `pointwise=True`, bends a square point by point.
+    """
+    shown: list[Text] = []
+    ax = mp.ThreeDAxes(
+        x_range=(-2, 2, 1),
+        y_range=(-2, 2, 1),
+        z_range=(-2, 2, 1),
+        x_length=4,
+        y_length=4,
+        z_length=4,
+        frame="box",
+    )
+    scene.set_camera_orientation(**ax.view(25, -50))  # type: ignore[attr-defined]
+
+    def swirl(p: np.ndarray) -> np.ndarray:
+        return np.array([-p[1], p[0], 0.3 - 0.15 * p[2]])
+
+    grid = {"x_range": (-2, 2, 1), "y_range": (-2, 2, 1), "z_range": (-2, 2, 1)}
+    field = ax.get_vector_field(swirl, **grid)
+    lines = ax.get_stream_lines(swirl, stroke_width=2, virtual_time=4)
+    ring = np.linspace(0, 2 * PI, 12, endpoint=False)
+    dots = VGroup(
+        *[Dot(ax.c2p(np.cos(a), np.sin(a), -1.5), color=YELLOW) for a in ring]
+    )
+    square = Square(0.6, color=RED, fill_opacity=0.5).move_to(ax.c2p(0, -1.2, -1))
+    show_call(scene, shown, "ax.get_vector_field(swirl)")
+    scene.play(Create(ax), FadeIn(field), run_time=2)
+    show_call(scene, shown, "ax.get_stream_lines(swirl)")
+    scene.play(lines.create(), run_time=2)
+    lines.start_animation(warm_up=False, flow_speed=1)
+    show_call(scene, shown, "mp.Flow(field, square, pointwise=True)")
+    scene.add(dots, square)
+    scene.play(
+        mp.Flow(field, dots, run_time=4),
+        mp.Flow(field, square, pointwise=True, run_time=4),
+    )
+    scene.move_camera(**ax.view(40, 40), run_time=3)  # type: ignore[attr-defined]
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -778,9 +823,10 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     polar_zoom,
     box_orbit,
     z_range_3d,
+    flow_3d,
 ]
 
-THREE_D = {box_orbit, z_range_3d}
+THREE_D = {box_orbit, z_range_3d, flow_3d}
 
 
 def render(demo: Callable[[Scene], None]) -> Path:
