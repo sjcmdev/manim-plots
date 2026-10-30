@@ -94,6 +94,8 @@ EXPECTED = {
     "WaterfallPlot",
     "BarPlot3D",
     "GrowSurface",
+    # task 28b
+    "SliceView",
 }
 
 
