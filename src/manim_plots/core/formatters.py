@@ -2,6 +2,7 @@
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from fractions import Fraction
 from math import floor, isfinite, log10
 from numbers import Real
 from typing import Protocol, runtime_checkable
@@ -113,6 +114,82 @@ def _decimal(value: float, places: int, commas: bool = False) -> str:
     if text.startswith("-") and (zero or not text.strip("-0,.")):
         return text[1:]
     return text
+
+
+class AngleFormatter:
+    """Format radian angles as fractions of pi, tau, degrees or turns.
+
+    Parameters
+    ----------
+    units
+        ``"PI radians"``, ``"TAU radians"``, ``"degrees"``, ``"gradians"``,
+        or None for fractions of a turn.
+    compact_fraction
+        Include the angular constant inside a fractional numerator.
+    max_denominator
+        Positive maximum denominator for rational approximations.
+    """
+
+    def __init__(
+        self,
+        units: str | None = "PI radians",
+        compact_fraction: bool = True,
+        max_denominator: int = 100,
+    ) -> None:
+        if units not in ("PI radians", "TAU radians", "degrees", "gradians", None):
+            raise ValueError(
+                "units must be PI radians, TAU radians, degrees, gradians or None"
+            )
+        if not isinstance(compact_fraction, bool):
+            raise TypeError("compact_fraction must be bool")
+        _places(max_denominator, "max_denominator")
+        if max_denominator == 0:
+            raise ValueError("max_denominator must be positive")
+        self.units = units
+        self.compact_fraction = compact_fraction
+        self.max_denominator = max_denominator
+
+    def format_ticks(self, values: FloatArray) -> Labels:
+        """Return math-mode labels for angles in radians.
+
+        Parameters
+        ----------
+        values
+            Finite radian angles in input order.
+
+        Returns
+        -------
+        Labels
+            LaTeX strings, with a leading sign for negative angles.
+        """
+        values = _values(values)
+        if self.units not in ("PI radians", "TAU radians"):
+            factor, suffix = {
+                "degrees": (360, r"^{\circ}"),
+                "gradians": (400, r"^{g}"),
+                None: (1, ""),
+            }[self.units]
+            return Labels([f"{v / (2 * np.pi) * factor:g}" + suffix for v in values])
+        constant = r"\pi" if self.units == "PI radians" else r"\tau"
+        divisor = np.pi if self.units == "PI radians" else 2 * np.pi
+        labels = []
+        for value in values:
+            fraction = Fraction(float(value / divisor)).limit_denominator(
+                self.max_denominator
+            )
+            numerator, denominator = abs(fraction.numerator), fraction.denominator
+            sign = "-" if fraction.numerator < 0 else ""
+            if numerator == 0:
+                label = "0"
+            elif denominator == 1:
+                label = (str(numerator) if numerator != 1 else "") + constant
+            elif self.compact_fraction:
+                top = (str(numerator) if numerator != 1 else "") + constant
+                label = rf"\tfrac{{{top}}}{{{denominator}}}"
+            else:
+                label = rf"\tfrac{{{numerator}}}{{{denominator}}}" + constant
+            labels.append(sign + label)
+        return Labels(labels)
 
 
 class DecimalFormatter:

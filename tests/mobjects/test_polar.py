@@ -219,7 +219,8 @@ def test_pp3_grid_follows_an_animated_range():
         lambda: float(radii(circle, plane.get_origin()).mean()),
     )
     assert frames[0] == pytest.approx(2.0, abs=1e-2)
-    assert frames[-1] == pytest.approx(4.0, abs=1e-2)
+    assert frames[-1] > 3.5
+    assert radii(circle, plane.get_origin()).mean() == pytest.approx(4.0, abs=1e-2)
     assert all(b >= a - 1e-9 for a, b in pairwise(frames))
 
 
@@ -305,12 +306,17 @@ def centre_of(ax) -> np.ndarray:
 
 
 def test_px1_linear_map_by_hand():
-    ax = mp.PolarAxes()  # r in (0, 4), diameter 8
+    ax = mp.PolarAxes(size=8)  # r in (0, 4)
     c = centre_of(ax)
     np.testing.assert_allclose(ax.c2p(0, 1.3), c, atol=1e-12)
     np.testing.assert_allclose(ax.c2p(4, 0), c + at(4, 0), atol=1e-9)
     np.testing.assert_allclose(ax.c2p(2, PI / 2), c + at(2, PI / 2), atol=1e-9)
     np.testing.assert_allclose(ax.pr2pt(2, PI / 2), ax.c2p(2, PI / 2))
+
+
+def test_px1_the_default_diameter_leaves_room_for_the_numbers():
+    ax = mp.PolarAxes()
+    assert np.linalg.norm(ax.c2p(4, 0) - centre_of(ax)) == pytest.approx(3.5)
 
 
 def test_px1_size_offset_and_direction():
@@ -323,7 +329,7 @@ def test_px1_size_offset_and_direction():
 
 
 def test_px1_log_radius():
-    ax = mp.PolarAxes(r_range=(1, 100), r_scale="log")
+    ax = mp.PolarAxes(r_range=(1, 100), r_scale="log", size=8)
     c = centre_of(ax)
     np.testing.assert_allclose(ax.c2p(1, 0.7), c, atol=1e-12)
     np.testing.assert_allclose(ax.c2p(10, 0), c + at(2, 0), atol=1e-9)
@@ -332,7 +338,7 @@ def test_px1_log_radius():
 
 @pytest.mark.parametrize("scale", ["linear", "log"])
 def test_px1_inverse_returns_theta_in_a_full_turn(scale):
-    ax = mp.PolarAxes(r_range=(1, 10), r_scale=scale).shift(RIGHT)
+    ax = mp.PolarAxes(r_range=(1, 10), r_scale=scale, size=8).shift(RIGHT)
     for r, t in [(2, 0.0), (5, 3 * PI / 2), (9, 6.0), (3, PI)]:
         assert tuple(ax.p2c(ax.c2p(r, t))) == pytest.approx((r, t), abs=1e-9)
         assert tuple(ax.pt2pr(ax.pr2pt(r, t))) == pytest.approx((r, t), abs=1e-9)
@@ -354,7 +360,7 @@ def test_px2_validation(kwargs, match):
 
 
 def test_px3_cardioid_against_its_analytic_points():
-    ax = mp.PolarAxes(r_range=(0, 2, 0.5))
+    ax = mp.PolarAxes(r_range=(0, 2, 0.5), size=8)
     curve = ax.plot(lambda t: 1 + np.cos(t))
     drawn = dense(pts(curve), per_curve=32)
     c = centre_of(ax)
@@ -364,7 +370,7 @@ def test_px3_cardioid_against_its_analytic_points():
 
 
 def test_px3_plot_polar_graph_is_plot_and_takes_the_cycle():
-    ax = mp.PolarAxes(r_range=(0, 2))
+    ax = mp.PolarAxes(r_range=(0, 2), size=8)
     a = ax.plot(lambda t: 1.0)
     b = ax.plot_polar_graph(lambda t: 1.5, [0, PI])
     assert a.get_color() != b.get_color()
@@ -375,7 +381,7 @@ def test_px3_plot_polar_graph_is_plot_and_takes_the_cycle():
 
 
 def test_px3_scatter_takes_r_and_theta():
-    ax = mp.PolarAxes()
+    ax = mp.PolarAxes(size=8)
     dots = ax.scatter([1.0, 2.0], [0.0, PI / 2])
     np.testing.assert_allclose(dots[0].get_center(), ax.c2p(1, 0), atol=1e-9)
     np.testing.assert_allclose(dots[1].get_center(), ax.c2p(2, PI / 2), atol=1e-9)
@@ -390,13 +396,13 @@ def test_px3_scatter_takes_r_and_theta():
     ],
 )
 def test_px3_cartesian_helpers_refuse(method, args):
-    ax = mp.PolarAxes()
+    ax = mp.PolarAxes(size=8)
     with pytest.raises(NotImplementedError, match="PolarAxes"):
         getattr(ax, method)(*args)
 
 
 def test_px4_a_curve_beyond_the_rim_is_cut_at_the_rim():
-    ax = mp.PolarAxes(r_range=(0, 2))  # rim at scene radius 4
+    ax = mp.PolarAxes(r_range=(0, 2), size=8)  # rim at scene radius 4
     curve = ax.plot(lambda t: 1 + 2 * np.cos(t))
     distances = np.linalg.norm(dense(pts(curve))[:, :2] - centre_of(ax)[:2], axis=1)
     assert distances.max() == pytest.approx(4.0, abs=1e-6)
@@ -405,14 +411,14 @@ def test_px4_a_curve_beyond_the_rim_is_cut_at_the_rim():
 
 
 def test_px4_a_point_inside_r_min_is_invalid_on_a_log_scale():
-    ax = mp.PolarAxes(r_range=(1, 100), r_scale="log")
+    ax = mp.PolarAxes(r_range=(1, 100), r_scale="log", size=8)
     with pytest.warns(mp.ManimPlotsWarning):
         curve = ax.plot(lambda t: 0.5 + 0 * t)
     assert len(pts(curve)) == 0
 
 
 def test_px5_the_rim_has_one_tick_and_number_per_division():
-    ax = mp.PolarAxes()
+    ax = mp.PolarAxes(size=8)
     rim = ax.azimuth_axis
     assert len(rim.numbers) == 20
     assert len(rim.ticks) == 20
@@ -426,7 +432,7 @@ def test_px5_the_rim_has_one_tick_and_number_per_division():
 
 
 def test_px5_ticks_point_in_and_follow_the_formatter():
-    ax = mp.PolarAxes(azimuth_units="degrees")
+    ax = mp.PolarAxes(azimuth_units="degrees", size=8)
     rim = ax.azimuth_axis
     tick = rim.ticks.at(0.0)
     distances = np.linalg.norm(pts(tick)[:, :2] - centre_of(ax)[:2], axis=1)
@@ -438,7 +444,7 @@ def test_px5_ticks_point_in_and_follow_the_formatter():
 
 
 def test_px6_radial_numbers_sit_beside_the_ray():
-    ax = mp.PolarAxes()
+    ax = mp.PolarAxes(size=8)
     numbers = ax.r_axis.numbers
     assert len(numbers) == 4
     for r in (1.0, 2.0, 3.0, 4.0):
@@ -449,7 +455,7 @@ def test_px6_radial_numbers_sit_beside_the_ray():
 
 
 def test_px6_grid_circles_and_spokes():
-    ax = mp.PolarAxes(faded_line_ratio=2)
+    ax = mp.PolarAxes(faded_line_ratio=2, size=8)
     c = centre_of(ax)
     for r in (1.0, 2.0, 3.0, 4.0, 0.5, 3.5):
         assert radii(ax.circles.at(r), c) == pytest.approx(r, abs=5e-3)
@@ -461,14 +467,14 @@ def test_px6_grid_circles_and_spokes():
 
 
 def test_px6_log_grid():
-    ax = mp.PolarAxes(r_range=(1, 100), r_scale="log")
+    ax = mp.PolarAxes(r_range=(1, 100), r_scale="log", size=8)
     c = centre_of(ax)
     assert radii(ax.circles.at(10.0), c) == pytest.approx(2.0, abs=5e-3)
     assert ax.r_axis.numbers.at(10.0) is not None
 
 
 def test_px7_set_r_range_moves_the_data_and_keeps_styles():
-    ax = mp.PolarAxes()
+    ax = mp.PolarAxes(size=8)
     circle = ax.circles.at(2.0).set_color(RED)
     dots = ax.scatter([1.0], [PI / 2])
     rim_number = ax.azimuth_axis.numbers.at(PI / 2).get_center()
@@ -485,7 +491,7 @@ def test_px7_set_r_range_moves_the_data_and_keeps_styles():
 
 
 def test_px7_animated_radial_range():
-    ax = mp.PolarAxes()
+    ax = mp.PolarAxes(size=8)
     curve = ax.plot(lambda t: 1.0)
     circle = ax.circles.at(1.0)
     frames = probe(
@@ -496,19 +502,21 @@ def test_px7_animated_radial_range():
         ),
     )
     assert frames[0] == pytest.approx((1.0, 1.0), abs=1e-2)
-    assert frames[-1] == pytest.approx((2.0, 2.0), abs=1e-2)
+    assert frames[-1][0] > 1.8
+    assert radii(curve, centre_of(ax)).mean() == pytest.approx(2.0, abs=1e-2)
+    assert radii(circle, centre_of(ax)).mean() == pytest.approx(2.0, abs=1e-2)
     for curve_r, circle_r in frames:
         assert curve_r == pytest.approx(circle_r, abs=1e-2)
 
 
 def test_px8_theme_and_cycle():
-    ax = mp.PolarAxes(theme="origin")
+    ax = mp.PolarAxes(theme="origin", size=8)
     first = ax.plot(lambda t: 1.0)
     assert first.get_color().to_hex() == ManimColor(mp.CYCLES["origin"][0]).to_hex()
 
 
 def test_px8_copy_add_legend_and_create():
-    ax = mp.PolarAxes()
+    ax = mp.PolarAxes(size=8)
     curve = ax.plot(lambda t: 1.0, label="r = 1")
     twin = ax.copy()
     np.testing.assert_allclose(twin.c2p(1, 1), ax.c2p(1, 1))

@@ -229,6 +229,16 @@ class Box:
         return inside
 
 
+class _Disk(Box):
+    def contains(self, local: FloatArray) -> BoolArray:
+        points = np.asarray(local, dtype=float)
+        result: BoolArray = np.isfinite(points).all(axis=1) & (
+            np.hypot(points[:, 0] / self.upper[0], points[:, 1] / self.upper[1])
+            <= 1 + 8 * np.finfo(float).eps
+        )
+        return result
+
+
 @runtime_checkable
 class Source(Protocol):
     """Supply data-space samples and exact or interpolated point queries."""

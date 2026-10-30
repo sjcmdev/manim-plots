@@ -63,8 +63,7 @@ def test_polar_plane_degrees_cw(visual):
             faded_line_ratio=2,
         ).add_coordinates()
         x, y = plane.p2c(plane.pr2pt(2.5, PI / 6))[:2]
-        plane.scatter([x], [y], color=YELLOW)
-        scene.add(plane)
+        scene.add(plane, plane.scatter([x], [y], color=YELLOW))
 
     visual(construct)
 
@@ -95,9 +94,9 @@ def test_polar_axes_rose(visual):
 
     def construct(scene: Scene) -> None:
         ax = mp.PolarAxes(r_range=(0, 3, 1), size=7)
-        ax.plot(lambda t: 1.5 + np.sin(5 * t))
-        ax.plot(lambda t: 1 + np.cos(t))
-        scene.add(ax)
+        scene.add(
+            ax, ax.plot(lambda t: 1.5 + np.sin(5 * t)), ax.plot(lambda t: 1 + np.cos(t))
+        )
 
     visual(construct)
 
@@ -109,9 +108,11 @@ def test_polar_axes_log(visual):
 
     def construct(scene: Scene) -> None:
         ax = mp.PolarAxes(r_range=(0.1, 100), r_scale="log", azimuth_units="degrees")
-        ax.plot(lambda t: 10 ** (t / PI - 0.5), theta_range=[0, 2.5 * PI])
-        ax.scatter(np.ones(12), np.arange(12) * TAU / 12)
-        scene.add(ax)
+        scene.add(
+            ax,
+            ax.plot(lambda t: 10 ** (t / PI - 0.5), theta_range=[0, 2.5 * PI]),
+            ax.scatter(np.ones(12), np.arange(12) * TAU / 12),
+        )
 
     visual(construct)
 
@@ -119,12 +120,14 @@ def test_polar_axes_log(visual):
 @pytest.mark.render
 def test_polar_axes_clipped(visual):
     """A limaçon `1 + 2 cos θ` on `r` in (0, 2): cut at the rim and at the centre, and
-    the same curve dashed with `clip=False`."""
+    the same curve faint with `clip=False`."""
 
     def construct(scene: Scene) -> None:
         ax = mp.PolarAxes(r_range=(0, 2, 0.5), size=6)
-        ax.plot(lambda t: 1 + 2 * np.cos(t))
-        ax.plot(lambda t: 1 + 2 * np.cos(t), clip=False, stroke_opacity=0.35)
-        scene.add(ax)
+        scene.add(
+            ax,
+            ax.plot(lambda t: 1 + 2 * np.cos(t)),
+            ax.plot(lambda t: 1 + 2 * np.cos(t), clip=False, stroke_opacity=0.35),
+        )
 
     visual(construct)

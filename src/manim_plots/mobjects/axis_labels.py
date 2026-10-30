@@ -39,6 +39,7 @@ class _Parts(VGroup, Generic[T]):  # noqa: UP046
         """
         self._axis._system._sync_data()
         axis = self._axis
+        value = axis._part_value(value)
         levels: tuple[Level, ...] = (
             ("major", "minor") if self._level is None else (self._level,)
         )
@@ -120,12 +121,7 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
     if len(formatted.text) != len(values):
         raise ValueError("formatter must return one label per value")
     system = axis._system
-    positions = np.full((len(values), 2), axis._cross_value())
-    positions[:, axis.index] = (
-        values if axis._functions is None else axis._data_values(values)
-    )
-    anchors = np.column_stack((system._data.forward(positions), np.zeros(len(values))))
-    anchors += axis._outward_offset()
+    anchors = axis._anchors(values)
     mapping = system.frame.mapping
     current: dict[object, NumberLabel] = {}
     glyphs: list[Leaf] = []
@@ -140,7 +136,7 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
     for i, (x, anchor) in enumerate(zip(values, anchors, strict=True)):
         item = by_value.get(float(x))
         key = (
-            ("major", axis.locator.key(float(x)))
+            ("major", axis._part_key(float(x)))
             if item is None
             else (item.level, item.key)
         )
@@ -192,7 +188,9 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                 )
                 fresh.match_style(label)
                 label.submobjects = fresh.submobjects
-            direction = axis._number_options.get("direction", axis.label_direction)
+            direction = axis._number_options.get(
+                "direction", axis._number_direction(float(x))
+            )
             label.next_to(
                 anchor,
                 direction=direction,
@@ -205,8 +203,7 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
             )
             if rotation:
                 label.rotate(rotation)
-            tangent = np.eye(3)[axis.index]
-            across = np.array([0, 1, 0]) if axis.index == 0 else np.array([-1, 0, 0])
+            tangent, across = axis._label_basis(float(x))
             shift = axis.offset.value[0] * tangent + axis.offset.value[1] * across
             if axis.justify.value != "center":
                 projections = label.get_all_points() @ tangent
@@ -345,15 +342,8 @@ def _configure_labels(axis: axis_module.Axis) -> None:
     ):
         if not lo <= x <= hi:
             continue
-        key = axis.locator.key(x)
-        anchor_data = np.full((1, 2), axis._cross_value())
-        anchor_data[0, axis.index] = (
-            x if axis._functions is None else axis._data_values(x)
-        )
-        anchor = (
-            np.append(axis._system._data.forward(anchor_data)[0], 0)
-            + axis._outward_offset()
-        )
+        key = axis._part_key(x)
+        anchor = axis._anchors([x])[0]
         label = axis._labels._parts.get(key)
         changed = axis._label_content.get(key) is not value
         if label is None or changed or style_version != axis._custom_style_seen:
@@ -386,8 +376,7 @@ def _configure_labels(axis: axis_module.Axis) -> None:
             )
             if rotation:
                 label.rotate(rotation)
-            tangent = np.eye(3)[axis.index]
-            across = np.array([0, 1, 0]) if axis.index == 0 else np.array([-1, 0, 0])
+            tangent, across = axis._label_basis(x)
             shift = axis.offset.value[0] * tangent + axis.offset.value[1] * across
             if axis.justify.value != "center":
                 projections = label.get_all_points() @ tangent
