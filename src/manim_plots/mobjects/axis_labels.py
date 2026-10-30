@@ -8,6 +8,7 @@ import numpy as np
 from manim import LogBase, MathTex, Tex, VGroup, VMobject
 
 from manim_plots.core import FloatArray
+from manim_plots.core.scales import LinearScale
 from manim_plots.core.ticks import Level, round_key
 from manim_plots.mobjects import axis as axis_module
 from manim_plots.mobjects.leaves import Leaf, NumberLabel, _label
@@ -46,9 +47,17 @@ class _Parts(VGroup, Generic[T]):  # noqa: UP046
             keys: list[object] = [("fixed", round_key(value))]
             if locator is not None:
                 try:
-                    lo, hi = axis.range.value
+                    lo, hi = (
+                        axis.range.value
+                        if axis._secondary_of is None
+                        else axis._tick_limits()
+                    )
                     if locator.contains(
-                        value, float(lo), float(hi), axis._scale, axis.max_ticks
+                        value,
+                        float(lo),
+                        float(hi),
+                        axis._scale if axis._secondary_of is None else LinearScale(),
+                        axis.max_ticks,
                     ):
                         keys.append(locator.key(value))
                 except ValueError:
@@ -62,6 +71,8 @@ class _Parts(VGroup, Generic[T]):  # noqa: UP046
     def _replace(self, parts: dict[object, T]) -> None:
         self._parts = parts
         self.submobjects = list(parts.values())
+        if self._axis._mirror_of is not None or self._axis._secondary_of is not None:
+            self._axis._parts_version += 1
 
 
 def _configure_numbers(axis: axis_module.Axis) -> None:
@@ -87,7 +98,9 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
             for item in items
             if item.level == "major" or item.label is not None
         ]
-    lo, hi = sorted(axis.range.value)
+    lo, hi = sorted(
+        axis.range.value if axis._secondary_of is None else axis._tick_limits()
+    )
     hides_zero = axis._hides_zero()
     excluded = axis.numbers_to_exclude
     if axis._default_exclusion and not hides_zero:
@@ -108,7 +121,9 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
         raise ValueError("formatter must return one label per value")
     system = axis._system
     positions = np.full((len(values), 2), axis._cross_value())
-    positions[:, axis.index] = values
+    positions[:, axis.index] = (
+        values if axis._functions is None else axis._data_values(values)
+    )
     anchors = np.column_stack((system._data.forward(positions), np.zeros(len(values))))
     anchors += axis._outward_offset()
     mapping = system.frame.mapping
@@ -145,6 +160,8 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                     font_size=axis.font_size,
                     **axis.decimal_number_config,
                 )
+                if axis._decoration_color is not None:
+                    label.set_color(axis._decoration_color)
             if axis._formatter_custom or round_key(float(x)) in explicit:
                 label._set_text(text, text_mode=mode)
             elif isinstance(axis.scaling, LogBase) and axis.scaling.custom_labels:
@@ -313,7 +330,9 @@ def _layout_overlap(axis: axis_module.Axis, group: _Parts[Any]) -> None:
 def _configure_labels(axis: axis_module.Axis) -> None:
     axis._crossing_frame = -1
     labels: dict[object, VGroup] = {}
-    lo, hi = sorted(axis.range.value)
+    lo, hi = sorted(
+        axis.range.value if axis._secondary_of is None else axis._tick_limits()
+    )
     mapping = axis._system.frame.mapping
     style_version = (
         axis.rotation.version,
@@ -328,7 +347,9 @@ def _configure_labels(axis: axis_module.Axis) -> None:
             continue
         key = axis.locator.key(x)
         anchor_data = np.full((1, 2), axis._cross_value())
-        anchor_data[0, axis.index] = x
+        anchor_data[0, axis.index] = (
+            x if axis._functions is None else axis._data_values(x)
+        )
         anchor = (
             np.append(axis._system._data.forward(anchor_data)[0], 0)
             + axis._outward_offset()

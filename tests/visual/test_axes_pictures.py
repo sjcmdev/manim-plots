@@ -11,7 +11,7 @@ from typing import Any
 
 import numpy as np
 import pytest
-from manim import RED, Axes, LogBase, NumberPlane, Scene
+from manim import BLUE, GREEN, RED, YELLOW, Axes, LogBase, NumberPlane, Scene
 
 import manim_plots as mp
 from manim_plots import MultipleLocator
@@ -165,5 +165,68 @@ def test_an_aspect_lock(visual):
     def construct(scene: Scene) -> None:
         ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-3, 3, 1), x_length=10, aspect=1.0)
         scene.add(ax, ax.plot(lambda x: np.sqrt(np.maximum(4 - x**2, 0))))
+
+    visual(construct)
+
+
+@pytest.mark.render
+def test_top_axis_twiny(visual):
+    """A framed plot with an independent top axis from `twiny`, taking the place of the
+    top mirror: time below, distance above (task 19b)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(x_range=(0, 10, 2), y_range=(0, 5, 1), axis_config=NUMBERS)
+        ax.x.set_position("bottom")
+        ax.y.set_position("left")
+        ax.x.mirror()
+        ax.y.mirror()
+        distance = ax.twiny(x_range=(0, 50, 10), x_axis_config=NUMBERS)
+        scene.add(
+            ax,
+            ax.plot(lambda t: 2.5 + 2 * np.sin(t), color=RED),
+            distance.plot(lambda d: d / 12, color=BLUE),
+        )
+
+    visual(construct)
+
+
+@pytest.mark.render
+def test_secondary_axis(visual):
+    """A spectrum in nanometres with electronvolts on a secondary top axis, decreasing
+    from left to right (task 19b)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(x_range=(400, 800, 100), y_range=(0, 1, 0.25), axis_config=NUMBERS)
+        ax.x.set_position("bottom")
+        ax.y.set_position("left")
+        energy = ax.secondary_xaxis(
+            "top", functions=(lambda nm: 1239.84198 / nm, lambda ev: 1239.84198 / ev)
+        )
+        energy.set_locator(MultipleLocator(0.25))
+        line = ax.plot(lambda nm: np.exp(-(((nm - 550) / 60) ** 2)), color=GREEN)
+        scene.add(ax, line)
+
+    visual(construct)
+
+
+@pytest.mark.render
+def test_four_corners(visual):
+    """One curve on each pair of a bottom and a top x axis and a left and a right y
+    axis, each pair one call (task 19b)."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(x_range=(0, 10, 2), y_range=(0, 100, 20), axis_config=NUMBERS)
+        ax.x.set_position("bottom")
+        ax.y.set_position("left")
+        right = ax.twinx(y_range=(0, 1, 0.2), y_axis_config=NUMBERS)
+        top = ax.twiny(x_range=(0, 50, 10), x_axis_config=NUMBERS)
+        corner = ax.twin(x=top, y=right)
+        scene.add(
+            ax,
+            ax.plot(lambda x: 10 * x, color=RED),
+            right.plot(lambda x: 1 - x / 10, color=BLUE),
+            top.plot(lambda d: 50 + 40 * np.sin(d / 8), color=GREEN),
+            corner.plot(lambda d: 0.5 + 0.4 * np.cos(d / 8), color=YELLOW),
+        )
 
     visual(construct)

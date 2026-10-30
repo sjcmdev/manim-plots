@@ -310,8 +310,8 @@ missing. All twelve concrete locators:
 | Capability | matplotlib | Verdict | Note |
 |---|---|---|---|
 | Grid | `grid`, `get_xgridlines`, `set_axisbelow` | **0.1** | |
-| Mirrored decoration | `secondary_xaxis(functions=(f, g))` | **0.1** | same `Map`, second decoration — the first half of the collaborator dual-axis request |
-| Independent second scale | `twinx`, `twiny` | **0.2** | a second `Map` sharing the system's frame |
+| Mirrored decoration | `secondary_xaxis(functions=(f, g))` | **0.1** | same `Map`, second decoration — the first half of the collaborator dual-axis request; `secondary_xaxis` and `secondary_yaxis` by name since task 19b |
+| Independent second scale | `twinx`, `twiny` | **0.1** | a second `Map` sharing the system's frame (task 19); any pair of axes by `ax.twin(x=, y=)` (task 19b) |
 | Linked axes | `sharex`, `sharey`, `get_shared_x_axes` | **0.2** | backlog |
 | Interaction | `can_pan`, `can_zoom`, `start_pan`, `drag_pan`, `end_pan`, `format_coord`, `pick`, `set_navigate`, `set_mouseover` | **non-goal** | there is no cursor in a rendered animation |
 | Renderer plumbing | `draw`, `draw_artist`, `redraw_in_frame`, `get_tightbbox`, `set_rasterized`, `set_agg_filter`, `set_clip_box`, `set_zorder`, `set_snap`, `set_url`, `set_gid`, `set_animated` | **non-goal** | Manim owns rendering |
@@ -372,8 +372,8 @@ set xtics {axis | border} {{no}mirror}
 | Command | Verdict | Note |
 |---|---|---|
 | `set mxtics <n>` | **0.1** | minor tick count: the collaborator request and defect 9 |
-| `set x2tics`, `set x2range` | **0.1** mirrored, **0.2** independent | the split already made in D9 |
-| `set link x2 via f(x) inverse g(x)` | **0.2** | the independent second scale, expressed exactly as our node pair |
+| `set x2tics`, `set x2range` | **0.1** | mirrored and independent: `mirror`, `twiny` (tasks 19, 19b) |
+| `set link x2 via f(x) inverse g(x)` | **0.1** | `secondary_xaxis(functions=(f, g))`, task 19b |
 | `set nonlinear x via f(x) inverse g(x)` | **0.1** | **the gnuplot answer is our answer**: a non-linear axis is a hidden linear axis plus a forward/inverse pair. Independent confirmation of the user-defined scale contract (A1.3) |
 | `set logscale x <base>` | **0.1** | log with an arbitrary base |
 | `set format x "%.2f"`, and gprintf `%h`, `%T`, `%P` | **0.1** | the format-string formatter, with the `%h` superscript form as the LaTeX formatter |

@@ -321,12 +321,14 @@ Named axis themes and colour cycles, the maintainer's Origin themes among them.
 
 An independent top axis (ADR 0005 §2), after task 20.
 
-- [ ] Acceptance table: any pair of axes (`ax.twin(x=, y=)`, a twin's `twinx` and
+- [x] Acceptance table: any pair of axes (`ax.twin(x=, y=)`, a twin's `twinx` and
       `twiny` sharing its own axis); `secondary_xaxis`, `secondary_yaxis` with
       `functions=(forward, inverse)`; a mirror styled on its own; a twin or a secondary
-      axis taking the place of its side's mirror
-- [ ] Implementation, tests, pictures of `twiny`, a secondary axis and the four corner
-      pairs, a film, gate; scope rows F-606 and F-610 and the parity survey amended
+      axis taking the place of its side's mirror — `docs/acceptance/19b-top-axis.md`
+- [x] Implementation, tests, pictures of `twiny`, a secondary axis and the four corner
+      pairs, films `four_corners` and `secondary_axis`, gate; scope rows F-606 and F-610
+      and the parity survey amended — a render defect of changing decorations under
+      `.animate` found at review and fixed
 
 ### task/21-fields-flow
 

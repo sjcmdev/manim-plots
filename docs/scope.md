@@ -168,11 +168,11 @@ choosing it later breaks nothing.
 | F-603 | Every generated part is addressable, in `NumberLine`'s vocabulary where Manim has one: `ax.x_axis.ticks` (major ticks), `ax.x_axis.minor_ticks`, `ax.x_axis.numbers` (tick labels), `ax.x_axis.labels` (custom labels from `add_labels`), `ax.x_axis.line`, `ax.x_axis.grid`, and `...at(value)` for one part | **0.1** | collaborator requirement 1, D10, D27, origin Special Ticks |
 | F-604 | Tick direction is `IN`, `OUT` or `BOTH`, with length, width and colour set per level | **0.1** | defect 12, gnuplot, origin |
 | F-605 | Axis position is `"origin"`, `"bottom"`, `"top"`, a data value, or a fractional offset | **0.1** | collaborator requirement 3, gnuplot `axis \| border`, origin |
-| F-606 | A mirrored axis — the same mapping, a second decoration, unlabelled by default | **0.1** | collaborator requirement 5, gnuplot `mirror` |
+| F-606 | A mirrored axis — the same mapping, a second decoration, unlabelled by default; styled on its own (`mirror(**axis_config)`, its own ticks, locator, numbers, colour), and a secondary axis — the same mapping seen through `functions=(forward, inverse)` (`secondary_xaxis`, `secondary_yaxis`) *(ADR 0005)* | **0.1** | collaborator requirement 5, gnuplot `mirror`, gnuplot `set link`, matplotlib `secondary_xaxis` |
 | F-607 | Grid lines per level, major and minor configured separately | **0.1** | gnuplot `set grid`, origin Grids |
 | F-608 | An arrow tip may be drawn at either end of an axis without affecting the mapping or the tick range | **0.1** | defect 2, origin arrows |
 | F-609 | Axis title with placement. `get_axis_labels`, `get_x_axis_label` and `get_graph_label` return decorations bound to their system, which follow it as curves do | **0.1** | manim `get_axis_labels`, D27, origin Title |
-| F-610 | An independent second scale (`x2` with its own range) | **0.2** | collaborator requirement 5, gnuplot `set link` |
+| F-610 | An independent second scale (`x2` with its own range): `twinx`, `twiny`, further offset axes, and any pair of x and y axes by `ax.twin(x=..., y=...)` *(ADR 0004, ADR 0005)* | **0.1** | collaborator requirement 5, gnuplot `x2range` |
 | F-611 | Axis line and ticks limited to the extent of the data | **0.2** | gnuplot `rangelimited` |
 | F-612 | Axis breaks | **0.2** | origin Breaks |
 
@@ -492,7 +492,7 @@ layout and subplot management; tick-label tables; copying settings between axes 
 | Requirement list, D9 — working control of the zero at the origin | F-203 |
 | Requirement list, D9 — axes through the origin or at the borders | F-605 |
 | Requirement list, D9 — gnuplot-style numbering | F-404, F-405, F-502, F-508 |
-| Requirement list, D9 — dual axes on either side | F-606 (0.1 mirrored), F-610 (0.2 independent) |
+| Requirement list, D9 — dual axes on either side | F-606 (0.1 mirrored), F-610 (0.1 independent, ADR 0004) |
 | Requirement list, D9 — date/time ticks | deferred, with stress case 1 as the condition |
 | Requirement list, D9 — time series and scatter from either array shape | F-703 |
 

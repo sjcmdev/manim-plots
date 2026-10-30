@@ -189,6 +189,18 @@ ADDED_BY_TASK_17 = [
 # Task 18: error bars read a scatter's markers through Manim's subpaths.
 ADDED_BY_TASK_18 = ["VMobject.get_subpaths"]
 
+# Task 19b: an axis colours its own parts and the mirrors that did not set a colour,
+# through Manim's `Mobject.set_color` on itself alone. A decoration whose ticks change
+# during `.animate` swaps its leaves while the renderer keeps the members it captured
+# when the animation began; a retired leaf is emptied, and drawing an empty path relies
+# on how Manim's scene and Cairo camera treat it.
+ADDED_BY_TASK_19B = [
+    "Mobject.set_color",
+    "Scene.get_moving_and_static_mobjects",
+    "Camera.set_cairo_context_color",
+    "Camera.apply_fill",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -211,6 +223,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_16
         + ADDED_BY_TASK_17
         + ADDED_BY_TASK_18
+        + ADDED_BY_TASK_19B
     )
 
 
