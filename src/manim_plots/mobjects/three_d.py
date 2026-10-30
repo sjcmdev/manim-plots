@@ -538,8 +538,20 @@ class ThreeDAxes(CartesianAxes):
 
     def _save_flat_text(self, axis: Axis) -> None:
         for number in (*axis.numbers, *axis.labels):
-            for leaf in number.family_members_with_points():
-                leaf._flat_points = leaf.points.copy()
+            members = number.family_members_with_points()
+            # Axis-local geometry stays unturned even after the camera faces text.
+            flats = [
+                self.frame.mapping.forward(leaf._axis_local)
+                if getattr(leaf, "_axis_local", None) is not None
+                else leaf.points.copy()
+                for leaf in members
+            ]
+            if not flats:
+                continue
+            points = np.concatenate(flats)
+            number._flat_anchor = (points.min(axis=0) + points.max(axis=0)) / 2
+            for leaf, flat in zip(members, flats, strict=True):
+                leaf._flat_offset = flat - number._flat_anchor
 
     def _read_camera(self) -> None:
         if not isinstance(self._camera, ThreeDCamera):
@@ -630,13 +642,12 @@ class ThreeDAxes(CartesianAxes):
                 for number in (*axis.numbers, *axis.labels)
             ]
             for number in (*texts, *self._axis_titles):
-                centre = number.get_center()
+                if not hasattr(number, "_flat_anchor"):
+                    number._flat_anchor = number.get_center()
                 for leaf in number.family_members_with_points():
-                    flat = getattr(leaf, "_flat_points", None)
-                    if flat is None:
-                        flat = leaf.points.copy()
-                        leaf._flat_points = flat
-                    leaf.set_points(centre + (flat - centre) @ rotation)
+                    if not hasattr(leaf, "_flat_offset"):
+                        leaf._flat_offset = leaf.points - number._flat_anchor
+                    leaf.set_points(number._flat_anchor + leaf._flat_offset @ rotation)
 
     def twinx(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional twinx helper.
