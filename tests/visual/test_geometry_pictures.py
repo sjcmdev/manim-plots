@@ -48,7 +48,7 @@ def test_two_planes_meet(visual):
     def construct(scene: Scene) -> None:
         camera(scene)
         ax = mp.ThreeDAxes(**BOX)
-        wall, slope = ax.plane(x=0.5), ax.plane((0, 0, 0), (0, 1, 1))
+        wall, slope = ax.plane(x=0.5), ax.plane((0, 0, 0), (0, -1, 1))
         scene.add(ax, wall, slope, ax.intersection(wall, slope))
 
     visual(construct, three_d=True)

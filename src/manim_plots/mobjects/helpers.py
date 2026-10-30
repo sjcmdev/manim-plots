@@ -428,6 +428,9 @@ class HelperGroup(VGroup):
     always_redraw; line-like parts are registered HelperLine artists.
     """
 
+    x_line: HelperLine
+    y_line: HelperLine
+    z_line: HelperLine
     horizontal_line: HelperLine
     vertical_line: HelperLine
     line: HelperLine
@@ -1219,10 +1222,11 @@ def _line_options(
 def _drop(
     system: mp.CartesianAxes, index: int, point: object, **options: Unpack[_DropOptions]
 ) -> HelperLine:
+    dim = len(system._ranges)
     if not isinstance(index, int) or isinstance(index, bool):
-        raise TypeError("index must be 0 or 1")
-    if index not in (0, 1):
-        raise ValueError("index must be 0 or 1")
+        raise TypeError("index must identify an axis")
+    if index not in range(dim):
+        raise ValueError("index must identify an axis")
     if isinstance(point, Mobject):
         point = point.get_center
     dynamic = callable(point)
@@ -1231,8 +1235,18 @@ def _drop(
     def derive(binding: _Binding) -> None:
         raw = binding.parameters["point"].value
         coords = system.p2c(raw) if dynamic else np.asarray(raw, dtype=float)
+        if dim == 3:
+            binding.valid = all(
+                min(axis.range.value) <= coords[i] <= max(axis.range.value)
+                for i, axis in enumerate(system._ranges)
+            )
         start = coords.copy()
-        start[1 - index] = system._axis_cross_value(index)
+        if dim == 2:
+            start[1 - index] = system._axis_cross_value(index)
+        else:
+            for i in range(dim):
+                if i != index:
+                    start[i] = system._axis_cross_value(i)
         binding.parts["line"] = binding.local([start, coords])
 
     binding = _Binding(system, derive, {"point": data})

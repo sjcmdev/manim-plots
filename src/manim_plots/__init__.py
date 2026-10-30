@@ -68,6 +68,7 @@ from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.fields import ArrowVectorField as ArrowVectorField
 from manim_plots.mobjects.fields import Flow
 from manim_plots.mobjects.fields import StreamLines as StreamLines
+from manim_plots.mobjects.geometry import AxLinePlot, PlanePlot
 from manim_plots.mobjects.helpers import FilledRegion as FilledRegion
 from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
@@ -90,6 +91,7 @@ __all__ = [
     "AffineNode",
     "AngleFormatter",
     "ArraySource",
+    "AxLinePlot",
     "Bounds",
     "CartesianAxes",
     "ColorMapping",
@@ -130,6 +132,7 @@ __all__ = [
     "ParametricPlot",
     "ParametricSource",
     "Payload",
+    "PlanePlot",
     "PolarAxes",
     "Scale",
     "ScaleNode",

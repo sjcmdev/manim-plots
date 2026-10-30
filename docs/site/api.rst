@@ -57,6 +57,12 @@ Artists
 .. autoclass:: ParametricPlot
    :members:
 
+.. autoclass:: PlanePlot
+   :members:
+
+.. autoclass:: AxLinePlot
+   :members:
+
 .. autoclass:: ErrorBars
    :members:
 

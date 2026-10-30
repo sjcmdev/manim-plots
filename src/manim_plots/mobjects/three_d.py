@@ -5,7 +5,8 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
-from typing import Any, Literal, NoReturn, Self, cast
+from functools import wraps
+from typing import Any, Literal, NoReturn, Self, Unpack, cast
 
 import numpy as np
 from manim import (
@@ -28,6 +29,12 @@ from manim.utils.color import ParsableManimColor
 from numpy.typing import ArrayLike
 
 from manim_plots.core import FloatArray, ManimPlotsWarning
+from manim_plots.core.coordinates import (
+    cartesian_to_cylindrical,
+    cartesian_to_spherical,
+    cylindrical_to_cartesian,
+    spherical_to_cartesian,
+)
 from manim_plots.core.scales import (
     MINPOS_UNKNOWN,
     LinearScale,
@@ -37,9 +44,16 @@ from manim_plots.core.scales import (
 )
 from manim_plots.core.sources import Box
 from manim_plots.core.ticks import LogLocator, SymLogLocator
-from manim_plots.mobjects.artists import LinePlot, ScatterPlot
+from manim_plots.mobjects.artists import LinePlot, ParametricPlot, ScatterPlot
 from manim_plots.mobjects.axis import Axis, TickDirection, _range
 from manim_plots.mobjects.context import _drawing_camera, _scene_camera
+from manim_plots.mobjects.geometry import (
+    AxLinePlot,
+    PlanePlot,
+    _drop_group,
+    _intersection,
+)
+from manim_plots.mobjects.helpers import HelperGroup, _DropOptions
 from manim_plots.mobjects.leaves import (
     AxisLine,
     BoundLabel,
@@ -47,10 +61,11 @@ from manim_plots.mobjects.leaves import (
     _ArtistOptions,
     _ClipInput,
     _label,
+    _ParametricOptions,
     _VMStyle,
 )
 from manim_plots.mobjects.legend import Legend
-from manim_plots.mobjects.surfaces import SurfacePlot, WireframePlot
+from manim_plots.mobjects.surfaces import ContourPlot, SurfacePlot, WireframePlot
 from manim_plots.mobjects.system import CartesianAxes, _scale
 from manim_plots.mobjects.themes import Theme, _resolve_theme
 
@@ -453,6 +468,170 @@ class ThreeDAxes(CartesianAxes):
         self.add(artist)
         return artist
 
+    def intersection(
+        self, a: object, b: object, **style: object
+    ) -> AxLinePlot | ScatterPlot | ContourPlot:
+        """Intersect two geometry artists of this system.
+
+        Parameters
+        ----------
+        a, b, **style
+            Plane and plane, line or surface, and result style.
+        """
+        return cast(
+            AxLinePlot | ScatterPlot | ContourPlot, _intersection(self, a, b, **style)
+        )
+
+    def plane(
+        self,
+        point: object = None,
+        normal: object = None,
+        *,
+        x: object = None,
+        y: object = None,
+        z: object = None,
+        **style: object,
+    ) -> PlanePlot:
+        """Draw a box section of a plane.
+
+        Parameters
+        ----------
+        point, normal, x, y, z, **style
+            Data plane or one axis coordinate, and artist options.
+        """
+        return PlanePlot(self, point, normal, x=x, y=y, z=z, **style)
+
+    def axline(
+        self,
+        xyz1: object,
+        xyz2: object = None,
+        *,
+        direction: object = None,
+        **style: object,
+    ) -> AxLinePlot:
+        """Draw the infinite data line inside the box.
+
+        Parameters
+        ----------
+        xyz1, xyz2, direction, **style
+            Two data points or point and direction, and artist options.
+        """
+        return AxLinePlot(self, xyz1, xyz2, direction=direction, **cast(Any, style))
+
+    def segment(self, start: object, end: object, **style: object) -> AxLinePlot:
+        """Join bound data points inside the box.
+
+        Parameters
+        ----------
+        start, end, **style
+            Data endpoints and artist options.
+        """
+        return AxLinePlot(self, start, end, segment=True, **cast(Any, style))
+
+    def xline(
+        self, y: object, z: object, xmin: object = 0, xmax: object = 1, **style: object
+    ) -> AxLinePlot:
+        """Draw a line parallel to the x axis.
+
+        Parameters
+        ----------
+        y, z, xmin, xmax, **style
+            Fixed data coordinates, fractions of drawn axis length and style.
+        """
+        return _parallel_line(self, 0, (y, z), (xmin, xmax), style)
+
+    def yline(
+        self, x: object, z: object, ymin: object = 0, ymax: object = 1, **style: object
+    ) -> AxLinePlot:
+        """Draw a line parallel to the y axis.
+
+        Parameters
+        ----------
+        x, z, ymin, ymax, **style
+            Fixed data coordinates, fractions of drawn axis length and style.
+        """
+        return _parallel_line(self, 1, (x, z), (ymin, ymax), style)
+
+    def zline(
+        self, x: object, y: object, zmin: object = 0, zmax: object = 1, **style: object
+    ) -> AxLinePlot:
+        """Draw a line parallel to the z axis.
+
+        Parameters
+        ----------
+        x, y, zmin, zmax, **style
+            Fixed data coordinates, fractions of drawn axis length and style.
+        """
+        return _parallel_line(self, 2, (x, y), (zmin, zmax), style)
+
+    def spherical_to_point(
+        self, r: ArrayLike, theta: ArrayLike, phi: ArrayLike
+    ) -> FloatArray:
+        """Map ISO spherical coordinates to scene points.
+
+        Parameters
+        ----------
+        r, theta, phi
+            Radius, polar angle and azimuth in radians; arrays broadcast.
+        """
+        return self.c2p(*spherical_to_cartesian(r, theta, phi))
+
+    def point_to_spherical(self, point: ArrayLike) -> FloatArray:
+        """Read ISO spherical coordinates from scene points.
+
+        Parameters
+        ----------
+        point
+            Scene triple or rows of triples.
+        """
+        return cartesian_to_spherical(self.p2c(point))
+
+    def cylindrical_to_point(
+        self, rho: ArrayLike, phi: ArrayLike, z: ArrayLike
+    ) -> FloatArray:
+        """Map cylindrical coordinates to scene points.
+
+        Parameters
+        ----------
+        rho, phi, z
+            Radius, azimuth in radians and height; arrays broadcast.
+        """
+        return self.c2p(*cylindrical_to_cartesian(rho, phi, z))
+
+    def point_to_cylindrical(self, point: ArrayLike) -> FloatArray:
+        """Read cylindrical coordinates from scene points.
+
+        Parameters
+        ----------
+        point
+            Scene triple or rows of triples.
+        """
+        return cartesian_to_cylindrical(self.p2c(point))
+
+    sp2pt = spherical_to_point
+    pt2sp = point_to_spherical
+    cy2pt = cylindrical_to_point
+    pt2cy = point_to_cylindrical
+
+    def plot_parametric_curve(
+        self,
+        function: Callable[..., Any],
+        use_vectorized: bool = False,
+        *,
+        coords: str | None = None,
+        **kwargs: Unpack[_ParametricOptions],
+    ) -> ParametricPlot:
+        """Draw a curve, optionally converting spherical or cylindrical data.
+
+        Parameters
+        ----------
+        function, use_vectorized, coords, **kwargs
+            Coordinate function, vectorisation, coordinate convention and style.
+        """
+        return super().plot_parametric_curve(
+            _coordinate_function(function, coords), use_vectorized, **kwargs
+        )
+
     def plot_surface(
         self,
         function: Callable[..., Any],
@@ -461,6 +640,7 @@ class ThreeDAxes(CartesianAxes):
         colorscale: object = None,
         colorscale_axis: int | str | Callable[..., Any] = 2,
         *,
+        coords: object = None,
         resolution: int | tuple[int, int] = 32,
         vmin: float | None = None,
         vmax: float | None = None,
@@ -474,9 +654,42 @@ class ThreeDAxes(CartesianAxes):
         ----------
         function, u_range, v_range, colorscale, colorscale_axis
             Surface data, parameter ranges, colours and rendering options.
-        resolution, vmin, vmax, norm, clip, **kwargs
+        coords, resolution, vmin, vmax, norm, clip, **kwargs
             Surface data, parameter ranges, colours and rendering options.
         """
+        _validate_coords(coords)
+        if coords is not None:
+            original = function
+
+            @wraps(original)
+            def function(
+                u: ArrayLike, v: ArrayLike, *args: object, **values: object
+            ) -> FloatArray:
+                height = original(u, v, *args, **values)
+                return (
+                    spherical_to_cartesian(height, u, v)
+                    if coords == "spherical"
+                    else cylindrical_to_cartesian(u, v, height)
+                )
+
+            if u_range is None:
+                if coords == "spherical":
+                    u_range = (0, np.pi)
+                else:
+                    radius = min(
+                        -self.x.range.value[0],
+                        self.x.range.value[1],
+                        -self.y.range.value[0],
+                        self.y.range.value[1],
+                    )
+                    if radius <= 0:
+                        raise ValueError(
+                            "u_range is required when the z axis is outside the box"
+                        )
+                    u_range = (0, radius)
+            if v_range is None:
+                v_range = (0, 2 * np.pi)
+            kwargs["_kind"] = "parametric"
         return SurfacePlot(
             self,
             function,
@@ -500,6 +713,7 @@ class ThreeDAxes(CartesianAxes):
         colorscale: object = None,
         colorscale_axis: int | str | Callable[..., Any] = 2,
         *,
+        coords: object = None,
         resolution: int | tuple[int, int] = 32,
         vmin: float | None = None,
         vmax: float | None = None,
@@ -513,9 +727,10 @@ class ThreeDAxes(CartesianAxes):
         ----------
         function, u_range, v_range, colorscale, colorscale_axis
             Surface data, parameter ranges, colours and rendering options.
-        resolution, vmin, vmax, norm, clip, **kwargs
+        coords, resolution, vmin, vmax, norm, clip, **kwargs
             Surface data, parameter ranges, colours and rendering options.
         """
+        function = _coordinate_function(function, coords)
         if u_range is None:
             raise ValueError("u_range is required")
         if v_range is None:
@@ -995,18 +1210,6 @@ class ThreeDAxes(CartesianAxes):
         """
         raise NotImplementedError("errorbar is not available on ThreeDAxes")
 
-    def get_line_from_axis_to_point(self, *args: object, **kwargs: object) -> NoReturn:
-        """Refuse the two-dimensional get_line_from_axis_to_point helper.
-
-        Parameters
-        ----------
-        *args, **kwargs
-            Arguments reserved for the two-dimensional system.
-        """
-        raise NotImplementedError(
-            "get_line_from_axis_to_point is not available on ThreeDAxes"
-        )
-
     def get_vertical_line(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional get_vertical_line helper.
 
@@ -1027,15 +1230,24 @@ class ThreeDAxes(CartesianAxes):
         """
         raise NotImplementedError("get_horizontal_line is not available on ThreeDAxes")
 
-    def get_lines_to_point(self, *args: object, **kwargs: object) -> NoReturn:
-        """Refuse the two-dimensional get_lines_to_point helper.
+    def _axis_cross_value(self, index: int) -> float:
+        axis = self.get_axis(index)
+        lo, hi = sorted(axis.range.value)
+        if isinstance(axis._scale, LogScale):
+            return float(lo)
+        return float(np.clip(0, lo, hi))
+
+    def get_lines_to_point(
+        self, point: object, **kwargs: Unpack[_DropOptions]
+    ) -> HelperGroup:
+        """Drop a scene point to the floor and far walls of the box.
 
         Parameters
         ----------
-        *args, **kwargs
-            Arguments reserved for the two-dimensional system.
+        point, **kwargs
+            Scene point, callable or Mobject, and native line options.
         """
-        raise NotImplementedError("get_lines_to_point is not available on ThreeDAxes")
+        return _drop_group(self, point, **kwargs)
 
     def get_vertical_lines_to_graph(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional get_vertical_lines_to_graph helper.
@@ -1201,3 +1413,54 @@ def _camera_update(mobject: Mobject, dt: float) -> None:
         axes._camera.add_fixed_in_frame_mobjects(axes._legend_pending)
         axes._legend_pending = None
     axes._read_camera()
+
+
+def _validate_coords(coords: object) -> None:
+    if coords not in (None, "spherical", "cylindrical"):
+        raise ValueError("coords must be None, spherical or cylindrical")
+
+
+def _coordinate_function(
+    function: Callable[..., Any], coords: object
+) -> Callable[..., Any]:
+    _validate_coords(coords)
+    if coords is None:
+        return function
+    convert = (
+        spherical_to_cartesian if coords == "spherical" else cylindrical_to_cartesian
+    )
+
+    @wraps(function)
+    def wrapped(*args: object, **kwargs: object) -> FloatArray:
+        return convert(*function(*args, **kwargs))
+
+    return wrapped
+
+
+def _parallel_line(
+    system: ThreeDAxes,
+    index: int,
+    fixed: tuple[object, object],
+    fractions: tuple[object, object],
+    style: dict[str, Any],
+) -> AxLinePlot:
+    from manim_plots.mobjects.helpers import _parameter
+
+    params = [_parameter(v, "line") for v in (*fixed, *fractions)]
+
+    def endpoint(end: int) -> FloatArray:
+        for p in params:
+            p.poll(system._token)
+        axis = system.get_axis(index)
+        lo, hi = axis.range.value
+        a, b = axis.n2p(lo), axis.n2p(hi)
+        coords = np.empty(3)
+        coords[index] = axis.p2n(a + float(params[2 + end].value) * (b - a))
+        coords[[i for i in range(3) if i != index]] = [
+            float(p.value) for p in params[:2]
+        ]
+        return coords
+
+    style.setdefault("color", VMobject().get_color())
+    style.setdefault("stroke_width", 2)
+    return system.segment(lambda: endpoint(0), lambda: endpoint(1), **style)
