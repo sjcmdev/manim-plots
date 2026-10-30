@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
 from functools import wraps
-from typing import Any, Literal, NoReturn, Self, Unpack, cast
+from typing import Any, Literal, NoReturn, Self, Unpack, cast, overload
 
 import numpy as np
 from manim import (
@@ -44,7 +44,12 @@ from manim_plots.core.scales import (
 )
 from manim_plots.core.sources import Box
 from manim_plots.core.ticks import LogLocator, SymLogLocator
-from manim_plots.mobjects.artists import LinePlot, ParametricPlot, ScatterPlot
+from manim_plots.mobjects.artists import (
+    FunctionPlot,
+    LinePlot,
+    ParametricPlot,
+    ScatterPlot,
+)
 from manim_plots.mobjects.axis import Axis, TickDirection, _range
 from manim_plots.mobjects.context import _drawing_camera, _scene_camera
 from manim_plots.mobjects.geometry import (
@@ -65,6 +70,7 @@ from manim_plots.mobjects.leaves import (
     _VMStyle,
 )
 from manim_plots.mobjects.legend import Legend
+from manim_plots.mobjects.projections import _juggle, _PlanePlot, _shadow
 from manim_plots.mobjects.surfaces import ContourPlot, SurfacePlot, WireframePlot
 from manim_plots.mobjects.system import CartesianAxes, _scale
 from manim_plots.mobjects.themes import Theme, _resolve_theme
@@ -422,25 +428,83 @@ class ThreeDAxes(CartesianAxes):
                 self._axis_titles.append(title)
         return labels
 
+    @overload
+    def plot(
+        self,
+        function: Callable[..., Any],
+        x_range: Sequence[float] | None = None,
+        use_vectorized: bool = False,
+        **kwargs: object,
+    ) -> FunctionPlot: ...
+
+    @overload
+    def plot(
+        self,
+        xs: ArrayLike,
+        ys: ArrayLike | None = None,
+        **kwargs: object,
+    ) -> LinePlot: ...
+
+    def plot(
+        self, *args: object, zs: object = 0, zdir: object = "z", **kwargs: object
+    ) -> FunctionPlot | LinePlot:
+        """Draw a function in a coordinate plane or join array data.
+
+        Parameters
+        ----------
+        *args, zs, zdir, **kwargs
+            Plot inputs, bound plane offset, perpendicular coordinate and options.
+        """
+        if not isinstance(zdir, str):
+            raise ValueError("zdir must be x, y or z")
+        _juggle(0, 0, 0, zdir)
+        if isinstance(zs, (int, float)) and zs == 0 and zdir == "z":
+            return cast(
+                FunctionPlot | LinePlot, cast(Any, super().plot)(*args, **kwargs)
+            )
+        function = args[0] if args else kwargs.pop("function", None)
+        if not callable(function):
+            return self.line(
+                cast(ArrayLike, function),
+                cast(ArrayLike, args[1] if len(args) > 1 else kwargs.pop("ys", None)),
+                zs=cast(ArrayLike, zs),
+                zdir=zdir,
+                **kwargs,
+            )
+        x_range = args[1] if len(args) > 1 else kwargs.pop("x_range", None)
+        vectorized = args[2] if len(args) > 2 else kwargs.pop("use_vectorized", False)
+        if len(args) > 3:
+            raise TypeError("plot accepts function, x_range and use_vectorized")
+        artist = _PlanePlot(
+            self,
+            function,
+            cast(Sequence[float] | None, x_range),
+            cast(bool, vectorized),
+            zs=zs,
+            zdir=zdir,
+            **kwargs,
+        )
+        self.add(artist)
+        return artist
+
     def line(
         self,
         xs: ArrayLike,
         ys: ArrayLike | None = None,
         zs: ArrayLike | None = None,
+        *,
+        zdir: str = "z",
         **kwargs: object,
     ) -> LinePlot:
         """Join data triples with straight segments.
 
         Parameters
         ----------
-        xs, ys, zs, **kwargs
+        xs, ys, zs, zdir, **kwargs
             Coordinate arrays (or rows in xs) and artist options.
         """
-        data = (
-            xs
-            if ys is None
-            else np.column_stack((np.asarray(xs), np.asarray(ys), np.asarray(zs)))
-        )
+        _juggle(0, 0, 0, zdir)
+        data = xs if ys is None else _juggle(xs, ys, 0 if zs is None else zs, zdir)
         artist = LinePlot(data, self, **cast(_ArtistOptions, kwargs))
         self.add(artist)
         return artist
@@ -450,23 +514,39 @@ class ThreeDAxes(CartesianAxes):
         xs: ArrayLike,
         ys: ArrayLike | None = None,
         zs: ArrayLike | None = None,
+        *,
+        zdir: str = "z",
         **kwargs: object,
     ) -> ScatterPlot:
         """Place flat markers at data triples.
 
         Parameters
         ----------
-        xs, ys, zs, **kwargs
+        xs, ys, zs, zdir, **kwargs
             Coordinate arrays (or rows in xs) and artist options.
         """
-        data = (
-            xs
-            if ys is None
-            else np.column_stack((np.asarray(xs), np.asarray(ys), np.asarray(zs)))
-        )
+        _juggle(0, 0, 0, zdir)
+        data = xs if ys is None else _juggle(xs, ys, 0 if zs is None else zs, zdir)
         artist = ScatterPlot(data, self, **cast(_VMStyle, kwargs))
         self.add(artist)
         return artist
+
+    def shadow(
+        self, artist: object, zdir: str = "z", offset: object = None, **style: object
+    ) -> ParametricPlot | ScatterPlot:
+        """Project an artist's drawn data onto a coordinate plane.
+
+        Parameters
+        ----------
+        artist, zdir, offset, **style
+            Curve or scatter, perpendicular coordinate, bound plane and style.
+
+        Returns
+        -------
+        ParametricPlot or ScatterPlot
+            A bound shadow, using the far pane for box frames by default.
+        """
+        return _shadow(self, artist, zdir, offset, style)
 
     def intersection(
         self, a: object, b: object, **style: object

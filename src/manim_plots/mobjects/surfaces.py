@@ -20,6 +20,7 @@ from manim_plots.core.payload import Payload
 from manim_plots.core.scales import Scale
 from manim_plots.core.sources import ArraySource, Bounds
 from manim_plots.mobjects.artists import (
+    FunctionPlot,
     ParametricPlot,
     _clip_axes,
     _clip_box,
@@ -29,6 +30,8 @@ from manim_plots.mobjects.artists import (
     _validate_clip,
 )
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
+from manim_plots.mobjects.geometry import _ensure_binding
+from manim_plots.mobjects.helpers import _Binding
 from manim_plots.mobjects.leaves import _ClipInput
 
 
@@ -548,6 +551,38 @@ class SurfacePlot(VGroup):
             self.set_colorscale(colorscale, axis, **cast(dict[str, Any], kwargs))
         return self
 
+    def slice(
+        self, *, x: object = None, y: object = None, z: object = None, **style: object
+    ) -> ParametricPlot | ContourPlot:
+        """Draw a bound coordinate section of this surface.
+
+        Parameters
+        ----------
+        x, y, z, **style
+            Exactly one bound coordinate and ordinary curve style options.
+
+        Returns
+        -------
+        ParametricPlot or ContourPlot
+            The surface section, following the coordinate and surface parameters.
+        """
+        axis, value = _slice_input("slice", (x, y, z))
+        if self._kind == "height" and axis < 2:
+            artist = _SurfaceSlice(self, axis, value, **style)
+            self._system.add(artist)
+            return artist
+        binding = _slice_binding(self, self._system, axis, value)
+        binding.ensure()
+        from manim_plots.mobjects.artists import _cycle_style
+
+        _cycle_style(self._system, cast(Any, style))
+        result = self.contour(
+            [binding.number("coordinate")], zdir="xyz"[axis], **cast(Any, style)
+        )
+        for line in result._lines.values():
+            line._slice_binding = binding
+        return result
+
     def contour(
         self,
         levels: Sequence[float] | int | None = None,
@@ -761,11 +796,18 @@ class _ContourLine(_CurvePlot):
         self._last_mapping = self.surface.color_mapping if _follow_mapping else None
         self.parameters = self.surface._parameters
         self._pane_seen: Any = None
+        self._slice_binding: _Binding | None = None
         super().__init__(cast(Any, source), self.surface._system, **cast(Any, kwargs))
         self.surface._system.add(self)
 
     def _ensure(self) -> None:
         source = cast(_ContourSource, self.source)
+        if self._slice_binding is not None:
+            _ensure_binding(self._slice_binding)
+            level = self._slice_binding.number("coordinate")
+            if source.level != level:
+                source.level = level
+                self._dirty = True
         if source.offset == "pane":
             sides = self.surface._system._pane_sides
             if sides != self._pane_seen:
@@ -786,9 +828,11 @@ class _ContourLine(_CurvePlot):
                 self._last_mapping = mapping
 
     def _needs_sync(self, moving: frozenset[Any]) -> bool:
-        return cast(
-            _ContourSource, self.source
-        ).offset == "pane" or super()._needs_sync(moving)
+        return (
+            (self._slice_binding is not None and self._slice_binding.needs_sync(moving))
+            or cast(_ContourSource, self.source).offset == "pane"
+            or super()._needs_sync(moving)
+        )
 
 
 class ContourPlot(VGroup):
@@ -878,3 +922,132 @@ class ContourPlot(VGroup):
             if abs(value - level) <= 1e-9:
                 return line
         raise KeyError(level)
+
+
+def _slice_input(name: str, values: tuple[object, ...]) -> tuple[int, object]:
+    chosen = [(i, value) for i, value in enumerate(values) if value is not None]
+    if len(chosen) != 1:
+        raise ValueError(f"{name} requires exactly one coordinate")
+    return chosen[0]
+
+
+def _surface_revision(surface: SurfacePlot) -> str:
+    for parameter in surface._parameters.values():
+        parameter.poll(parameter.version + 1)
+    surface._driver._ensure()
+    return repr(
+        (
+            tuple(p.version for p in surface._parameters.values()),
+            surface._system._data_version,
+            surface._system.frame.version,
+            tuple(surface._u_range) if surface._u_range is not None else None,
+            tuple(surface._v_range) if surface._v_range is not None else None,
+        )
+    )
+
+
+def _slice_binding(
+    surface: SurfacePlot, system: mp.CartesianAxes, axis: int, value: object
+) -> _Binding:
+    def derive(binding: _Binding) -> None:
+        coordinate = binding.number("coordinate")
+        low, high = np.nanmin(surface._grid[:, axis]), np.nanmax(surface._grid[:, axis])
+        binding.valid = bool(low <= coordinate <= high)
+        if not binding.valid and binding.version == 0:
+            raise ValueError(f"{'xyz'[axis]} must be inside the surface range")
+
+    return _Binding(
+        system,
+        derive,
+        {"coordinate": value, "surface": lambda: _surface_revision(surface)},
+    )
+
+
+class _SliceArtist(_CurvePlot):
+    def _ensure(self) -> None:
+        from manim_plots.core import lifecycle as lc
+
+        if self._lifecycle.state is lc.State.ATTACHED and not self._alignment_locked:
+            _ensure_binding(self._binding)
+            if self._binding_seen != self._binding.version:
+                self._dirty = True
+                self._native_sample_key = None
+        super()._ensure()
+        self._binding_seen = self._binding.version
+
+    def _poll(self) -> None:
+        self._binding.poll()
+
+    def _needs_sync(self, moving: frozenset[Any]) -> bool:
+        return self._binding.needs_sync(moving)
+
+    def _rebuild(self) -> None:
+        if not self._binding.valid:
+            self._geometry_payload = Payload.empty(
+                "path", len(self._binding.system._ranges)
+            )
+            self._place(self._frame())
+            self._dirty = False
+            self._data_seen = self._binding.system._data_version
+            return
+        super()._rebuild()
+
+    _binding: _Binding
+    _binding_seen: int
+
+
+class _SurfaceSlice(_SliceArtist, ParametricPlot):
+    def __init__(
+        self, surface: SurfacePlot, axis: int, value: object, **style: object
+    ) -> None:
+        self._binding = _slice_binding(surface, surface._system, axis, value)
+        self._binding_seen = -1
+        self._binding.ensure()
+
+        def point(t: float) -> FloatArray:
+            ranges = (surface._u_range, surface._v_range)
+            interval = ranges[1 - axis]
+            if interval is None:
+                interval = tuple(surface._system.get_axis(1 - axis).range.value)
+            other = interval[0] + t * (interval[1] - interval[0])
+            uv = np.array([self._binding.number("coordinate"), other])
+            if axis == 1:
+                uv = uv[::-1]
+            return surface._evaluate(uv)
+
+        super().__init__(point, surface._system, t_range=(0, 1), **cast(Any, style))
+
+
+class _SliceProfile(_SliceArtist, FunctionPlot):
+    def __init__(
+        self,
+        system: mp.CartesianAxes,
+        surface: SurfacePlot,
+        axis: int,
+        value: object,
+        **style: object,
+    ) -> None:
+        self._surface, self._axis = surface, axis
+        self._binding = _slice_binding(surface, system, axis, value)
+        self._binding_seen = -1
+        self._binding.ensure()
+
+        def height(t: float) -> float:
+            uv = np.array([self._binding.number("coordinate"), t])
+            return float(surface._evaluate(uv if axis == 0 else uv[::-1])[2])
+
+        super().__init__(height, system, self._interval(), **cast(Any, style))
+
+    def _interval(self) -> tuple[float, float]:
+        surface = self._surface
+        interval = surface._v_range if self._axis == 0 else surface._u_range
+        if interval is None:
+            interval = tuple(surface._system.get_axis(1 - self._axis).range.value)
+        return float(interval[0]), float(interval[1])
+
+    def _rebuild(self) -> None:
+        from manim_plots.core.sources import FunctionSource
+
+        source = cast(FunctionSource, self.source)
+        self.source = FunctionSource(source.function, self._interval(), dim=2)
+        super()._rebuild()

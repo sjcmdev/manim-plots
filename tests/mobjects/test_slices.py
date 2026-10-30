@@ -57,8 +57,8 @@ def test_sc1_a_slice_lies_on_the_surface_exactly():
     drawn = data(ax, anchors(cut))
     np.testing.assert_allclose(drawn[:, 0], 1, atol=1e-9)
     np.testing.assert_allclose(drawn[:, 2], 0.5 * drawn[:, 1], atol=1e-9)
-    assert drawn[:, 1].min() == pytest.approx(-2)
-    assert drawn[:, 1].max() == pytest.approx(2)
+    edges = data(ax, np.asarray(cut.points)[[0, -1]])
+    assert sorted(edges[:, 1]) == pytest.approx([-2, 2])
 
 
 def test_sc1_along_x():
@@ -158,8 +158,8 @@ def test_ps1_the_profile_agrees_with_the_slice():
     assert isinstance(profile, mp.FunctionPlot)
     xy = np.array([ax2.p2c(p)[:2] for p in anchors(profile)])
     np.testing.assert_allclose(xy[:, 1], 0.5 * 1 * xy[:, 0], atol=1e-9)
-    assert xy[:, 0].min() == pytest.approx(-2)
-    assert xy[:, 0].max() == pytest.approx(2)
+    edges = [ax2.p2c(p)[0] for p in np.asarray(profile.points)[[0, -1]]]
+    assert sorted(edges) == pytest.approx([-2, 2])
     other = ax2.plot_slice(s, y=-1)
     xy = np.array([ax2.p2c(p)[:2] for p in anchors(other)])
     np.testing.assert_allclose(xy[:, 1], -0.5 * xy[:, 0], atol=1e-9)
