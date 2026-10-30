@@ -201,6 +201,33 @@ ADDED_BY_TASK_19B = [
     "Camera.apply_fill",
 ]
 
+# Task 21: field parity and native arrow/flash geometry.
+ADDED_BY_TASK_21 = [
+    "VectorField.__init__",
+    "VectorField.fit_to_coordinate_system",
+    "VectorField.nudge",
+    "VectorField.nudge_submobjects",
+    "VectorField.get_nudge_updater",
+    "VectorField.start_submobject_movement",
+    "VectorField.stop_submobject_movement",
+    "VectorField.get_colored_background_image",
+    "VectorField.get_vectorized_rgba_gradient_function",
+    "ArrowVectorField.__init__",
+    "ArrowVectorField.get_vector",
+    "StreamLines.__init__",
+    "StreamLines.create",
+    "StreamLines.start_animation",
+    "StreamLines.end_animation",
+    "Vector.__init__",
+    "Arrow.__init__",
+    "ShowPassingFlash.__init__",
+    "ShowPassingFlash._get_bounds",
+    "NumberPlane.get_vector",
+    "CoordinateSystem.plot_implicit_curve",
+    "VectorField.shift_func",
+    "VectorField.scale_func",
+]
+
 ADDED_BY_TASK_22 = [
     "VMobject.get_subpath_split_indices_from_points",
     "Camera.transform_points_pre_display",
@@ -243,6 +270,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_17
         + ADDED_BY_TASK_18
         + ADDED_BY_TASK_19B
+        + ADDED_BY_TASK_21
         + ADDED_BY_TASK_22
     )
 

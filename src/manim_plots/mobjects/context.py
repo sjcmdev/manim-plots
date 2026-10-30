@@ -17,6 +17,8 @@ import numpy as np
 from manim import (
     Animation,
     AnimationGroup,
+    Arrow,
+    ArrowVectorField,
     Axes,
     CoordinateSystem,
     DashedLine,
@@ -34,10 +36,13 @@ from manim import (
     Scene,
     ShowIncreasingSubsets,
     ShowPassingFlash,
+    StreamLines,
     Succession,
     TangentLine,
     Transform,
     TransformFromCopy,
+    Vector,
+    VectorField,
     VGroup,
     VMobject,
     Wiggle,
@@ -204,6 +209,29 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VMobject.split,
     Animation.interpolate_mobject,
     Mobject.family_members_with_points,
+    VectorField.__init__,
+    VectorField.fit_to_coordinate_system,
+    VectorField.nudge,
+    VectorField.nudge_submobjects,
+    VectorField.get_nudge_updater,
+    VectorField.start_submobject_movement,
+    VectorField.stop_submobject_movement,
+    VectorField.get_colored_background_image,
+    VectorField.get_vectorized_rgba_gradient_function,
+    ArrowVectorField.__init__,
+    ArrowVectorField.get_vector,
+    StreamLines.__init__,
+    StreamLines.create,
+    StreamLines.start_animation,
+    StreamLines.end_animation,
+    Vector.__init__,
+    Arrow.__init__,
+    ShowPassingFlash.__init__,
+    ShowPassingFlash._get_bounds,
+    NumberPlane.get_vector,
+    CoordinateSystem.plot_implicit_curve,
+    VectorField.shift_func,
+    VectorField.scale_func,
     PolarPlane._init_background_lines,
     PolarPlane._get_lines,
     PolarPlane.get_axes,
@@ -224,6 +252,75 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "VectorField.__init__": (
+            "bd5b0886cfa6186ad12cd868ca9b2bf3e6c7ac021d531d68d062cebe415a8018"
+        ),
+        "VectorField.fit_to_coordinate_system": (
+            "f6bf0f9a819a25cb19e480c4a5dac13378aeea68108505a98ceb3ee3b98ae8b3"
+        ),
+        "VectorField.nudge": (
+            "9f5afe12e9a2a50423ec89bd182cb67fd3badf460bdd8ca9d63ea3dc22282451"
+        ),
+        "VectorField.nudge_submobjects": (
+            "4c5f877497b18eedc3f5f2206da69143d18b29e9077bc86197a74ab39d597426"
+        ),
+        "VectorField.get_nudge_updater": (
+            "ac57f8505bbcd2c7b2dc22292210eaf48b8220c114c02ae27631c87be958c766"
+        ),
+        "VectorField.start_submobject_movement": (
+            "5edd169bcecd2027c848c66c88e2b54ebd21ef7b5c29b8c8328bffdddd7853c5"
+        ),
+        "VectorField.stop_submobject_movement": (
+            "8f7bcfde33b6dd57468ebab37fd2a0a0e7fba1e8128e8bd7f58d3b68d2956c1a"
+        ),
+        "VectorField.get_colored_background_image": (
+            "1a588a917c4d374bcf2d6251aef8f1889771addecb0ea047121a93159157f31c"
+        ),
+        "VectorField.get_vectorized_rgba_gradient_function": (
+            "54bfe5020db9f88e62063971976bfc90d5eef61e76b0906fefa1e49948ec5a46"
+        ),
+        "ArrowVectorField.__init__": (
+            "9cec329935b0870d41a63df9229edfed69ae43f302ef5fb7a614989020f057be"
+        ),
+        "ArrowVectorField.get_vector": (
+            "dce59be06da3b6a867bdc089c4e486ee22465a6efc7ec2417ee3f6c6bd813894"
+        ),
+        "StreamLines.__init__": (
+            "6391a837ca70b8e458a40a8dc7fe68ae10c81ef34cea860f6713df5bda6f2e7d"
+        ),
+        "StreamLines.create": (
+            "a9b14688b01e5084a0b2e0244a7f09dd15c3b0212ca7b862911314ad835218bd"
+        ),
+        "StreamLines.start_animation": (
+            "416e78f338d1e96fd577bcbf4c1c2405e07b47400d45ad60dad915e3bec71510"
+        ),
+        "StreamLines.end_animation": (
+            "6a8d559f605757187b9ab83c67b92fbb45fff0457e64e3209a13bc85952be5d7"
+        ),
+        "Vector.__init__": (
+            "7db92f923b54a4e9f5b23059ecb162f73a26ee02f72c96b2d2764b05568ae594"
+        ),
+        "Arrow.__init__": (
+            "76cfd9890aeace0ed442e35aa0e3a81cfbd368580cedf7b81f54f348292797a1"
+        ),
+        "ShowPassingFlash.__init__": (
+            "7a5cebb1946e03e14bcfe035dbe23e754b328892e523335b4f360e1e48813f33"
+        ),
+        "ShowPassingFlash._get_bounds": (
+            "2c6d9350f5de2119afdc052ee9b2ccecf0903bff204d3ef881efe0b002865d1d"
+        ),
+        "NumberPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "CoordinateSystem.plot_implicit_curve": (
+            "8c315192e0855e979be8ea3ac7c0af22612625c36667e07cefdb5d9166aed609"
+        ),
+        "VectorField.shift_func": (
+            "34c4749a5e73faf486a52e05d9effb7c6eb72c0cc1c3861775e507a43d9b613c"
+        ),
+        "VectorField.scale_func": (
+            "647ccfede01ef25dbdd4f75b35014896481694905dfbc506eec4d374a8817f9b"
+        ),
         "VMobject.get_subpath_split_indices_from_points": (
             "f6390df4e1903191807df6181bb8e83ec09107d93cbd1962d7bc80b1e9ce8c24"
         ),
@@ -706,6 +803,75 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "VectorField.__init__": (
+            "9daf0191595a1903e5bbe8a8db26dea7f542926d1b7b1589d7649fd960596de1"
+        ),
+        "VectorField.fit_to_coordinate_system": (
+            "f6bf0f9a819a25cb19e480c4a5dac13378aeea68108505a98ceb3ee3b98ae8b3"
+        ),
+        "VectorField.nudge": (
+            "0cf0fee6d27065a56f7db0474f252f85ae0dfc3e12d44041bbb8cc357f23b9da"
+        ),
+        "VectorField.nudge_submobjects": (
+            "4c5f877497b18eedc3f5f2206da69143d18b29e9077bc86197a74ab39d597426"
+        ),
+        "VectorField.get_nudge_updater": (
+            "ac57f8505bbcd2c7b2dc22292210eaf48b8220c114c02ae27631c87be958c766"
+        ),
+        "VectorField.start_submobject_movement": (
+            "5edd169bcecd2027c848c66c88e2b54ebd21ef7b5c29b8c8328bffdddd7853c5"
+        ),
+        "VectorField.stop_submobject_movement": (
+            "f0db183caac6e433db95b3cf1439b00f8c08b0a9626180ade7f2779cf42894e9"
+        ),
+        "VectorField.get_colored_background_image": (
+            "90237652e8d44c354cb00d4ec385db7aa88503e3cf90a033d368abbe9997ed24"
+        ),
+        "VectorField.get_vectorized_rgba_gradient_function": (
+            "54bfe5020db9f88e62063971976bfc90d5eef61e76b0906fefa1e49948ec5a46"
+        ),
+        "ArrowVectorField.__init__": (
+            "bb5956db7cd5063bdab39554b81cfb0a14d2be534213c264d2b0afdee53ba0e8"
+        ),
+        "ArrowVectorField.get_vector": (
+            "02099921b2c30a178baacb1ef151082c721ab6aedd61a55ef9f957be769f1238"
+        ),
+        "StreamLines.__init__": (
+            "3d725e54bbff1a4e6dff6bb9b43d8c97157d0f7e829aca2b0f36e40e85277572"
+        ),
+        "StreamLines.create": (
+            "23917d4c7d3d6b0a0c58fc72347fa58340c03a677b003ad00ed2958d9a98a0d7"
+        ),
+        "StreamLines.start_animation": (
+            "36fe1058dd3aaee53f6ec7802a1c6f186ce164b3a9faafb87947c560d99ff4f3"
+        ),
+        "StreamLines.end_animation": (
+            "1a69ee7e977c0e5eb7013edacf5b755c618bb2ab9daed1725a2c0802fb382a48"
+        ),
+        "Vector.__init__": (
+            "7db92f923b54a4e9f5b23059ecb162f73a26ee02f72c96b2d2764b05568ae594"
+        ),
+        "Arrow.__init__": (
+            "76cfd9890aeace0ed442e35aa0e3a81cfbd368580cedf7b81f54f348292797a1"
+        ),
+        "ShowPassingFlash.__init__": (
+            "7a5cebb1946e03e14bcfe035dbe23e754b328892e523335b4f360e1e48813f33"
+        ),
+        "ShowPassingFlash._get_bounds": (
+            "2c6d9350f5de2119afdc052ee9b2ccecf0903bff204d3ef881efe0b002865d1d"
+        ),
+        "NumberPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "CoordinateSystem.plot_implicit_curve": (
+            "8c315192e0855e979be8ea3ac7c0af22612625c36667e07cefdb5d9166aed609"
+        ),
+        "VectorField.shift_func": (
+            "f4c446462935910b176317b5469ed6aac6612ee7fcbf7a4458759901abf7c0b6"
+        ),
+        "VectorField.scale_func": (
+            "1944d75f52cf323858f16fb5d7403e399144c24033d92913bbb2fdbd4c7015d5"
+        ),
         "VMobject.get_subpath_split_indices_from_points": (
             "f6390df4e1903191807df6181bb8e83ec09107d93cbd1962d7bc80b1e9ce8c24"
         ),

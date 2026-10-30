@@ -51,6 +51,20 @@ Artists
 .. autoclass:: ErrorBars
    :members:
 
+Fields
+------
+
+``ArrowVectorField`` and ``StreamLines`` share Manim's names, so like ``NumberPlane`` they
+are reached as ``mp.ArrowVectorField`` and ``mp.StreamLines``, outside the star import.
+
+.. autoclass:: manim_plots.mobjects.fields.ArrowVectorField
+   :members:
+
+.. autoclass:: manim_plots.mobjects.fields.StreamLines
+   :members:
+
+.. autoclass:: Flow
+
 Legend and style
 ----------------
 

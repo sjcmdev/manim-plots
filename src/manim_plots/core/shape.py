@@ -16,6 +16,95 @@ from manim_plots.core.sources import Bounds, Box, _Disk
 
 Shape = Callable[[Payload, Bounds], Payload]
 
+
+def marching_squares(payload: Payload, bounds: Bounds) -> Payload:
+    """Extract connected zero contours from a scalar region grid.
+
+    Parameters
+    ----------
+    payload
+        Region with scalar values and quad topology. Invalid cells are omitted.
+    bounds
+        Local viewport, unused during contour extraction.
+
+    Returns
+    -------
+    Payload
+        Data anchors in connected paths, with no region topology or values.
+        Ambiguous saddle cells use the bilinear asymptotic decider.
+    """
+    if payload.kind != "region" or payload.values is None or payload.values.ndim != 1:
+        raise ValueError("marching_squares requires a scalar region payload")
+    topology = payload.topology
+    if isinstance(topology, tuple):
+        rows, cols = topology
+        r, c = np.mgrid[: rows - 1, : cols - 1]
+        a = (r * cols + c).ravel()
+        cells = np.column_stack((a, a + 1, a + cols + 1, a + cols))
+    else:
+        assert topology is not None
+        cells = topology
+    if cells.shape[1] != 4:
+        raise ValueError("marching_squares requires quad cells")
+    values = payload.values
+    if payload.valid is not None:
+        cells = cells[payload.valid[cells].all(axis=1)]
+    signs = values[cells] >= 0
+    cells = cells[np.any(signs, axis=1) & ~np.all(signs, axis=1)]
+    locations: dict[tuple[int, int], FloatArray] = {}
+    neighbours: dict[tuple[int, int], list[tuple[int, int]]] = {}
+    for cell in cells:
+        crossings = []
+        for i, j in zip(cell, np.roll(cell, -1), strict=True):
+            a, b = values[i], values[j]
+            if (a >= 0) == (b >= 0):
+                continue
+            key = (
+                (int(i), int(i))
+                if a == 0
+                else (
+                    (int(j), int(j))
+                    if b == 0
+                    else (min(int(i), int(j)), max(int(i), int(j)))
+                )
+            )
+            scale = max(abs(a), abs(b))
+            fraction = (a / scale) / (a / scale - b / scale)
+            locations[key] = payload.coords[i] + fraction * (
+                payload.coords[j] - payload.coords[i]
+            )
+            crossings.append(key)
+        if len(crossings) == 4:
+            f = values[cell]
+            f = f / np.max(np.abs(f))
+            if f[0] * f[2] - f[1] * f[3] < 0:
+                crossings = crossings[1:] + crossings[:1]
+        for a_key, b_key in zip(crossings[::2], crossings[1::2], strict=True):
+            if a_key != b_key:
+                neighbours.setdefault(a_key, []).append(b_key)
+                neighbours.setdefault(b_key, []).append(a_key)
+    paths = []
+    while neighbours:
+        start = next(
+            (k for k, v in neighbours.items() if len(v) == 1), next(iter(neighbours))
+        )
+        path = [locations[start]]
+        current = start
+        while current in neighbours:
+            following = neighbours[current].pop()
+            if not neighbours[current]:
+                del neighbours[current]
+            neighbours[following].remove(current)
+            if not neighbours[following]:
+                del neighbours[following]
+            path.append(locations[following])
+            current = following
+            if current == start:
+                break
+        paths.append(np.array(path))
+    return _assemble(paths, payload.coords.shape[1])
+
+
 _NODES, _WEIGHTS = np.polynomial.legendre.leggauss(8)
 _NODES = (_NODES + 1) / 2
 _WEIGHTS = _WEIGHTS / 2
@@ -431,6 +520,40 @@ def _clip_path(payload: Payload, box: Box) -> Payload:
     return _assemble(parts, dim, lengths)
 
 
+def _clip_with_parameters(payload: Payload, box: Box) -> tuple[Payload, FloatArray]:
+    """Clip once, retaining each cubic's interval in the original traversal."""
+    curves = _curves(payload)
+    count = len(curves)
+    inside = box.contains(payload.coords).reshape(-1, 4).all(axis=1)
+    parts: list[FloatArray] = []
+    intervals: list[tuple[float, float]] = []
+    for i, curve in enumerate(curves):
+        if inside[i]:
+            parts.append(curve)
+            intervals.append((float(i), float(i + 1)))
+            continue
+        xy = curve[:, :2]
+        if ((xy < box.lower).all(axis=0) | (xy > box.upper).all(axis=0)).any():
+            continue
+        times, crossing = _crossings(curve, box)
+        a, b = times[:-1], times[1:]
+        pieces = _restrict(np.repeat(curve[None], len(a), axis=0), a, b)
+        pieces[:, 0, :2] = np.where(
+            np.isfinite(crossing[:-1]), crossing[:-1], pieces[:, 0, :2]
+        )
+        pieces[:, 3, :2] = np.where(
+            np.isfinite(crossing[1:]), crossing[1:], pieces[:, 3, :2]
+        )
+        middle = (pieces[:, 0] + 3 * pieces[:, 1] + 3 * pieces[:, 2] + pieces[:, 3]) / 8
+        for j in np.flatnonzero(box.contains(middle)):
+            parts.append(pieces[j])
+            intervals.append((i + float(a[j]), i + float(b[j])))
+    return (
+        _assemble(parts, payload.coords.shape[1]),
+        np.asarray(intervals, dtype=float).reshape(-1, 2) / max(1, count),
+    )
+
+
 def clip(payload: Payload, bounds: Bounds) -> Payload:
     """Clip final cubic paths, points or whole region cells to a local box.
 
@@ -455,7 +578,13 @@ def clip(payload: Payload, bounds: Bounds) -> Payload:
     if payload.valid is not None:
         valid &= payload.valid
     if payload.kind == "points":
-        return Payload._trusted("points", payload.coords, payload.segments, valid=valid)
+        return Payload._trusted(
+            "points",
+            payload.coords,
+            payload.segments,
+            valid=valid,
+            values=payload.values,
+        )
     topology = payload.topology
     if isinstance(topology, tuple):
         rows, cols = topology
@@ -467,7 +596,7 @@ def clip(payload: Payload, bounds: Bounds) -> Payload:
         cells = topology
     cells = cells[valid[cells].all(axis=1)]
     return Payload._trusted(
-        "region", payload.coords, payload.segments, cells, payload.valid
+        "region", payload.coords, payload.segments, cells, payload.valid, payload.values
     )
 
 
