@@ -78,6 +78,8 @@ class Payload:
         Region grid shape or cell corners; absent for other kinds.
     valid
         Boolean mask of shape ``(n,)``, or None when all samples are valid.
+    values
+        Optional scalar ``(n,)`` or vector ``(n, 2)`` field samples.
 
     Notes
     -----
@@ -90,6 +92,7 @@ class Payload:
     segments: IntArray
     topology: IntArray | tuple[int, int] | None = None
     valid: BoolArray | None = None
+    values: FloatArray | None = None
 
     @classmethod
     def _trusted(
@@ -99,6 +102,7 @@ class Payload:
         segments: IntArray,
         topology: IntArray | tuple[int, int] | None = None,
         valid: BoolArray | None = None,
+        values: FloatArray | None = None,
     ) -> Payload:
         """Freeze core output whose dtype, coverage and validity are already known.
 
@@ -112,6 +116,7 @@ class Payload:
             ("segments", segments),
             ("topology", topology),
             ("valid", valid),
+            ("values", values),
         ):
             if isinstance(value, np.ndarray):
                 value = value.view()
@@ -131,6 +136,20 @@ class Payload:
             raise ValueError("segments must cover all coords for points or region")
         _valid(self.valid, n)
         valid = np.ones(n, dtype=np.bool_) if self.valid is None else self.valid
+        if self.values is not None:
+            values = np.asarray(self.values, dtype=float)
+            if values.shape not in ((n,), (n, 2)):
+                raise ValueError(f"values must have shape ({n},) or ({n}, 2)")
+            finite = np.isfinite(values)
+            if values.ndim == 2:
+                finite = finite.all(axis=1)
+            bad_values = ~finite & valid
+            if bad_values.any():
+                i = int(np.flatnonzero(bad_values)[0])
+                raise ValueError(f"values sample {i} is not finite where valid")
+            values = values.view()
+            values.flags.writeable = False
+            object.__setattr__(self, "values", values)
         bad = ~np.isfinite(coords).all(axis=1) & valid
         if np.any(bad):
             i = int(np.flatnonzero(bad)[0])

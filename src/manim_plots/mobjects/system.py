@@ -85,6 +85,12 @@ from manim_plots.mobjects.context import (
     writer_context,
 )
 from manim_plots.mobjects.errorbar import ErrorBars
+from manim_plots.mobjects.fields import (
+    ArrowVectorField,
+    StreamLines,
+    _get_vector,
+    _implicit_curve,
+)
 from manim_plots.mobjects.helpers import (
     FilledRegion,
     HelperGroup,
@@ -415,6 +421,7 @@ class CartesianAxes(VGroup):
         self._twins: list[CartesianAxes] = []
         self._twin_axis: int | None = None
         self._artists = _ArtistRegistry()
+        self._field_steps = tuple(float(r[2]) if len(r) == 3 else 1.0 for r in ranges)
         self._data_animation = False
         self._channel_frame_moves = False
         self._pool_warned = False
@@ -1153,6 +1160,15 @@ class CartesianAxes(VGroup):
         self, start: CartesianAxes, target: CartesianAxes, alpha: float
     ) -> None:
         self._pool_alpha = alpha
+        for system, system_start, system_target in zip(
+            self._systems(), start._systems(), target._systems(), strict=True
+        ):
+            system._field_steps = tuple(
+                (1 - alpha) * x + alpha * y
+                for x, y in zip(
+                    system_start._field_steps, system_target._field_steps, strict=True
+                )
+            )
         self._syncing = True
         try:
             for axis, a, b in zip(
@@ -1548,6 +1564,8 @@ class CartesianAxes(VGroup):
             New endpoints and an optional ignored locator step.
         """
         self.x_axis.range = _range(x_range, "x_range")
+        if len(x_range) == 3:
+            self._field_steps = (float(x_range[2]), self._field_steps[1])
         return self
 
     def set_y_range(self, y_range: Sequence[float]) -> Self:
@@ -1559,6 +1577,8 @@ class CartesianAxes(VGroup):
             New endpoints and an optional ignored locator step.
         """
         self.y_axis.range = _range(y_range, "y_range")
+        if len(y_range) == 3:
+            self._field_steps = (self._field_steps[0], float(y_range[2]))
         return self
 
     def get_origin(self) -> FloatArray:
@@ -1764,6 +1784,88 @@ class CartesianAxes(VGroup):
             if axis._mirrors or axis._secondaries:
                 for decoration in (*axis._mirrors, *axis._secondaries):
                     decoration._configure_grid()
+
+    def get_vector_field(
+        self, func: Callable[..., Any], **kwargs: object
+    ) -> ArrowVectorField:
+        """Create a bound arrow field in data coordinates.
+
+        Parameters
+        ----------
+        func
+            Function of one point ``[x, y, 0]`` returning a vector.
+        **kwargs
+            ArrowVectorField options, styles and function parameter bindings.
+
+        Returns
+        -------
+        ArrowVectorField
+            Independently styleable arrows following this system.
+        """
+        return ArrowVectorField(func, self, **cast(dict[str, Any], kwargs))
+
+    def get_stream_lines(
+        self, func: Callable[..., Any], **kwargs: object
+    ) -> StreamLines:
+        """Create bound RK4 trajectories in data coordinates.
+
+        Parameters
+        ----------
+        func
+            Function of one point ``[x, y, 0]`` returning a vector.
+        **kwargs
+            StreamLines options, styles and function parameter bindings.
+
+        Returns
+        -------
+        StreamLines
+            Clipped trajectories following this system.
+        """
+        return StreamLines(func, self, **cast(dict[str, Any], kwargs))
+
+    def get_vector(self, coords: Sequence[object], **kwargs: object) -> HelperGroup:
+        """Draw a bound arrow from the data origin to coordinates.
+
+        Parameters
+        ----------
+        coords
+            Two data coordinates, each accepting a tracker or callable binding.
+        **kwargs
+            Native Arrow style and tip options.
+
+        Returns
+        -------
+        HelperGroup
+            Independently styleable ``line`` and ``tip`` parts.
+        """
+        return _get_vector(self, coords, **kwargs)
+
+    def plot_implicit_curve(
+        self,
+        func: Callable[..., Any],
+        min_depth: int = 5,
+        max_quads: int = 1500,
+        **kwargs: object,
+    ) -> _CurvePlot:
+        """Plot a bound zero contour by refined marching squares.
+
+        Parameters
+        ----------
+        func
+            Scalar function of x and y, followed by optional bound parameters.
+        min_depth
+            Number of subdivisions of cells containing a sign change.
+        max_quads
+            Approximate initial grid cell budget.
+        **kwargs
+            Artist style, clipping, and function parameter values or bindings.
+
+        Returns
+        -------
+        VMobject
+            One registered path artist following the system and parameters.
+        """
+        return _implicit_curve(self, func, min_depth, max_quads, **kwargs)
 
     @overload
     def plot(

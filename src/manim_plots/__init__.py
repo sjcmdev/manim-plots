@@ -56,6 +56,9 @@ from manim_plots.mobjects.artists import (
 from manim_plots.mobjects.axis import TickDirection as TickDirection
 from manim_plots.mobjects.context import check_pins
 from manim_plots.mobjects.errorbar import ErrorBars
+from manim_plots.mobjects.fields import ArrowVectorField as ArrowVectorField
+from manim_plots.mobjects.fields import Flow
+from manim_plots.mobjects.fields import StreamLines as StreamLines
 from manim_plots.mobjects.helpers import FilledRegion as FilledRegion
 from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
@@ -81,6 +84,7 @@ __all__ = [
     "ErrorBars",
     "FixedFormatter",
     "FixedLocator",
+    "Flow",
     "FormatStrFormatter",
     "Formatter",
     "FunctionPlot",

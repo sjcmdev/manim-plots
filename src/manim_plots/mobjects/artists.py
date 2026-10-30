@@ -443,8 +443,11 @@ class _CurvePlot(Leaf):
             invalid = (
                 not len(payload.coords)
                 or (payload.valid is not None and not payload.valid.all())
-                or len(payload.segments)
-                > len(getattr(self.source, "discontinuities", ())) + 1
+                or (
+                    hasattr(self.source, "discontinuities")
+                    and len(payload.segments)
+                    > len(getattr(self.source, "discontinuities", ())) + 1
+                )
             )
         payload = system._data.apply_payload(payload)
         if invalid or (payload.valid is not None and not payload.valid.all()):

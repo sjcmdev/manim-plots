@@ -23,6 +23,164 @@ MAX_DEPTH = 12
 MAX_SAMPLES = 20_000
 
 
+def rk4_step(
+    func: Callable[[FloatArray], FloatArray], points: FloatArray, dt: float
+) -> FloatArray:
+    """Advance data points by one classical fourth-order Runge-Kutta step.
+
+    Parameters
+    ----------
+    func
+        Vectorized velocity on arrays of shape ``(n, 2)``.
+    points
+        Initial data coordinates of shape ``(n, 2)``.
+    dt
+        Finite signed field time.
+
+    Returns
+    -------
+    FloatArray
+        Advanced coordinates. A non-finite stage leaves that point stationary.
+    """
+    points = np.asarray(points, dtype=float)
+    if points.ndim != 2 or points.shape[1] != 2:
+        raise ValueError("points must have shape (n, 2)")
+    if not np.isfinite(dt):
+        raise ValueError("dt must be finite")
+    with np.errstate(all="ignore"):
+        k1 = np.asarray(func(points.copy()), dtype=float)
+        k2 = np.asarray(func(points + dt / 2 * k1), dtype=float)
+        k3 = np.asarray(func(points + dt / 2 * k2), dtype=float)
+        k4 = np.asarray(func(points + dt * k3), dtype=float)
+        if any(k.shape != points.shape for k in (k1, k2, k3, k4)):
+            raise ValueError("func must return shape (n, 2)")
+        result = points + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+    good = np.isfinite(result).all(axis=1)
+    return np.where(good[:, None], result, points)
+
+
+@dataclass(frozen=True, init=False)
+class FieldSource:
+    """Sample a scalar or vector field on an inclusive rectangular data grid.
+
+    Parameters
+    ----------
+    func
+        Function accepting one data point ``[x, y, 0]`` and returning a scalar
+        or a two- or three-component vector. The third component is ignored.
+    x_range, y_range
+        Optional finite bounds and positive step; omitted bounds use the map's
+        viewport and omitted steps use one. Field artists supply tick steps.
+    use_vectorized
+        Pass an ``(n, 3)`` array and expect ``(n,)``, ``(n, 2)`` or ``(n, 3)``.
+    """
+
+    func: Callable[..., Any]
+    x_range: tuple[float, ...] | None
+    y_range: tuple[float, ...] | None
+    use_vectorized: bool
+
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        *,
+        x_range: Sequence[float] | None = None,
+        y_range: Sequence[float] | None = None,
+        use_vectorized: bool = False,
+    ) -> None:
+        if not callable(func):
+            raise TypeError("func must be callable")
+        if not isinstance(use_vectorized, bool):
+            raise TypeError("use_vectorized must be a bool")
+        object.__setattr__(self, "func", func)
+        object.__setattr__(self, "x_range", _range(x_range, "x_range"))
+        object.__setattr__(self, "y_range", _range(y_range, "y_range"))
+        object.__setattr__(self, "use_vectorized", use_vectorized)
+
+    def at(self, points: ArrayLike) -> FloatArray:
+        """Evaluate arbitrary data points without restricting them to the grid.
+
+        Parameters
+        ----------
+        points
+            Array of shape ``(n, 2)`` or ``(n, 3)``.
+
+        Returns
+        -------
+        FloatArray
+            Scalars ``(n,)`` or two-component vectors ``(n, 2)``.
+        """
+        data = _numeric(points, "points")
+        if data.ndim != 2 or data.shape[1] not in (2, 3):
+            raise ValueError("points must have shape (n, 2) or (n, 3)")
+        inputs = np.column_stack((data[:, :2], np.zeros(len(data))))
+        with np.errstate(all="ignore"):
+            if self.use_vectorized:
+                values = _numeric(self.func(inputs), "func output")
+            else:
+                outputs = []
+                for point in inputs:
+                    try:
+                        outputs.append(self.func(point))
+                    except (ZeroDivisionError, OverflowError):
+                        outputs.append(np.nan)
+                # Scalar failures in an otherwise vector field invalidate the row.
+                shape = next((np.shape(v) for v in outputs if np.ndim(v)), ())
+                values = _numeric(
+                    [
+                        np.full(shape, v) if np.ndim(v) == 0 and shape else v
+                        for v in outputs
+                    ],
+                    "func output",
+                )
+        if values.shape == (len(data),):
+            return values
+        if values.shape in ((len(data), 2), (len(data), 3)):
+            return values[:, :2].copy()
+        raise ValueError("func output must have shape (n,), (n, 2) or (n, 3)")
+
+    def sample(self, map: CompiledMap, bounds: Bounds) -> Payload:
+        """Sample a region in C order, with rows along y and columns along x.
+
+        Parameters
+        ----------
+        map, bounds
+            Coordinate conversion and local viewport.
+
+        Returns
+        -------
+        Payload
+            Region with grid topology, immutable values and sample validity.
+        """
+        edges = map.inverse(np.array([bounds.lower, bounds.upper]))[:, :2]
+        axes = []
+        for i, explicit in enumerate((self.x_range, self.y_range)):
+            lo, hi = sorted(edges[:, i]) if explicit is None else explicit[:2]
+            step = explicit[2] if explicit is not None and len(explicit) == 3 else 1
+            count = int(np.floor((hi - lo) / step + 1e-12))
+            grid = lo + np.arange(count + 1) * step
+            # Include the upper end even when the final cell is shorter.
+            if not np.isclose(grid[-1], hi, rtol=0, atol=step * 1e-12):
+                grid = np.append(grid, hi)
+            else:
+                grid[-1] = hi
+            axes.append(grid)
+        xs, ys = np.meshgrid(*axes)
+        coords = np.column_stack((xs.ravel(), ys.ravel()))
+        values = self.at(coords)
+        valid = np.isfinite(values)
+        if values.ndim == 2:
+            valid = valid.all(axis=1)
+        return Payload(
+            "region",
+            coords,
+            np.array([[0, len(coords)]]),
+            (len(axes[1]), len(axes[0])),
+            None if valid.all() else valid,
+            values,
+        )
+
+
 class _CalculusSource:
     """Cache calculus queries against a versioned, replaceable parent source."""
 

@@ -700,7 +700,9 @@ class Chain:
         valid = mask
         # User nodes can disagree with valid(); region maps can change winding.
         build = Payload._trusted if trusted else Payload
-        return build(payload.kind, current, segments, payload.topology, valid)
+        return build(
+            payload.kind, current, segments, payload.topology, valid, payload.values
+        )
 
 
 class FrameMap:

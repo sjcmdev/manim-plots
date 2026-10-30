@@ -151,7 +151,12 @@ def test_sl1_noise_is_seeded():
 def test_sl1_a_rotation_field_line_follows_its_circle():
     ax = mp.Axes(x_range=(-2, 2, 1), y_range=(-2, 2, 1), x_length=6, y_length=6)
     lines = ax.get_stream_lines(
-        rotation, x_range=(1, 1.5, 1), y_range=(0, 0.5, 1), virtual_time=6, dt=0.05
+        rotation,
+        x_range=(1, 1.5, 1),
+        y_range=(0, 0.5, 1),
+        noise_factor=0,
+        virtual_time=6,
+        dt=0.05,
     )
     points = np.asarray(lines.stream_lines[0].get_anchors())
     radii = np.linalg.norm(np.array([ax.p2c(p)[:2] for p in points]), axis=1)
