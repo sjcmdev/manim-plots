@@ -21,7 +21,9 @@ TURNS = [k / 24 for k in range(25)] + [1 / 20, 3 / 20, 7 / 10, 1 / 3, 5 / 6]
 def manim_label(monkeypatch, units: str, compact: bool, turn: float) -> str:
     monkeypatch.setattr(coordinate_systems, "MathTex", lambda s, **_: s)
     plane = SimpleNamespace(azimuth_units=units, azimuth_compact_fraction=compact)
-    return PolarPlane.get_radian_label(plane, turn)  # type: ignore[arg-type]
+    label: object = PolarPlane.get_radian_label(plane, turn)  # type: ignore[arg-type]
+    assert isinstance(label, str)
+    return label
 
 
 def text(formatter, values) -> list[str]:

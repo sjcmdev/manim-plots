@@ -36,7 +36,8 @@ def pts(mob) -> np.ndarray:
 
 def radii(mob, centre) -> np.ndarray:
     """Distances from ``centre`` of points along the drawn curve."""
-    return np.linalg.norm(dense(pts(mob))[:, :2] - np.asarray(centre)[:2], axis=1)
+    offsets = dense(pts(mob))[:, :2] - np.asarray(centre)[:2]
+    return np.asarray(np.linalg.norm(offsets, axis=1))
 
 
 def angle(vector) -> float:
@@ -212,10 +213,7 @@ def test_pp3_grid_follows_an_animated_range():
     plane = mp.PolarPlane()
     circle = plane.circles.at(2.0)
     frames = probe(
-        lambda s: (
-            s.add(plane),
-            s.play(plane.animate.set_x_range((-2, 2, 1)).set_y_range((-2, 2, 1))),
-        ),
+        lambda s: s.play(plane.animate.set_x_range((-2, 2, 1)).set_y_range((-2, 2, 1))),
         lambda: float(radii(circle, plane.get_origin()).mean()),
     )
     assert frames[0] == pytest.approx(2.0, abs=1e-2)
@@ -302,7 +300,7 @@ def test_pp6_radian_label_strings():
 
 
 def centre_of(ax) -> np.ndarray:
-    return ax.c2p(ax.r_range[0], 0)
+    return np.asarray(ax.c2p(ax.r_range[0], 0))
 
 
 def test_px1_linear_map_by_hand():
@@ -495,7 +493,7 @@ def test_px7_animated_radial_range():
     curve = ax.plot(lambda t: 1.0)
     circle = ax.circles.at(1.0)
     frames = probe(
-        lambda s: (s.add(ax), s.play(ax.animate.set_r_range((0, 2, 1)))),
+        lambda s: s.play(ax.animate.set_r_range((0, 2, 1))),
         lambda: (
             float(radii(curve, centre_of(ax)).mean()),
             float(radii(circle, centre_of(ax)).mean()),
