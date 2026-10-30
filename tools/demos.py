@@ -28,6 +28,7 @@ from manim import (
     YELLOW,
     Axes,
     Create,
+    Dot,
     FadeIn,
     FadeOut,
     Indicate,
@@ -37,6 +38,7 @@ from manim import (
     Transform,
     Uncreate,
     ValueTracker,
+    VGroup,
     Wiggle,
     always_redraw,
     tempconfig,
@@ -564,6 +566,96 @@ def errorbar_data(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def swirl(point: np.ndarray) -> np.ndarray:
+    """Return the swirl of the field pictures: two vortices and a drift between."""
+    x, y = point[0], point[1]
+    return np.array([np.sin(y), np.cos(x) - 0.3 * y, 0.0])
+
+
+def field_flow(scene: Scene) -> None:
+    """Carry dots along an arrow field with `Flow`, then zoom the axes under it.
+
+    `ax.get_vector_field(swirl)` maps each arrow through the system, so it stays right
+    on unequal units; `Flow(field, dots)` advects with RK4 and leaves no updater behind.
+    Animating the range resamples the field on every frame.
+    """
+    shown: list[Text] = []
+    ax = mp.NumberPlane(x_range=(-6, 6, 1), y_range=(-3, 3, 1), x_length=12, y_length=6)
+    ax.shift(0.4 * DOWN)
+    field = ax.get_vector_field(swirl)
+    dots = VGroup(
+        *(Dot(ax.c2p(x, y), color=YELLOW) for x in (-4, -1, 2) for y in (-1, 1))
+    )
+    show_call(scene, shown, "field = ax.get_vector_field(swirl)")
+    scene.play(Create(ax), FadeIn(field), run_time=1.5)
+    scene.add(dots)
+    show_call(scene, shown, "self.play(Flow(field, dots, run_time=4))")
+    scene.play(mp.Flow(field, dots, run_time=4))
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((-3, 3)))")
+    scene.play(FadeOut(dots), ax.animate.set_x_range((-3, 3)), run_time=2)
+    scene.wait(0.5)
+
+
+def stream_lines_flow(scene: Scene) -> None:
+    """Draw stream lines, run Manim's flowing animation on them, then stop it.
+
+    `ax.get_stream_lines(swirl)` integrates each line with RK4 in data coordinates
+    and clips it to the axes; `create`, `start_animation` and `end_animation` keep
+    Manim's meaning.
+    """
+    shown: list[Text] = []
+    ax = mp.NumberPlane(x_range=(-6, 6, 1), y_range=(-3, 3, 1), x_length=12, y_length=6)
+    ax.shift(0.4 * DOWN)
+    lines = ax.get_stream_lines(swirl, stroke_width=2)
+    show_call(scene, shown, "lines = ax.get_stream_lines(swirl)")
+    scene.add(ax)
+    scene.play(lines.create(run_time=2))
+    show_call(scene, shown, "lines.start_animation(flow_speed=1.5)")
+    lines.start_animation(warm_up=False, flow_speed=1.5)
+    scene.wait(3)
+    show_call(scene, shown, "self.play(lines.end_animation())")
+    scene.play(lines.end_animation())
+    scene.wait(0.5)
+
+
+def polar_flower(scene: Scene) -> None:
+    """Grow a flower on true polar axes: `r = 1.5 + a sin 5θ` with `a` on a tracker.
+
+    `mp.PolarAxes` takes data in `(r, θ)`; `plot` draws `r = f(θ)`, clipped to the disk.
+    The petals pass the rim at `a > 1.5` and are cut there.
+    """
+    shown: list[Text] = []
+    a = ValueTracker(0.2)
+    ax = mp.PolarAxes(r_range=(0, 3, 1), size=6.4).shift(0.3 * DOWN)
+    flower = ax.plot(lambda t, a=0.2: 1.5 + a * np.sin(5 * t), a=a, color=YELLOW)
+    show_call(scene, shown, "ax.plot(lambda t, a: 1.5 + a * np.sin(5 * t), a=tracker)")
+    scene.play(Create(ax), Create(flower), run_time=2)
+    scene.play(a.animate.set_value(1.0), run_time=2)
+    show_call(scene, shown, "self.play(a.animate.set_value(2.2))  # past the rim")
+    scene.play(a.animate.set_value(2.2), run_time=2)
+    scene.wait(0.5)
+
+
+def polar_zoom(scene: Scene) -> None:
+    """Zoom a log-polar radius: the spiral, the points and the circles follow.
+
+    `mp.PolarAxes(r_range=(0.1, 100), r_scale="log")`; `ax.animate.set_r_range(...)`
+    moves the data and the radial grid while the rim and its degrees stay.
+    """
+    shown: list[Text] = []
+    ax = mp.PolarAxes(
+        r_range=(0.1, 100), r_scale="log", azimuth_units="degrees", azimuth_step=12
+    ).shift(0.3 * DOWN)
+    spiral = ax.plot(lambda t: 10 ** (t / PI - 0.5), theta_range=[0, 2.5 * PI])
+    dots = ax.scatter(np.ones(12), np.arange(12) * 2 * PI / 12, color=YELLOW)
+    show_call(scene, shown, 'mp.PolarAxes(r_range=(0.1, 100), r_scale="log")')
+    scene.play(Create(ax), Create(spiral), FadeIn(dots), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_r_range((1, 100)))")
+    scene.play(ax.animate.set_r_range((1, 100)), run_time=2)
+    scene.play(ax.animate.set_r_range((0.1, 100)), run_time=2)
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -586,6 +678,10 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     four_corners,
     secondary_axis,
     errorbar_data,
+    field_flow,
+    stream_lines_flow,
+    polar_flower,
+    polar_zoom,
 ]
 
 
