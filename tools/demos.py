@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 from manim import (
     BLUE,
+    DEGREES,
     DOWN,
     GREEN,
     LEFT,
@@ -36,6 +37,7 @@ from manim import (
     Scene,
     Square,
     Text,
+    ThreeDScene,
     TracedPath,
     Transform,
     Uncreate,
@@ -216,7 +218,10 @@ def show_call(scene: Scene, shown: list[Text], code: str) -> None:
     if shown:
         scene.remove(shown.pop())
     shown.append(new)
-    scene.add(new)
+    if isinstance(scene, ThreeDScene):
+        scene.add_fixed_in_frame_mobjects(new)
+    else:
+        scene.add(new)
 
 
 def legend_placement(scene: Scene) -> None:
@@ -687,6 +692,64 @@ def polar_zoom(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def helix(t: float | np.ndarray) -> np.ndarray:
+    """Return the helix of two turns about (2, 2) rising to z = 2."""
+    return np.array([2 + 1.5 * np.cos(t), 2 + 1.5 * np.sin(t), t / (2 * PI)])
+
+
+def box_orbit(scene: Scene) -> None:
+    """Orbit a box frame: the panes and the axes change sides as the camera turns.
+
+    `mp.ThreeDAxes(frame="box")` draws matplotlib's box; it reads the `ThreeDScene`
+    camera on every frame, so `move_camera` swaps the panes and edges and the numbers
+    keep facing the camera.
+    """
+    shown: list[Text] = []
+    ax = mp.ThreeDAxes(
+        x_range=(0, 4, 1),
+        y_range=(0, 4, 1),
+        z_range=(0, 2, 0.5),
+        x_length=4,
+        y_length=4,
+        z_length=3,
+        frame="box",
+    )
+    scene.set_camera_orientation(**ax.view(25, -50))  # type: ignore[attr-defined]
+    curve = ax.plot_parametric_curve(helix, t_range=(0, 4 * PI), color=YELLOW)
+    t = np.linspace(0, 4 * PI, 13)
+    dots = ax.scatter(*helix(t))
+    show_call(scene, shown, 'mp.ThreeDAxes(frame="box")')
+    scene.play(Create(ax), Create(curve), FadeIn(dots), run_time=2)
+    show_call(scene, shown, "self.move_camera(**ax.view(25, 130))")
+    scene.move_camera(**ax.view(25, 130), run_time=5)  # type: ignore[attr-defined]
+    show_call(scene, shown, "self.move_camera(**ax.view(60, -50))")
+    scene.move_camera(**ax.view(60, -50), run_time=3)  # type: ignore[attr-defined]
+    scene.wait(0.5)
+
+
+def z_range_3d(scene: Scene) -> None:
+    """Animate a z range in 3D: the curves follow and are cut on the box.
+
+    Manim's `ThreeDAxes` picture, but every artist is bound: `ax.animate.set_z_range`
+    rescales the helix and the sine, and the helix is clipped at the new top and bottom.
+    """
+    shown: list[Text] = []
+    ax = mp.ThreeDAxes()
+    scene.set_camera_orientation(phi=65 * DEGREES, theta=-45 * DEGREES)  # type: ignore[attr-defined]
+    spiral = ax.plot_parametric_curve(
+        lambda t: np.array([2 * np.cos(t), 2 * np.sin(t), t / 2]),
+        t_range=(-8, 8),
+        color=YELLOW,
+    )
+    show_call(scene, shown, "mp.ThreeDAxes()")
+    scene.play(Create(ax), Create(spiral), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_z_range((-2, 2, 1)))")
+    scene.play(ax.animate.set_z_range((-2, 2, 1)), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_z_range((-4, 4, 1)))")
+    scene.play(ax.animate.set_z_range((-4, 4, 1)), run_time=2)
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -713,13 +776,18 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     stream_lines_flow,
     polar_flower,
     polar_zoom,
+    box_orbit,
+    z_range_3d,
 ]
+
+THREE_D = {box_orbit, z_range_3d}
 
 
 def render(demo: Callable[[Scene], None]) -> Path:
     """Render one demo at 720p30 and return the video's path."""
+    base = ThreeDScene if demo in THREE_D else Scene
 
-    class Demo(Scene):
+    class Demo(base):  # type: ignore[valid-type,misc]
         def construct(self) -> None:
             demo(self)
 
