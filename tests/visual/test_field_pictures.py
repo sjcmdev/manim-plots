@@ -30,12 +30,12 @@ def test_vector_field(visual):
 
 @pytest.mark.render
 def test_vector_field__manim(visual):
-    """Plain Manim, same field."""
+    """Plain Manim, same field on its defaults (a 0.5 grid)."""
 
     def construct(scene: Scene) -> None:
         scene.add(
             NumberPlane(),
-            ArrowVectorField(swirl, x_range=[-7, 7, 1], y_range=[-4, 4, 1]),
+            ArrowVectorField(swirl),
         )
 
     visual(construct)

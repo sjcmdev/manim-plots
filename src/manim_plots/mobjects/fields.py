@@ -277,7 +277,8 @@ class _Field(VGroup):
             step = (
                 explicit[2]
                 if explicit is not None and len(explicit) == 3
-                else self.system._field_steps[axis.index]
+                # Half the system's step: Manim's 0.5 on its default plane.
+                else self.system._field_steps[axis.index] / 2
             )
             ranges.append((float(lo), float(hi), float(step)))
         self.source = FieldSource(

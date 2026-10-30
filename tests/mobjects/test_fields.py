@@ -53,7 +53,8 @@ def test_vf1_one_arrow_per_grid_point_starting_on_it():
     ax = axes()
     field = ax.get_vector_field(uniform)
     assert isinstance(field, mp.ArrowVectorField)
-    xs, ys = np.arange(-2.0, 2.5, 1.0), np.arange(-1.0, 1.25, 0.5)
+    # Half the axes' steps by default: Manim's 0.5 on its default plane (FS-4).
+    xs, ys = np.arange(-2.0, 2.25, 0.5), np.arange(-1.0, 1.125, 0.25)
     assert len(field.arrows) == len(xs) * len(ys)
     expected = [ax.c2p(x, y) for x in xs for y in ys]  # Manim's order: x outer
     for arrow, point in zip(field.arrows, expected, strict=True):
@@ -108,7 +109,7 @@ def test_fs4_an_animated_range_resamples_the_field():
         scene.play(ax.animate.set_x_range((-4, 4, 2)), run_time=1)
 
     probe(construct, lambda: None)
-    assert len(field.arrows) == 5 * 5
+    assert len(field.arrows) == 9 * 9
     np.testing.assert_allclose(start(field.arrows[0]), ax.c2p(-4, -1), atol=1e-6)
 
 
