@@ -13,26 +13,42 @@ by dimension), `mobjects/surfaces.py` (`coords=`), `src/manim_plots/__init__.py`
 
 ```python
 # on ThreeDAxes
-def plane(self, point=None, normal=None, *, x=None, y=None, z=None, **style) -> PlanePlot: ...
+def plane(
+    self, point=None, normal=None, *, x=None, y=None, z=None, **style
+) -> PlanePlot: ...
 def axline(self, xyz1, xyz2=None, *, direction=None, **style) -> AxLinePlot: ...
 def segment(self, start, end, **style) -> AxLinePlot: ...
 def xline(self, y, z, xmin=0, xmax=1, **style) -> AxLinePlot: ...  # parallel to x
 def yline(self, x, z, ymin=0, ymax=1, **style) -> AxLinePlot: ...
 def zline(self, x, y, zmin=0, zmax=1, **style) -> AxLinePlot: ...
 def get_line_from_axis_to_point(
-    self, index, point, line_func=DashedLine, line_config=None, color=None, stroke_width=2
+    self,
+    index,
+    point,
+    line_func=DashedLine,
+    line_config=None,
+    color=None,
+    stroke_width=2,
 ) -> HelperLine: ...
-def get_lines_to_point(self, point, **kwargs) -> HelperGroup: ...  # .x_line .y_line .z_line
+def get_lines_to_point(
+    self, point, **kwargs
+) -> HelperGroup: ...  # .x_line .y_line .z_line
 def intersection(self, a, b, **style) -> AxLinePlot | ScatterPlot | ContourPlot: ...
-def spherical_to_point(self, r, theta, phi): ...    # alias sp2pt
-def point_to_spherical(self, point): ...            # alias pt2sp
-def cylindrical_to_point(self, rho, phi, z): ...    # alias cy2pt
-def point_to_cylindrical(self, point): ...          # alias pt2cy
+def spherical_to_point(self, r, theta, phi): ...  # alias sp2pt
+def point_to_spherical(self, point): ...  # alias pt2sp
+def cylindrical_to_point(self, rho, phi, z): ...  # alias cy2pt
+def point_to_cylindrical(self, point): ...  # alias pt2cy
+
+
 # coords=None | "spherical" | "cylindrical" on plot_surface, plot_parametric_surface,
 # plot_parametric_curve
 
 
-class PlanePlot(_CurvePlot): ...   # mp.PlanePlot: one closed polygon, the plane in the box
+class PlanePlot(
+    _CurvePlot
+): ...  # mp.PlanePlot: one closed polygon, the plane in the box
+
+
 class AxLinePlot(ParametricPlot): ...  # mp.AxLinePlot: a straight line in data space
 ```
 

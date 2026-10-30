@@ -660,6 +660,7 @@ class _ContourSource:
         offset: float | Literal["pane"] | None,
     ) -> None:
         self.surface, self.level, self.axis, self.offset = surface, level, axis, offset
+        self.value_function: Callable[[FloatArray], FloatArray] | None = None
 
     def at(self, t: ArrayLike) -> FloatArray:
         raise NotImplementedError("contours are sampled as connected paths")
@@ -669,7 +670,11 @@ class _ContourSource:
 
         s = self.surface
         s._driver._ensure()
-        values = s._grid[:, self.axis] - self.level
+        values = (
+            s._grid[:, self.axis]
+            if self.value_function is None
+            else self.value_function(s._grid)
+        ) - self.level
         if s._kind == "triangles":
             locations: dict[tuple[int, int], FloatArray] = {}
             neighbours: dict[tuple[int, int], list[tuple[int, int]]] = {}

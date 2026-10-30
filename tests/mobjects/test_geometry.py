@@ -52,7 +52,7 @@ def ends(mob: Any) -> np.ndarray:
     return np.array([points[0], points[-1]])
 
 
-def same_set(a: np.ndarray, b: np.ndarray, atol: float = 1e-9) -> None:
+def same_set(a: Any, b: Any, atol: float = 1e-9) -> None:
     """Two point sets equal up to order."""
     a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
     assert len(a) == len(b)
