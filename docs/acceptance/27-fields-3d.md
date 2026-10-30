@@ -21,6 +21,8 @@ def get_stream_lines(
     self, func, *, three_dimensions=True, line="flat", coords=None, **kwargs
 ) -> StreamLines: ...
 def get_vector(self, coords, **kwargs) -> HelperGroup: ...  # .line .tip, flat, facing
+
+
 # Flow(field, *mobjects, ...) and the nudge family take 3D fields unchanged
 ```
 
