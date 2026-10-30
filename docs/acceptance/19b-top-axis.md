@@ -95,4 +95,9 @@ mirror made after `ax.x.set_tick_style(width=4)` draws its ticks at width 2.
   both orders; the mirror back when the twin moves out.
 - Visual: `test_top_axis_twiny`, `test_secondary_axis` and `test_four_corners`, no Manim
   twin. A frame-cost reading: a secondary axis and the four corner pairs under an
-  animated range, recorded here, not gated.
+  animated range, recorded here, not gated — update p95 3.98 ms (four curves of 2 000
+  samples and a secondary x axis, 2026-10-30). F-1001 itself unchanged: interleaved with
+  `dev`, `animate-bilinear` 3.37-3.62 ms against 3.28-3.57 ms.
+- Found at review and fixed: a decoration whose ticks change under `.animate` left its
+  new leaves out of the renderer's members and one retired number frozen in place
+  (`test_sa4_mi2_new_parts_are_rendered_on_every_frame`).
