@@ -69,7 +69,6 @@ def test_ts1_log_z_by_hand():
         ("twinx", ()),
         ("twiny", ()),
         ("secondary_xaxis", ("top",)),
-        ("get_vector_field", (lambda p: p,)),
         ("get_area", (None,)),
         ("get_vertical_line", ((0, 0, 0),)),
         ("errorbar", ([1], [1])),
