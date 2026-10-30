@@ -295,7 +295,7 @@ def test_tx2_in_a_three_d_scene_the_text_stays_at_its_point():
     ax = mp.ThreeDAxes()
     note: Any = ax.annotate("peak", (2, 2, 2), (3.5, 0.5, 3.5))
     label = ax.text(0.5, 3.5, 4, "top")
-    seen: list[np.ndarray] = []
+    seen: list[Any] = []
 
     class Shot(ThreeDScene):
         def construct(self) -> None:
