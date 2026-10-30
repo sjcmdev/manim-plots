@@ -1218,6 +1218,10 @@ class ScatterPlot(VGroup):
         Coordinate system supplying bounds and placement.
     marker
         Marker enum or native template, defaulting to Dot().
+    c, s
+        Values or a single colour, and marker radii in scene units.
+    colorscale, vmin, vmax, norm
+        Value colour mapping and normalisation.
     label
         Legend entry text, or None when unset.
     clip
@@ -1237,6 +1241,12 @@ class ScatterPlot(VGroup):
         marker: Mobject | Marker | None = None,
         label: str | None = None,
         clip: _ClipInput = True,
+        c: object = None,
+        s: ArrayLike | None = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: object = None,
         **kwargs: Unpack[_VMStyle],
     ) -> None:
         _validate_label(label)
@@ -1244,6 +1254,37 @@ class ScatterPlot(VGroup):
         _clip_box(system, clip_value)
         self._label, self._clip = label, clip_value
         self.source = ArraySource(xs, ys, kind="points", dim=len(system._ranges))
+        count = len(self.source.data)
+        self._color_mapping: mp.ColorMapping | None = None
+        colors = None
+        if isinstance(c, (str, ManimColor)):
+            kwargs["color"] = c
+        elif c is not None:
+            from manim_plots.mobjects.colormaps import resolve_colorscale
+
+            values = np.asarray(c, dtype=float)
+            if values.shape != (count,) or not np.isfinite(values).all():
+                raise ValueError("c must contain one finite value per point")
+            lo, hi = (float(values.min()), float(values.max())) if count else (0.0, 1.0)
+            self._color_mapping = resolve_colorscale(
+                "viridis" if colorscale is None else colorscale,
+                vmin=vmin,
+                vmax=vmax,
+                norm=cast(Any, norm),
+                default_range=(lo, hi if hi > lo else lo + 1),
+            )
+            colors = self._color_mapping(values)
+        sizes = None
+        if s is not None:
+            sizes = np.asarray(s, dtype=float)
+            if sizes.ndim == 0:
+                sizes = np.full(count, sizes)
+            if (
+                sizes.shape != (count,)
+                or not np.isfinite(sizes).all()
+                or (sizes < 0).any()
+            ):
+                raise ValueError("s must be a nonnegative radius or one per point")
         if marker is not None and not isinstance(marker, (Mobject, Marker)):
             raise TypeError("marker must be a Marker, Mobject or None")
         if marker is None or isinstance(marker, Marker):
@@ -1307,8 +1348,20 @@ class ScatterPlot(VGroup):
                 group.match_style(native, family=False)
             return group
 
-        self.submobjects = [convert(template, i) for i in range(len(self.source.data))]
+        self.submobjects = []
+        for i in range(count):
+            native = template.copy()
+            if colors is not None:
+                native.set_color(ManimColor(colors[i]))
+            if sizes is not None:
+                native.scale(2 * sizes[i] / native.width)
+            self.submobjects.append(convert(native, i))
         self.add_updater(_synchronise)
+
+    @property
+    def color_mapping(self) -> mp.ColorMapping | None:
+        """Return the value colour mapping, or None without numeric c."""
+        return self._color_mapping
 
     @property
     def points(self) -> FloatArray:
@@ -1410,6 +1463,7 @@ class ScatterPlot(VGroup):
             mobject, match_height, match_width, match_depth, match_center, stretch
         )
         if isinstance(mobject, ScatterPlot):
+            self._color_mapping = mobject._color_mapping
             self._clip = mobject._clip
             for leaf in self.get_family():
                 if isinstance(leaf, _MarkerLeaf):

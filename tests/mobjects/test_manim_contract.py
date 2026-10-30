@@ -287,6 +287,7 @@ ADDED_BY_TASK_25 = [
 
 ADDED_BY_TASK_26: list[str] = []
 ADDED_BY_TASK_28: list[str] = []
+ADDED_BY_TASK_29: list[str] = []
 
 ADDED_BY_TASK_27 = [
     "Arrow3D.get_end",
@@ -328,6 +329,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_26
         + ADDED_BY_TASK_27
         + ADDED_BY_TASK_28
+        + ADDED_BY_TASK_29
     )
 
 

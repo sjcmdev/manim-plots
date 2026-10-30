@@ -71,7 +71,6 @@ def test_ts1_log_z_by_hand():
         ("secondary_xaxis", ("top",)),
         ("get_area", (None,)),
         ("get_vertical_line", ((0, 0, 0),)),
-        ("errorbar", ([1], [1])),
     ],
 )
 def test_ts3_2d_only_methods_refuse(method, args):

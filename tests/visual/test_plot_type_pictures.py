@@ -57,8 +57,8 @@ def test_bars(visual):
     def construct(scene: Scene) -> None:
         camera(scene)
         ax = mp.ThreeDAxes(**BOX)
-        x, y = np.meshgrid(np.arange(4), np.arange(4))
-        x, y = x.ravel(), y.ravel()
+        gx, gy = np.meshgrid(np.arange(4), np.arange(4))
+        x, y = gx.ravel(), gy.ravel()
         heights = 4 * np.exp(-((x - 1.5) ** 2 + (y - 1.5) ** 2) / 3)
         scene.add(ax, ax.bar3d(x + 0.1, y + 0.1, 0 * x, 0.8, 0.8, heights))
 
@@ -89,9 +89,9 @@ def test_text_and_annotation(visual):
         ax = mp.ThreeDAxes(**BOX)
         scene.add(
             ax,
-            ax.scatter([2], [2], [3]),
-            ax.annotate("peak", (2, 2, 3), (3, 1, 4)),
-            ax.text(2, 2, 4, "top"),
+            ax.scatter([2], [2], [1.5], s=0.08),
+            ax.annotate("peak", (2, 2, 1.5), (0.5, 1, 3.5)),
+            ax.text(3.5, 3, 4, "top"),
         )
 
     visual(construct, three_d=True)

@@ -73,9 +73,15 @@ from manim_plots.mobjects.helpers import FilledRegion as FilledRegion
 from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
 from manim_plots.mobjects.legend import Legend
+from manim_plots.mobjects.plots3d import BarPlot3D, StemPlot, WaterfallPlot
 from manim_plots.mobjects.polar import PolarAxes
 from manim_plots.mobjects.polar import PolarPlane as PolarPlane
-from manim_plots.mobjects.surfaces import ContourPlot, SurfacePlot, WireframePlot
+from manim_plots.mobjects.surfaces import (
+    ContourPlot,
+    GrowSurface,
+    SurfacePlot,
+    WireframePlot,
+)
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
 from manim_plots.mobjects.system import NumberPlane as NumberPlane
@@ -92,6 +98,7 @@ __all__ = [
     "AngleFormatter",
     "ArraySource",
     "AxLinePlot",
+    "BarPlot3D",
     "Bounds",
     "CartesianAxes",
     "ColorMapping",
@@ -112,6 +119,7 @@ __all__ = [
     "FunctionPlot",
     "FunctionScale",
     "FunctionSource",
+    "GrowSurface",
     "Labels",
     "Legend",
     "LinePlot",
@@ -141,11 +149,13 @@ __all__ = [
     "Shape",
     "ShowPoints",
     "Source",
+    "StemPlot",
     "SurfacePlot",
     "SymLogLocator",
     "SymLogScale",
     "Theme",
     "TraceCurve",
+    "WaterfallPlot",
     "WireframePlot",
     "__version__",
     "colormaps",
