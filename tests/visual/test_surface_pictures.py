@@ -4,6 +4,8 @@ draws the same scene."""
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pytest
 from manim import (
@@ -20,6 +22,8 @@ from manim import (
 import manim_plots as mp
 
 SCALE = [BLUE, GREEN, YELLOW, ORANGE, RED]
+# Small enough for the whole box to stay in the frame at the test camera.
+SIZE: dict[str, Any] = {"x_length": 5, "y_length": 5, "z_length": 3.5}
 
 
 def camera(scene: Scene) -> None:
@@ -74,7 +78,11 @@ def test_surface_viridis_colorbar(visual):
     def construct(scene: Scene) -> None:
         camera(scene)
         ax = mp.ThreeDAxes(
-            x_range=(-2, 2, 1), y_range=(-2, 2, 1), z_range=(0, 1, 0.25), frame="box"
+            x_range=(-2, 2, 1),
+            y_range=(-2, 2, 1),
+            z_range=(0, 1, 0.25),
+            frame="box",
+            **SIZE,
         )
         surface = ax.plot_surface(
             lambda u, v: np.exp(-(u**2 + v**2)), resolution=24, colorscale="viridis"
@@ -90,7 +98,9 @@ def test_surface_clipped(visual):
 
     def construct(scene: Scene) -> None:
         camera(scene)
-        ax = mp.ThreeDAxes(x_range=(-3, 3, 1), y_range=(-3, 3, 1), z_range=(-2, 2, 1))
+        ax = mp.ThreeDAxes(
+            x_range=(-3, 3, 1), y_range=(-3, 3, 1), z_range=(-2, 2, 1), **SIZE
+        )
         surface = ax.plot_surface(
             lambda u, v: 3 * np.sin(u + v), resolution=24, colorscale=SCALE
         )
@@ -108,7 +118,9 @@ def test_trisurf(visual):
         camera(scene)
         rng = np.random.default_rng(7)
         x, y = rng.uniform(-2, 2, 60), rng.uniform(-2, 2, 60)
-        ax = mp.ThreeDAxes(x_range=(-2, 2, 1), y_range=(-2, 2, 1), z_range=(0, 3, 1))
+        ax = mp.ThreeDAxes(
+            x_range=(-2, 2, 1), y_range=(-2, 2, 1), z_range=(0, 3, 1), **SIZE
+        )
         scene.add(ax, ax.plot_trisurf(x, y, np.hypot(x, y), colorscale="plasma"))
 
     visual(construct, three_d=True)
@@ -120,7 +132,9 @@ def test_wireframe(visual):
 
     def construct(scene: Scene) -> None:
         camera(scene)
-        ax = mp.ThreeDAxes(x_range=(-6, 6, 2), y_range=(-6, 6, 2), z_range=(-1, 1, 0.5))
+        ax = mp.ThreeDAxes(
+            x_range=(-6, 6, 2), y_range=(-6, 6, 2), z_range=(-1, 1, 0.5), **SIZE
+        )
         scene.add(ax, ax.plot_wireframe(lambda u, v: np.sinc(np.hypot(u, v) / np.pi)))
 
     visual(construct, three_d=True)
@@ -132,7 +146,9 @@ def test_surface_of_revolution(visual):
 
     def construct(scene: Scene) -> None:
         camera(scene)
-        ax = mp.ThreeDAxes(x_range=(-2, 2, 1), y_range=(-2, 2, 1), z_range=(0, 6, 1))
+        ax = mp.ThreeDAxes(
+            x_range=(-2, 2, 1), y_range=(-2, 2, 1), z_range=(0, 6, 1), **SIZE
+        )
         scene.add(
             ax, ax.plot_surface_of_revolution(lambda t: 1 + np.sin(t) / 2, (0, 6))
         )
@@ -148,7 +164,11 @@ def test_contours_on_the_pane(visual):
     def construct(scene: Scene) -> None:
         camera(scene)
         ax = mp.ThreeDAxes(
-            x_range=(-2, 2, 1), y_range=(-2, 2, 1), z_range=(0, 8, 2), frame="box"
+            x_range=(-2, 2, 1),
+            y_range=(-2, 2, 1),
+            z_range=(0, 8, 2),
+            frame="box",
+            **SIZE,
         )
         surface = ax.plot_surface(
             lambda u, v: u**2 + v**2, colorscale="coolwarm", fill_opacity=0.7

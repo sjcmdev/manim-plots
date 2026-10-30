@@ -61,6 +61,8 @@ from manim_plots.mobjects.artists import (
     ScatterPlot,
 )
 from manim_plots.mobjects.axis import TickDirection as TickDirection
+from manim_plots.mobjects.colorbar import Colorbar
+from manim_plots.mobjects.colormaps import Colormap, ColorMapping, colormaps
 from manim_plots.mobjects.context import check_pins
 from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.fields import ArrowVectorField as ArrowVectorField
@@ -72,6 +74,7 @@ from manim_plots.mobjects.helpers import HelperLine as HelperLine
 from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.polar import PolarAxes
 from manim_plots.mobjects.polar import PolarPlane as PolarPlane
+from manim_plots.mobjects.surfaces import ContourPlot, SurfacePlot, WireframePlot
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
 from manim_plots.mobjects.system import NumberPlane as NumberPlane
@@ -89,7 +92,11 @@ __all__ = [
     "ArraySource",
     "Bounds",
     "CartesianAxes",
+    "ColorMapping",
+    "Colorbar",
+    "Colormap",
     "CompiledMap",
+    "ContourPlot",
     "DecimalFormatter",
     "DrawAxes",
     "EngFormatter",
@@ -131,11 +138,14 @@ __all__ = [
     "Shape",
     "ShowPoints",
     "Source",
+    "SurfacePlot",
     "SymLogLocator",
     "SymLogScale",
     "Theme",
     "TraceCurve",
+    "WireframePlot",
     "__version__",
+    "colormaps",
     "get_theme",
     "set_theme",
 ]

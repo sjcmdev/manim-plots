@@ -36,6 +36,7 @@ from manim.utils.color import ParsableManimColor
 from manim.utils.config_ops import merge_dicts_recursively
 from numpy.typing import ArrayLike
 
+import manim_plots as mp
 from manim_plots.core import FloatArray
 from manim_plots.core import lifecycle as lc
 from manim_plots.core.nodes import (
@@ -2213,6 +2214,197 @@ class CartesianAxes(VGroup):
         )
         self.add(artist)
         return artist
+
+    def colorbar(
+        self,
+        mappable: object = None,
+        *,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        label: object = None,
+        length: float | None = None,
+        width: float = 0.25,
+        buff: float = MED_SMALL_BUFF,
+        **kwargs: object,
+    ) -> mp.Colorbar:
+        """Build a numbered colour strip beside this system.
+
+        Parameters
+        ----------
+        mappable, colorscale, vmin, vmax, norm, label, length, width, buff, **kwargs
+            Artist or explicit mapping, label, size and decoration options.
+
+        Returns
+        -------
+        Colorbar
+            The bound colour strip and value axis.
+        """
+        from manim_plots.mobjects.colorbar import Colorbar
+
+        return Colorbar(
+            self,
+            mappable,
+            colorscale=colorscale,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            label=label,
+            length=length,
+            width=width,
+            buff=buff,
+            **kwargs,
+        )
+
+    def plot_surface(
+        self,
+        function: Callable[..., Any],
+        u_range: Sequence[float] | None = None,
+        v_range: Sequence[float] | None = None,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        resolution: int | tuple[int, int] = 32,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> mp.SurfacePlot:
+        """Draw a bound height surface.
+
+        Parameters
+        ----------
+        function, u_range, v_range, colorscale, colorscale_axis
+            Surface data, parameter ranges, colours and rendering options.
+        resolution, vmin, vmax, norm, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        raise NotImplementedError("plot_surface needs ThreeDAxes")
+
+    def plot_parametric_surface(
+        self,
+        function: Callable[..., Any],
+        u_range: Sequence[float] | None,
+        v_range: Sequence[float] | None,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        resolution: int | tuple[int, int] = 32,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> mp.SurfacePlot:
+        """Draw a parametric surface in data coordinates.
+
+        Parameters
+        ----------
+        function, u_range, v_range, colorscale, colorscale_axis
+            Surface data, parameter ranges, colours and rendering options.
+        resolution, vmin, vmax, norm, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        raise NotImplementedError("plot_parametric_surface needs ThreeDAxes")
+
+    def plot_surface_of_revolution(
+        self,
+        function: Callable[..., Any],
+        t_range: Sequence[float] | None = None,
+        axis: str = "z",
+        angle_range: Sequence[float] = (0, 2 * np.pi),
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        resolution: int | tuple[int, int] = 32,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> mp.SurfacePlot:
+        """Revolve a radius function about a data axis.
+
+        Parameters
+        ----------
+        function, t_range, axis, angle_range, colorscale, colorscale_axis
+            Surface data, parameter ranges, colours and rendering options.
+        resolution, vmin, vmax, norm, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        raise NotImplementedError("plot_surface_of_revolution needs ThreeDAxes")
+
+    def surface(
+        self,
+        X: ArrayLike,
+        Y: ArrayLike,
+        Z: ArrayLike,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> mp.SurfacePlot:
+        """Draw quadrilateral cells from three matching coordinate grids.
+
+        Parameters
+        ----------
+        X, Y, Z, colorscale, colorscale_axis, vmin, vmax, norm, clip
+            Surface data, parameter ranges, colours and rendering options.
+        **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        raise NotImplementedError("surface needs ThreeDAxes")
+
+    def plot_trisurf(
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        z: ArrayLike,
+        triangles: ArrayLike | None = None,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> mp.SurfacePlot:
+        """Draw explicit triangles or a Delaunay triangulation of scattered points.
+
+        Parameters
+        ----------
+        x, y, z, triangles, colorscale, colorscale_axis, vmin, vmax, norm
+            Surface data, parameter ranges, colours and rendering options.
+        clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        raise NotImplementedError("plot_trisurf needs ThreeDAxes")
+
+    def plot_wireframe(
+        self,
+        function: Callable[..., Any],
+        u_range: Sequence[float] | None = None,
+        v_range: Sequence[float] | None = None,
+        *,
+        resolution: int | tuple[int, int] = 10,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> mp.WireframePlot:
+        """Draw a grid of adaptive three-dimensional surface curves.
+
+        Parameters
+        ----------
+        function, u_range, v_range, resolution, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        raise NotImplementedError("plot_wireframe needs ThreeDAxes")
 
     def plot_parametric_curve(
         self,

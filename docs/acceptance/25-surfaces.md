@@ -14,60 +14,144 @@ Modules: `mobjects/surfaces.py` (new: the surface artists, contours), `core/colo
 ```python
 # on ThreeDAxes
 def plot_surface(
-    self, function, u_range=None, v_range=None, colorscale=None, colorscale_axis=2,
-    *, resolution=32, vmin=None, vmax=None, norm=None, clip=True, **kwargs,
-) -> SurfacePlot: ...                      # z = function(x, y); Manim's signature first
-def plot_parametric_surface(
-    self, function, u_range, v_range, colorscale=None, colorscale_axis=2, *,
-    resolution=32, vmin=None, vmax=None, norm=None, clip=True, **kwargs,
-) -> SurfacePlot: ...                      # (x, y, z) = function(u, v)
-def plot_surface_of_revolution(
-    self, function, t_range=None, axis="z", angle_range=(0, TAU), colorscale=None,
-    colorscale_axis=2, *, resolution=32, vmin=None, vmax=None, norm=None, clip=True,
+    self,
+    function,
+    u_range=None,
+    v_range=None,
+    colorscale=None,
+    colorscale_axis=2,
+    *,
+    resolution=32,
+    vmin=None,
+    vmax=None,
+    norm=None,
+    clip=True,
     **kwargs,
-) -> SurfacePlot: ...                      # radius = function(t) about axis
-def surface(self, X, Y, Z, colorscale=None, colorscale_axis=2, *, vmin=None, vmax=None,
-            norm=None, clip=True, **kwargs) -> SurfacePlot: ...   # grids, shape (m, n)
-def plot_trisurf(self, x, y, z, triangles=None, colorscale=None, colorscale_axis=2, *,
-                 vmin=None, vmax=None, norm=None, clip=True, **kwargs) -> SurfacePlot: ...
-def plot_wireframe(self, function, u_range=None, v_range=None, *, resolution=10,
-                   clip=True, **kwargs) -> WireframePlot: ...     # z = function(x, y)
-def colorbar(self, mappable=None, *, colorscale=None, vmin=None, vmax=None, norm=None,
-             label=None, length=None, width=0.25, buff=MED_SMALL_BUFF, **kwargs
-) -> Colorbar: ...                         # also on CartesianAxes (2D)
+) -> SurfacePlot: ...  # z = function(x, y); Manim's signature first
+def plot_parametric_surface(
+    self,
+    function,
+    u_range,
+    v_range,
+    colorscale=None,
+    colorscale_axis=2,
+    *,
+    resolution=32,
+    vmin=None,
+    vmax=None,
+    norm=None,
+    clip=True,
+    **kwargs,
+) -> SurfacePlot: ...  # (x, y, z) = function(u, v)
+def plot_surface_of_revolution(
+    self,
+    function,
+    t_range=None,
+    axis="z",
+    angle_range=(0, TAU),
+    colorscale=None,
+    colorscale_axis=2,
+    *,
+    resolution=32,
+    vmin=None,
+    vmax=None,
+    norm=None,
+    clip=True,
+    **kwargs,
+) -> SurfacePlot: ...  # radius = function(t) about axis
+def surface(
+    self,
+    X,
+    Y,
+    Z,
+    colorscale=None,
+    colorscale_axis=2,
+    *,
+    vmin=None,
+    vmax=None,
+    norm=None,
+    clip=True,
+    **kwargs,
+) -> SurfacePlot: ...  # grids, shape (m, n)
+def plot_trisurf(
+    self,
+    x,
+    y,
+    z,
+    triangles=None,
+    colorscale=None,
+    colorscale_axis=2,
+    *,
+    vmin=None,
+    vmax=None,
+    norm=None,
+    clip=True,
+    **kwargs,
+) -> SurfacePlot: ...
+def plot_wireframe(
+    self, function, u_range=None, v_range=None, *, resolution=10, clip=True, **kwargs
+) -> WireframePlot: ...  # z = function(x, y)
+def colorbar(
+    self,
+    mappable=None,
+    *,
+    colorscale=None,
+    vmin=None,
+    vmax=None,
+    norm=None,
+    label=None,
+    length=None,
+    width=0.25,
+    buff=MED_SMALL_BUFF,
+    **kwargs,
+) -> Colorbar: ...  # also on CartesianAxes (2D)
+
 
 class SurfacePlot(VGroup):
-    faces: FaceGroup                       # .at((i, j)) for grids, .at(k) for triangles
+    faces: FaceGroup  # .at((i, j)) for grids, .at(k) for triangles
     color_mapping: ColorMapping | None
-    def set_colorscale(self, colorscale, colorscale_axis=2, *, vmin=None, vmax=None,
-                       norm=None) -> Self: ...
+
+    def set_colorscale(
+        self, colorscale, colorscale_axis=2, *, vmin=None, vmax=None, norm=None
+    ) -> Self: ...
     def set_fill_by_checkerboard(self, *colors, opacity=None) -> Self: ...  # Manim's
     def set_fill_by_value(self, axes, colorscale=None, axis=2, **kwargs) -> Self: ...
-    def contour(self, levels=None, *, zdir="z", offset=None, colorscale=None,
-                **kwargs) -> ContourPlot: ...
+    def contour(
+        self, levels=None, *, zdir="z", offset=None, colorscale=None, **kwargs
+    ) -> ContourPlot: ...
+
 
 class WireframePlot(VGroup):
-    u_lines: VGroup                        # .at(u): the line of constant u
-    v_lines: VGroup                        # .at(v)
+    u_lines: VGroup  # .at(u): the line of constant u
+    v_lines: VGroup  # .at(v)
 
-class ContourPlot(VGroup):                 # .at(level): one VMobject per level
+
+class ContourPlot(VGroup):  # .at(level): one VMobject per level
     levels: tuple[float, ...]
 
-class Colormap:                            # mp.Colormap
-    def __init__(self, colors, positions=None, name=None): ...
-    def __call__(self, t) -> np.ndarray: ...   # t in [0, 1], scalar or array -> (..., 3) rgb
-colormaps: dict[str, Colormap]             # mp.colormaps
 
-class ColorMapping:                        # mp.ColorMapping, what a colorbar reads
+class Colormap:  # mp.Colormap
+    def __init__(self, colors, positions=None, name=None): ...
+    def __call__(
+        self, t
+    ) -> np.ndarray: ...  # t in [0, 1], scalar or array -> (..., 3) rgb
+
+
+colormaps: dict[str, Colormap]  # mp.colormaps
+
+
+class ColorMapping:  # mp.ColorMapping, what a colorbar reads
     colormap: Colormap
     vmin: float
     vmax: float
     scale: Scale
+
     def __call__(self, values) -> np.ndarray: ...  # (..., 3) rgb
 
-class Colorbar(CartesianAxes):             # mp.Colorbar
-    axis: Axis                             # the numbered axis (bar.y)
-    strip: VGroup                          # the coloured cells, bottom to top
+
+class Colorbar(CartesianAxes):  # mp.Colorbar
+    axis: Axis  # the numbered axis (bar.y)
+    strip: VGroup  # the coloured cells, bottom to top
 ```
 
 ## SF — surfaces
@@ -123,7 +207,7 @@ class Colorbar(CartesianAxes):             # mp.Colorbar
 
 | ID | Row |
 |---|---|
-| CB-1 | `ax.colorbar(mappable)` reads `mappable.color_mapping`; `ax.colorbar(colorscale=..., vmin=..., vmax=..., norm=...)` builds one without a mappable (both raise `ValueError` when neither or both are given). The bar is an `mp.Colorbar`, a `CartesianAxes` whose y axis is the value axis on the mapping's scale (`y_range = (vmin, vmax)`, `y_scale` = the mapping's), placed on the right (`set_position("right")`), numbered by task 10's locator and formatter; the x axis is hidden. `bar.axis` is `bar.y`, with every control of task 10 |
+| CB-1 | `ax.colorbar(mappable)` reads `mappable.color_mapping`; `ax.colorbar(colorscale=..., vmin=..., vmax=..., norm=...)` builds one without a mappable (both raise `ValueError` when neither or both are given). The bar is an `mp.Colorbar`, a `CartesianAxes` whose y axis is the value axis on the mapping's scale (`y_range = (vmin, vmax)`, `y_scale` = the mapping's), placed on the right (`set_position("right")`), numbered by task 10's locator and formatter, every tick numbered (no origin is excluded, so `0` reads at the bottom of a bar from 0); the x axis is hidden. `bar.axis` is `bar.y`, with every control of task 10 |
 | CB-2 | `bar.strip` is 64 cells *(default taken)* stacked bottom to top, cell `k` filled with the mapping's colour at the centre of its value interval (in the scale's space), no stroke; `width=0.25`, `length` defaults to the axes' `y_length` in 2D and `z_length` in 3D, label via `label=` as task 10's axis label |
 | CB-3 | Placement: in 2D, the strip's left edge is `buff` right of the axes' right edge (`ax.get_right()`), its centre at the axes' centre height, kept there on every frame the axes move *(default taken)*. In a `ThreeDScene`, the bar is added to the camera's fixed-in-frame mobjects on its first frame (TF-5's mechanism) and placed at `RIGHT * (config.frame_width / 2 - 1)` |
 | CB-4 | Bound: when the mapping changes (a range change of the surface's colour axis, `set_colorscale`), the bar's range and colours follow on that frame, animated with the change. `ArrowVectorField` and `StreamLines` gain `color_mapping` (their `colors` evenly spaced, `min_color_scheme_value`, `max_color_scheme_value`, linear), so `ax.colorbar(field)` works in 2D |
@@ -163,44 +247,156 @@ Visual (`tests/visual/test_surface_pictures.py`, camera at `phi = 65°`, `theta 
 ```python
 STOPS = {
     "viridis": (
-        "#440154", "#48186a", "#472d7b", "#424086", "#3b528b", "#33638d",
-        "#2c728e", "#26828e", "#21918c", "#1fa088", "#28ae80", "#3fbc73",
-        "#5ec962", "#84d44b", "#addc30", "#d8e219", "#fde725",
+        "#440154",
+        "#48186a",
+        "#472d7b",
+        "#424086",
+        "#3b528b",
+        "#33638d",
+        "#2c728e",
+        "#26828e",
+        "#21918c",
+        "#1fa088",
+        "#28ae80",
+        "#3fbc73",
+        "#5ec962",
+        "#84d44b",
+        "#addc30",
+        "#d8e219",
+        "#fde725",
     ),
     "plasma": (
-        "#0d0887", "#310597", "#4c02a1", "#6600a7", "#7e03a8", "#9511a1",
-        "#aa2395", "#bc3587", "#cc4778", "#da5a6a", "#e66c5c", "#f0804e",
-        "#f89540", "#fdac33", "#fdc527", "#f8df25", "#f0f921",
+        "#0d0887",
+        "#310597",
+        "#4c02a1",
+        "#6600a7",
+        "#7e03a8",
+        "#9511a1",
+        "#aa2395",
+        "#bc3587",
+        "#cc4778",
+        "#da5a6a",
+        "#e66c5c",
+        "#f0804e",
+        "#f89540",
+        "#fdac33",
+        "#fdc527",
+        "#f8df25",
+        "#f0f921",
     ),
     "inferno": (
-        "#000004", "#0b0724", "#210c4a", "#3d0965", "#57106e", "#71196e",
-        "#8a226a", "#a32c61", "#bc3754", "#d24644", "#e45a31", "#f1731d",
-        "#f98e09", "#fcac11", "#f9cb35", "#f2ea69", "#fcffa4",
+        "#000004",
+        "#0b0724",
+        "#210c4a",
+        "#3d0965",
+        "#57106e",
+        "#71196e",
+        "#8a226a",
+        "#a32c61",
+        "#bc3754",
+        "#d24644",
+        "#e45a31",
+        "#f1731d",
+        "#f98e09",
+        "#fcac11",
+        "#f9cb35",
+        "#f2ea69",
+        "#fcffa4",
     ),
     "magma": (
-        "#000004", "#0a0822", "#1d1147", "#36106b", "#51127c", "#6a1c81",
-        "#832681", "#9c2e7f", "#b73779", "#d0416f", "#e75263", "#f56b5c",
-        "#fc8961", "#fea772", "#fec488", "#fde2a3", "#fcfdbf",
+        "#000004",
+        "#0a0822",
+        "#1d1147",
+        "#36106b",
+        "#51127c",
+        "#6a1c81",
+        "#832681",
+        "#9c2e7f",
+        "#b73779",
+        "#d0416f",
+        "#e75263",
+        "#f56b5c",
+        "#fc8961",
+        "#fea772",
+        "#fec488",
+        "#fde2a3",
+        "#fcfdbf",
     ),
     "cividis": (
-        "#00224e", "#002e6a", "#1a386f", "#32436d", "#434e6c", "#535a6d",
-        "#61656f", "#6f7073", "#7d7c78", "#8c8878", "#9b9476", "#aba072",
-        "#bcae6c", "#cdbb63", "#dec958", "#f0d846", "#fee838",
+        "#00224e",
+        "#002e6a",
+        "#1a386f",
+        "#32436d",
+        "#434e6c",
+        "#535a6d",
+        "#61656f",
+        "#6f7073",
+        "#7d7c78",
+        "#8c8878",
+        "#9b9476",
+        "#aba072",
+        "#bcae6c",
+        "#cdbb63",
+        "#dec958",
+        "#f0d846",
+        "#fee838",
     ),
     "coolwarm": (
-        "#3b4cc0", "#4e68d8", "#6282ea", "#779af7", "#8db0fe", "#a3c2fe",
-        "#b9d0f9", "#ccd9ed", "#dddcdc", "#ecd3c5", "#f5c4ac", "#f7b093",
-        "#f4987a", "#eb7d62", "#dd5f4b", "#ca3b37", "#b40426",
+        "#3b4cc0",
+        "#4e68d8",
+        "#6282ea",
+        "#779af7",
+        "#8db0fe",
+        "#a3c2fe",
+        "#b9d0f9",
+        "#ccd9ed",
+        "#dddcdc",
+        "#ecd3c5",
+        "#f5c4ac",
+        "#f7b093",
+        "#f4987a",
+        "#eb7d62",
+        "#dd5f4b",
+        "#ca3b37",
+        "#b40426",
     ),
     "RdBu_r": (
-        "#053061", "#175290", "#2a71b2", "#3f8ec0", "#6bacd1", "#9bc9e0",
-        "#c2ddec", "#e0ecf3", "#f7f6f6", "#fbe5d8", "#fbccb4", "#f5aa89",
-        "#e48066", "#d05548", "#ba2832", "#930e26", "#67001f",
+        "#053061",
+        "#175290",
+        "#2a71b2",
+        "#3f8ec0",
+        "#6bacd1",
+        "#9bc9e0",
+        "#c2ddec",
+        "#e0ecf3",
+        "#f7f6f6",
+        "#fbe5d8",
+        "#fbccb4",
+        "#f5aa89",
+        "#e48066",
+        "#d05548",
+        "#ba2832",
+        "#930e26",
+        "#67001f",
     ),
     "gray": (
-        "#000000", "#101010", "#202020", "#303030", "#404040", "#505050",
-        "#606060", "#707070", "#808080", "#909090", "#a0a0a0", "#b0b0b0",
-        "#c0c0c0", "#d0d0d0", "#e0e0e0", "#f0f0f0", "#ffffff",
+        "#000000",
+        "#101010",
+        "#202020",
+        "#303030",
+        "#404040",
+        "#505050",
+        "#606060",
+        "#707070",
+        "#808080",
+        "#909090",
+        "#a0a0a0",
+        "#b0b0b0",
+        "#c0c0c0",
+        "#d0d0d0",
+        "#e0e0e0",
+        "#f0f0f0",
+        "#ffffff",
     ),
 }
 ```

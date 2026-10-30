@@ -38,6 +38,7 @@ from manim import (
     ShowPassingFlash,
     StreamLines,
     Succession,
+    Surface,
     TangentLine,
     ThreeDAxes,
     ThreeDCamera,
@@ -55,6 +56,7 @@ from manim.animation.growing import GrowFromCenter, GrowFromPoint
 from manim.animation.transform import ShrinkToCenter, _MethodAnimation
 from manim.camera.camera import Camera
 from manim.mobject.mobject import _AnimationBuilder
+from manim.mobject.three_d.three_dimensions import ThreeDVMobject
 from manim.renderer.cairo_renderer import CairoRenderer
 from manim.utils.color import color_gradient, invert_color
 from manim.utils.hashing import (
@@ -269,10 +271,60 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     Camera.capture_mobjects,
     Mobject.get_family,
     ThreeDCamera.get_gamma,
+    Surface,
+    Surface.__init__,
+    Surface._get_u_values_and_v_values,
+    Surface._setup_in_uv_space,
+    Surface.func,
+    Surface.set_fill_by_checkerboard,
+    Surface.set_fill_by_value,
+    CoordinateSystem.plot_surface,
+    ThreeDVMobject,
+    VMobject.set_points_as_corners,
+    VMobject.set_style,
+    VMobject.get_fill_color,
+    VMobject.get_stroke_color,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Surface": ("5efd13b05fc45289e7f8d5dbf0e7fa2ab680d0a46eee1e7c27702eed5ab662c8"),
+        "Surface.__init__": (
+            "0dec826329a458b52579802351fd834b500da8477a8c00f25d738e0afe8563c7"
+        ),
+        "Surface._get_u_values_and_v_values": (
+            "544fd65e60434439a8b7f8bd0a58c383a0094716b8e2173bd1af8a08e03e6306"
+        ),
+        "Surface._setup_in_uv_space": (
+            "ecf2ab08360988f255cd4046578d3edb49c72a80606118909678355eee7df924"
+        ),
+        "Surface.func": (
+            "c90473e4fb517b22740ad21b57260a0ae4d741890d80f57013adc0e9ca98de34"
+        ),
+        "Surface.set_fill_by_checkerboard": (
+            "52feec233be288b70c98910b52740a010de67dc557a3013a3acf25223ebc3075"
+        ),
+        "Surface.set_fill_by_value": (
+            "e1bae5fbc36642125bdc1414d3cf9db776beb2eb7ea8cf90f5f0a5ee369e772e"
+        ),
+        "CoordinateSystem.plot_surface": (
+            "a4baed845b234914171cd72f1727b34f23e1e1f5f5f9ae3ac31bac8f0b22c68c"
+        ),
+        "ThreeDVMobject": (
+            "f57ee19613bf7cbc69593eaf9552811cdf33186299d1248841d848a85f0ca01c"
+        ),
+        "VMobject.set_points_as_corners": (
+            "da22591520b847b12ba20d1dc0dfe9d44b591f03ff14f4e349fcf5f1374e1ad7"
+        ),
+        "VMobject.set_style": (
+            "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"
+        ),
+        "VMobject.get_fill_color": (
+            "610941a212afa2f4f00a4ea471573515368d194efb6127fb4f017e4c9422cf8c"
+        ),
+        "VMobject.get_stroke_color": (
+            "a73e4804d4cd5431a8377aa0de0d699527f69fe3612b2ca32377b17f117200c8"
+        ),
         "Camera": ("a4bc43d2af494b4a33370cff0c3e21fbc1f8454f22beebe6e570b8034c93d576"),
         "Camera.capture_mobjects": (
             "958b8f23af48f900a4bca8a6eee38bb39de4aeff7a2e1ee3ba11ee5f370af526"
@@ -879,6 +931,43 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Surface": ("5efd13b05fc45289e7f8d5dbf0e7fa2ab680d0a46eee1e7c27702eed5ab662c8"),
+        "Surface.__init__": (
+            "0dec826329a458b52579802351fd834b500da8477a8c00f25d738e0afe8563c7"
+        ),
+        "Surface._get_u_values_and_v_values": (
+            "544fd65e60434439a8b7f8bd0a58c383a0094716b8e2173bd1af8a08e03e6306"
+        ),
+        "Surface._setup_in_uv_space": (
+            "ecf2ab08360988f255cd4046578d3edb49c72a80606118909678355eee7df924"
+        ),
+        "Surface.func": (
+            "c90473e4fb517b22740ad21b57260a0ae4d741890d80f57013adc0e9ca98de34"
+        ),
+        "Surface.set_fill_by_checkerboard": (
+            "52feec233be288b70c98910b52740a010de67dc557a3013a3acf25223ebc3075"
+        ),
+        "Surface.set_fill_by_value": (
+            "e1bae5fbc36642125bdc1414d3cf9db776beb2eb7ea8cf90f5f0a5ee369e772e"
+        ),
+        "CoordinateSystem.plot_surface": (
+            "a4baed845b234914171cd72f1727b34f23e1e1f5f5f9ae3ac31bac8f0b22c68c"
+        ),
+        "ThreeDVMobject": (
+            "f57ee19613bf7cbc69593eaf9552811cdf33186299d1248841d848a85f0ca01c"
+        ),
+        "VMobject.set_points_as_corners": (
+            "da22591520b847b12ba20d1dc0dfe9d44b591f03ff14f4e349fcf5f1374e1ad7"
+        ),
+        "VMobject.set_style": (
+            "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"
+        ),
+        "VMobject.get_fill_color": (
+            "610941a212afa2f4f00a4ea471573515368d194efb6127fb4f017e4c9422cf8c"
+        ),
+        "VMobject.get_stroke_color": (
+            "a73e4804d4cd5431a8377aa0de0d699527f69fe3612b2ca32377b17f117200c8"
+        ),
         "Camera": ("94e976f9408f176ab0fcaf6873a881333fe66938b90d5c6527e715eae988c2d6"),
         "Camera.capture_mobjects": (
             "958b8f23af48f900a4bca8a6eee38bb39de4aeff7a2e1ee3ba11ee5f370af526"

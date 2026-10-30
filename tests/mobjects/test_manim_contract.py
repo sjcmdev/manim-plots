@@ -269,6 +269,22 @@ ADDED_BY_TASK_22 = [
     "CoordinateSystem.plot_polar_graph",
 ]
 
+ADDED_BY_TASK_25 = [
+    "Surface",
+    "Surface.__init__",
+    "Surface._get_u_values_and_v_values",
+    "Surface._setup_in_uv_space",
+    "Surface.func",
+    "Surface.set_fill_by_checkerboard",
+    "Surface.set_fill_by_value",
+    "CoordinateSystem.plot_surface",
+    "ThreeDVMobject",
+    "VMobject.set_points_as_corners",
+    "VMobject.set_style",
+    "VMobject.get_fill_color",
+    "VMobject.get_stroke_color",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -295,6 +311,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_21
         + ADDED_BY_TASK_22
         + ADDED_BY_TASK_24
+        + ADDED_BY_TASK_25
     )
 
 

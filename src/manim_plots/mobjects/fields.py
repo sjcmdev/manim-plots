@@ -254,6 +254,20 @@ class _Field(VGroup):
     def updaters(self, value: list[Callable[..., Any]]) -> None:
         self._updaters = value
 
+    @property
+    def color_mapping(self) -> mp.ColorMapping:
+        """Return the field's linear magnitude-to-colour mapping."""
+        from manim_plots.core.scales import LinearScale
+        from manim_plots.mobjects.colormaps import Colormap, ColorMapping
+
+        cached = self.__dict__.get("_field_color_mapping")
+        if not isinstance(cached, ColorMapping):
+            cached = ColorMapping(
+                Colormap(self._colors), self._minimum, self._maximum, LinearScale()
+            )
+            self._field_color_mapping = cached
+        return cached
+
     def _color(self, vector: FloatArray) -> ManimColor:
         if self._single_color is not None:
             return self._single_color
