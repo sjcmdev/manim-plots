@@ -90,3 +90,50 @@ def test_three_d_log_z(visual):
         )
 
     visual(construct, three_d=True)
+
+
+def surface_points():
+    t = np.linspace(0, 4 * np.pi, 80)
+    return 2 + 1.5 * np.cos(t), 2 + 1.5 * np.sin(t), t / (4 * np.pi) * 2
+
+
+@pytest.mark.render
+def test_three_d_box(visual):
+    """`frame="box"`: three grey panes with grids on the far sides, the axes on the near
+    edges, numbers facing the camera; a helix and its points, as matplotlib draws it."""
+
+    def construct(scene: Scene) -> None:
+        camera(scene)
+        ax = mp.ThreeDAxes(
+            x_range=(0, 4, 1), y_range=(0, 4, 1), z_range=(0, 2, 0.5), frame="box"
+        )
+        x, y, z = surface_points()
+        scene.add(ax, ax.line(x, y, z), ax.scatter(x[::8], y[::8], z[::8]))
+
+    visual(construct, three_d=True)
+
+
+@pytest.mark.render
+def test_three_d_box_turned(visual):
+    """The same box seen from azim = 120°: the panes and the axes changed sides."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.ThreeDAxes(
+            x_range=(0, 4, 1), y_range=(0, 4, 1), z_range=(0, 2, 0.5), frame="box"
+        )
+        scene.set_camera_orientation(**ax.view(25, 120))  # type: ignore[attr-defined]
+        x, y, z = surface_points()
+        scene.add(ax, ax.line(x, y, z), ax.scatter(x[::8], y[::8], z[::8]))
+
+    visual(construct, three_d=True)
+
+
+@pytest.mark.render
+def test_axes_box_2d(visual):
+    """`mp.Axes(frame="box")`: the framed plot in one keyword, ticks inward, mirrors."""
+
+    def construct(scene: Scene) -> None:
+        ax = mp.Axes(x_range=(0, 10, 1), y_range=(-1, 1, 0.5), frame="box")
+        scene.add(ax, ax.plot(np.sin))
+
+    visual(construct)

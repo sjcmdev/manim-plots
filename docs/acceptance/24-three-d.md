@@ -2,8 +2,8 @@
 
 **Status: Living until task 24 merges, then Record.** Written 2026-10-30 before any code,
 per ADR 0003 §9. Rows marked *(default taken)* were settled here without the maintainer
-and stand unless vetoed. Contracts: ADR 0006 §1-§5; the grill log's D7; task 15
-(clipping per axis), task 20 (themes). Surfaces are task 25; camera-facing labels task 26.
+and stand unless vetoed. Contracts: ADR 0006 §1-§4 and §6; the grill log's D7; task 15
+(clipping per axis), task 20 (themes). Surfaces are task 25; coordinates and geometry task 26; occlusion task 30.
 
 Modules: `core/nodes.py`, `core/sources.py`, `core/shape.py` (generalized by dimension),
 `mobjects/system.py`, `mobjects/axis.py`, `mobjects/artists.py`, `mobjects/three_d.py`
@@ -29,6 +29,9 @@ class ThreeDAxes(CartesianAxes):  # mp.ThreeDAxes, not in __all__ (Manim's name)
         x_scale="linear",
         y_scale="linear",
         z_scale="linear",
+        frame=None,  # "origin" (default) or "box"; a theme may set it
+        aspect=None,  # None, "equal" or a (x, y, z) box ratio
+        face_camera=None,  # numbers and labels; default True in "box"
         theme=None,
         cycle=None,
         **kwargs,  # axis_config, x_axis_config, y_axis_config, tips, as CartesianAxes
@@ -57,8 +60,14 @@ class ThreeDAxes(CartesianAxes):  # mp.ThreeDAxes, not in __all__ (Manim's name)
         self, function, t_range=None, **kwargs
     ): ...  # 3 components
     def scatter(self, x, y, z, **kwargs) -> ScatterPlot: ...
+    def view(self, elev=30, azim=-60, roll=0) -> dict: ...  # for set_camera_orientation
+
+    panes: dict[str, Pane]  # "x", "y", "z" in "box": each a part with .grid
+
     def line(self, x, y, z, **kwargs) -> LinePlot: ...
 ```
+
+In 2D, `CartesianAxes` and `NumberPlane` take `frame="origin" | "box"` too (FR-5).
 
 ## TS — one system by dimension (ADR 0006 §1)
 
@@ -104,6 +113,24 @@ class ThreeDAxes(CartesianAxes):  # mp.ThreeDAxes, not in __all__ (Manim's name)
 | TK-2 | `clip=(x, y, z)` clips per axis, each entry a bool or a margin in scene units, as task 15's `clip=(x, y)`; a two-entry tuple on a `ThreeDAxes` raises `ValueError` naming `clip` |
 | TK-3 | Scatter points outside the box are not drawn when clipped, per axis, as in 2D |
 
+## FR — frame styles (ADR 0006 §4)
+
+| ID | Row |
+|---|---|
+| FR-1 | The style is kept as `ax.frame_style` (`ax.frame` is the system's invisible frame, task 09). `frame="origin"` (the default) is Manim's picture: the axes cross at the data origin, or where `set_position` puts them, as TA-1 to TA-4 say |
+| FR-2 | `frame="box"` draws the box of the three ranges with three panes on its far sides, each a filled part with a grid at its two axes' major ticks (`ax.panes["x"]` is the pane perpendicular to x, `.grid` its lines), and the three axes on near edges, their ticks inward and numbers outward, numbered by default *(default taken: matplotlib's)*. Far and near are read from the camera: with the camera direction `d = (sin φ cos θ, sin φ sin θ, cos φ)` of `ThreeDScene`'s `phi` and `theta`, the x pane lies at the x end opposite `sign(d_x)` (x_min when `d_x > 0`), the same for y and z; the x axis runs along the near bottom edge (`y` at the end of `sign(d_y)`, `z` at its far end), the y axis likewise, the z axis along the vertical edge farthest to the camera's right among the near ones *(default taken: matplotlib's choices)* |
+| FR-3 | The panes, edges and axes follow the camera: a `move_camera` or an ambient rotation that crosses a pane's plane moves the pane and the axes to the other side on that frame, keyed by side so a style set on a pane or an axis is kept; a still camera costs nothing per frame. The system finds the camera of the `ThreeDScene` it is drawn in without being told and without patching Manim; `ax.set_camera(camera)` names one explicitly *(default taken)* |
+| FR-4 | `frame="box"` with a plain `Scene` (no 3D camera) draws the box as seen from the default view (`phi = 0`) and warns once through `ManimPlotsWarning` |
+| FR-5 | In 2D, `frame="box"` on `CartesianAxes` and `NumberPlane` is the framed plot: x at the bottom, y at the left, unlabelled mirrors at the top and right, no tips, ticks inward (task 19b, ADR 0005 §1); it draws exactly what `x.set_position("bottom")`, `y.set_position("left")` and the theme field `box=True` draw today. `frame="origin"` is the default. A theme with `position="border"` and `box=True` sets `frame="box"`, and an explicit `frame` wins |
+| FR-6 | `face_camera=True` turns every number and label to face the camera on every frame the camera moves (the label's plane normal parallel to `d`, its up direction the screen's up), as Manim's `add_fixed_orientation_mobjects` does, kept centred where it was placed; it defaults to `True` in `"box"` and `False` in `"origin"` (Manim's flat labels) |
+
+## VW — view and aspect
+
+| ID | Row |
+|---|---|
+| VW-1 | `ax.view(elev=30, azim=-60, roll=0)` returns the keywords of Manim's `set_camera_orientation` and `move_camera` for matplotlib's angles: `phi = 90° - elev`, `theta = azim`, `gamma = roll`, in radians, so `self.set_camera_orientation(**ax.view(30, -60))` shows what matplotlib's `view_init(30, -60)` shows and `self.move_camera(**ax.view(...))` animates to it *(default taken: the axes do not move the camera themselves)* |
+| VW-2 | `aspect="equal"` makes one data unit the same scene length on all three axes, keeping `x_length` and adapting the other two lengths; `aspect=(a, b, c)` sets the lengths in that ratio, keeping `x_length` (matplotlib's `set_box_aspect`); a length given with an aspect that fixes it raises `ValueError` naming both, as F-205 in 2D |
+
 ## Defects fixed (probed on 0.21.0)
 
 Manim's curves on a `ThreeDAxes` keep their points when the axes move or a range
@@ -121,4 +148,9 @@ helix against its analytic points; scatter and line; following a shift and a rot
 clip and `clip=(x, y, z)`; the refusals of TS-3; a theme. Visual (in a `ThreeDScene`
 with the camera at `phi = 65°`, `theta = -45°`): `test_three_d_axes` with a `__manim`
 twin, `test_three_d_helix_clipped` with its twin (Manim's unclipped), `test_three_d_log_z`.
-A frame-cost reading: three curves under `ax.animate.set_z_range`, p95 of `update`.
+`tests/mobjects/test_frames.py`: FR and VW: the panes and edges under four camera
+angles, a pane switching sides during `move_camera`, a styled pane kept, the 2D box
+against the manual framed plot, `face_camera`, `view`, `aspect`. Visual: also
+`test_three_d_box` and `test_three_d_box_turned` (the same axes from `azim = 120°`), and
+`test_axes_box_2d`. Frame-cost readings: three curves under `ax.animate.set_z_range`,
+and a `"box"` frame under `move_camera`, p95 of `update`.
