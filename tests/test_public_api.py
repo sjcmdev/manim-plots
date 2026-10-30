@@ -68,6 +68,13 @@ EXPECTED = {
     "TraceCurve",
     "ShowPoints",
     "Morph",
+    # task 22: PolarPlane is an attribute only, as NumberPlane
+    "PolarAxes",
+    "AngleFormatter",
+    "Node",
+    "AffineNode",
+    "ScaleNode",
+    "FunctionNode",
 }
 
 
