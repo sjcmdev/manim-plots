@@ -305,3 +305,40 @@ def test_fr6_numbers_read_upright_on_screen(phi, theta):
         Still().render()
     expected = glyph(flat.x.numbers.at(2.0))
     np.testing.assert_allclose(screens[0][:, :2], expected[:, :2], atol=1e-6)
+
+
+def distance_to_axis(axis: Any, number: Any) -> float:
+    a, b = np.asarray(axis.get_start()), np.asarray(axis.get_end())
+    c = np.asarray(number.get_center())
+    t = np.clip(np.dot(c - a, b - a) / np.dot(b - a, b - a), 0, 1)
+    return float(np.linalg.norm(c - (a + t * (b - a))))
+
+
+def test_fr6_numbers_stay_by_their_axis_through_an_orbit():
+    """Two camera moves that swap the edges several times: every number stays next to
+    its axis and keeps facing the camera (no compounding of the facing turn)."""
+    ax = mp.ThreeDAxes(frame="box", **RANGES)
+
+    def construct(scene: ThreeDScene) -> None:
+        scene.set_camera_orientation(**ax.view(25, -50))
+        scene.add(ax)
+        scene.move_camera(**ax.view(25, 130), run_time=5)
+        scene.move_camera(**ax.view(60, -50), run_time=3)
+
+    def worst() -> float:
+        return max(
+            distance_to_axis(axis, number)
+            for axis in (ax.x, ax.y, ax.z)
+            for number in axis.numbers
+        )
+
+    distances = probe3d(construct, worst)
+    assert max(distances) < 1.0
+    number = ax.x.numbers.at(2.0)
+    points = np.concatenate(
+        [np.asarray(m.points) for m in number.family_members_with_points()]
+    )
+    view = ax.view(60, -50)
+    assert abs(
+        float(np.dot(plane_normal(points), direction(view["phi"], view["theta"])))
+    ) == pytest.approx(1, abs=1e-6)
