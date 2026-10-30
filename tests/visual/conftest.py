@@ -19,7 +19,8 @@ from typing import Any, Literal
 
 import numpy as np
 import pytest
-from manim import Scene, tempconfig
+from manim import Scene, ThreeDScene, tempconfig
+from manim.camera.three_d_camera import ThreeDCamera
 from manim.renderer.cairo_renderer import CairoRenderer
 from numpy.typing import NDArray
 from PIL import Image
@@ -69,18 +70,26 @@ class _Capture(CairoRenderer):
         super().add_frame(frame, num_frames)
 
 
-def render(construct: Construct, frames: Frames) -> tuple[Pixels, tuple[int, int]]:
+def render(
+    construct: Construct, frames: Frames, three_d: bool = False
+) -> tuple[Pixels, tuple[int, int]]:
     """Render ``construct``; return its last frame or every frame in one grid, and the
-    frame size."""
+    frame size. ``three_d`` renders in a `ThreeDScene` with its camera."""
     last = frames == "last"
     size = LAST_FRAME if last else ALL_FRAMES
 
-    class VisualScene(Scene):
+    base: type[Scene] = ThreeDScene if three_d else Scene
+
+    class VisualScene(base):  # type: ignore[valid-type,misc]
         def construct(self) -> None:
             construct(self)
 
     with tempconfig({**size, **RUN}):
-        renderer = _Capture(skip_animations=last)
+        renderer = (
+            _Capture(skip_animations=last, camera_class=ThreeDCamera)
+            if three_d
+            else _Capture(skip_animations=last)
+        )
         scene = VisualScene(renderer=renderer)
         scene.render()
         # A play leaves its end state undrawn until the next play; draw it. A frozen
@@ -149,8 +158,10 @@ def visual(request: pytest.FixtureRequest, report: list[str]) -> Callable[..., N
     actual = OUT / module / f"{name}.actual.png"
     diff = actual.with_name(f"{name}.diff.png")
 
-    def check(construct: Construct, frames: Frames = "last") -> None:
-        image, tile = render(construct, frames)
+    def check(
+        construct: Construct, frames: Frames = "last", three_d: bool = False
+    ) -> None:
+        image, tile = render(construct, frames, three_d)
         expected = _load(baseline)
         differs, failing = None, 0
         if expected is not None and expected.shape == image.shape:
