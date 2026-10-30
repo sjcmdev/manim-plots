@@ -310,10 +310,12 @@ F-610: `twinx`, `twiny`, further offset axes; plots bound to their pair.
 
 Named axis themes and colour cycles, the maintainer's Origin themes among them.
 
-- [ ] Acceptance table with the names for the maintainer's review
-- [ ] Ticks at a border point inward unless a direction is set (ADR 0005 §1, TH-11);
-      the changed baselines reviewed one by one
-- [ ] Implementation, a baseline per theme, gate
+- [x] Acceptance table with the names for the maintainer's review —
+      `docs/acceptance/20-themes.md`
+- [x] Ticks at a border point inward unless a direction is set (ADR 0005 §1, TH-11);
+      the changed baselines reviewed one by one — `test_two_y_axes`, `test_three_y_axes`
+- [x] Implementation, a baseline per theme, gate — `minor_grid_style` added at review;
+      F-1001 3.3 ms
 
 ### task/19b-top-axis
 

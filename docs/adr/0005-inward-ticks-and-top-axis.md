@@ -77,10 +77,10 @@ A plot binds to one x axis and one y axis, and every pair is one call away. Also
   returns a system)*.
 
 ```python
-right = ax.twinx(y_range=(0, 1))       # bottom x, right y
-top = ax.twiny(x_range=(0, 50))        # top x, left y
-corner = ax.twin(x=top, y=right)       # top x, right y
-corner.plot(f)                         # also: right.twiny(...) makes a new top axis
+right = ax.twinx(y_range=(0, 1))  # bottom x, right y
+top = ax.twiny(x_range=(0, 50))  # top x, left y
+corner = ax.twin(x=top, y=right)  # top x, right y
+corner.plot(f)  # also: right.twiny(...) makes a new top axis
 ```
 
 ## Consequences

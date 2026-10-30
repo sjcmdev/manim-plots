@@ -8,6 +8,7 @@ minor ticks, the grid, the legend and the cycle.
 from __future__ import annotations
 
 import dataclasses
+from typing import Any
 
 import numpy as np
 import pytest
@@ -16,7 +17,12 @@ from manim import UP, ManimColor
 import manim_plots as mp
 from manim_plots.mobjects.axis import Axis
 
-RANGES = {"x_range": (0, 10, 2), "y_range": (0, 4, 1), "x_length": 8, "y_length": 4}
+RANGES: dict[str, Any] = {
+    "x_range": (0, 10, 2),
+    "y_range": (0, 4, 1),
+    "x_length": 8,
+    "y_length": 4,
+}
 
 HEX = {
     "origin": "#515151 #F14040 #1A6FDF #37AD6B #B177DE #CC9900 #00CBCC #7D4E4E "
@@ -236,23 +242,28 @@ def test_th8_a_twin_takes_its_parents_theme():
 
 def test_th9_a_framed_legend_follows_its_axes():
     ax = axes()
-    ax.plot(np.sin, label="sin")
+    # The registry holds artists weakly (task 11b): keep them alive.
+    curve = ax.plot(np.sin, label="sin")
     legend = ax.legend(frame=True)
     assert legend.frame is not None
-    entries = legend.entries[0][1]
-    assert legend.frame.get_left()[0] < entries.get_left()[0]
-    assert legend.frame.get_top()[1] > entries.get_top()[1]
+    entry = legend.entries[0]
+    assert entry.artist is curve
+    assert legend.frame.get_left()[0] < entry.handle.get_left()[0]
+    assert legend.frame.get_right()[0] > entry.label.get_right()[0]
+    assert legend.frame.get_top()[1] > entry.label.get_top()[1]
     before = np.array(legend.frame.get_center(), copy=True)
     ax.shift(UP)
     np.testing.assert_allclose(legend.frame.get_center(), before + UP, atol=1e-9)
-    assert axes().legend().frame is None
+    plain = axes()
+    kept = plain.plot(np.cos, label="cos")
+    assert plain.legend().frame is None and kept in plain.artists
 
 
 def test_th9_the_theme_places_and_frames_the_legend():
     ax = axes(theme="origin")
-    ax.plot(np.sin, label="sin")
+    curve = ax.plot(np.sin, label="sin")
     legend = ax.legend()
-    assert legend.frame is not None
+    assert legend.frame is not None and legend.entries[0].artist is curve
     assert legend.get_left()[0] < ax.get_center()[0]  # upper left
 
 
@@ -333,3 +344,12 @@ def test_th11_a_themes_direction_wins_and_none_is_the_rule():
     ax = axes(theme=out)
     below, above = tick_side(ax.x_axis)
     assert below > 0 and above == pytest.approx(0, abs=1e-9)
+
+
+def test_th3_the_minor_grid_style_is_a_field():
+    lab = mp.THEMES["lab"]
+    assert lab.minor_grid_style == {"stroke_opacity": 0.15, "stroke_width": 0.5}
+    ax = axes(theme=dataclasses.replace(lab, minor_grid_style={"stroke_opacity": 0.6}))
+    minor = [line for line in ax.x_axis.grid if line.level == "minor"]
+    assert minor and minor[0].get_stroke_opacity() == pytest.approx(0.6)
+    assert minor[0].get_stroke_width() == pytest.approx(1)  # from grid_style
