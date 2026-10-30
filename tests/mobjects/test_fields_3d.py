@@ -170,7 +170,10 @@ def test_vt4_flat_arrows_turn_with_the_camera():
 
 def test_vt5_three_d_arrows():
     ax = mp.ThreeDAxes()
-    field = ax.get_vector_field(uniform, arrow="3d", length_func=lambda norm: 1.0)
+    one = {"x_range": (-6, -6, 1), "y_range": (-5, -5, 1), "z_range": (-4, -4, 1)}
+    field = ax.get_vector_field(
+        uniform, arrow="3d", length_func=lambda norm: 1.0, **one
+    )
     first = field.arrows[0]
     assert isinstance(first, Arrow3D)
     np.testing.assert_allclose(first.get_start(), ax.c2p(-6, -5, -4), atol=1e-9)
@@ -180,6 +183,20 @@ def test_vt5_three_d_arrows():
     )
     with pytest.raises(ValueError, match="arrow"):
         ax.get_vector_field(uniform, arrow="cone")
+
+
+def test_vt5_a_short_three_d_arrow_keeps_its_tip_forward():
+    ax = cube()
+    one = {"x_range": (0, 0, 1), "y_range": (0, 0, 1), "z_range": (0, 0, 1)}
+    field = ax.get_vector_field(
+        uniform, arrow="3d", length_func=lambda norm: 0.1, **one
+    )
+    arrow = field.arrows[0]
+    start_, end_ = np.asarray(arrow.get_start()), np.asarray(arrow.get_end())
+    d = unit(end_ - start_)
+    along = (np.asarray(arrow.get_all_points()) - start_) @ d
+    assert along.min() > -1e-6  # nothing behind the start
+    assert along.max() == pytest.approx(0.1, abs=1e-6)  # the tip at the end
 
 
 def test_vt6_colour_style_and_ranges_as_in_2d():

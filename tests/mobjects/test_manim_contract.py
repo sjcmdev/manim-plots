@@ -288,6 +288,16 @@ ADDED_BY_TASK_25 = [
 ADDED_BY_TASK_26: list[str] = []
 ADDED_BY_TASK_28: list[str] = []
 
+ADDED_BY_TASK_27 = [
+    "Arrow3D.get_end",
+    "Arrow3D",
+    "Arrow3D.__init__",
+    "Line3D",
+    "Line3D.__init__",
+    "Line3D.get_start",
+    "Line3D.get_end",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -316,6 +326,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_24
         + ADDED_BY_TASK_25
         + ADDED_BY_TASK_26
+        + ADDED_BY_TASK_27
         + ADDED_BY_TASK_28
     )
 

@@ -39,7 +39,8 @@ def test_field_flat_arrows(visual):
     def construct(scene: Scene) -> None:
         camera(scene)
         ax = mp.ThreeDAxes(**BOX)
-        scene.add(ax, ax.get_vector_field(swirl))
+        dense = {"x_range": (-2, 2, 1), "y_range": (-2, 2, 1), "z_range": (-2, 2, 1)}
+        scene.add(ax, ax.get_vector_field(swirl, **dense))
 
     visual(construct, three_d=True)
 
@@ -67,16 +68,14 @@ def test_field_three_d_arrows(visual):
 
 @pytest.mark.render
 def test_stream_lines_3d(visual):
-    """Stream lines of the swirl from one layer of start points."""
+    """Stream lines of the swirl from the layer of start points at z = 0."""
 
     def construct(scene: Scene) -> None:
         camera(scene)
         ax = mp.ThreeDAxes(**BOX)
         scene.add(
             ax,
-            ax.get_stream_lines(
-                swirl, three_dimensions=False, z_range=(-2, -2, 1), stroke_width=2
-            ),
+            ax.get_stream_lines(swirl, three_dimensions=False, stroke_width=2),
         )
 
     visual(construct, three_d=True)
@@ -84,8 +83,8 @@ def test_stream_lines_3d(visual):
 
 @pytest.mark.render
 def test_coulomb_field_in_spherical_coordinates(visual):
-    """`(1 / r², 0, 0)` in spherical coordinates: arrows pointing out, shorter far
-    away."""
+    """`(1 / r², 0, 0)` in spherical coordinates: arrows pointing out, warmer near the
+    centre."""
 
     def construct(scene: Scene) -> None:
         camera(scene)
@@ -93,7 +92,11 @@ def test_coulomb_field_in_spherical_coordinates(visual):
         field = ax.get_vector_field(
             lambda p: np.array([1 / max(p[0], 0.5) ** 2, 0.0, 0.0]),
             coords="spherical",
-            length_func=lambda norm: 0.6 * np.tanh(norm),
+            x_range=(-2, 2, 1),
+            y_range=(-2, 2, 1),
+            z_range=(-2, 2, 1),
+            length_func=lambda norm: 0.5,
+            max_color_scheme_value=1,
         )
         scene.add(ax, field)
 

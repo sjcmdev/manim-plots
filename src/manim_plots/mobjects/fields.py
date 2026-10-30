@@ -6,6 +6,7 @@ import copy
 import inspect
 import warnings
 from collections.abc import Callable, Sequence
+from itertools import pairwise
 from typing import Any, Self, cast
 
 import numpy as np
@@ -13,8 +14,10 @@ from manim import (
     Animation,
     AnimationGroup,
     Arrow,
+    Arrow3D,
     Create,
     Group,
+    Line3D,
     Mobject,
     Scene,
     ShowPassingFlash,
@@ -31,10 +34,19 @@ from numpy.typing import ArrayLike
 import manim_plots as mp
 from manim_plots.core import FloatArray, ManimPlotsWarning
 from manim_plots.core import lifecycle as lc
+from manim_plots.core.coordinates import (
+    cartesian_to_cylindrical,
+    cartesian_to_spherical,
+)
 from manim_plots.core.nodes import CompiledMap
 from manim_plots.core.params import Parameter
 from manim_plots.core.payload import Payload
-from manim_plots.core.shape import _clip_with_parameters, marching_squares, smooth
+from manim_plots.core.shape import (
+    _clip_with_parameters,
+    corners,
+    marching_squares,
+    smooth,
+)
 from manim_plots.core.shape import clip as clip_path
 from manim_plots.core.sources import Bounds, FieldSource, rk4_step
 from manim_plots.mobjects.artists import (
@@ -72,6 +84,26 @@ def _count(value: int, name: str, *, minimum: int = 1) -> int:
     if value < minimum:
         raise ValueError(f"{name} must be at least {minimum}")
     return value
+
+
+def _facing_basis(
+    system: mp.CartesianAxes, unit: FloatArray, previous: FloatArray | None
+) -> tuple[FloatArray, FloatArray]:
+    angles = cast(Any, system)._camera_angles
+    phi, theta = angles[:2] if angles else (0.0, -np.pi / 2)
+    view = np.array(
+        [np.sin(phi) * np.cos(theta), np.sin(phi) * np.sin(theta), np.cos(phi)]
+    )
+    normal = view - (unit @ view)[:, None] * unit
+    size = np.linalg.norm(normal, axis=1)
+    if previous is None or previous.shape != normal.shape:
+        fallback = np.eye(3)[np.argmin(np.abs(unit), axis=1)]
+        previous = fallback - np.sum(fallback * unit, axis=1)[:, None] * unit
+        previous /= np.maximum(np.linalg.norm(previous, axis=1)[:, None], 1e-12)
+    normal = np.divide(
+        normal, size[:, None], out=previous.copy(), where=size[:, None] >= 1e-9
+    )
+    return np.cross(normal, unit), normal
 
 
 class _FieldBinding(_Binding):
@@ -166,7 +198,7 @@ class _FieldPart(_HelperShape):
         binding.ensure()
         local = binding.parts.get(self._part, np.empty((0, 3)))
         bounds = _clip_box(binding.system, self._clip)
-        axes = _clip_axes(self._clip)
+        axes = _clip_axes(self._clip, len(binding.system._ranges))
         if self._start is not None:
             inside = all(
                 axis is False
@@ -215,13 +247,36 @@ class _Field(VGroup):
         kwargs: dict[str, object],
     ) -> None:
         func, parameters = _parameterize(func, kwargs)
+        self._dimension: int = len(system._ranges)
+        self._coords = kwargs.pop("coords", None)
+        if self._coords not in (None, "spherical", "cylindrical"):
+            raise ValueError("coords must be spherical or cylindrical")
+        z_range = kwargs.pop("z_range", None)
+        self._three_dimensions = kwargs.pop("three_dimensions", True)
+        if self._dimension == 3 and not self._three_dimensions:
+            z_range = (0, 0, 1)
         self.func, self.system = func, system
         self._system = system
         self._vectorized = use_vectorized
         self.source = FieldSource(
-            func, x_range=x_range, y_range=y_range, use_vectorized=use_vectorized
+            func,
+            x_range=x_range,
+            y_range=y_range,
+            z_range=(
+                cast(Sequence[float], z_range)
+                if z_range is not None
+                else (*system.get_axis(2).range.value, 1)
+            )
+            if self._dimension == 3
+            else None,
+            use_vectorized=use_vectorized,
         )
-        self._ranges = (self.source.x_range, self.source.y_range)
+        self._ranges: tuple[tuple[float, ...] | None, ...] = (
+            self.source.x_range,
+            self.source.y_range,
+        )
+        if self._dimension == 3:
+            self._ranges += (None if z_range is None else self.source.z_range,)
         self._binding = _FieldBinding(system, self._derive, {})
         self._binding.parameters = parameters
         self.parameters = parameters
@@ -271,7 +326,7 @@ class _Field(VGroup):
     def _color(self, vector: FloatArray) -> ManimColor:
         if self._single_color is not None:
             return self._single_color
-        vector3 = np.append(vector, 0)
+        vector3 = np.append(vector, 0) if self._dimension == 2 else vector
         value = self._scheme(vector3)
         alpha = float(
             np.clip((value - self._minimum) / (self._maximum - self._minimum), 0, 1)
@@ -287,28 +342,34 @@ class _Field(VGroup):
     def _grid(self) -> Payload:
         ranges = []
         for explicit, axis in zip(
-            self._ranges, (self.system.x, self.system.y), strict=True
+            self._ranges,
+            tuple(self.system.get_axis(i) for i in range(self._dimension)),
+            strict=True,
         ):
             lo, hi = sorted(axis.range.value) if explicit is None else explicit[:2]
             step = (
                 explicit[2]
                 if explicit is not None and len(explicit) == 3
                 # Half the system's step: Manim's 0.5 on its default plane.
-                else self.system._field_steps[axis.index] / 2
+                else self.system._field_steps[axis.index]
+                * (2 if self._dimension == 3 else 0.5)
             )
             ranges.append((float(lo), float(hi), float(step)))
         self.source = FieldSource(
-            self.func,
+            self._coordinate_velocity if self._coords else self.func,
             x_range=ranges[0],
             y_range=ranges[1],
+            z_range=ranges[2] if self._dimension == 3 else None,
             use_vectorized=self._vectorized,
         )
         payload = self.source.sample(self.system._mapping(), self.system.bounds)
         assert isinstance(payload.topology, tuple)
-        rows, cols = payload.topology
+        rows, cols = payload.topology[:2]
         self._steps = np.array([r[2] for r in ranges])
         # Payloads are row-major; Manim's public part order is x outer, y inner.
-        self._order = np.arange(len(payload.coords)).reshape(rows, cols).T.ravel()
+        self._order = np.arange(len(payload.coords))
+        if self._dimension == 2:
+            self._order = self._order.reshape(rows, cols).T.ravel()
         if payload.valid is not None and not self._warned:
             warnings.warn(
                 "field contains invalid samples; they are not drawn",
@@ -369,6 +430,7 @@ class _Field(VGroup):
             result.func,
             x_range=self.source.x_range,
             y_range=self.source.y_range,
+            z_range=self.source.z_range,
             use_vectorized=self._vectorized,
         )
         for key, value in self.__dict__.items():
@@ -398,6 +460,36 @@ class _Field(VGroup):
             self.parameters[name].value = value
         self._binding.ensure()
         return self
+
+    def _coordinate_velocity(self, points: FloatArray) -> FloatArray:
+        points = np.atleast_2d(points)
+        spherical = self._coords == "spherical"
+        converted = (cartesian_to_spherical if spherical else cartesian_to_cylindrical)(
+            points
+        )
+        converted[(points[:, :2] == 0).all(axis=1), 2 if spherical else 1] = 0
+        values = np.asarray(
+            self.func(converted) if self._vectorized else self.func(converted[0]),
+            dtype=float,
+        )
+        if not self._vectorized:
+            values = values[None, :]
+        if values.shape != converted.shape:
+            raise ValueError("func must return three components for coords")
+        phi = converted[:, 2 if spherical else 1]
+        c, t = np.cos(phi), np.sin(phi)
+        radial = np.column_stack((c, t, np.zeros(len(points))))
+        azimuth = np.column_stack((-t, c, np.zeros(len(points))))
+        vertical = np.tile([0.0, 0.0, 1.0], (len(points), 1))
+        if spherical:
+            theta = converted[:, 1]
+            first = np.sin(theta)[:, None] * radial + np.cos(theta)[:, None] * vertical
+            second = np.cos(theta)[:, None] * radial - np.sin(theta)[:, None] * vertical
+            basis = np.stack((first, second, azimuth), axis=1)
+        else:
+            basis = np.stack((radial, azimuth, vertical), axis=1)
+        result = np.einsum("ni,nij->nj", values, basis)
+        return cast(FloatArray, result if self._vectorized else result[0])
 
     def _velocity(self, points: FloatArray) -> FloatArray:
         values = self.source.at(points)
@@ -433,7 +525,7 @@ class _Field(VGroup):
         self._binding.poll()
 
         def move(scene: FloatArray) -> FloatArray:
-            data = system.p2c(scene)[:, :2]
+            data = system.p2c(scene)[:, : self._dimension]
             for _ in range(substeps):
                 data = rk4_step(self._velocity, data, dt / substeps)
             valid = system._data.valid(data)
@@ -545,6 +637,9 @@ class ArrowVectorField(_Field):
         Evaluate ``func`` over an ``(n, 3)`` batch.
     **kwargs
         VGroup style, function parameters or bindings, and per-axis ``clip``.
+        On 3D systems, ``z_range`` sets the third grid range,
+        ``three_dimensions=False`` samples z=0, ``arrow="3d"`` uses Arrow3D,
+        and ``coords`` selects spherical or cylindrical local components.
     """
 
     def __init__(
@@ -564,6 +659,13 @@ class ArrowVectorField(_Field):
         use_vectorized: bool = False,
         **kwargs: object,
     ) -> None:
+        self._arrow_kind = kwargs.pop("arrow", "flat")
+        if self._arrow_kind not in ("flat", "3d"):
+            raise ValueError("arrow must be flat or 3d")
+        self._solid_arrows: list[VMobject] = []
+        self._solid_colors: list[ManimColor] = []
+        self._normals: FloatArray | None = None
+        self._flat_geometry: tuple[FloatArray, FloatArray, FloatArray] | None = None
         self.length_func, self.opacity = length_func, opacity
         self.vector_config = dict(vector_config or {})
         self._centred = self.vector_config.pop("center", False)
@@ -581,6 +683,9 @@ class ArrowVectorField(_Field):
             use_vectorized,
             kwargs,
         )
+        if self._arrow_kind == "3d":
+            self._binding.ensure()
+            return
         self._arrow_template = Vector(
             (1.0, 0.0, 0.0), **(self.vector_config | {"buff": 0})
         )
@@ -601,11 +706,43 @@ class ArrowVectorField(_Field):
             else np.zeros(3)
         )
         self._binding.ensure()
+        if self._dimension == 3 and self._arrow_kind == "flat":
+            cast(Any, system)._register_field_view(self)
+
+    def _turn(self) -> None:
+        if self._arrow_kind != "flat":
+            return
+        binding = self._binding
+        version = binding.version
+        binding.ensure()
+        if binding.version != version or self._flat_geometry is None:
+            return
+        origins, unit, coordinates = self._flat_geometry
+        width, self._normals = _facing_basis(self.system, unit, self._normals)
+        basis = np.stack((unit, width, np.cross(unit, width)), axis=1)
+        scene = origins[:, None] + np.einsum("npj,njk->npk", coordinates, basis)
+        local = self.system.frame.mapping.inverse(scene.reshape(-1, 3)).reshape(
+            scene.shape
+        )
+        for i in range(self._active_count):
+            for part, points, placed in (
+                (self._parts[i], local[i, :4], scene[i, :4]),
+                (self._tips[i], local[i, 4:], scene[i, 4:]),
+            ):
+                visible = len(binding.parts[part._part]) > 0
+                self._publish_arrow(
+                    part,
+                    points if visible else np.empty((0, 3)),
+                    placed if visible else np.empty((0, 3)),
+                )
+        binding.version += 1
 
     @property
     def arrows(self) -> list[VMobject]:
         """Return current arrows in grid order, x outer and y inner."""
         self._binding.ensure()
+        if self._arrow_kind == "3d":
+            return self._solid_arrows[: self._active_count]
         return list(self._parts[: self._active_count])
 
     def _derive(self, binding: _Binding) -> None:
@@ -618,7 +755,8 @@ class ArrowVectorField(_Field):
         mapping, frame = system._data, system.frame.mapping
         starts = mapping.forward(coords)
         scene_starts = frame.forward(starts)
-        directions = frame.forward(mapping.forward(coords + vectors)) - scene_starts
+        delta = 1e-6 * vectors if self._dimension == 3 else vectors
+        directions = frame.forward(mapping.forward(coords + delta)) - scene_starts
         norms = np.linalg.norm(vectors, axis=1)
         valid = (
             mapping.valid(coords)
@@ -646,6 +784,49 @@ class ArrowVectorField(_Field):
             where=(valid & (magnitude > 0))[:, None],
         )
         lengths = np.where(magnitude > 0, lengths, 0)
+        if self._arrow_kind == "3d":
+            visible = []
+            for i, (point, direction, length, vector) in enumerate(
+                zip(scene_starts, unit, lengths, vectors, strict=True)
+            ):
+                end = point + length * direction
+                if i == len(self._solid_arrows):
+                    arrow: VMobject = self._solid_arrow(point, end, float(length))
+                    arrow.set_color(self._color(vector)).set_opacity(self.opacity)
+                    self._solid_arrows.append(arrow)
+                    self._solid_colors.append(self._color(vector))
+                else:
+                    arrow = self._solid_arrows[i]
+                    color = self._color(vector)
+                    if arrow.get_color() == self._solid_colors[i]:
+                        arrow.set_color(color)
+                    self._solid_colors[i] = color
+                    if not np.array_equal(
+                        arrow.get_start(), point
+                    ) or not np.array_equal(arrow.get_end(), end):
+                        replacement = self._solid_arrow(
+                            point, end, float(length)
+                        ).match_style(arrow)
+                        arrow.become(replacement)
+                        cast(Arrow3D, arrow).start = point.copy()
+                bounds = _clip_box(system, self._clip)
+                if (
+                    valid[i]
+                    and length > 0
+                    and all(
+                        axis is False
+                        or bounds.lower[j] - 1e-12
+                        <= starts[i, j]
+                        <= bounds.upper[j] + 1e-12
+                        for j, axis in enumerate(
+                            _clip_axes(self._clip, self._dimension)
+                        )
+                    )
+                ):
+                    visible.append(arrow)
+            self.submobjects = visible
+            self._active_count = len(coords)
+            return
         transverse = np.column_stack((-unit[:, 1], unit[:, 0], np.zeros(len(unit))))
         xy_length = np.linalg.norm(transverse, axis=1)
         transverse = np.divide(
@@ -654,6 +835,8 @@ class ArrowVectorField(_Field):
             out=np.tile([0.0, -1.0, 0.0], (len(unit), 1)),
             where=xy_length[:, None] > 0,
         )
+        if self._dimension == 3:
+            transverse, self._normals = _facing_basis(system, unit, self._normals)
         normal = np.cross(unit, transverse)
         basis = np.stack((unit, transverse, normal), axis=1)
         buff = max(0.0, float(self.vector_config.get("buff", 0)))
@@ -678,7 +861,13 @@ class ArrowVectorField(_Field):
         )
         scene = np.concatenate((shafts, tip_points), axis=1)
         if not valid.all():
-            scene[~valid] = frame.forward(np.zeros((1, 2)))[0]
+            scene[~valid] = frame.forward(np.zeros((1, self._dimension)))[0]
+        if self._dimension == 3:
+            self._flat_geometry = (
+                scene_starts,
+                unit,
+                np.einsum("npk,njk->npj", scene - scene_starts[:, None], basis),
+            )
         local = frame.inverse(scene.reshape(-1, 3)).reshape(scene.shape)
         if self._single_color is not None:
             colors = np.tile(self._single_color.to_rgb(), (len(coords), 1))
@@ -688,7 +877,7 @@ class ArrowVectorField(_Field):
                 if self._norm_scheme
                 else np.array(
                     [
-                        self._scheme(np.append(v, 0))
+                        self._scheme(np.append(v, 0) if self._dimension == 2 else v)
                         for v in np.where(valid[:, None], vectors, 0)
                     ]
                 )
@@ -728,7 +917,7 @@ class ArrowVectorField(_Field):
                     or bounds.lower[j] - 1e-12
                     <= starts[i, j]
                     <= bounds.upper[j] + 1e-12
-                    for j, axis in enumerate(_clip_axes(part._clip))
+                    for j, axis in enumerate(_clip_axes(part._clip, self._dimension))
                 )
                 self._publish_arrow(
                     part,
@@ -745,6 +934,18 @@ class ArrowVectorField(_Field):
             for part in (self._parts[i], self._tips[i]):
                 self._publish_arrow(part, np.empty((0, 3)), np.empty((0, 3)))
         self._active_count = len(coords)
+
+    def _solid_arrow(
+        self, start: FloatArray, end: FloatArray, length: float
+    ) -> Arrow3D:
+        config = self.vector_config.copy()
+        height = config.get("height", 0.3)
+        if length < 2 * height:
+            config["height"] = length / 2
+            config["base_radius"] = (
+                config.get("base_radius", 0.08) * length / (2 * height)
+            )
+        return Arrow3D(start, end, **config)
 
     def _publish_arrow(
         self, part: _FieldPart, local: FloatArray, scene: FloatArray
@@ -859,6 +1060,11 @@ class StreamLines(_Field):
         seed: int = 0,
         **kwargs: object,
     ) -> None:
+        self._line_kind = kwargs.pop("line", "flat")
+        if self._line_kind not in ("flat", "3d"):
+            raise ValueError("line must be flat or 3d")
+        self._solid_lines: list[VMobject] = []
+        self._solid_line_colors: list[tuple[FloatArray, FloatArray]] = []
         self.seed = _count(seed, "seed", minimum=0)
         self.noise_factor = noise_factor
         if noise_factor is not None:
@@ -897,6 +1103,8 @@ class StreamLines(_Field):
     def stream_lines(self) -> list[VMobject]:
         """Return independently styleable lines in seed order."""
         self._binding.ensure()
+        if self._line_kind == "3d":
+            return self._solid_lines[: self._active_count]
         return list(self._parts[: self._active_count])
 
     def _derive(self, binding: _Binding) -> None:
@@ -912,11 +1120,15 @@ class StreamLines(_Field):
         seeds = self._seeds
         system = self.system
         lower = (
-            np.array([min(system.x.range.value), min(system.y.range.value)])
+            np.array(
+                [min(system.get_axis(i).range.value) for i in range(self._dimension)]
+            )
             - self.padding * self._steps
         )
         upper = (
-            np.array([max(system.x.range.value), max(system.y.range.value)])
+            np.array(
+                [max(system.get_axis(i).range.value) for i in range(self._dimension)]
+            )
             + self.padding * self._steps
         )
         traces = [[seed.copy()] for seed in seeds]
@@ -952,6 +1164,53 @@ class StreamLines(_Field):
             anchors = trace[indices]
             self._anchor_times.append(self._times[i][indices])
             local = system._data.apply_payload(Payload.path(anchors))
+            if self._line_kind == "3d":
+                clipped = (
+                    clip_path(
+                        corners(local, system.bounds), _clip_box(system, self._clip)
+                    )
+                    if self._clip is not False
+                    else local
+                )
+                group = VGroup()
+                for begin, stop in clipped.segments:
+                    points = clipped.coords[begin:stop]
+                    pairs = (
+                        ((curve[0], curve[-1]) for curve in points.reshape(-1, 4, 3))
+                        if self._clip is not False
+                        else pairwise(points)
+                    )
+                    for first, last in pairs:
+                        if np.linalg.norm(last - first) < 1e-12:
+                            continue
+                        endpoints = system.frame.mapping.forward(
+                            np.array([first, last])
+                        )
+                        segment = Line3D(*endpoints)
+                        midpoint = system._data.inverse(((first + last) / 2)[None, :])
+                        segment.set_color(
+                            self._color(self._velocity(midpoint)[0])
+                        ).set_opacity(self.opacity)
+                        group.add(segment)
+                if i == len(self._solid_lines):
+                    self._solid_lines.append(group)
+                    self._solid_line_colors.append(
+                        (group.fill_rgbas.copy(), group.stroke_rgbas.copy())
+                    )
+                    self.add(group)
+                else:
+                    old = self._solid_lines[i]
+                    fill, stroke = self._solid_line_colors[i]
+                    self._solid_line_colors[i] = (
+                        group.fill_rgbas.copy(),
+                        group.stroke_rgbas.copy(),
+                    )
+                    if not np.array_equal(old.fill_rgbas, fill) or not np.array_equal(
+                        old.stroke_rgbas, stroke
+                    ):
+                        group.match_style(old)
+                    old.submobjects = group.submobjects
+                continue
             curves = smooth(local, system.bounds)
             binding.parts[str(i)] = curves.coords
             template = VMobject(
@@ -967,6 +1226,10 @@ class StreamLines(_Field):
                     )
                 )
             templates.append(template)
+        if self._line_kind == "3d":
+            self._active_count = len(self._traces)
+            self.submobjects = self._solid_lines[: self._active_count]
+            return
         self._resize(templates)
         for part, template in zip(self._parts, templates, strict=False):
             if not part._explicit_stroke:
@@ -1037,6 +1300,8 @@ class StreamLines(_Field):
         Self
             This field with its animation updater installed.
         """
+        if self._line_kind == "3d":
+            raise NotImplementedError("start_animation is not defined for line=3d")
         if self.flow_animation is not None:
             self.remove_updater(self.flow_animation)
         speed = _positive(flow_speed, "flow_speed")
@@ -1069,7 +1334,7 @@ class StreamLines(_Field):
                 local = np.column_stack((local, np.zeros(len(local))))
             payload = Payload.path(local)
             bounds = _clip_box(self.system, line._clip)
-            axes = _clip_axes(line._clip)
+            axes = _clip_axes(line._clip, self._dimension)
             if any(a is not False for a in axes) and len(local):
                 if any(a is False for a in axes):
                     bounds = _unclipped_box(bounds, axes, local)
@@ -1267,30 +1532,68 @@ def _members(mob: Mobject) -> list[Mobject]:
 class _VectorGroup(_HelperShape, HelperGroup):
     """Keep the shaft on the group itself, as on a native Arrow."""
 
+    def _ensure(self) -> None:
+        if (
+            len(self._binding.system._ranges) == 3
+            and self._lifecycle.state is lc.State.ATTACHED
+            and not self._alignment_locked
+        ):
+            from manim_plots.mobjects.geometry import _ensure_binding
+
+            _ensure_binding(self._binding)
+        super()._ensure()
+
+    def _turn(self) -> None:
+        self._binding._seen = None
+        self._binding.ensure()
+
 
 def _get_vector(
     system: mp.CartesianAxes, coords: Sequence[object], **kwargs: object
 ) -> HelperGroup:
     if len(coords) not in (2, 3):
         raise ValueError("coords must have length 2 or 3")
+    if len(system._ranges) == 3 and len(coords) != 3:
+        raise ValueError("coords must have length 3")
     template: Arrow | None = None
+    previous: FloatArray | None = None
 
     def derive(binding: _Binding) -> None:
-        nonlocal template
-        endpoint = system.c2p(binding.number("x"), binding.number("y"))
-        template = Arrow(
-            system.c2p(0, 0), endpoint, buff=0, **cast(dict[str, Any], kwargs)
-        )
+        nonlocal template, previous
+        values = [binding.number(name) for name in "xyz"[: len(system._ranges)]]
+        origin = system.c2p(*([0.0] * len(system._ranges)))
+        endpoint = system.c2p(*values)
+        template = Arrow(origin, endpoint, buff=0, **cast(dict[str, Any], kwargs))
+        if len(system._ranges) == 3:
+            delta = endpoint - origin
+            length = np.linalg.norm(delta)
+            direction = (delta / length if length else np.array([1.0, 0.0, 0.0]))[
+                None, :
+            ]
+            width, previous = _facing_basis(system, direction, previous)
+            flat = Arrow(
+                np.zeros(3),
+                np.array([length, 0.0, 0.0]),
+                buff=0,
+                **cast(dict[str, Any], kwargs),
+            )
+            basis = np.stack((direction[0], width[0], previous[0]))
+            template.set_points(origin + flat.points @ basis)
+            template.tip.set_points(origin + flat.tip.points @ basis)
         binding.parts["line"] = binding.scene(template.points)
         binding.parts["tip"] = binding.scene(template.tip.points)
 
-    binding = _Binding(system, derive, {"x": coords[0], "y": coords[1]})
+    binding = _Binding(
+        system, derive, dict(zip("xyz"[: len(system._ranges)], coords, strict=False))
+    )
     binding.ensure()
     assert template is not None
     group = _VectorGroup(binding, "line", template)
     group.line = group
     group.tip = _HelperShape(binding, "tip", template.tip)
     group.add(group.tip)
+    if len(system._ranges) == 3:
+        cast(Any, system)._register_field_view(group)
     return group
 
 

@@ -31,9 +31,9 @@ def rk4_step(
     Parameters
     ----------
     func
-        Vectorized velocity on arrays of shape ``(n, 2)``.
+        Vectorized velocity on arrays of shape ``(n, d)``, with d equal to 2 or 3.
     points
-        Initial data coordinates of shape ``(n, 2)``.
+        Initial data coordinates of shape ``(n, d)``, with d equal to 2 or 3.
     dt
         Finite signed field time.
 
@@ -43,8 +43,8 @@ def rk4_step(
         Advanced coordinates. A non-finite stage leaves that point stationary.
     """
     points = np.asarray(points, dtype=float)
-    if points.ndim != 2 or points.shape[1] != 2:
-        raise ValueError("points must have shape (n, 2)")
+    if points.ndim != 2 or points.shape[1] not in (2, 3):
+        raise ValueError("points must have shape (n, 2) or (n, 3)")
     if not np.isfinite(dt):
         raise ValueError("dt must be finite")
     with np.errstate(all="ignore"):
@@ -53,7 +53,7 @@ def rk4_step(
         k3 = np.asarray(func(points + dt / 2 * k2), dtype=float)
         k4 = np.asarray(func(points + dt * k3), dtype=float)
         if any(k.shape != points.shape for k in (k1, k2, k3, k4)):
-            raise ValueError("func must return shape (n, 2)")
+            raise ValueError("func must return the same shape as points")
         result = points + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
     good = np.isfinite(result).all(axis=1)
     return np.where(good[:, None], result, points)
@@ -67,8 +67,9 @@ class FieldSource:
     ----------
     func
         Function accepting one data point ``[x, y, 0]`` and returning a scalar
-        or a two- or three-component vector. The third component is ignored.
-    x_range, y_range
+        or a two- or three-component vector. Without z_range the third
+        component is ignored. With z_range all three components are retained.
+    x_range, y_range, z_range
         Optional finite bounds and positive step; omitted bounds use the map's
         viewport and omitted steps use one. Field artists supply tick steps.
     use_vectorized
@@ -78,6 +79,7 @@ class FieldSource:
     func: Callable[..., Any]
     x_range: tuple[float, ...] | None
     y_range: tuple[float, ...] | None
+    z_range: tuple[float, ...] | None
     use_vectorized: bool
 
     def __init__(
@@ -86,6 +88,7 @@ class FieldSource:
         *,
         x_range: Sequence[float] | None = None,
         y_range: Sequence[float] | None = None,
+        z_range: Sequence[float] | None = None,
         use_vectorized: bool = False,
     ) -> None:
         if not callable(func):
@@ -93,8 +96,15 @@ class FieldSource:
         if not isinstance(use_vectorized, bool):
             raise TypeError("use_vectorized must be a bool")
         object.__setattr__(self, "func", func)
-        object.__setattr__(self, "x_range", _range(x_range, "x_range"))
-        object.__setattr__(self, "y_range", _range(y_range, "y_range"))
+        object.__setattr__(
+            self, "x_range", _range(x_range, "x_range", allow_equal=z_range is not None)
+        )
+        object.__setattr__(
+            self, "y_range", _range(y_range, "y_range", allow_equal=z_range is not None)
+        )
+        object.__setattr__(
+            self, "z_range", _range(z_range, "z_range", allow_equal=True)
+        )
         object.__setattr__(self, "use_vectorized", use_vectorized)
 
     def at(self, points: ArrayLike) -> FloatArray:
@@ -108,12 +118,16 @@ class FieldSource:
         Returns
         -------
         FloatArray
-            Scalars ``(n,)`` or two-component vectors ``(n, 2)``.
+            Scalars ``(n,)`` or vectors ``(n, d)`` in the grid dimension.
         """
         data = _numeric(points, "points")
         if data.ndim != 2 or data.shape[1] not in (2, 3):
             raise ValueError("points must have shape (n, 2) or (n, 3)")
-        inputs = np.column_stack((data[:, :2], np.zeros(len(data))))
+        inputs = (
+            data.copy()
+            if self.z_range is not None and data.shape[1] == 3
+            else np.column_stack((data[:, :2], np.zeros(len(data))))
+        )
         with np.errstate(all="ignore"):
             if self.use_vectorized:
                 values = _numeric(self.func(inputs), "func output")
@@ -136,11 +150,11 @@ class FieldSource:
         if values.shape == (len(data),):
             return values
         if values.shape in ((len(data), 2), (len(data), 3)):
-            return values[:, :2].copy()
+            return values[:, : 3 if self.z_range is not None else 2].copy()
         raise ValueError("func output must have shape (n,), (n, 2) or (n, 3)")
 
     def sample(self, map: CompiledMap, bounds: Bounds) -> Payload:
-        """Sample a region in C order, with rows along y and columns along x.
+        """Sample a region in C order, with x outermost on a 3D grid.
 
         Parameters
         ----------
@@ -152,9 +166,12 @@ class FieldSource:
         Payload
             Region with grid topology, immutable values and sample validity.
         """
-        edges = map.inverse(np.array([bounds.lower, bounds.upper]))[:, :2]
+        dimension = 3 if self.z_range is not None else 2
+        edges = map.inverse(np.array([bounds.lower, bounds.upper]))[:, :dimension]
         axes = []
-        for i, explicit in enumerate((self.x_range, self.y_range)):
+        for i, explicit in enumerate(
+            (self.x_range, self.y_range, self.z_range)[:dimension]
+        ):
             lo, hi = sorted(edges[:, i]) if explicit is None else explicit[:2]
             step = explicit[2] if explicit is not None and len(explicit) == 3 else 1
             count = int(np.floor((hi - lo) / step + 1e-12))
@@ -165,8 +182,8 @@ class FieldSource:
             else:
                 grid[-1] = hi
             axes.append(grid)
-        xs, ys = np.meshgrid(*axes)
-        coords = np.column_stack((xs.ravel(), ys.ravel()))
+        grids = np.meshgrid(*axes, indexing="ij" if dimension == 3 else "xy")
+        coords = np.column_stack([grid.ravel() for grid in grids])
         values = self.at(coords)
         valid = np.isfinite(values)
         if values.ndim == 2:
@@ -175,7 +192,9 @@ class FieldSource:
             "region",
             coords,
             np.array([[0, len(coords)]]),
-            (len(axes[1]), len(axes[0])),
+            tuple(len(axis) for axis in axes)
+            if dimension == 3
+            else (len(axes[1]), len(axes[0])),
             None if valid.all() else valid,
             values,
         )
@@ -440,7 +459,9 @@ class Source(Protocol):
         ...
 
 
-def _range(value: Sequence[float] | None, name: str) -> tuple[float, ...] | None:
+def _range(
+    value: Sequence[float] | None, name: str, *, allow_equal: bool = False
+) -> tuple[float, ...] | None:
     if value is None:
         return None
     numbers = _numeric(value, name)
@@ -449,7 +470,7 @@ def _range(value: Sequence[float] | None, name: str) -> tuple[float, ...] | None
     bad = ~np.isfinite(numbers)
     if np.any(bad):
         raise ValueError(f"{name}[{np.flatnonzero(bad)[0]}] must be finite")
-    if numbers[0] >= numbers[1]:
+    if numbers[0] > numbers[1] or (numbers[0] == numbers[1] and not allow_equal):
         raise ValueError(f"{name} must have lo < hi")
     if len(numbers) == 3 and numbers[2] <= 0:
         raise ValueError(f"{name} step must be positive")

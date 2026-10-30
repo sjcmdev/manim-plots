@@ -18,6 +18,7 @@ from manim import (
     Animation,
     AnimationGroup,
     Arrow,
+    Arrow3D,
     ArrowVectorField,
     Axes,
     CoordinateSystem,
@@ -26,6 +27,7 @@ from manim import (
     DecimalNumber,
     FadeOut,
     Line,
+    Line3D,
     LogBase,
     Mobject,
     MoveAlongPath,
@@ -284,10 +286,34 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VMobject.set_style,
     VMobject.get_fill_color,
     VMobject.get_stroke_color,
+    Arrow3D,
+    Arrow3D.__init__,
+    Arrow3D.get_end,
+    Line3D,
+    Line3D.__init__,
+    Line3D.get_start,
+    Line3D.get_end,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Arrow3D.get_end": (
+            "15089dbdeef393857a1a974e9866ea0e78d6178ed80235e62d3ed8e2273ee85f"
+        ),
+        "Arrow3D": ("dd1a13ffc7db42fad44719c6cb3cada433aa982369d17fc7754e1bcd857b382d"),
+        "Arrow3D.__init__": (
+            "e89db431164efc17a0451e556344d4ccf63e025ce0a0061b59a4a2b3b85a26d1"
+        ),
+        "Line3D": ("bc2e4d728fa5edbe811b0e4ac0dbe3599a280ebb868b2e6cc58dd94d82a2f905"),
+        "Line3D.__init__": (
+            "a9aeb2516090bb2ae6688e9599711a190543faa85f841743b15cfa1648fde9f0"
+        ),
+        "Line3D.get_start": (
+            "b09fef38db1b15df2ef6f1139bc2d49c977d213099c1674fb8decf62ed0a6b08"
+        ),
+        "Line3D.get_end": (
+            "426c9903382f0930f2f56d51e93f0d61de01e6824f0756ef0f624a1367c8e1f5"
+        ),
         "Surface": ("5efd13b05fc45289e7f8d5dbf0e7fa2ab680d0a46eee1e7c27702eed5ab662c8"),
         "Surface.__init__": (
             "0dec826329a458b52579802351fd834b500da8477a8c00f25d738e0afe8563c7"
@@ -931,6 +957,23 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Arrow3D.get_end": (
+            "15089dbdeef393857a1a974e9866ea0e78d6178ed80235e62d3ed8e2273ee85f"
+        ),
+        "Arrow3D": ("dd1a13ffc7db42fad44719c6cb3cada433aa982369d17fc7754e1bcd857b382d"),
+        "Arrow3D.__init__": (
+            "e89db431164efc17a0451e556344d4ccf63e025ce0a0061b59a4a2b3b85a26d1"
+        ),
+        "Line3D": ("bc2e4d728fa5edbe811b0e4ac0dbe3599a280ebb868b2e6cc58dd94d82a2f905"),
+        "Line3D.__init__": (
+            "a9aeb2516090bb2ae6688e9599711a190543faa85f841743b15cfa1648fde9f0"
+        ),
+        "Line3D.get_start": (
+            "b09fef38db1b15df2ef6f1139bc2d49c977d213099c1674fb8decf62ed0a6b08"
+        ),
+        "Line3D.get_end": (
+            "426c9903382f0930f2f56d51e93f0d61de01e6824f0756ef0f624a1367c8e1f5"
+        ),
         "Surface": ("5efd13b05fc45289e7f8d5dbf0e7fa2ab680d0a46eee1e7c27702eed5ab662c8"),
         "Surface.__init__": (
             "0dec826329a458b52579802351fd834b500da8477a8c00f25d738e0afe8563c7"

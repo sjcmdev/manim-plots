@@ -79,7 +79,7 @@ class Payload:
     valid
         Boolean mask of shape ``(n,)``, or None when all samples are valid.
     values
-        Optional scalar ``(n,)`` or vector ``(n, 2)`` field samples.
+        Optional scalar ``(n,)`` or vector ``(n, 2)`` / ``(n, 3)`` samples.
 
     Notes
     -----
@@ -90,7 +90,7 @@ class Payload:
     kind: Kind
     coords: FloatArray
     segments: IntArray
-    topology: IntArray | tuple[int, int] | None = None
+    topology: IntArray | tuple[int, ...] | None = None
     valid: BoolArray | None = None
     values: FloatArray | None = None
 
@@ -100,7 +100,7 @@ class Payload:
         kind: Kind,
         coords: FloatArray,
         segments: IntArray,
-        topology: IntArray | tuple[int, int] | None = None,
+        topology: IntArray | tuple[int, ...] | None = None,
         valid: BoolArray | None = None,
         values: FloatArray | None = None,
     ) -> Payload:
@@ -138,8 +138,10 @@ class Payload:
         valid = np.ones(n, dtype=np.bool_) if self.valid is None else self.valid
         if self.values is not None:
             values = np.asarray(self.values, dtype=float)
-            if values.shape not in ((n,), (n, 2)):
-                raise ValueError(f"values must have shape ({n},) or ({n}, 2)")
+            if values.shape not in ((n,), (n, 2)) and not (
+                coords.shape[1] == 3 and values.shape == (n, 3)
+            ):
+                raise ValueError(f"values must have shape ({n},), ({n}, 2) or ({n}, 3)")
             finite = np.isfinite(values)
             if values.ndim == 2:
                 finite = finite.all(axis=1)
@@ -186,10 +188,14 @@ class Payload:
             raise ValueError("topology is required for region")
         n = len(coords)
         if isinstance(topology, tuple):
-            if len(topology) != 2 or any(
+            if len(topology) not in ((2, 3) if coords.shape[1] == 3 else (2,)) or any(
                 not isinstance(v, int) or isinstance(v, bool) for v in topology
             ):
-                raise TypeError("topology grid must be a tuple of two ints")
+                raise TypeError("topology grid must be a tuple of two or three ints")
+            if len(topology) == 3:
+                if any(v < 1 for v in topology) or np.prod(topology) != n:
+                    raise ValueError("topology grid does not match coords length")
+                return
             rows, cols = topology
             if rows < 1 or cols < 1 or rows * cols != n:
                 raise ValueError(

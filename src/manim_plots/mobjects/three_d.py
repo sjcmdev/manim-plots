@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+import weakref
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
 from functools import wraps
@@ -172,6 +173,7 @@ class ThreeDAxes(CartesianAxes):
             lengths = (lengths[0] * ratios / ratios[0]).tolist()
         self._camera: Camera | None = None
         self._camera_explicit = False
+        self._field_views: list[weakref.ReferenceType[Mobject]] = []
         self._camera_angles: tuple[float, float, float] | None = None
         self._camera_warned = False
         self._pane_sides: tuple[bool, ...] | None = None
@@ -1054,7 +1056,11 @@ class ThreeDAxes(CartesianAxes):
         list of Mobject
             The unchanged family returned by Manim.
         """
-        if self.face_camera or self.__dict__.get("_frame_style") == "box":
+        if (
+            self._field_views
+            or self.face_camera
+            or self.__dict__.get("_frame_style") == "box"
+        ):
             camera = _drawing_camera()
             if camera is not None:
                 if not self._camera_explicit and self._camera is not camera:
@@ -1094,6 +1100,11 @@ class ThreeDAxes(CartesianAxes):
             for leaf, flat in zip(members, flats, strict=True):
                 leaf._flat_offset = flat - number._flat_anchor
 
+    def _register_field_view(self, field: Mobject) -> None:
+        self._field_views.append(weakref.ref(field))
+        if _camera_update not in self.updaters:
+            self.add_updater(_camera_update)
+
     def _read_camera(self) -> None:
         if not isinstance(self._camera, ThreeDCamera):
             if (
@@ -1119,6 +1130,11 @@ class ThreeDAxes(CartesianAxes):
         self._update_view(*angles[:2])
 
     def _update_view(self, phi: float, theta: float) -> None:
+        self._field_views = [ref for ref in self._field_views if ref() is not None]
+        for ref in self._field_views:
+            field = ref()
+            if field is not None:
+                cast(Any, field)._turn()
         d = np.array(
             [np.sin(phi) * np.cos(theta), np.sin(phi) * np.sin(theta), np.cos(phi)]
         )
@@ -1239,36 +1255,6 @@ class ThreeDAxes(CartesianAxes):
             Arguments reserved for the two-dimensional system.
         """
         raise NotImplementedError("secondary_yaxis is not available on ThreeDAxes")
-
-    def get_vector_field(self, *args: object, **kwargs: object) -> NoReturn:
-        """Refuse the two-dimensional get_vector_field helper.
-
-        Parameters
-        ----------
-        *args, **kwargs
-            Arguments reserved for the two-dimensional system.
-        """
-        raise NotImplementedError("get_vector_field is not available on ThreeDAxes")
-
-    def get_stream_lines(self, *args: object, **kwargs: object) -> NoReturn:
-        """Refuse the two-dimensional get_stream_lines helper.
-
-        Parameters
-        ----------
-        *args, **kwargs
-            Arguments reserved for the two-dimensional system.
-        """
-        raise NotImplementedError("get_stream_lines is not available on ThreeDAxes")
-
-    def get_vector(self, *args: object, **kwargs: object) -> NoReturn:
-        """Refuse the two-dimensional get_vector helper.
-
-        Parameters
-        ----------
-        *args, **kwargs
-            Arguments reserved for the two-dimensional system.
-        """
-        raise NotImplementedError("get_vector is not available on ThreeDAxes")
 
     def plot_implicit_curve(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional plot_implicit_curve helper.
