@@ -18,11 +18,13 @@ import numpy as np
 from manim import (
     BLUE,
     DOWN,
+    GREEN,
     LEFT,
     PI,
     RED,
     RIGHT,
     UP,
+    WHITE,
     YELLOW,
     Axes,
     Create,
@@ -471,6 +473,73 @@ def twin_axes(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def four_corners(scene: Scene) -> None:
+    """Bind one curve to each pair of a bottom or top x axis and a left or right y axis.
+
+    `ax.twinx` and `ax.twiny` add the right and the top axis; `ax.twin(x=top, y=right)`
+    is the pair of the two. A range animated on one axis moves only its curves.
+    """
+    shown: list[Text] = []
+    numbers = {"include_numbers": True, "font_size": 22}
+    ax = mp.Axes(
+        x_range=(0, 10, 2),
+        y_range=(0, 100, 20),
+        x_length=8.5,
+        y_length=4.4,
+        axis_config=numbers,
+        theme="origin",
+    ).shift(0.5 * DOWN)
+    right = ax.twinx(y_range=(0, 1, 0.2), y_axis_config=numbers)
+    top = ax.twiny(x_range=(0, 50, 10), x_axis_config=numbers)
+    corner = ax.twin(x=top, y=right)
+    right.y_axis.set_color(BLUE)
+    top.x_axis.set_color(GREEN)
+    curves = [
+        ax.plot(lambda x: 10 * x, color=WHITE),
+        right.plot(lambda x: 1 - x / 10, color=BLUE),
+        top.plot(lambda d: 50 + 40 * np.sin(d / 8), color=GREEN),
+        corner.plot(lambda d: 0.5 + 0.4 * np.cos(d / 8), color=YELLOW),
+    ]
+    show_call(scene, shown, "corner = ax.twin(x=top, y=right)")
+    scene.play(Create(ax), *(Create(c) for c in curves), run_time=2)
+    show_call(scene, shown, "self.play(top.animate.set_x_range((0, 100)))")
+    scene.play(top.animate.set_x_range((0, 100)), run_time=2)
+    show_call(scene, shown, "self.play(right.animate.set_y_range((0, 2)))")
+    scene.play(right.animate.set_y_range((0, 2)), run_time=2)
+    scene.wait(0.5)
+
+
+def secondary_axis(scene: Scene) -> None:
+    """Show electronvolts above a spectrum in nanometres, then zoom the wavelengths.
+
+    `ax.secondary_xaxis("top", functions=(forward, inverse))` puts ticks in `forward`'s
+    units where the bottom axis has `inverse` of them; they follow the range. Both axes
+    use `MaxNLocator(6)`, so their ticks thin and fill in as the range changes.
+    """
+    shown: list[Text] = []
+    hc = 1239.84198
+    ax = mp.Axes(
+        x_range=(400, 800, 100),
+        y_range=(0, 1, 0.25),
+        x_length=9,
+        y_length=4.6,
+        axis_config={"include_numbers": True, "font_size": 22},
+        theme="origin",
+    ).shift(0.5 * DOWN)
+    energy = ax.secondary_xaxis(
+        "top", functions=(lambda nm: hc / nm, lambda ev: hc / ev), font_size=22
+    )
+    for axis in (ax.x, energy):
+        axis.set_locator(mp.MaxNLocator(6))
+    energy.set_color(YELLOW)
+    peak = ax.plot(lambda nm: np.exp(-(((nm - 550) / 40) ** 2)), color=GREEN)
+    show_call(scene, shown, 'ax.secondary_xaxis("top", functions=(nm_to_ev, ev_to_nm))')
+    scene.play(Create(ax), Create(peak), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((500, 600)))")
+    scene.play(ax.animate.set_x_range((500, 600)), run_time=2.5)
+    scene.wait(0.5)
+
+
 def errorbar_data(scene: Scene) -> None:
     """Move measured points and their error bars with `.animate.set_data`.
 
@@ -514,6 +583,8 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     riemann_refines,
     derived_graphs,
     twin_axes,
+    four_corners,
+    secondary_axis,
     errorbar_data,
 ]
 
