@@ -286,6 +286,7 @@ ADDED_BY_TASK_25 = [
 ]
 
 ADDED_BY_TASK_26: list[str] = []
+ADDED_BY_TASK_28: list[str] = []
 
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -315,6 +316,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_24
         + ADDED_BY_TASK_25
         + ADDED_BY_TASK_26
+        + ADDED_BY_TASK_28
     )
 
 
