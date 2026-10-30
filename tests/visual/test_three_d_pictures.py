@@ -22,7 +22,7 @@ def helix(t):
 
 @pytest.mark.render
 def test_three_d_axes(visual):
-    """Manim's default `ThreeDAxes` with its axis labels and a sine in the z = 0 plane."""
+    """Manim's default `ThreeDAxes`, its axis labels and a sine in the z = 0 plane."""
 
     def construct(scene: Scene) -> None:
         camera(scene)

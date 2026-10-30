@@ -42,10 +42,20 @@ class ThreeDAxes(CartesianAxes):  # mp.ThreeDAxes, not in __all__ (Manim's name)
     def p2c(self, point) -> np.ndarray: ...  # (x, y, z)
     def set_z_range(self, z_range) -> Self: ...  # animatable
     def get_z_axis(self) -> Axis: ...
-    def get_z_axis_label(self, label, edge=OUT, direction=RIGHT, buff=SMALL_BUFF,
-                         rotation=PI / 2, rotation_axis=RIGHT, **kwargs): ...
+    def get_z_axis_label(
+        self,
+        label,
+        edge=OUT,
+        direction=RIGHT,
+        buff=SMALL_BUFF,
+        rotation=PI / 2,
+        rotation_axis=RIGHT,
+        **kwargs,
+    ): ...
     def get_axis_labels(self, x_label="x", y_label="y", z_label="z") -> VGroup: ...
-    def plot_parametric_curve(self, function, t_range=None, **kwargs): ...  # 3 components
+    def plot_parametric_curve(
+        self, function, t_range=None, **kwargs
+    ): ...  # 3 components
     def scatter(self, x, y, z, **kwargs) -> ScatterPlot: ...
     def line(self, x, y, z, **kwargs) -> LinePlot: ...
 ```
