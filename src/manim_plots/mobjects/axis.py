@@ -345,6 +345,8 @@ class Axis(VGroup):
     ) -> None:
         self._system = system
         self.index = index
+        self._edge_coordinates: Sequence[float] | None = None
+        self.pieces: VGroup
         self.range = limits
         self._range_parameter = self.range
         self._step = limits[2] if len(limits) == 3 else 1
@@ -614,14 +616,29 @@ class Axis(VGroup):
 
     def _anchors(self, values: ArrayLike) -> FloatArray:
         values = np.atleast_1d(np.asarray(values, dtype=float))
-        positions = np.full((len(values), 2), self._cross_value())
-        positions[:, self.index] = self._data_values(values)
+        positions = self._anchor_data(values)
+        local = self._system._data.forward(positions)
         return (
-            np.column_stack(
-                (self._system._data.forward(positions), np.zeros(len(values)))
-            )
-            + self._outward_offset()
-        )
+            np.column_stack((local, np.zeros(len(local))))
+            if local.shape[1] == 2
+            else local
+        ) + self._outward_offset()
+
+    def _anchor_data(self, values: ArrayLike) -> FloatArray:
+        values = np.atleast_1d(np.asarray(values, dtype=float))
+        dim = len(self._system._ranges)
+        if dim == 2:
+            positions = np.full((len(values), dim), self._cross_value())
+        else:
+            crossing = getattr(self, "_edge_coordinates", None)
+            if crossing is None:
+                crossing = [
+                    float(np.clip(0, *axis.range.value))
+                    for axis in self._system._ranges
+                ]
+            positions = np.tile(crossing, (len(values), 1))
+        positions[:, self.index] = self._data_values(values)
+        return positions
 
     def _number_direction(self, value: float) -> FloatArray:
         return np.asarray(self.label_direction, dtype=float)
@@ -799,9 +816,11 @@ class Axis(VGroup):
                 and (self._pool is None or self._pool.same)
             ):
                 return
-        coords = np.array([[self.range.value[0], self.range.value[0]]])
-        coords[0, 1 - self.index] = self._cross_value()
-        origin = np.append(system._data.forward(coords)[0], 0) + self._outward_offset()
+        coords = self._anchor_data(self.range.value[0])
+        local_origin = system._data.forward(coords)[0]
+        origin = (
+            np.pad(local_origin, (0, 3 - len(local_origin))) + self._outward_offset()
+        )
         offset = origin - self._crossing_reference
         offset[self.index] = 0
         mapping = system.frame.mapping
@@ -951,9 +970,7 @@ class Axis(VGroup):
                 values[ticks[item.key]] = item.value
             for glyph in self._number_members.get((item.level, item.key), ()):
                 values[glyph] = item.value
-        self._crossing_data = np.full(
-            (len(self._crossing_leaves), 2), self._cross_value()
-        )
+        self._crossing_data = self._anchor_data(np.zeros(len(self._crossing_leaves)))
         self._crossing_data[:, self.index] = [
             values.get(leaf, float(self.range.value[0]))
             for leaf in self._crossing_leaves
@@ -1098,22 +1115,23 @@ class Axis(VGroup):
             ),
         )
         if direction is not TickDirection.BOTH:
-            other = system.get_axis(1 - self.index)
+            cross_index = int(np.argmax(np.ptp(self._tick_reference, axis=0)))
+            other = system.get_axis(cross_index)
             limits = other._scale.forward(other.range.value)
-            cross = float(other._scale.forward(self._cross_value()))
+            cross = float(other._scale.forward(self._anchor_data(0)[0, cross_index]))
             outward = -1 if (cross - limits[0]) / (limits[1] - limits[0]) <= 0.5 else 1
             if direction is TickDirection.IN:
                 outward *= -1
-            local[:, :, 1 - self.index] += (
-                outward * np.ptp(local[:, :, 1 - self.index], axis=1)[:, None] / 2
+            local[:, :, cross_index] += (
+                outward * np.ptp(local[:, :, cross_index], axis=1)[:, None] / 2
             )
-        positions = np.full((len(items), 2), self._cross_value())
+        positions = self._anchor_data(np.zeros(len(items)))
         values = [item.value for item in items]
         positions[:, self.index] = (
             values if self._functions is None else self._data_values(values)
         )
         centers = system._data.forward(positions)
-        local[:, :, :2] += centers[:, None, :]
+        local[:, :, : centers.shape[1]] += centers[:, None, :]
         local += self._outward_offset()
         return local
 

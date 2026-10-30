@@ -724,6 +724,19 @@ class FrameMap:
         self._check_bounds(self.lower, self.upper)
         if self.nodes.ndim != 2 or self.nodes.shape[1] != 3:
             raise ValueError("nodes must have shape (n*n, 3)")
+        if len(self.lower) == 3:
+            if len(self.nodes) != 8:
+                raise ValueError("nodes must contain eight affine box corners")
+            _finite(self.nodes, "nodes")
+            self._basis: FloatArray = (self.nodes[[4, 2, 1]] - self.nodes[0]) / (
+                self.upper - self.lower
+            )[:, None]
+            self._origin: FloatArray = self.nodes[0].copy()
+            self._is_affine = True
+            self._is_singular = _singular(self._basis)
+            self._normal = np.zeros(3)
+            self._size = float(np.linalg.norm(np.ptp(self.nodes, axis=0)))
+            return
         self.n = isqrt(len(self.nodes))
         if self.n < 2 or self.n * self.n != len(self.nodes):
             raise ValueError("nodes length must be n*n for n >= 2")
@@ -833,9 +846,9 @@ class FrameMap:
 
     @staticmethod
     def _check_bounds(lower: FloatArray, upper: FloatArray) -> None:
-        if lower.shape != (2,):
+        if lower.shape not in ((2,), (3,)):
             raise ValueError("lower must have shape (2,)")
-        if upper.shape != (2,):
+        if upper.shape != lower.shape:
             raise ValueError("upper must have shape (2,)")
         _finite(lower, "lower")
         _finite(upper, "upper")
@@ -866,6 +879,12 @@ class FrameMap:
             raise TypeError("n must be an int")
         if n < 2:
             raise ValueError("n must be at least 2")
+        if len(lower) == 3:
+            grids = np.meshgrid(
+                *(np.array([lo, hi]) for lo, hi in zip(lower, upper, strict=True)),
+                indexing="ij",
+            )
+            return np.column_stack([grid.ravel() for grid in grids])
         with np.errstate(all="ignore"):
             x, y = np.meshgrid(
                 np.linspace(lower[0], upper[0], n), np.linspace(lower[1], upper[1], n)
@@ -951,6 +970,8 @@ class FrameMap:
             local = np.asarray(local, dtype=np.float64)
         if local.ndim != 2 or local.shape[1] not in (2, 3):
             raise ValueError("local must have shape (m, 2) or (m, 3)")
+        if len(self.lower) == 3:
+            return (local - self.lower) @ self._basis + self._origin
         finite = np.isfinite(local)
         all_finite = bool(finite.all())
         good = None if all_finite else finite.all(axis=1)
@@ -1011,6 +1032,10 @@ class FrameMap:
             raise ValueError("frame is singular")
         scene = _samples(scene, 3, "scene")
         _finite(scene, "scene")
+        if len(self.lower) == 3:
+            return (
+                np.linalg.solve(self._basis.T, (scene - self._origin).T).T + self.lower
+            )
         with np.errstate(all="ignore"):
             distance = (scene - self._origin) @ self._normal
             off_plane = np.abs(distance) > PLANE_RTOL * self._size
@@ -1063,8 +1088,8 @@ class SystemMap:
     """
 
     def __init__(self, data: Chain, frame: FrameMap, own: Chain | None = None) -> None:
-        if data.dim != 2:
-            raise ValueError("data dim must be 2")
+        if data.dim != len(frame.lower):
+            raise ValueError("data dim must match the frame dimension")
         if own is not None and own.nodes and own.dim != 3:
             raise ValueError("own dim must be 3")
         self.data = data
@@ -1141,7 +1166,7 @@ class SystemMap:
         local = self.data.forward(data)
         if self.own is None:
             return self.frame.forward(local)
-        padded = np.column_stack((local, np.zeros(len(local))))
+        padded = np.pad(local, ((0, 0), (0, 3 - local.shape[1])))
         placed = self.own.forward(padded)
         return self.frame.forward(placed)
 
@@ -1157,7 +1182,8 @@ class SystemMap:
     ) -> tuple[bool, bool]:
         """Certify midpoint error and a pole-free extent without screen arrays."""
         if (
-            self.own is not None
+            self.data.dim != 2
+            or self.own is not None
             or type(self.data) is not Chain
             or type(self.frame) is not FrameMap
             or not self.data.is_affine

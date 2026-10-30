@@ -210,6 +210,8 @@ class CartesianAxes(VGroup):
         explicit axis length sets the length; supplying both raises ValueError.
     tips
         Default for each axis's include_tip option.
+    frame
+        Origin axes or a box border; an explicit choice overrides the theme.
     theme
         Named preset, Theme or mapping of Theme fields. None uses the module
         default. Explicit constructor options and later decoration calls win.
@@ -273,6 +275,7 @@ class CartesianAxes(VGroup):
         y_axis_config: dict[str, Any] | None = None,
         tips: bool | None = None,
         *,
+        frame: Literal["origin", "box"] | None = None,
         theme: str | Theme | Mapping[str, Any] | None = None,
         cycle: str | Sequence[ParsableManimColor] | None = None,
         x_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
@@ -284,6 +287,18 @@ class CartesianAxes(VGroup):
         if config.renderer == RendererType.OPENGL:
             raise ValueError("CartesianAxes requires the Cairo renderer")
         self.theme = _resolve_theme(theme)
+        if frame not in (None, "origin", "box"):
+            raise ValueError("frame must be origin or box")
+        self._frame_style = frame or (
+            "box" if self.theme.position == "border" and self.theme.box else "origin"
+        )
+        if frame is not None:
+            self.theme = replace(
+                self.theme,
+                position="border" if frame == "box" else "origin",
+                box=frame == "box",
+                tips=False if frame == "box" else self.theme.tips,
+            )
         self._cycle = _resolve_cycle(self.theme.cycle if cycle is None else cycle)
         tips = self.theme.tips if tips is None else tips
         for options in (axis_config, x_axis_config, y_axis_config):
@@ -480,14 +495,15 @@ class CartesianAxes(VGroup):
             given = (axis_config or {}, own or {})
             axis._default_exclusion = not any("numbers_to_exclude" in c for c in given)
             axis._label_direction_custom = any("label_direction" in c for c in given)
+        self._ranges: tuple[Axis, ...] = (self.x_axis, self.y_axis)
         self.axes = VGroup(self.x_axis, self.y_axis)
         self.x, self.y = self.x_axis, self.y_axis
         self.submobjects = [self.x_axis, self.y_axis, self.frame]
         self._compile()
-        for axis in (self.x_axis, self.y_axis):
+        for axis in self._ranges:
             if axis.include_numbers or axis.numbers_to_include is not None:
                 axis.add_numbers(axis.numbers_to_include)
-        for axis in (self.x_axis, self.y_axis):
+        for axis in self._ranges:
             axis._decoration_seen = axis._versions()
         self._syncing = False
         if any(not isinstance(scale, LinearScale) for scale in scales):
@@ -519,6 +535,11 @@ class CartesianAxes(VGroup):
 
     def __getattr__(self, name: str) -> NoReturn:
         raise AttributeError(f"CartesianAxes has no attribute {name!r}")
+
+    @property
+    def frame_style(self) -> str:
+        """Return the selected origin or box frame style."""
+        return self._frame_style
 
     @property
     def twins(self) -> tuple[CartesianAxes, ...]:
@@ -640,6 +661,7 @@ class CartesianAxes(VGroup):
         )
         pair.x = pair.x_axis = axes[0]
         pair.y = pair.y_axis = axes[1]
+        pair._ranges = tuple(axes)
         pair.axes = VGroup(*axes)
         pair.submobjects = []
         root._attach_twin(pair, -1)
@@ -771,6 +793,7 @@ class CartesianAxes(VGroup):
         twin.submobjects = [own]
         previous = [t.get_axis(index) for t in root.twins if t._twin_axis == index]
         outward = previous[-1]._position_offset + distance if previous else 0.0
+        twin._ranges = (twin.x, twin.y)
         root._attach_twin(twin, index)
         own.set_position("top" if index == 0 else "right", offset=outward)
         return twin
@@ -793,7 +816,7 @@ class CartesianAxes(VGroup):
         if self._twin_axis == -1:
             return ()
         return (
-            (self.x, self.y)
+            self._ranges
             if self._twin_axis is None
             else (self.get_axis(self._twin_axis),)
         )
@@ -966,6 +989,7 @@ class CartesianAxes(VGroup):
                 self.x = self.x_axis = shared[0]
             if 1 in shared:
                 self.y = self.y_axis = shared[1]
+            self._ranges = (self.x, self.y)
             self.axes = VGroup(self.x, self.y)
             self._compile()
             for axis in self._owned_axes():
@@ -1200,7 +1224,7 @@ class CartesianAxes(VGroup):
                 if (
                     system._twin_axis != -1
                     or system._range_versions
-                    != (system.x.range.version, system.y.range.version)
+                    != tuple(axis.range.version for axis in system._ranges)
                     or (
                         system.parent is not None
                         and system.bounds is not system.parent.bounds
@@ -1310,19 +1334,23 @@ class CartesianAxes(VGroup):
             self.x_length, self.y_length = self.parent.x_length, self.parent.y_length
             for axis in self._owned_axes():
                 axis._resize(self.x_length if axis.index == 0 else self.y_length)
-        axes = (self.x_axis, self.y_axis)
+        axes = self._ranges
+        dim = len(axes)
         scaled = [axis._scale.forward(axis.range.value) for axis in axes]
         if self.aspect is not None:
             self._enforce_aspect(scaled)
         lower = np.array([limits[0] for limits in scaled])
         span = np.array([limits[1] - limits[0] for limits in scaled])
         factors = np.divide(
-            [self.x_length, self.y_length], span, out=np.zeros(2), where=span != 0
+            [getattr(self, name + "_length") for name in "xyz"[:dim]],
+            span,
+            out=np.zeros(dim),
+            where=span != 0,
         )
         self._data = Chain(
             (
                 *(
-                    ScaleNode(axis._scale, index, 2)
+                    ScaleNode(axis._scale, index, dim)
                     for index, axis in enumerate(axes)
                     if not isinstance(axis._scale, LinearScale)
                 ),
@@ -1376,13 +1404,16 @@ class CartesianAxes(VGroup):
         self.y_axis._resize(self.y_length)
 
     def _data_dirty(self) -> bool:
-        return not self._syncing and (
-            (self.parent is not None and self.bounds is not self.parent.bounds)
-            or self._range_versions[0] != self.x._range_parameter.version
-            or self._range_versions[1] != self.y._range_parameter.version
-            or (self._twin_axis in (None, 0) and self.x._style_changed())
-            or (self._twin_axis in (None, 1) and self.y._style_changed())
-        )
+        if self._syncing:
+            return False
+        if self.parent is not None and self.bounds is not self.parent.bounds:
+            return True
+        for index, axis in enumerate(self._ranges):
+            if self._range_versions[index] != axis._range_parameter.version or (
+                self._twin_axis in (None, index) and axis._style_changed()
+            ):
+                return True
+        return False
 
     def _sync_data(self) -> None:
         if not self._data_dirty():
@@ -1390,9 +1421,8 @@ class CartesianAxes(VGroup):
         axes = self._owned_axes()
         range_changed = (
             self.parent is not None and self.bounds is not self.parent.bounds
-        ) or self._range_versions != (
-            self.x._range_parameter.version,
-            self.y._range_parameter.version,
+        ) or self._range_versions != tuple(
+            axis._range_parameter.version for axis in self._ranges
         )
         changed = [axis for axis in axes if axis._decoration_seen != axis._versions()]
         if not range_changed and not changed:
@@ -1411,7 +1441,7 @@ class CartesianAxes(VGroup):
         token = playback_context()
         if token is not None and token == self._poll_token:
             return
-        parameters = (*self.x_axis._parameters(), *self.y_axis._parameters())
+        parameters = tuple(p for axis in self._ranges for p in axis._parameters())
         self._poll_token = token
         self._token += 1
         for parameter in parameters:
@@ -1432,7 +1462,7 @@ class CartesianAxes(VGroup):
             return False
         if self.frame in moving:
             return True
-        for axis in (self.x_axis, self.y_axis):
+        for axis in self._ranges:
             for parameter in axis._parameters():
                 tracker = parameter.tracker
                 if tracker is not None and (callable(tracker) or tracker in moving):
@@ -1494,7 +1524,13 @@ class CartesianAxes(VGroup):
         data = np.atleast_2d(values) if scalar or rows else values.T
         if data.shape[1] == 1:
             data = np.column_stack((data, np.zeros(len(data))))
-        data = data[:, :2]
+        dim = len(self._ranges)
+        if data.shape[1] < dim:
+            padded = np.zeros((len(data), dim))
+            padded[:, : data.shape[1]] = data
+            data = padded
+        else:
+            data = data[:, :dim]
         mapping = self._mapping()
         if mapping.frame.is_singular:
             raise ValueError("frame is singular")
@@ -1545,7 +1581,7 @@ class CartesianAxes(VGroup):
             raise ValueError(f"point at index {index} must be finite")
         self._sync_data()
         local = self.frame.mapping.inverse(np.atleast_2d(values))
-        result = self._data.inverse(local[:, :2])
+        result = self._data.inverse(local[:, : len(self._ranges)])
         if not np.isfinite(result).all():
             raise ValueError("point maps to non-finite coordinates")
         return result[0] if values.ndim == 1 else result
@@ -1661,7 +1697,7 @@ class CartesianAxes(VGroup):
         """
         self.x_axis.range = _range(x_range, "x_range")
         if len(x_range) == 3:
-            self._field_steps = (float(x_range[2]), self._field_steps[1])
+            self._field_steps = (float(x_range[2]), *self._field_steps[1:])
         return self
 
     def set_y_range(self, y_range: Sequence[float]) -> Self:
@@ -1674,7 +1710,11 @@ class CartesianAxes(VGroup):
         """
         self.y_axis.range = _range(y_range, "y_range")
         if len(y_range) == 3:
-            self._field_steps = (self._field_steps[0], float(y_range[2]))
+            self._field_steps = (
+                self._field_steps[0],
+                float(y_range[2]),
+                *self._field_steps[2:],
+            )
         return self
 
     def get_origin(self) -> FloatArray:
@@ -1693,7 +1733,7 @@ class CartesianAxes(VGroup):
         index
             Zero for x, one for y.
         """
-        return (self.x_axis, self.y_axis)[index]
+        return self._ranges[index]
 
     def get_x_axis(self) -> Axis:
         """Return the x decoration."""
@@ -2838,7 +2878,9 @@ class CartesianAxes(VGroup):
             frame_style={"color": self.x.line.get_color(), **(frame_style or {})},
         )
         corner = np.array([*locations[location], 0.0], dtype=float)
-        local = np.where(corner[:2] > 0, self.bounds.upper, self.bounds.lower)
+        local = np.where(
+            corner[: len(self._ranges)] > 0, self.bounds.upper, self.bounds.lower
+        )
         legend.shift(
             self.frame.mapping.forward(local[None])[0]
             - corner * buff
@@ -3098,7 +3140,7 @@ class NumberPlane(CartesianAxes):
             make_smooth_after_applying_functions=make_smooth_after_applying_functions,
             **options,
         )
-        for axis in (self.x_axis, self.y_axis):
+        for axis in self._ranges:
             axis.minor_locator = (
                 MinorCountLocator(axis.locator, faded_line_ratio - 1)
                 if faded_line_ratio > 1

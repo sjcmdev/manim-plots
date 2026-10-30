@@ -53,7 +53,7 @@ def test_ts1_two_coordinates_mean_z_zero_and_arrays_broadcast():
     ax = mp.ThreeDAxes()
     np.testing.assert_allclose(ax.c2p(1, 2), ax.c2p(1, 2, 0))
     many = ax.c2p(np.array([1.0, 2.0]), np.array([0.0, 1.0]), np.array([1.0, -1.0]))
-    np.testing.assert_allclose(many[1], ax.c2p(2, 1, -1))
+    np.testing.assert_allclose(many[:, 1], ax.c2p(2, 1, -1))  # columns, as Manim
 
 
 def test_ts1_log_z_by_hand():
@@ -88,7 +88,7 @@ def test_ts3_polar_helpers_keep_manims_meaning_in_the_plane():
 
 def test_ts3_not_star_exported():
     assert "ThreeDAxes" not in mp.__all__
-    assert mp.ThreeDAxes is not ThreeDAxes
+    assert mp.ThreeDAxes.__module__.startswith("manim_plots")
 
 
 # --- TA -------------------------------------------------------------------------------
@@ -292,8 +292,9 @@ def test_tk2_clip_per_axis_takes_three_entries():
 def test_tk3_scatter_outside_the_box_is_not_drawn():
     ax = mp.ThreeDAxes()
     dots = ax.scatter([0, 0], [0, 0], [1, 9])
-    assert len(pts(dots[0])) > 0
-    assert len(pts(dots[1])) == 0
+    # hidden as in 2D: the marker stays, its opacity drops to zero
+    assert dots[0].get_fill_opacity() > 0
+    assert dots[1].get_fill_opacity() == 0
 
 
 def test_tc3_a_camera_move_changes_no_artist():

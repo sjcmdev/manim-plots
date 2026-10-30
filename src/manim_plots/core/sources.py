@@ -347,13 +347,15 @@ class Box:
     def __post_init__(self) -> None:
         for name in ("lower", "upper"):
             value = _numeric(getattr(self, name), name).copy()
-            if value.shape != (2,):
+            if value.shape not in ((2,), (3,)):
                 raise ValueError(f"{name} must have shape (2,)")
             bad = ~np.isfinite(value)
             if np.any(bad):
                 raise ValueError(f"{name}[{np.flatnonzero(bad)[0]}] must be finite")
             value.flags.writeable = False
             object.__setattr__(self, name, value)
+        if self.lower.shape != self.upper.shape:
+            raise ValueError("lower and upper must have the same shape")
         bad = self.lower >= self.upper
         if np.any(bad):
             i = int(np.flatnonzero(bad)[0])
@@ -384,6 +386,10 @@ class Box:
         )
         if points.shape[1] == 3:
             inside &= np.isfinite(points[:, 2])
+        for axis in range(2, len(self.lower)):
+            inside &= (points[:, axis] >= self.lower[axis]) & (
+                points[:, axis] <= self.upper[axis]
+            )
         return inside
 
 
@@ -487,7 +493,8 @@ def _inputs(t: ArrayLike) -> FloatArray:
 def _extent(map: CompiledMap, bounds: Bounds) -> tuple[float, float]:
     with np.errstate(all="ignore"):
         middle = bounds.lower / 2 + bounds.upper / 2
-        edges = np.array([[bounds.lower[0], middle[1]], [bounds.upper[0], middle[1]]])
+        edges = np.tile(middle, (2, 1))
+        edges[:, 0] = [bounds.lower[0], bounds.upper[0]]
         xs = map.inverse(edges)[:, 0]
     return float(np.min(xs)), float(np.max(xs))
 
@@ -540,10 +547,11 @@ class _AnalyticSource:
     discontinuities: tuple[float, ...]
     dt: float
     _parametric: bool
+    dim: int = 2
 
     def _evaluate(self, t: FloatArray) -> FloatArray:
         if not len(t):
-            return np.empty((0, 2))
+            return np.empty((0, self.dim))
         with warnings.catch_warnings(), np.errstate(all="ignore"):
             warnings.simplefilter("ignore", RuntimeWarning)
             if self.use_vectorized:
@@ -558,22 +566,29 @@ class _AnalyticSource:
                         raise TypeError(
                             "function must return two or three arrays of input length"
                         )
-                    return values[:2].T.copy()
+                    if len(values) >= self.dim:
+                        return values[: self.dim].T.copy()
+                    return np.pad(values.T, ((0, 0), (0, self.dim - len(values))))
                 if values.shape != t.shape:
                     raise TypeError("function must return an array of input length")
-                return np.column_stack((t, values))
-            result = np.empty((len(t), 2))
+                coordinates = np.column_stack((t, values))
+                return (
+                    coordinates
+                    if self.dim == 2
+                    else np.pad(coordinates, ((0, 0), (0, self.dim - 2)))
+                )
+            result = np.zeros((len(t), self.dim))
             for i, scalar in enumerate(t):
                 raw = self.function(scalar)
                 value = _numeric(raw, "function output")
                 if self._parametric:
                     if value.shape not in ((2,), (3,)):
                         raise TypeError("function must return two or three coordinates")
-                    result[i] = value[:2]
+                    result[i, : min(self.dim, len(value))] = value[: self.dim]
                 else:
                     if value.ndim != 0:
                         raise TypeError("function must return a scalar")
-                    result[i] = scalar, value.item()
+                    result[i, :2] = scalar, value.item()
             return result
 
     def at(self, t: ArrayLike) -> FloatArray:
@@ -606,6 +621,7 @@ class _AnalyticSource:
         Payload
             Ordered data anchors, retaining invalid samples and path splits.
         """
+        tolerance = CHORD_TOLERANCE / (self.dim - 1) ** 4
         if self._parametric:
             assert self._range is not None
             lo, hi = self._range[:2]
@@ -614,7 +630,7 @@ class _AnalyticSource:
             if self._range is not None:
                 lo, hi = max(lo, self._range[0]), min(hi, self._range[1])
         if not np.isfinite([lo, hi]).all() or lo > hi:
-            return Payload.empty("path", 2)
+            return Payload.empty("path", self.dim)
         intervals = _pieces(lo, hi, self.discontinuities, self.dt)
         ts: list[FloatArray] = []
         ids: list[IntArray] = []
@@ -636,7 +652,7 @@ class _AnalyticSource:
                 ids.append(np.full(count, i, dtype=np.intp))
                 remaining -= count
         if not ts:
-            return Payload.empty("path", 2)
+            return Payload.empty("path", self.dim)
         t = ts[0] if len(ts) == 1 else np.concatenate(ts)
         labels = ids[0] if len(ids) == 1 else np.concatenate(ids)
         depth: IntArray | None = None
@@ -650,7 +666,7 @@ class _AnalyticSource:
                 certified, contained = map._straight_enough(
                     evaluated,
                     len(t),
-                    CHORD_TOLERANCE,
+                    tolerance,
                     bounds.lower,
                     bounds.upper,
                     parametric=self._parametric,
@@ -694,7 +710,7 @@ class _AnalyticSource:
                     probes = None
                 # The chord midpoint is an admissible closest-point candidate.
                 delta = images - left / 2 - right / 2
-                if (_sum_rows(delta * delta) <= CHORD_TOLERANCE**2).all():
+                if (_sum_rows(delta * delta) <= tolerance**2).all():
                     break
                 chord = right - left
                 norm = _sum_rows(chord * chord)
@@ -710,14 +726,12 @@ class _AnalyticSource:
                 delta -= chord
                 error = _sum_rows(delta * delta)
                 if np.isfinite(screen).all() and np.isfinite(images).all():
-                    refine = error > CHORD_TOLERANCE**2
+                    refine = error > tolerance**2
                 else:
                     lv = np.isfinite(left).all(axis=1)
                     rv = np.isfinite(right).all(axis=1)
                     mv = np.isfinite(images).all(axis=1)
-                    refine = (lv != rv) | (
-                        lv & rv & (~mv | (error > CHORD_TOLERANCE**2))
-                    )
+                    refine = (lv != rv) | (lv & rv & (~mv | (error > tolerance**2)))
                 refine &= (mid > left_t) & (mid < right_t)
             chosen = np.flatnonzero(refine)[: MAX_SAMPLES - len(t)]
             if not len(chosen):
@@ -727,7 +741,7 @@ class _AnalyticSource:
             insert[edges] = True
             positions = np.arange(len(t)) + np.concatenate(([0], np.cumsum(insert)))
             new_t = np.empty(len(t) + len(edges))
-            new_coords = np.empty((len(new_t), 2))
+            new_coords = np.empty((len(new_t), self.dim))
             new_screen = np.empty((len(new_t), screen.shape[1]))
             new_labels = np.empty(len(new_t), dtype=np.intp)
             new_t[positions], new_coords[positions] = t, coords
@@ -804,7 +818,7 @@ class _AnalyticSource:
             return _path(coords, labels)
         ids = confirmed[: max(0, (MAX_SAMPLES - len(t)) // 2)]
         extra_t = np.column_stack((left[ids], right[ids])).ravel()
-        extra_coords = np.stack((lc[ids], rc[ids]), axis=1).reshape(-1, 2)
+        extra_coords = np.stack((lc[ids], rc[ids]), axis=1).reshape(-1, self.dim)
         all_t = np.concatenate((t, extra_t))
         order = np.argsort(all_t, kind="stable")
         sorted_t = all_t[order]
@@ -838,6 +852,8 @@ class FunctionSource(_AnalyticSource):
         Inputs at which to force a gap.
     dt
         Positive half-width of each forced gap.
+    dim
+        Data dimension; missing coordinates are zero and excess ones are dropped.
     """
 
     def __init__(
@@ -848,16 +864,17 @@ class FunctionSource(_AnalyticSource):
         use_vectorized: bool = False,
         discontinuities: Iterable[float] | None = None,
         dt: float = 1e-8,
+        dim: int = 2,
     ) -> None:
         ds = _options(function, use_vectorized, discontinuities, dt)
         super().__init__(
-            function, _range(x_range, "x_range"), use_vectorized, ds, dt, False
+            function, _range(x_range, "x_range"), use_vectorized, ds, dt, False, dim
         )
 
 
 @dataclass(frozen=True, init=False)
 class ParametricSource(_AnalyticSource):
-    """Sample a parameterized curve, dropping its optional z coordinate.
+    """Sample a parameterized curve in the requested data dimension.
 
     Parameters
     ----------
@@ -871,6 +888,8 @@ class ParametricSource(_AnalyticSource):
         Parameter values at which to force a gap.
     dt
         Positive half-width of each forced gap.
+    dim
+        Data dimension; missing coordinates are zero and excess ones are dropped.
     """
 
     def __init__(
@@ -881,12 +900,13 @@ class ParametricSource(_AnalyticSource):
         use_vectorized: bool = False,
         discontinuities: Iterable[float] | None = None,
         dt: float = 1e-8,
+        dim: int = 2,
     ) -> None:
         ds = _options(function, use_vectorized, discontinuities, dt)
         checked = _range(t_range, "t_range")
         if checked is None:
             raise TypeError("t_range must be a sequence")
-        super().__init__(function, checked, use_vectorized, ds, dt, True)
+        super().__init__(function, checked, use_vectorized, ds, dt, True, dim)
 
 
 @dataclass(frozen=True, init=False)
@@ -901,6 +921,8 @@ class ArraySource:
         One-dimensional y values, absent when xs contains pairs.
     kind
         Path connectivity or independent points.
+    dim
+        Number of coordinate columns, defaulting to two.
     """
 
     data: FloatArray
@@ -912,11 +934,12 @@ class ArraySource:
         ys: ArrayLike | None = None,
         *,
         kind: Literal["path", "points"] = "path",
+        dim: int = 2,
     ) -> None:
         x = _numeric(xs, "xs")
         if ys is None:
-            if x.ndim != 2 or x.shape[1] != 2:
-                raise ValueError("pairs must have shape (n, 2)")
+            if x.ndim != 2 or x.shape[1] != dim:
+                raise ValueError(f"pairs must have shape (n, {dim})")
             data = x.copy()
         else:
             y = _numeric(ys, "ys")

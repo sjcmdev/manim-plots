@@ -73,7 +73,7 @@ In 2D, `CartesianAxes` and `NumberPlane` take `frame="origin" | "box"` too (FR-5
 
 | ID | Row |
 |---|---|
-| TS-1 | The map of a `ThreeDAxes` is the 2D map's composition at `dim=3`: one `ScaleNode` per non-linear axis and one `AffineNode`; `c2p(x, y, z)` and `p2c` are inverse within `1e-9` on linear, log and symlog axes; arrays broadcast as on `CartesianAxes`; `c2p(x, y)` is `c2p(x, y, 0)` |
+| TS-1 | The map of a `ThreeDAxes` is the 2D map's composition at `dim=3`: one `ScaleNode` per non-linear axis and one `AffineNode`; `c2p(x, y, z)` and `p2c` are inverse within `1e-9` on linear, log and symlog axes; arrays broadcast as on `CartesianAxes` (one column per point, Manim's shape `(3, n)`); `c2p(x, y)` is `c2p(x, y, 0)` |
 | TS-2 | Every existing test passes unchanged; a 2D system's map, leaves and per-frame cost are unchanged (F-1001 interleaved against `dev` equal) |
 | TS-3 | Twins (`twinx`, `twiny`, `twin`), `secondary_xaxis`/`secondary_yaxis`, the field helpers of task 21 and task 16-18's helpers (drop lines, calculus, regions, error bars) raise `NotImplementedError` naming the method and `ThreeDAxes` *(default taken: 3D versions are later tasks)*. The polar helpers of task 22 keep Manim's meaning in the `z = 0` plane |
 
@@ -111,18 +111,18 @@ In 2D, `CartesianAxes` and `NumberPlane` take `frame="origin" | "box"` too (FR-5
 |---|---|
 | TK-1 | An artist is clipped to the box of the three ranges by default: a helix of height 10 on Manim's defaults is cut at `z = ±4` within `1e-6` scene units and resumes inside; `clip=False` draws it whole, as Manim does |
 | TK-2 | `clip=(x, y, z)` clips per axis, each entry a bool or a margin in scene units, as task 15's `clip=(x, y)`; a two-entry tuple on a `ThreeDAxes` raises `ValueError` naming `clip` |
-| TK-3 | Scatter points outside the box are not drawn when clipped, per axis, as in 2D |
+| TK-3 | Scatter points outside the box are hidden when clipped, per axis, as in 2D (the marker stays, its opacity drops to zero) |
 
 ## FR — frame styles (ADR 0006 §4)
 
 | ID | Row |
 |---|---|
 | FR-1 | The style is kept as `ax.frame_style` (`ax.frame` is the system's invisible frame, task 09). `frame="origin"` (the default) is Manim's picture: the axes cross at the data origin, or where `set_position` puts them, as TA-1 to TA-4 say |
-| FR-2 | `frame="box"` draws the box of the three ranges with three panes on its far sides, each a filled part with a grid at its two axes' major ticks (`ax.panes["x"]` is the pane perpendicular to x, `.grid` its lines), and the three axes on near edges, their ticks inward and numbers outward, numbered by default *(default taken: matplotlib's)*. Far and near are read from the camera: with the camera direction `d = (sin φ cos θ, sin φ sin θ, cos φ)` of `ThreeDScene`'s `phi` and `theta`, the x pane lies at the x end opposite `sign(d_x)` (x_min when `d_x > 0`), the same for y and z; the x axis runs along the near bottom edge (`y` at the end of `sign(d_y)`, `z` at its far end), the y axis likewise, the z axis along the vertical edge farthest to the camera's right among the near ones *(default taken: matplotlib's choices)* |
+| FR-2 | `frame="box"` draws the box of the three ranges with three panes on its far sides, each a filled part with a grid at its two axes' major ticks (`ax.panes["x"]` is the pane perpendicular to x, `.grid` its lines), and the three axes on near edges, their ticks inward and numbers outward, numbered by default, no tips (as the 2D box) *(default taken: matplotlib's)*. Far and near are read from the camera: with the camera direction `d = (sin φ cos θ, sin φ sin θ, cos φ)` of `ThreeDScene`'s `phi` and `theta`, the x pane lies at the x end opposite `sign(d_x)` (x_min when `d_x > 0`), the same for y and z; the x axis runs along the near bottom edge (`y` at the end of `sign(d_y)`, `z` at its far end), the y axis likewise, the z axis along the vertical edge farthest to the camera's right among the near ones *(default taken: matplotlib's choices)* |
 | FR-3 | The panes, edges and axes follow the camera: a `move_camera` or an ambient rotation that crosses a pane's plane moves the pane and the axes to the other side on that frame, keyed by side so a style set on a pane or an axis is kept; a still camera costs nothing per frame. The system finds the camera of the `ThreeDScene` it is drawn in without being told and without patching Manim; `ax.set_camera(camera)` names one explicitly *(default taken)* |
 | FR-4 | `frame="box"` with a plain `Scene` (no 3D camera) draws the box as seen from the default view (`phi = 0`) and warns once through `ManimPlotsWarning` |
 | FR-5 | In 2D, `frame="box"` on `CartesianAxes` and `NumberPlane` is the framed plot: x at the bottom, y at the left, unlabelled mirrors at the top and right, no tips, ticks inward (task 19b, ADR 0005 §1); it draws exactly what `x.set_position("bottom")`, `y.set_position("left")` and the theme field `box=True` draw today. `frame="origin"` is the default. A theme with `position="border"` and `box=True` sets `frame="box"`, and an explicit `frame` wins |
-| FR-6 | `face_camera=True` turns every number and label to face the camera on every frame the camera moves (the label's plane normal parallel to `d`, its up direction the screen's up), as Manim's `add_fixed_orientation_mobjects` does, kept centred where it was placed; it defaults to `True` in `"box"` and `False` in `"origin"` (Manim's flat labels) |
+| FR-6 | `face_camera=True` turns every number and label to face the camera on every frame the camera moves (the label's plane normal parallel to `d`, its up direction the screen's up: its flat points `p` become `centre + (p - centre) @ M` with `M = camera.generate_rotation_matrix()`; `get_rotation_matrix()` is the matrix of the last captured frame), as Manim's `add_fixed_orientation_mobjects` does, kept centred where it was placed; it defaults to `True` in `"box"` and `False` in `"origin"` (Manim's flat labels) |
 
 ## VW — view and aspect
 

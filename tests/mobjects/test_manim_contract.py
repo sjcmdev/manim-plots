@@ -228,6 +228,28 @@ ADDED_BY_TASK_21 = [
     "VectorField.scale_func",
 ]
 
+ADDED_BY_TASK_24 = [
+    "Camera",
+    "Camera.capture_mobjects",
+    "Mobject.get_family",
+    "ThreeDCamera.get_gamma",
+    "ThreeDCamera.add_fixed_in_frame_mobjects",
+    "ThreeDAxes.__init__",
+    "ThreeDAxes._add_3d_pieces",
+    "ThreeDAxes._set_axis_shading",
+    "ThreeDAxes.get_y_axis_label",
+    "ThreeDAxes.get_z_axis_label",
+    "ThreeDAxes.get_axis_labels",
+    "ThreeDCamera.__init__",
+    "ThreeDCamera.get_phi",
+    "ThreeDCamera.get_theta",
+    "ThreeDCamera.get_rotation_matrix",
+    "ThreeDCamera.reset_rotation_matrix",
+    "ThreeDCamera.generate_rotation_matrix",
+    "Scene.update_mobjects",
+    "Mobject.get_pieces",
+]
+
 ADDED_BY_TASK_22 = [
     "VMobject.get_subpath_split_indices_from_points",
     "Camera.transform_points_pre_display",
@@ -272,6 +294,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_19B
         + ADDED_BY_TASK_21
         + ADDED_BY_TASK_22
+        + ADDED_BY_TASK_24
     )
 
 

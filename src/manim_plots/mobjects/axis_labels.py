@@ -292,7 +292,7 @@ def _layout_overlap(axis: axis_module.Axis, group: _Parts[Any]) -> None:
         sizes.append(sum(len(part) for part in parts))
     bounds = np.zeros((len(labels), 2, 2))
     if outlines:
-        points = np.concatenate(outlines)[:, :2]
+        points = np.concatenate(outlines)[:, [axis.index, 0 if axis.index else 1]]
         starts = np.cumsum([0, *sizes[:-1]])
         nonempty = np.asarray(sizes) != 0
         bounds[nonempty, 0] = np.minimum.reduceat(points, starts[nonempty], axis=0)

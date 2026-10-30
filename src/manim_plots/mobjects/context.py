@@ -39,6 +39,8 @@ from manim import (
     StreamLines,
     Succession,
     TangentLine,
+    ThreeDAxes,
+    ThreeDCamera,
     Transform,
     TransformFromCopy,
     Vector,
@@ -248,10 +250,84 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     CoordinateSystem.plot_polar_graph,
     VMobject.get_subpath_split_indices_from_points,
     Camera.transform_points_pre_display,
+    ThreeDAxes.__init__,
+    ThreeDAxes._add_3d_pieces,
+    ThreeDAxes._set_axis_shading,
+    ThreeDAxes.get_y_axis_label,
+    ThreeDAxes.get_z_axis_label,
+    ThreeDAxes.get_axis_labels,
+    ThreeDCamera.__init__,
+    ThreeDCamera.add_fixed_in_frame_mobjects,
+    ThreeDCamera.get_phi,
+    ThreeDCamera.get_theta,
+    ThreeDCamera.get_rotation_matrix,
+    ThreeDCamera.reset_rotation_matrix,
+    ThreeDCamera.generate_rotation_matrix,
+    Scene.update_mobjects,
+    Mobject.get_pieces,
+    Camera,
+    Camera.capture_mobjects,
+    Mobject.get_family,
+    ThreeDCamera.get_gamma,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Camera": ("a4bc43d2af494b4a33370cff0c3e21fbc1f8454f22beebe6e570b8034c93d576"),
+        "Camera.capture_mobjects": (
+            "958b8f23af48f900a4bca8a6eee38bb39de4aeff7a2e1ee3ba11ee5f370af526"
+        ),
+        "Mobject.get_family": (
+            "6335b7e3fc2f5cb8d3edf37261ed9c944614948a915381680d8a19621098e6d7"
+        ),
+        "ThreeDCamera.get_gamma": (
+            "79f1c64bf6de437112fb08d7ad3f8f7ce97279fa5462402667efb4226bab5eaf"
+        ),
+        "ThreeDCamera.add_fixed_in_frame_mobjects": (
+            "8c714c6cfe1dad948b9ee2842f679da799aaa2b47bc787c67dbb20bc735f76ba"
+        ),
+        "ThreeDAxes.__init__": (
+            "9c61175bcf12a80b68bc7cf8f72c9f3306ced9f805ad48eeba7b1c5f9b723374"
+        ),
+        "ThreeDAxes._add_3d_pieces": (
+            "abe2a7f8922a6081df702eb04a0b7672aa70ece713caa60c561c9b8363f6ea70"
+        ),
+        "ThreeDAxes._set_axis_shading": (
+            "730315b205c01f1d70313e596b7c42659e1702e1e530a398ceee1afe5387dd83"
+        ),
+        "ThreeDAxes.get_y_axis_label": (
+            "6c03129efc0d05d37784240262eff82a72c67b4f00642879c7a11c2ee8552a74"
+        ),
+        "ThreeDAxes.get_z_axis_label": (
+            "de33d29ae01852d0cd3e8c6b05f64e2e0a39f78162ccd06bd66a62fe79d4c4cc"
+        ),
+        "ThreeDAxes.get_axis_labels": (
+            "ce9536dc4ff053f8af24cb0871788047c7181617be1b6845110ece7a59e4c91e"
+        ),
+        "ThreeDCamera.__init__": (
+            "221f5f8dc3d01535ead1350cfe8557fdf2bd6b16dabddee3a319cd5d4234db79"
+        ),
+        "ThreeDCamera.get_phi": (
+            "1f631e2d34012d5f4fa5cf1619477fd4cbab7b9dfa75af95e3ca443314c8e094"
+        ),
+        "ThreeDCamera.get_theta": (
+            "0313fb1c16e5fe1fe1945087a10ee38865b4da9bb516e146875a36f94b0dd6ad"
+        ),
+        "ThreeDCamera.get_rotation_matrix": (
+            "a6ad11cc4f9c7e6433ad63ffd45d96ef6aa7516675053410064bfe3cd4c191dd"
+        ),
+        "ThreeDCamera.reset_rotation_matrix": (
+            "74ac1fec34c4bf3e5ea0c9aee54a668c6664353ca93f80bbd8c0f309c631facb"
+        ),
+        "ThreeDCamera.generate_rotation_matrix": (
+            "c5e496e456b3ffa908d20bd64d26b055c4e7fc4bf39fd178b0f957ed6216f444"
+        ),
+        "Scene.update_mobjects": (
+            "8d4edd0afd900f5993f878c3ad6d7ab5a8d29872c3682523551da4b1cd4e77dc"
+        ),
+        "Mobject.get_pieces": (
+            "176d5845ad6d953bd7f04052471e7aeaea4030d4dccf8cc1eb00b61335cde256"
+        ),
         "VectorField.__init__": (
             "bd5b0886cfa6186ad12cd868ca9b2bf3e6c7ac021d531d68d062cebe415a8018"
         ),
@@ -803,6 +879,61 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Camera": ("94e976f9408f176ab0fcaf6873a881333fe66938b90d5c6527e715eae988c2d6"),
+        "Camera.capture_mobjects": (
+            "958b8f23af48f900a4bca8a6eee38bb39de4aeff7a2e1ee3ba11ee5f370af526"
+        ),
+        "Mobject.get_family": (
+            "d0b2953532b4380ab77417bd43b5bdc64dafbe958441a9fdcf9450f5dbde2789"
+        ),
+        "ThreeDCamera.get_gamma": (
+            "79f1c64bf6de437112fb08d7ad3f8f7ce97279fa5462402667efb4226bab5eaf"
+        ),
+        "ThreeDCamera.add_fixed_in_frame_mobjects": (
+            "8c714c6cfe1dad948b9ee2842f679da799aaa2b47bc787c67dbb20bc735f76ba"
+        ),
+        "ThreeDAxes.__init__": (
+            "9c61175bcf12a80b68bc7cf8f72c9f3306ced9f805ad48eeba7b1c5f9b723374"
+        ),
+        "ThreeDAxes._add_3d_pieces": (
+            "abe2a7f8922a6081df702eb04a0b7672aa70ece713caa60c561c9b8363f6ea70"
+        ),
+        "ThreeDAxes._set_axis_shading": (
+            "730315b205c01f1d70313e596b7c42659e1702e1e530a398ceee1afe5387dd83"
+        ),
+        "ThreeDAxes.get_y_axis_label": (
+            "6c03129efc0d05d37784240262eff82a72c67b4f00642879c7a11c2ee8552a74"
+        ),
+        "ThreeDAxes.get_z_axis_label": (
+            "de33d29ae01852d0cd3e8c6b05f64e2e0a39f78162ccd06bd66a62fe79d4c4cc"
+        ),
+        "ThreeDAxes.get_axis_labels": (
+            "ce9536dc4ff053f8af24cb0871788047c7181617be1b6845110ece7a59e4c91e"
+        ),
+        "ThreeDCamera.__init__": (
+            "221f5f8dc3d01535ead1350cfe8557fdf2bd6b16dabddee3a319cd5d4234db79"
+        ),
+        "ThreeDCamera.get_phi": (
+            "1f631e2d34012d5f4fa5cf1619477fd4cbab7b9dfa75af95e3ca443314c8e094"
+        ),
+        "ThreeDCamera.get_theta": (
+            "0313fb1c16e5fe1fe1945087a10ee38865b4da9bb516e146875a36f94b0dd6ad"
+        ),
+        "ThreeDCamera.get_rotation_matrix": (
+            "a6ad11cc4f9c7e6433ad63ffd45d96ef6aa7516675053410064bfe3cd4c191dd"
+        ),
+        "ThreeDCamera.reset_rotation_matrix": (
+            "74ac1fec34c4bf3e5ea0c9aee54a668c6664353ca93f80bbd8c0f309c631facb"
+        ),
+        "ThreeDCamera.generate_rotation_matrix": (
+            "c5e496e456b3ffa908d20bd64d26b055c4e7fc4bf39fd178b0f957ed6216f444"
+        ),
+        "Scene.update_mobjects": (
+            "8d4edd0afd900f5993f878c3ad6d7ab5a8d29872c3682523551da4b1cd4e77dc"
+        ),
+        "Mobject.get_pieces": (
+            "55997ea46f1eaad3bdfd8f7ab12125778dcd3f9cd1ec20fd9ae6b4a6eb430911"
+        ),
         "VectorField.__init__": (
             "9daf0191595a1903e5bbe8a8db26dea7f542926d1b7b1589d7649fd960596de1"
         ),
@@ -1651,3 +1782,32 @@ def moving_context() -> frozenset[Mobject] | None:
         return None
     finally:
         del frame
+
+
+def _scene_camera() -> Camera | None:
+    frame: FrameType | None = sys._getframe()
+    try:
+        while frame is not None:
+            scene = frame.f_locals.get("self")
+            if isinstance(scene, Scene):
+                return cast(Camera, scene.camera)
+            frame = frame.f_back
+    finally:
+        del frame
+    return None
+
+
+def _drawing_camera() -> Camera | None:
+    # Start at get_family's caller; stack access stays in the context layer.
+    frame: FrameType | None = sys._getframe(2)
+    try:
+        for _ in range(8):
+            if frame is None:
+                break
+            camera = frame.f_locals.get("self")
+            if isinstance(camera, Camera):
+                return camera
+            frame = frame.f_back
+    finally:
+        del frame
+    return None

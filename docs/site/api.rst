@@ -20,6 +20,15 @@ is likewise reached as ``mp.NumberPlane``.
 .. autoclass:: manim_plots.mobjects.axis.Axis
    :members:
 
+3D
+--
+
+.. autoclass:: ThreeDAxes
+   :members:
+
+.. autoclass:: manim_plots.mobjects.three_d.Pane
+   :members:
+
 Polar
 -----
 

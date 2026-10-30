@@ -57,7 +57,7 @@ class _VMStyle(TypedDict, total=False):
 
 
 type _Clip = bool | float
-type _ClipPair = tuple[_Clip, _Clip]
+type _ClipPair = tuple[_Clip, ...]
 type _ClipValue = _Clip | _ClipPair
 type _ClipInput = _ClipValue | list[_Clip]
 
