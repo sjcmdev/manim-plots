@@ -27,6 +27,7 @@ class Theme:  # mp.Theme, star-exported
     minor_ticks: int = 0                   # minor ticks between two majors
     grid: tuple[Level, ...] = ()           # (), ("major",) or ("major", "minor")
     grid_style: Mapping[str, Any] = ...    # VMobject style of the major grid
+    minor_grid_style: Mapping[str, Any] = ...  # over grid_style for the minor grid
     legend_location: str = "upper right"
     legend_frame: bool = False
     cycle: str | tuple[ParsableManimColor, ...] = "manim"

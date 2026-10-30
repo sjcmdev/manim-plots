@@ -911,7 +911,13 @@ class Axis(VGroup):
             "direction",
             major.get(
                 "direction",
-                TickDirection.OUT if self._position_outward else TickDirection.BOTH,
+                TickDirection.IN
+                if self._mirror_of is not None
+                or (
+                    self._position in ("bottom", "top", "left", "right")
+                    and self._position_fraction is None
+                )
+                else TickDirection.BOTH,
             ),
         )
         if direction is not TickDirection.BOTH:
@@ -1110,6 +1116,10 @@ class Axis(VGroup):
     ) -> Self:
         """Move only this axis's decoration across the other coordinate range.
 
+        Unset tick directions point inward at named borders and straddle axes
+        through the data. Numbers stay outside borders unless their direction
+        was explicitly configured. An explicit tick direction is retained.
+
         Parameters
         ----------
         where
@@ -1144,9 +1154,11 @@ class Axis(VGroup):
         self._position, self._position_fraction = where, fraction
         self._position_offset = distance
         self._position_outward = offset is not None
-        if offset is not None and not self._label_direction_custom:
-            self.label_direction = np.eye(3)[1 - self.index] * (
-                -1 if where in ("left", "bottom") else 1
+        if not self._label_direction_custom:
+            self.label_direction = (
+                np.eye(3)[1 - self.index] * (-1 if where in ("left", "bottom") else 1)
+                if where in ("left", "right", "top", "bottom") and fraction is None
+                else np.asarray(self._native.label_direction, dtype=float)
             )
             self._label_style_seen = None
             self._custom_style_seen = None
