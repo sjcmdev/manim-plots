@@ -89,6 +89,11 @@ EXPECTED = {
     # task 26
     "PlanePlot",
     "AxLinePlot",
+    # task 29
+    "StemPlot",
+    "WaterfallPlot",
+    "BarPlot3D",
+    "GrowSurface",
 }
 
 
