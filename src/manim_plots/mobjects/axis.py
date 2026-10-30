@@ -606,6 +606,31 @@ class Axis(VGroup):
             mode=mode,
         )
 
+    def _part_value(self, value: float) -> float:
+        return value
+
+    def _part_key(self, value: float) -> object:
+        return self.locator.key(value)
+
+    def _anchors(self, values: ArrayLike) -> FloatArray:
+        values = np.atleast_1d(np.asarray(values, dtype=float))
+        positions = np.full((len(values), 2), self._cross_value())
+        positions[:, self.index] = self._data_values(values)
+        return (
+            np.column_stack(
+                (self._system._data.forward(positions), np.zeros(len(values)))
+            )
+            + self._outward_offset()
+        )
+
+    def _number_direction(self, value: float) -> FloatArray:
+        return np.asarray(self.label_direction, dtype=float)
+
+    def _label_basis(self, value: float) -> tuple[FloatArray, FloatArray]:
+        return np.eye(3)[self.index], np.array(
+            [0, 1, 0]
+        ) if self.index == 0 else np.array([-1, 0, 0])
+
     def _configure_ticks(self, native: NumberLine) -> None:
         self._items = self._drawn_items()
         values = (item for item in self._items if item.level == "major")
@@ -998,6 +1023,52 @@ class Axis(VGroup):
         length = style.get(
             "length", major_length / 2 if level == "minor" else major_length
         )
+        local = self._tick_geometry(items, level, length)
+        placed = system.frame.mapping.forward(local.reshape(-1, 3)).reshape(local.shape)
+        previous = self._tick_leaves if level == "major" else self._minor_leaves
+        current: dict[object, TickLeaf] = {}
+        for item, outline, points in zip(items, local, placed, strict=True):
+            leaf = previous.get(item.key)
+            if leaf is None:
+                if self._pool is not None and not self._pool.building:
+                    leaf = self._pool._take(self, level)
+                    if leaf is None:
+                        continue
+                    leaf._cache = points
+                    previous[item.key] = leaf
+                else:
+                    leaf = TickLeaf(points, system)
+                    leaf.match_style(self.line)
+                    leaf.set_stroke(
+                        color=style.get("color", leaf.get_color()),
+                        width=style.get("width", self._default_width(level)),
+                    )
+            else:
+                leaf._cache = points
+                if stroke:
+                    leaf.set_stroke(**stroke)
+            leaf._axis_local = outline
+            current[item.key] = leaf
+        if self._pool is None:
+            for key in previous.keys() - current.keys():
+                previous[key]._cache = np.empty((0, 3))
+            retained = current
+        else:
+            retained = {**previous, **current}
+        if level == "major":
+            self._tick_leaves = retained
+            self._ticks._replace(current if self.include_ticks else {})
+        else:
+            self._minor_leaves = retained
+            self._minor_ticks._replace(current if self.include_ticks else {})
+            if current and self._minor_ticks not in self.submobjects:
+                self.add(self._minor_ticks)
+
+    def _tick_geometry(
+        self, items: list[Tick], level: Level, length: float
+    ) -> FloatArray:
+        system = self._system
+        style = self._tick_styles[level]
         local = np.tile(self._tick_reference, (len(items), 1, 1))
         local *= length / 2
         if level == "major":
@@ -1044,45 +1115,7 @@ class Axis(VGroup):
         centers = system._data.forward(positions)
         local[:, :, :2] += centers[:, None, :]
         local += self._outward_offset()
-        placed = system.frame.mapping.forward(local.reshape(-1, 3)).reshape(local.shape)
-        previous = self._tick_leaves if level == "major" else self._minor_leaves
-        current: dict[object, TickLeaf] = {}
-        for item, outline, points in zip(items, local, placed, strict=True):
-            leaf = previous.get(item.key)
-            if leaf is None:
-                if self._pool is not None and not self._pool.building:
-                    leaf = self._pool._take(self, level)
-                    if leaf is None:
-                        continue
-                    leaf._cache = points
-                    previous[item.key] = leaf
-                else:
-                    leaf = TickLeaf(points, system)
-                    leaf.match_style(self.line)
-                    leaf.set_stroke(
-                        color=style.get("color", leaf.get_color()),
-                        width=style.get("width", self._default_width(level)),
-                    )
-            else:
-                leaf._cache = points
-                if stroke:
-                    leaf.set_stroke(**stroke)
-            leaf._axis_local = outline
-            current[item.key] = leaf
-        if self._pool is None:
-            for key in previous.keys() - current.keys():
-                previous[key]._cache = np.empty((0, 3))
-            retained = current
-        else:
-            retained = {**previous, **current}
-        if level == "major":
-            self._tick_leaves = retained
-            self._ticks._replace(current if self.include_ticks else {})
-        else:
-            self._minor_leaves = retained
-            self._minor_ticks._replace(current if self.include_ticks else {})
-            if current and self._minor_ticks not in self.submobjects:
-                self.add(self._minor_ticks)
+        return local
 
     def _regenerate(self) -> None:
         system = self._system
@@ -1830,7 +1863,7 @@ class Axis(VGroup):
         )
         number.next_to(
             self.n2p(x),
-            direction=self.label_direction
+            direction=self._number_direction(x)
             if direction is None
             else np.asarray(direction, dtype=float),
             buff=self.line_to_number_buff if buff is None else buff,

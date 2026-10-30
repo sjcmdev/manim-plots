@@ -601,6 +601,11 @@ def _script_zero_advance(font_size: float) -> float:
 def _formatted_glyphs(
     text: str, font_size: float, *, text_mode: bool = False
 ) -> VGroup:
+    if not text_mode and any(
+        command in text for command in (r"\tfrac", r"\frac", r"\dfrac")
+    ):
+        # Fractions are one TeX expression; their arguments cannot render alone.
+        return VGroup(_glyph(text, font_size))
     # Tokenize commands and scripts, so a new label never compiles a whole string.
     result = VGroup()
     tokens = re.findall(r"\\[a-zA-Z]+|\\.|.", text)
@@ -626,7 +631,8 @@ def _formatted_glyphs(
                 i += 1
             small = _formatted_glyphs("".join(script), font_size * 0.7)
             small.next_to(result, direction=(1, 0, 0), buff=0.02)
-            small.shift((0, (0.35 if token == "^" else -0.2) * font_size / 48, 0))
+            # A superscript's centre sits as TeX puts it, a sixth of an em above.
+            small.shift((0, (0.16 if token == "^" else -0.2) * font_size / 48, 0))
             result.add(*small.submobjects)
             continue
         if (

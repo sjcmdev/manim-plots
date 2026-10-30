@@ -1552,6 +1552,102 @@ class CartesianAxes(VGroup):
 
     point_to_coords = p2c
 
+    def _polar_data(self, radius: ArrayLike, azimuth: ArrayLike) -> FloatArray:
+        r, theta = np.broadcast_arrays(
+            np.asarray(radius, dtype=float), np.asarray(azimuth, dtype=float)
+        )
+        return np.array([r * np.cos(theta), r * np.sin(theta)])
+
+    def polar_to_point(self, radius: ArrayLike, azimuth: ArrayLike) -> FloatArray:
+        """Convert polar coordinates through this system's data map.
+
+        Parameters
+        ----------
+        radius, azimuth
+            Broadcastable radii and radian angles.
+
+        Returns
+        -------
+        FloatArray
+            Scene points, in the same convention as c2p.
+        """
+        return self.c2p(*self._polar_data(radius, azimuth))
+
+    def point_to_polar(self, point: ArrayLike) -> tuple[float, float]:
+        """Recover a radius and signed azimuth from a scene point.
+
+        Parameters
+        ----------
+        point
+            One scene point.
+
+        Returns
+        -------
+        tuple of float
+            Radius and angle in ``(-pi, pi]`` for Cartesian systems.
+        """
+        x, y = self.p2c(point)
+        theta = float(np.arctan2(y, x))
+        return float(np.hypot(x, y)), np.pi if theta == -np.pi else theta
+
+    def pr2pt(self, radius: ArrayLike, azimuth: ArrayLike) -> FloatArray:
+        """Convert polar coordinates to scene points.
+
+        Parameters
+        ----------
+        radius, azimuth
+            Broadcastable radii and radian angles.
+
+        Returns
+        -------
+        FloatArray
+            Result of polar_to_point.
+        """
+        return self.polar_to_point(radius, azimuth)
+
+    def pt2pr(self, point: ArrayLike) -> tuple[float, float]:
+        """Convert a scene point to polar coordinates.
+
+        Parameters
+        ----------
+        point
+            One scene point.
+
+        Returns
+        -------
+        tuple of float
+            Result of point_to_polar.
+        """
+        return self.point_to_polar(point)
+
+    def plot_polar_graph(
+        self,
+        r_func: Callable[..., Any],
+        theta_range: Sequence[float] | None = None,
+        **kwargs: object,
+    ) -> ParametricPlot:
+        """Draw a bound polar graph with angle as its parameter.
+
+        Parameters
+        ----------
+        r_func
+            Radius as a function of a radian angle and optional parameters.
+        theta_range
+            Endpoints and optional maximum spacing; defaults to a full turn.
+        **kwargs
+            Function parameters and ordinary plot keywords.
+
+        Returns
+        -------
+        ParametricPlot
+            Registered curve carrying r_func as underlying_function.
+        """
+        from manim_plots.mobjects.polar import _PolarPlot
+
+        artist = _PolarPlot(r_func, self, theta_range, **kwargs)
+        self.add(artist)
+        return artist
+
     def __matmul__(self, coords: ArrayLike) -> FloatArray:
         return self.c2p(coords)
 

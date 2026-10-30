@@ -170,7 +170,7 @@ def _clip_box(system: mp.CartesianAxes, value: _ClipValue) -> Box:
     # A fitted frame can leave roundoff-sized remnants of a collapsed interval.
     if np.any(span + 2 * margin <= 8 * np.finfo(float).eps * span):
         raise ValueError("clip margin narrows the rectangle to nothing")
-    return Box(bounds.lower - margin, bounds.upper + margin)
+    return type(bounds)(bounds.lower - margin, bounds.upper + margin)
 
 
 def _unclipped_box(bounds: Box, axes: _ClipPair, coords: FloatArray) -> Box:

@@ -70,6 +70,13 @@ EXPECTED = {
     "Morph",
     # task 21: ArrowVectorField and StreamLines are attributes only, as NumberPlane
     "Flow",
+    # task 22: PolarPlane is an attribute only, as NumberPlane
+    "PolarAxes",
+    "AngleFormatter",
+    "Node",
+    "AffineNode",
+    "ScaleNode",
+    "FunctionNode",
 }
 
 

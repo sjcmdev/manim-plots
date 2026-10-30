@@ -12,7 +12,7 @@ from scipy.linalg.lapack import dpttrf, dpttrs  # type: ignore[import-untyped]
 
 from manim_plots.core import FloatArray, IntArray
 from manim_plots.core.payload import Payload
-from manim_plots.core.sources import Bounds, Box
+from manim_plots.core.sources import Bounds, Box, _Disk
 
 Shape = Callable[[Payload, Bounds], Payload]
 
@@ -361,6 +361,40 @@ def _restrict(curves: FloatArray, lo: FloatArray, hi: FloatArray) -> FloatArray:
 
 
 def _crossings(curve: FloatArray, box: Box) -> tuple[FloatArray, FloatArray]:
+    if isinstance(box, _Disk):
+        p = curve[:, :2] / box.upper
+        disk_coefficients = np.array(
+            [
+                p[0],
+                3 * (p[1] - p[0]),
+                3 * (p[2] - 2 * p[1] + p[0]),
+                p[3] - 3 * p[2] + 3 * p[1] - p[0],
+            ]
+        )
+        polynomial = np.polynomial.polynomial.polyadd(
+            np.polynomial.polynomial.polymul(
+                disk_coefficients[:, 0], disk_coefficients[:, 0]
+            ),
+            np.polynomial.polynomial.polymul(
+                disk_coefficients[:, 1], disk_coefficients[:, 1]
+            ),
+        )
+        polynomial[0] -= 1
+        solutions = np.polynomial.polynomial.polyroots(
+            np.polynomial.polynomial.polytrim(polynomial, tol=1e-14)
+        )
+        times = np.unique(
+            [
+                0.0,
+                1.0,
+                *(
+                    float(r.real)
+                    for r in solutions
+                    if abs(r.imag) <= 1e-9 and 0 < r.real < 1
+                ),
+            ]
+        )
+        return times, np.full((len(times), 2), np.nan)
     roots: list[float] = [0.0, 1.0]
     sides: list[tuple[int, float]] = [(-1, 0.0), (-1, 0.0)]
     scale = max(
@@ -447,7 +481,12 @@ def _clip_path(payload: Payload, box: Box) -> Payload:
         return Payload._trusted("path", payload.coords, payload.segments)
     outside = payload.coords[~inside, :2]
     tolerance = 8 * np.spacing(np.maximum(np.abs(box.lower), np.abs(box.upper)))
-    if ((outside >= box.lower - tolerance) & (outside <= box.upper + tolerance)).all():
+    if (
+        type(box) is Box
+        and (
+            (outside >= box.lower - tolerance) & (outside <= box.upper + tolerance)
+        ).all()
+    ):
         # An inverse/forward round trip at the viewport edge need not be bit-exact.
         coords = payload.coords.copy()
         coords[~inside, :2] = np.clip(outside, box.lower, box.upper)
@@ -532,7 +571,7 @@ def clip(payload: Payload, bounds: Bounds) -> Payload:
     """
     if not len(payload.coords):
         return Payload.empty(payload.kind, payload.coords.shape[1])
-    box = bounds if type(bounds) is Box else Box(bounds.lower, bounds.upper)
+    box = bounds if isinstance(bounds, Box) else Box(bounds.lower, bounds.upper)
     if payload.kind == "path":
         return _clip_path(payload, box)
     valid = box.contains(payload.coords)

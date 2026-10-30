@@ -19,6 +19,7 @@ PLANE_RTOL = 1e-6
 FRAME_NODES = 33
 
 
+@runtime_checkable
 class Node(Protocol):
     """Describe a numeric transformation of fixed-dimensional samples."""
 

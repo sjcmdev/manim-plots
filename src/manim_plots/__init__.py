@@ -7,6 +7,7 @@ from importlib.metadata import version
 
 from manim_plots.core import ManimPlotsWarning
 from manim_plots.core.formatters import (
+    AngleFormatter,
     DecimalFormatter,
     EngFormatter,
     FixedFormatter,
@@ -16,7 +17,13 @@ from manim_plots.core.formatters import (
     NullFormatter,
     ScientificFormatter,
 )
-from manim_plots.core.nodes import CompiledMap
+from manim_plots.core.nodes import (
+    AffineNode,
+    CompiledMap,
+    FunctionNode,
+    Node,
+    ScaleNode,
+)
 from manim_plots.core.payload import Payload
 from manim_plots.core.scales import (
     FunctionScale,
@@ -63,6 +70,8 @@ from manim_plots.mobjects.helpers import FilledRegion as FilledRegion
 from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
 from manim_plots.mobjects.legend import Legend
+from manim_plots.mobjects.polar import PolarAxes
+from manim_plots.mobjects.polar import PolarPlane as PolarPlane
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
 from manim_plots.mobjects.system import NumberPlane as NumberPlane
@@ -74,6 +83,8 @@ __all__ = [
     "COLOR_CYCLE",
     "CYCLES",
     "THEMES",
+    "AffineNode",
+    "AngleFormatter",
     "ArraySource",
     "Bounds",
     "CartesianAxes",
@@ -87,6 +98,7 @@ __all__ = [
     "Flow",
     "FormatStrFormatter",
     "Formatter",
+    "FunctionNode",
     "FunctionPlot",
     "FunctionScale",
     "FunctionSource",
@@ -104,12 +116,15 @@ __all__ = [
     "MinorCountLocator",
     "Morph",
     "MultipleLocator",
+    "Node",
     "NullFormatter",
     "NullLocator",
     "ParametricPlot",
     "ParametricSource",
     "Payload",
+    "PolarAxes",
     "Scale",
+    "ScaleNode",
     "ScatterPlot",
     "ScientificFormatter",
     "Shape",

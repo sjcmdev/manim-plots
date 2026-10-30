@@ -32,6 +32,7 @@ from manim import (
     NumberLine,
     NumberPlane,
     PhaseFlow,
+    PolarPlane,
     Scene,
     ShowIncreasingSubsets,
     ShowPassingFlash,
@@ -231,6 +232,22 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     CoordinateSystem.plot_implicit_curve,
     VectorField.shift_func,
     VectorField.scale_func,
+    PolarPlane._init_background_lines,
+    PolarPlane._get_lines,
+    PolarPlane.get_axes,
+    PolarPlane.get_vector,
+    PolarPlane.prepare_for_nonlinear_transform,
+    PolarPlane.get_coordinate_labels,
+    PolarPlane.add_coordinates,
+    PolarPlane.get_radian_label,
+    PolarPlane.__init__,
+    CoordinateSystem.polar_to_point,
+    CoordinateSystem.point_to_polar,
+    CoordinateSystem.pr2pt,
+    CoordinateSystem.pt2pr,
+    CoordinateSystem.plot_polar_graph,
+    VMobject.get_subpath_split_indices_from_points,
+    Camera.transform_points_pre_display,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
@@ -303,6 +320,54 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VectorField.scale_func": (
             "647ccfede01ef25dbdd4f75b35014896481694905dfbc506eec4d374a8817f9b"
+        ),
+        "VMobject.get_subpath_split_indices_from_points": (
+            "f6390df4e1903191807df6181bb8e83ec09107d93cbd1962d7bc80b1e9ce8c24"
+        ),
+        "Camera.transform_points_pre_display": (
+            "04eaaf6f29c6dd0a56798d398448c3d451555ca6c774b88dfc40d2765d8d4999"
+        ),
+        "PolarPlane._init_background_lines": (
+            "ce9eb25873ab6f30dd407669f034fc329cd5c1afae8d3cbfe9007f4757e9ed07"
+        ),
+        "PolarPlane._get_lines": (
+            "12136a54a93ff9dabc6fee75d0e869800f99648e7a51d21d5718aecb319bb8c0"
+        ),
+        "PolarPlane.get_axes": (
+            "9b2d48c3b0f126bae8eac2112cbee5d091d0ecd8eed8b5708fef95c5ae97eb54"
+        ),
+        "PolarPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "PolarPlane.prepare_for_nonlinear_transform": (
+            "51cc9eb09a6381171721c581f1c2e34af49e1c718e57e1bdb17bc93420037185"
+        ),
+        "PolarPlane.get_coordinate_labels": (
+            "be282258437953815f202144bc7c45b5bd04b0d1a8e971560210975ca9eb7cca"
+        ),
+        "PolarPlane.add_coordinates": (
+            "615b4ca34cee5663a719c9ad889764de6b13bd65f75a6659ba087365d04bce28"
+        ),
+        "PolarPlane.get_radian_label": (
+            "695a83f72d4259ee8268b6b8c13a2a528015e9a7e1c5a4a41c3c8452fc4162d8"
+        ),
+        "PolarPlane.__init__": (
+            "1b0837070c74e35df72907038b6c8ff8792d1de6fc7dd94e217265c465746edc"
+        ),
+        "CoordinateSystem.polar_to_point": (
+            "3d96ef62964b76edd62327d9aebd7345477bf6812163a7fe6abba884aa0fba1a"
+        ),
+        "CoordinateSystem.point_to_polar": (
+            "11dfff47f4e0b285566d67da9303e94bf13c17ddfe4636609b4338939a1d6c39"
+        ),
+        "CoordinateSystem.pr2pt": (
+            "6b704e8e05b968c59cb5ac7373bc7e092bf3f89e977c6b3f310976a6a54182fd"
+        ),
+        "CoordinateSystem.pt2pr": (
+            "c83dcdf7c95fb0f2bb6b05decb0d04a32e88276551c83471950c8f945a8eaba5"
+        ),
+        "CoordinateSystem.plot_polar_graph": (
+            "5b18016ce7db866c38a02341ad27762a09b0221d74a23667ab53358816cfe12b"
         ),
         "VMobject.get_subpaths": (
             "a3b39f251f72c2d4e3c5392c079f8b659457e875c9630bd59d20057a4472e0e2"
@@ -806,6 +871,54 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VectorField.scale_func": (
             "1944d75f52cf323858f16fb5d7403e399144c24033d92913bbb2fdbd4c7015d5"
+        ),
+        "VMobject.get_subpath_split_indices_from_points": (
+            "f6390df4e1903191807df6181bb8e83ec09107d93cbd1962d7bc80b1e9ce8c24"
+        ),
+        "Camera.transform_points_pre_display": (
+            "04eaaf6f29c6dd0a56798d398448c3d451555ca6c774b88dfc40d2765d8d4999"
+        ),
+        "PolarPlane._init_background_lines": (
+            "ce9eb25873ab6f30dd407669f034fc329cd5c1afae8d3cbfe9007f4757e9ed07"
+        ),
+        "PolarPlane._get_lines": (
+            "12136a54a93ff9dabc6fee75d0e869800f99648e7a51d21d5718aecb319bb8c0"
+        ),
+        "PolarPlane.get_axes": (
+            "9b2d48c3b0f126bae8eac2112cbee5d091d0ecd8eed8b5708fef95c5ae97eb54"
+        ),
+        "PolarPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "PolarPlane.prepare_for_nonlinear_transform": (
+            "51cc9eb09a6381171721c581f1c2e34af49e1c718e57e1bdb17bc93420037185"
+        ),
+        "PolarPlane.get_coordinate_labels": (
+            "be282258437953815f202144bc7c45b5bd04b0d1a8e971560210975ca9eb7cca"
+        ),
+        "PolarPlane.add_coordinates": (
+            "615b4ca34cee5663a719c9ad889764de6b13bd65f75a6659ba087365d04bce28"
+        ),
+        "PolarPlane.get_radian_label": (
+            "695a83f72d4259ee8268b6b8c13a2a528015e9a7e1c5a4a41c3c8452fc4162d8"
+        ),
+        "PolarPlane.__init__": (
+            "1b0837070c74e35df72907038b6c8ff8792d1de6fc7dd94e217265c465746edc"
+        ),
+        "CoordinateSystem.polar_to_point": (
+            "3d96ef62964b76edd62327d9aebd7345477bf6812163a7fe6abba884aa0fba1a"
+        ),
+        "CoordinateSystem.point_to_polar": (
+            "11dfff47f4e0b285566d67da9303e94bf13c17ddfe4636609b4338939a1d6c39"
+        ),
+        "CoordinateSystem.pr2pt": (
+            "6b704e8e05b968c59cb5ac7373bc7e092bf3f89e977c6b3f310976a6a54182fd"
+        ),
+        "CoordinateSystem.pt2pr": (
+            "c83dcdf7c95fb0f2bb6b05decb0d04a32e88276551c83471950c8f945a8eaba5"
+        ),
+        "CoordinateSystem.plot_polar_graph": (
+            "5b18016ce7db866c38a02341ad27762a09b0221d74a23667ab53358816cfe12b"
         ),
         "VMobject.get_subpaths": (
             "a3b39f251f72c2d4e3c5392c079f8b659457e875c9630bd59d20057a4472e0e2"
