@@ -362,7 +362,7 @@ def _restrict(curves: FloatArray, lo: FloatArray, hi: FloatArray) -> FloatArray:
 
 def _crossings(curve: FloatArray, box: Box) -> tuple[FloatArray, FloatArray]:
     if isinstance(box, _Disk):
-        p = curve[:, :2] / box.upper
+        p = curve[:, : len(box.lower)] / box.upper
         disk_coefficients = np.array(
             [
                 p[0],
@@ -394,17 +394,17 @@ def _crossings(curve: FloatArray, box: Box) -> tuple[FloatArray, FloatArray]:
                 ),
             ]
         )
-        return times, np.full((len(times), 2), np.nan)
+        return times, np.full((len(times), len(box.lower)), np.nan)
     roots: list[float] = [0.0, 1.0]
     sides: list[tuple[int, float]] = [(-1, 0.0), (-1, 0.0)]
     scale = max(
-        float(np.max(np.abs(curve[:, :2]))),
+        float(np.max(np.abs(curve[:, : len(box.lower)]))),
         float(np.max(np.abs(box.lower))),
         float(np.max(np.abs(box.upper))),
         1.0,
     )
-    points = curve[:, :2] / scale
-    for axis in range(2):
+    points = curve[:, : len(box.lower)] / scale
+    for axis in range(len(box.lower)):
         p = points[:, axis]
         coefficients = [
             p[0],
@@ -425,7 +425,7 @@ def _crossings(curve: FloatArray, box: Box) -> tuple[FloatArray, FloatArray]:
                     roots.append(float(root.real))
                     sides.append((axis, float(bound)))
     times, inverse = np.unique(roots, return_inverse=True)
-    crossing = np.full((len(times), 2), np.nan)
+    crossing = np.full((len(times), len(box.lower)), np.nan)
     for index, (axis, bound) in zip(inverse, sides, strict=True):
         if axis >= 0:
             crossing[index, axis] = bound
@@ -436,7 +436,7 @@ def _clip_curve(curve: FloatArray, box: Box) -> tuple[list[FloatArray], bool, bo
     dim = curve.shape[1]
     if box.contains(curve).all():
         return [curve], True, True
-    xy = curve[:, :2]
+    xy = curve[:, : len(box.lower)]
     if ((xy < box.lower).all(axis=0) | (xy > box.upper).all(axis=0)).any():
         return [], False, False
     # Subdivision keeps roots well-conditioned even beside very large pole values.
@@ -455,11 +455,11 @@ def _clip_curve(curve: FloatArray, box: Box) -> tuple[list[FloatArray], bool, bo
         pieces = np.concatenate((left, right))
     else:
         pieces = _restrict(np.repeat(curve[None], len(a), axis=0), a, b)
-    pieces[:, 0, :2] = np.where(
-        np.isfinite(crossing[:-1]), crossing[:-1], pieces[:, 0, :2]
+    pieces[:, 0, : len(box.lower)] = np.where(
+        np.isfinite(crossing[:-1]), crossing[:-1], pieces[:, 0, : len(box.lower)]
     )
-    pieces[:, 3, :2] = np.where(
-        np.isfinite(crossing[1:]), crossing[1:], pieces[:, 3, :2]
+    pieces[:, 3, : len(box.lower)] = np.where(
+        np.isfinite(crossing[1:]), crossing[1:], pieces[:, 3, : len(box.lower)]
     )
     mid = (pieces[:, 0] + 3 * pieces[:, 1] + 3 * pieces[:, 2] + pieces[:, 3]) / 8
     keep = box.contains(mid)
@@ -479,7 +479,7 @@ def _clip_path(payload: Payload, box: Box) -> Payload:
     inside = box.contains(payload.coords)
     if inside.all():
         return Payload._trusted("path", payload.coords, payload.segments)
-    outside = payload.coords[~inside, :2]
+    outside = payload.coords[~inside, : len(box.lower)]
     tolerance = 8 * np.spacing(np.maximum(np.abs(box.lower), np.abs(box.upper)))
     if (
         type(box) is Box
@@ -489,7 +489,7 @@ def _clip_path(payload: Payload, box: Box) -> Payload:
     ):
         # An inverse/forward round trip at the viewport edge need not be bit-exact.
         coords = payload.coords.copy()
-        coords[~inside, :2] = np.clip(outside, box.lower, box.upper)
+        coords[~inside, : len(box.lower)] = np.clip(outside, box.lower, box.upper)
         return Payload._trusted("path", coords, payload.segments)
     inside = inside.reshape(-1, 4).all(axis=1)
     parts: list[FloatArray] = []
@@ -532,17 +532,17 @@ def _clip_with_parameters(payload: Payload, box: Box) -> tuple[Payload, FloatArr
             parts.append(curve)
             intervals.append((float(i), float(i + 1)))
             continue
-        xy = curve[:, :2]
+        xy = curve[:, : len(box.lower)]
         if ((xy < box.lower).all(axis=0) | (xy > box.upper).all(axis=0)).any():
             continue
         times, crossing = _crossings(curve, box)
         a, b = times[:-1], times[1:]
         pieces = _restrict(np.repeat(curve[None], len(a), axis=0), a, b)
-        pieces[:, 0, :2] = np.where(
-            np.isfinite(crossing[:-1]), crossing[:-1], pieces[:, 0, :2]
+        pieces[:, 0, : len(box.lower)] = np.where(
+            np.isfinite(crossing[:-1]), crossing[:-1], pieces[:, 0, : len(box.lower)]
         )
-        pieces[:, 3, :2] = np.where(
-            np.isfinite(crossing[1:]), crossing[1:], pieces[:, 3, :2]
+        pieces[:, 3, : len(box.lower)] = np.where(
+            np.isfinite(crossing[1:]), crossing[1:], pieces[:, 3, : len(box.lower)]
         )
         middle = (pieces[:, 0] + 3 * pieces[:, 1] + 3 * pieces[:, 2] + pieces[:, 3]) / 8
         for j in np.flatnonzero(box.contains(middle)):

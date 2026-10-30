@@ -899,6 +899,7 @@ class PolarAxes(CartesianAxes):
         )
         self.x = self.x_axis = self.r_axis
         self.y = self.y_axis = self.azimuth_axis
+        self._ranges = (self.r_axis, self.azimuth_axis)
         self.axes = VGroup(self.r_axis, self.azimuth_axis)
         if not isinstance(self._r_scale, LinearScale):
             self.r_axis.formatter = FormatStrFormatter("%g")

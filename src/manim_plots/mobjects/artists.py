@@ -46,6 +46,7 @@ from manim_plots.core.nodes import (
     FrameMap,
     FunctionNode,
     Node,
+    ScaleNode,
     SystemMap,
 )
 from manim_plots.core.params import Parameter
@@ -131,9 +132,9 @@ def _validate_label(label: str | None) -> None:
         raise TypeError("label must be a string or None")
 
 
-def _validate_clip(value: object) -> _ClipValue:
-    if isinstance(value, (tuple, list)) and len(value) != 2:
-        raise ValueError("clip must contain two axis entries")
+def _validate_clip(value: object, dim: int = 2) -> _ClipValue:
+    if isinstance(value, (tuple, list)) and len(value) != dim:
+        raise ValueError(f"clip must contain {dim} axis entries")
     entries = value if isinstance(value, (tuple, list)) else (value,)
     for index, entry in enumerate(entries):
         if not isinstance(entry, (bool, Real)):
@@ -143,8 +144,8 @@ def _validate_clip(value: object) -> _ClipValue:
     return cast(_ClipValue, tuple(value) if isinstance(value, list) else value)
 
 
-def _clip_axes(value: _ClipValue) -> _ClipPair:
-    return value if isinstance(value, tuple) else (value, value)
+def _clip_axes(value: _ClipValue, dim: int = 2) -> _ClipPair:
+    return value if isinstance(value, tuple) else (value,) * dim
 
 
 def _clip_has_margin(value: _ClipValue) -> bool:
@@ -155,13 +156,17 @@ def _clip_box(system: mp.CartesianAxes, value: _ClipValue) -> Box:
     if not _clip_has_margin(value):
         return system.bounds
     bounds = system.bounds
-    origin = np.zeros((3, 2))
-    origin[1:] = np.eye(2)
+    dim = len(system._ranges)
+    origin = np.zeros((dim + 1, dim))
+    origin[1:] = np.eye(dim)
     placed = system.frame.mapping.forward(origin)
     units = np.linalg.norm(placed[1:] - placed[0], axis=1)
     margin = (
         np.array(
-            [0.0 if isinstance(axis, bool) else axis for axis in _clip_axes(value)],
+            [
+                0.0 if isinstance(axis, bool) else axis
+                for axis in _clip_axes(value, len(system._ranges))
+            ],
             dtype=float,
         )
         / units
@@ -245,7 +250,7 @@ class _CurvePlot(Leaf):
         **kwargs: Unpack[_VMStyle],
     ) -> None:
         _validate_label(label)
-        clip_value = _validate_clip(clip)
+        clip_value = _validate_clip(clip, len(system._ranges))
         _clip_box(system, clip_value)
         self._label = label
         self._clip = clip_value
@@ -265,6 +270,8 @@ class _CurvePlot(Leaf):
             self.parameters: dict[str, Parameter[Any]] = {}
         self._parameter_versions: dict[str, int] = {}
         self._parameter_token = -1
+        self._native_samples: Payload | None = None
+        self._native_sample_key: tuple[object, ...] | None = None
         self.use_smoothing = use_smoothing
         self._data_seen = -1
         self._local = np.empty((0, 3))
@@ -313,7 +320,9 @@ class _CurvePlot(Leaf):
         Self
             This artist after rebuilding.
         """
-        clip = _validate_clip(value)
+        clip = _validate_clip(
+            value, len(self._system._ranges) if self._system is not None else 2
+        )
         if self._system is not None:
             _clip_box(self._system, clip)
         self._clip = clip
@@ -402,7 +411,7 @@ class _CurvePlot(Leaf):
         frame = self._frame()
         collapsed = [
             i
-            for i, axis in enumerate((system.x, system.y))
+            for i, axis in enumerate(system._ranges)
             if axis.range.value[0] == axis.range.value[1]
         ]
         if collapsed:
@@ -417,7 +426,7 @@ class _CurvePlot(Leaf):
             return
         mapping = SystemMap(system._data, frame)
         bounds = _clip_box(system, self._clip)
-        clip_axes = _clip_axes(self._clip)
+        clip_axes = _clip_axes(self._clip, len(system._ranges))
         unclipped = any(axis is False for axis in clip_axes)
         clipped = any(axis is not False for axis in clip_axes)
         sampling_bounds = bounds
@@ -429,14 +438,55 @@ class _CurvePlot(Leaf):
                     extent = system._data.forward(finite)[:, 0]
             elif isinstance(self.source, FunctionSource) and self.source._range:
                 extent = system._data.forward(
-                    np.column_stack((self.source._range[:2], np.zeros(2)))
+                    np.column_stack(
+                        (self.source._range[:2], np.zeros((2, len(system._ranges) - 1)))
+                    )
                 )[:, 0]
             if extent is not None:
                 lower, upper = bounds.lower.copy(), bounds.upper.copy()
                 lower[0] = min(lower[0], float(np.min(extent)))
                 upper[0] = max(upper[0], float(np.max(extent)))
                 sampling_bounds = Box(lower, upper)
-        payload = self.source.sample(mapping, sampling_bounds)
+        nodes = system._data.nodes
+        sample_key: tuple[object, ...] | None = None
+        if (
+            isinstance(self.source, (FunctionSource, ParametricSource))
+            and nodes
+            and type(nodes[-1]) is AffineNode
+            and all(type(node) is ScaleNode for node in nodes[:-1])
+        ):
+            sample_extent: tuple[float, ...] = ()
+            if isinstance(self.source, FunctionSource):
+                if sampling_bounds is system.bounds:
+                    lo, hi = sorted(system.x.range.value)
+                else:
+                    endpoints = mapping.inverse(
+                        np.array([sampling_bounds.lower, sampling_bounds.upper])
+                    )[:, 0]
+                    lo, hi = float(min(endpoints)), float(max(endpoints))
+                if self.source._range is not None:
+                    lo, hi = (
+                        max(lo, self.source._range[0]),
+                        min(hi, self.source._range[1]),
+                    )
+                sample_extent = (lo, hi)
+            sample_key = (
+                self.source,
+                tuple(axis._scale for axis in system._ranges),
+                tuple(p.version for p in self.parameters.values()),
+                sample_extent,
+            )
+        if sample_key is not None and sample_key == self._native_sample_key:
+            assert self._native_samples is not None
+            payload = self._native_samples
+        else:
+            payload = self.source.sample(mapping, sampling_bounds)
+            if sample_key is not None:
+                # Keep the adaptive grid before the range-dependent affine placement.
+                if len(nodes) > 1:
+                    payload = Chain(nodes[:-1]).apply_payload(payload)
+                self._native_samples = payload
+                self._native_sample_key = sample_key
         if isinstance(self.source, ArraySource):
             invalid = self._source_invalid or not len(self.source.data)
         else:
@@ -449,7 +499,11 @@ class _CurvePlot(Leaf):
                     > len(getattr(self.source, "discontinuities", ())) + 1
                 )
             )
-        payload = system._data.apply_payload(payload)
+        payload = (
+            Chain(nodes[-1:])
+            if sample_key is not None and len(nodes) > 1
+            else system._data
+        ).apply_payload(payload)
         if invalid or (payload.valid is not None and not payload.valid.all()):
             self._sample_warnings.warn(
                 system,
@@ -490,6 +544,18 @@ class _CurvePlot(Leaf):
             name: parameter.version for name, parameter in self.parameters.items()
         }
         self._dirty = False
+
+    def refresh(self) -> Self:
+        """Resample the source and restore attached geometry.
+
+        Returns
+        -------
+        Self
+            This curve, regenerated from its current function.
+        """
+        self._native_sample_key = None
+        self._native_samples = None
+        return super().refresh()
 
     def _restore(self) -> None:
         system = self._system
@@ -920,6 +986,7 @@ class FunctionPlot(_CurvePlot):
                 use_vectorized=use_vectorized,
                 discontinuities=discontinuities,
                 dt=dt,
+                dim=len(system._ranges),
             ),
             system,
             use_smoothing=use_smoothing,
@@ -966,6 +1033,7 @@ class FunctionPlot(_CurvePlot):
                 use_vectorized=source.use_vectorized,
                 discontinuities=source.discontinuities,
                 dt=source.dt,
+                dim=source.dim,
             )
         return result
 
@@ -992,7 +1060,12 @@ class LinePlot(_CurvePlot):
         ys: ArrayLike | None = None,
         **kwargs: Unpack[_ArtistOptions],
     ) -> None:
-        super().__init__(ArraySource(xs, ys), system, use_smoothing=False, **kwargs)
+        super().__init__(
+            ArraySource(xs, ys, dim=len(system._ranges)),
+            system,
+            use_smoothing=False,
+            **kwargs,
+        )
 
 
 class ParametricPlot(_CurvePlot):
@@ -1037,6 +1110,7 @@ class ParametricPlot(_CurvePlot):
                 use_vectorized=use_vectorized,
                 discontinuities=discontinuities,
                 dt=dt,
+                dim=len(system._ranges),
             ),
             system,
             use_smoothing=use_smoothing,
@@ -1086,7 +1160,7 @@ class _MarkerLeaf(_CurvePlot):
                 self.source,
                 "source contains invalid samples; points are hidden",
             )
-        axes = _clip_axes(self._clip)
+        axes = _clip_axes(self._clip, len(system._ranges))
         visible = payload.valid is None or bool(payload.valid[0])
         if visible and any(axis is not False for axis in axes):
             bounds = _clip_box(system, self._clip)
@@ -1109,7 +1183,7 @@ class _MarkerLeaf(_CurvePlot):
             self._visible = visible
         center = np.zeros(3)
         if np.isfinite(payload.coords).all():
-            center[:2] = payload.coords[0]
+            center[: payload.coords.shape[1]] = payload.coords[0]
         points = self._outline + center
         # Marker outlines already are native control points, including local depth.
         self._geometry_payload = Payload._trusted(
@@ -1166,10 +1240,10 @@ class ScatterPlot(VGroup):
         **kwargs: Unpack[_VMStyle],
     ) -> None:
         _validate_label(label)
-        clip_value = _validate_clip(clip)
+        clip_value = _validate_clip(clip, len(system._ranges))
         _clip_box(system, clip_value)
         self._label, self._clip = label, clip_value
-        self.source = ArraySource(xs, ys, kind="points")
+        self.source = ArraySource(xs, ys, kind="points", dim=len(system._ranges))
         if marker is not None and not isinstance(marker, (Mobject, Marker)):
             raise TypeError("marker must be a Marker, Mobject or None")
         if marker is None or isinstance(marker, Marker):
@@ -1294,7 +1368,9 @@ class ScatterPlot(VGroup):
         Self
             This scatter after rebuilding its markers.
         """
-        clip = _validate_clip(value)
+        clip = _validate_clip(
+            value, len(self._system._ranges) if self._system is not None else 2
+        )
         if self._system is not None:
             _clip_box(self._system, clip)
         self._clip = clip

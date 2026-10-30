@@ -76,6 +76,7 @@ from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
 from manim_plots.mobjects.system import NumberPlane as NumberPlane
 from manim_plots.mobjects.themes import CYCLES, THEMES, Theme, get_theme, set_theme
+from manim_plots.mobjects.three_d import ThreeDAxes as ThreeDAxes
 
 __version__ = version("manim-plots")
 

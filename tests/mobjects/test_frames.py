@@ -252,3 +252,56 @@ def test_vw2_box_aspect_and_a_conflict():
     assert ax.z_length == pytest.approx(3)
     with pytest.raises(ValueError, match="aspect"):
         mp.ThreeDAxes(x_length=6, y_length=5, aspect="equal")
+
+
+def test_fr3_a_still_frame_reads_the_camera():
+    """No wait, no play: the frame Manim captures must already show the camera's view
+    (a static picture runs no updater)."""
+    ax = mp.ThreeDAxes(frame="box", **RANGES)
+    phi, theta = 65 * DEGREES, 135 * DEGREES
+
+    class Still(ThreeDScene):
+        def construct(self) -> None:
+            self.set_camera_orientation(phi=phi, theta=theta)
+            self.add(ax)
+            self.camera.capture_mobjects(self.mobjects)
+
+    with tempconfig(RUN):
+        Still().render()
+    assert ax.p2c(ax.panes["x"].get_center())[0] == pytest.approx(4.0, abs=1e-6)
+    number = ax.x.numbers.at(2.0)
+    points = np.concatenate(
+        [np.asarray(m.points) for m in number.family_members_with_points()]
+    )
+    assert abs(float(np.dot(plane_normal(points), direction(phi, theta)))) == (
+        pytest.approx(1, abs=1e-6)
+    )
+
+
+@pytest.mark.parametrize(("phi", "theta"), [(65, -45), (65, 120), (110, -60)])
+def test_fr6_numbers_read_upright_on_screen(phi, theta):
+    """On screen (the camera's rotation applied), a facing number is its flat glyph,
+    upright and unmirrored, in every view."""
+    phi, theta = phi * DEGREES, theta * DEGREES
+    flat = mp.ThreeDAxes(axis_config={"include_numbers": True}, **RANGES)
+    ax = mp.ThreeDAxes(frame="box", **RANGES)
+    screens: list[np.ndarray] = []
+
+    def glyph(mob: Any) -> np.ndarray:
+        p = np.concatenate(
+            [np.asarray(m.points) for m in mob.family_members_with_points()]
+        )
+        return p - p.mean(axis=0)
+
+    class Still(ThreeDScene):
+        def construct(self) -> None:
+            self.set_camera_orientation(phi=phi, theta=theta)
+            self.add(ax)
+            self.camera.capture_mobjects(self.mobjects)
+            matrix = self.camera.generate_rotation_matrix()
+            screens.append(glyph(ax.x.numbers.at(2.0)) @ matrix.T)
+
+    with tempconfig(RUN):
+        Still().render()
+    expected = glyph(flat.x.numbers.at(2.0))
+    np.testing.assert_allclose(screens[0][:, :2], expected[:, :2], atol=1e-6)

@@ -105,7 +105,13 @@ def test_three_d_box(visual):
     def construct(scene: Scene) -> None:
         camera(scene)
         ax = mp.ThreeDAxes(
-            x_range=(0, 4, 1), y_range=(0, 4, 1), z_range=(0, 2, 0.5), frame="box"
+            x_range=(0, 4, 1),
+            y_range=(0, 4, 1),
+            z_range=(0, 2, 0.5),
+            x_length=4,
+            y_length=4,
+            z_length=3,
+            frame="box",
         )
         x, y, z = surface_points()
         scene.add(ax, ax.line(x, y, z), ax.scatter(x[::8], y[::8], z[::8]))
@@ -119,7 +125,13 @@ def test_three_d_box_turned(visual):
 
     def construct(scene: Scene) -> None:
         ax = mp.ThreeDAxes(
-            x_range=(0, 4, 1), y_range=(0, 4, 1), z_range=(0, 2, 0.5), frame="box"
+            x_range=(0, 4, 1),
+            y_range=(0, 4, 1),
+            z_range=(0, 2, 0.5),
+            x_length=4,
+            y_length=4,
+            z_length=3,
+            frame="box",
         )
         scene.set_camera_orientation(**ax.view(25, 120))  # type: ignore[attr-defined]
         x, y, z = surface_points()
