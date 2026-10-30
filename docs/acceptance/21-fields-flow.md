@@ -14,7 +14,7 @@ Modules: `src/manim_plots/core/payload.py` (an optional `values` field),
 `src/manim_plots/__init__.py`.
 
 ```python
-class ArrowVectorField(VGroup):  # mp.ArrowVectorField, star-exported
+class ArrowVectorField(VGroup):  # mp.ArrowVectorField, not in __all__ (Manim's name)
     def __init__(
         self,
         func,
@@ -42,7 +42,7 @@ class ArrowVectorField(VGroup):  # mp.ArrowVectorField, star-exported
     def stop_submobject_movement(self) -> Self: ...
 
 
-class StreamLines(VGroup):  # mp.StreamLines, star-exported
+class StreamLines(VGroup):  # mp.StreamLines, not in __all__ (Manim's name)
     def __init__(
         self,
         func,

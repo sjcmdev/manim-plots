@@ -68,6 +68,8 @@ EXPECTED = {
     "TraceCurve",
     "ShowPoints",
     "Morph",
+    # task 21: ArrowVectorField and StreamLines are attributes only, as NumberPlane
+    "Flow",
 }
 
 
