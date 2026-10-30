@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 from numbers import Integral, Real
-from typing import Any, Self, Unpack
+from typing import Any, Self, Unpack, cast
 
 import numpy as np
 from manim import Mobject, VGroup, VMobject
@@ -104,6 +104,7 @@ class _ErrorPart(_CurvePlot):
     def __init__(self, owner: ErrorBars, axis: int, caps: bool) -> None:
         self._owner, self._axis, self._caps = owner, axis, caps
         self._error_seen = -1
+        self._view_seen: object = None
         assert owner._system is not None
         super().__init__(
             owner.source,
@@ -113,6 +114,12 @@ class _ErrorPart(_CurvePlot):
             color=owner._ecolor,
             stroke_width=owner._capthick if caps else owner._elinewidth,
         )
+        if caps and len(owner._system._ranges) == 3:
+            cast(Any, owner._system)._register_field_view(self)
+
+    def _turn(self) -> None:
+        self._dirty = True
+        self._ensure()
 
     def _ensure(self) -> None:
         if self._error_seen != self._owner._version or (
@@ -137,9 +144,24 @@ class _ErrorPart(_CurvePlot):
         system._sync_data()
         frame = self._frame()
         ends, cap_mask = self._owner._endpoints(self._axis)
+        dim = len(system._ranges)
         if self._caps:
             if self._owner.capsize == 0:
-                ends = np.empty((0, 2, 2))
+                ends = np.empty((0, 2, dim))
+            elif dim == 3:
+                from manim_plots.mobjects.fields import _facing_basis
+
+                centers = ends.reshape(-1, dim)[cap_mask.ravel()]
+                probes = centers.copy()
+                probes[:, self._axis] += 1
+                placed = frame.forward(centers)
+                tangent = frame.forward(probes) - placed
+                tangent /= np.maximum(np.linalg.norm(tangent, axis=1)[:, None], 1e-12)
+                direction, _ = _facing_basis(system, tangent, None)
+                half = direction * self._owner.capsize / 2
+                ends = frame.inverse(
+                    np.stack((placed - half, placed + half), axis=1).reshape(-1, 3)
+                ).reshape(-1, 2, 3)
             else:
                 centers = ends.reshape(-1, 2)[cap_mask.ravel()]
                 probes = np.repeat(centers[:, None, :], 3, axis=1)
@@ -165,7 +187,7 @@ class _ErrorPart(_CurvePlot):
             Payload._trusted("path", points, np.column_stack((edges, edges + 2))),
             bounds,
         )
-        axes = _clip_axes(self._clip)
+        axes = _clip_axes(self._clip, dim)
         if any(axis is not False for axis in axes):
             if any(axis is False for axis in axes):
                 bounds = _unclipped_box(bounds, axes, payload.coords)
@@ -230,6 +252,7 @@ class ErrorBars(VGroup):
         yerr: ArrayLike | None = None,
         xerr: ArrayLike | None = None,
         *,
+        zerr: ArrayLike | None = None,
         marker: Mobject | Marker | None = Marker.DOT,
         line: bool = False,
         ecolor: ParsableManimColor | None = None,
@@ -242,13 +265,16 @@ class ErrorBars(VGroup):
         clip: _ClipInput = True,
         **style: Unpack[_VMStyle],
     ) -> None:
-        source = ArraySource(x, y, kind="points")
-        errors = (
+        self._dim = len(system._ranges)
+        source = ArraySource(x, y, kind="points", dim=self._dim)
+        errors: tuple[FloatArray | None, ...] = (
             _errors(xerr, len(source.data), "xerr"),
             _errors(yerr, len(source.data), "yerr"),
         )
+        if self._dim == 3:
+            errors += (_errors(zerr, len(source.data), "zerr"),)
         _validate_label(label)
-        self._clip = _validate_clip(clip)
+        self._clip = _validate_clip(clip, self._dim)
         _clip_box(system, self._clip)
         if marker is not None and not isinstance(marker, (Mobject, Marker)):
             raise TypeError("marker must be a Marker, Mobject or None")
@@ -302,6 +328,8 @@ class ErrorBars(VGroup):
         self.ybars: _ErrorPart | None = None
         self.xcaps: _ErrorPart | None = None
         self.ycaps: _ErrorPart | None = None
+        self.zbars: _ErrorPart | None = None
+        self.zcaps: _ErrorPart | None = None
         super().__init__()
         self._poll()
         self._update_parts()
@@ -309,9 +337,7 @@ class ErrorBars(VGroup):
     def _seed_data(self) -> FloatArray:
         assert self._system is not None
         # Install the shared warning sink before exposing invalid input to parts.
-        center = [
-            np.mean(axis.range.value) for axis in (self._system.x, self._system.y)
-        ]
+        center = [np.mean(axis.range.value) for axis in self._system._ranges]
         return np.tile(center, (max(1, len(self.source.data)), 1))
 
     def _poll(self) -> None:
@@ -332,7 +358,7 @@ class ErrorBars(VGroup):
         assert system is not None
         error = self._errors[axis]
         if error is None:
-            return np.empty((0, 2, 2)), np.empty((0, 2), dtype=bool)
+            return np.empty((0, 2, self._dim)), np.empty((0, 2), dtype=bool)
         data = self.source.data
         start, step = self._every
         indices = np.arange(start, len(data), step)
@@ -345,14 +371,16 @@ class ErrorBars(VGroup):
         with np.errstate(over="ignore", invalid="ignore"):
             ends[:, 0, axis] -= error[0, indices]
             ends[:, 1, axis] += error[1, indices]
-        component = (system.x, system.y)[axis]
+        component = system._ranges[axis]
         cap_mask = np.isfinite(component._scale.forward(ends[:, :, axis]))
         if not cap_mask.all():
             lo, hi = sorted(component.range.value)
             ends[:, :, axis] = np.where(
                 cap_mask, ends[:, :, axis], np.clip(ends[:, :, axis], lo, hi)
             )
-        local = system._data.forward(ends.reshape(-1, 2)).reshape(-1, 2, 2)
+        local = system._data.forward(ends.reshape(-1, self._dim)).reshape(
+            -1, 2, self._dim
+        )
         finite = np.isfinite(local).all(axis=(1, 2))
         return local[finite], cap_mask[finite]
 
@@ -360,7 +388,7 @@ class ErrorBars(VGroup):
         system = self._system
         if system is None:
             return
-        for axis, prefix in enumerate(("x", "y")):
+        for axis, prefix in enumerate("xyz"[: self._dim]):
             for caps, suffix in ((False, "bars"), (True, "caps")):
                 name = prefix + suffix
                 part = getattr(self, name)
@@ -396,12 +424,14 @@ class ErrorBars(VGroup):
                     member._dirty = True
                     member._rebuild()
         if self.line is not None:
-            self.line.source = ArraySource(self.source.data)
+            self.line.source = ArraySource(self.source.data, dim=self._dim)
             self.line._sample_warnings = self._sample_warnings
             self.line._source_invalid = not np.isfinite(self.source.data).all()
             self.line._dirty = True
             self.line._rebuild()
         bars: list[VMobject | None] = [self.ybars, self.xbars, self.ycaps, self.xcaps]
+        if self._dim == 3:
+            bars += [self.zbars, self.zcaps]
         foreground: list[VMobject | None] = [self.line, self.markers]
         parts = foreground + bars if self._barsabove else bars + foreground
         self.submobjects = [part for part in parts if part is not None]
@@ -410,8 +440,10 @@ class ErrorBars(VGroup):
         self,
         x: ArrayLike,
         y: ArrayLike | None = None,
+        *coordinates: ArrayLike,
         yerr: ArrayLike | None = None,
         xerr: ArrayLike | None = None,
+        zerr: ArrayLike | None = None,
     ) -> Self:
         """Replace immutable coordinates and errors, preserving existing styles.
 
@@ -419,7 +451,9 @@ class ErrorBars(VGroup):
         ----------
         x, y
             Separate coordinates, or pairs with y omitted.
-        yerr, xerr
+        *coordinates
+            Third coordinate in 3D, followed by positional error arrays.
+        yerr, xerr, zerr
             Scalar, n values, (2, n) lower/upper values, or None to omit bars.
 
         Returns
@@ -427,11 +461,28 @@ class ErrorBars(VGroup):
         Self
             This artist with all parts re-derived.
         """
-        source = ArraySource(x, y, kind="points")
-        errors = (
+        if self._dim == 3 and y is not None:
+            if not coordinates:
+                raise ValueError("z coordinates are required")
+            x = np.column_stack((x, y, coordinates[0]))
+            y = None
+            coordinates = coordinates[1:]
+            if coordinates:
+                zerr = coordinates[0]
+                coordinates = coordinates[1:]
+        if coordinates:
+            yerr = coordinates[0]
+        if len(coordinates) > 1:
+            xerr = coordinates[1]
+        if len(coordinates) > 2:
+            raise TypeError("too many error arrays")
+        source = ArraySource(x, y, kind="points", dim=self._dim)
+        errors: tuple[FloatArray | None, ...] = (
             _errors(xerr, len(source.data), "xerr"),
             _errors(yerr, len(source.data), "yerr"),
         )
+        if self._dim == 3:
+            errors += (_errors(zerr, len(source.data), "zerr"),)
         if self._data_animation:
             expanded = [
                 _errors(0, len(source.data), "error")
@@ -439,7 +490,7 @@ class ErrorBars(VGroup):
                 else new
                 for old, new in zip(self._errors, errors, strict=True)
             ]
-            errors = (expanded[0], expanded[1])
+            errors = tuple(expanded)
         self.source, self._errors = source, errors
         self._version += 1
         self._sample_warnings.version = self._version
@@ -471,7 +522,7 @@ class ErrorBars(VGroup):
         value
             Boolean, finite scene-unit margin, or an (x, y) pair of policies.
         """
-        clip = _validate_clip(value)
+        clip = _validate_clip(value, self._dim)
         if self._system is not None:
             _clip_box(self._system, clip)
         self._clip = clip
@@ -503,13 +554,13 @@ class ErrorBars(VGroup):
             self._data_animation = mobject._data_animation = True
             for artist in (self, mobject):
                 artist._channel_errors = artist._errors
-            for axis in range(2):
+            for axis in range(self._dim):
                 if (self._errors[axis] is None) != (mobject._errors[axis] is None):
                     for artist in (self, mobject):
                         if artist._errors[axis] is None:
                             errors = list(artist._errors)
                             errors[axis] = _errors(0, len(self.source.data), "error")
-                            artist._errors = (errors[0], errors[1])
+                            artist._errors = tuple(errors)
                             artist._update_parts()
         return super().align_data(mobject, skip_point_alignment)
 
@@ -547,7 +598,12 @@ class ErrorBars(VGroup):
                 errors.append(
                     None if a is None or b is None else (1 - alpha) * a + alpha * b
                 )
-            self.set_data(data, xerr=errors[0], yerr=errors[1])
+            self.set_data(
+                data,
+                xerr=errors[0],
+                yerr=errors[1],
+                zerr=errors[2] if self._dim == 3 else None,
+            )
             return self
         return super().interpolate(mobject1, mobject2, alpha, path_func)
 

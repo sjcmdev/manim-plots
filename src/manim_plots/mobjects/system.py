@@ -2147,12 +2147,22 @@ class CartesianAxes(VGroup):
         marker: Mobject | Marker | None = None,
         label: str | None = None,
         clip: _ClipInput = True,
+        c: object = None,
+        s: ArrayLike | None = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: object = None,
         **kwargs: Unpack[_VMStyle],
     ) -> ScatterPlot:
         """Create and register independent markers in input order.
 
         Parameters
         ----------
+        c, s
+            Per-point values or a single colour, and scene-unit marker radii.
+        colorscale, vmin, vmax, norm
+            Value colour mapping and normalisation.
         xs, ys
             Separate coordinates, or pairs in xs with ys omitted.
         marker
@@ -2168,7 +2178,19 @@ class CartesianAxes(VGroup):
             Native VMobject styles for the markers.
         """
         artist = ScatterPlot(
-            xs, self, ys, marker=marker, label=label, clip=clip, **kwargs
+            xs,
+            self,
+            ys,
+            marker=marker,
+            label=label,
+            clip=clip,
+            c=c,
+            s=s,
+            colorscale=colorscale,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            **kwargs,
         )
         self.add(artist)
         return artist

@@ -206,6 +206,14 @@ Surfaces and colour
 
 .. autoclass:: SurfacePlot
 
+.. autoclass:: GrowSurface
+
+.. autoclass:: StemPlot
+
+.. autoclass:: WaterfallPlot
+
+.. autoclass:: BarPlot3D
+
 .. autoclass:: WireframePlot
 
 .. autoclass:: ContourPlot

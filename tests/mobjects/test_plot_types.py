@@ -35,6 +35,12 @@ def anchors(mob: Any) -> np.ndarray:
     return np.asarray(mob.points)[::4]
 
 
+def vertices(mob: Any) -> np.ndarray:
+    """A polyline's corners: every curve's start and the last curve's end."""
+    points = np.asarray(mob.points)
+    return np.vstack([points[::4], points[-1:]])
+
+
 def data(ax: Any, points: np.ndarray) -> np.ndarray:
     return np.array([ax.p2c(p) for p in np.atleast_2d(points)])
 
@@ -68,7 +74,9 @@ def test_vs1_colour_by_value_in_2d():
     viridis = mp.colormaps["viridis"]
     for dot, t in zip(dots, (0.0, 0.5, 1.0), strict=True):
         np.testing.assert_allclose(fill_rgb(dot), viridis(t), atol=1.5 / 255)
-    assert (dots.color_mapping.vmin, dots.color_mapping.vmax) == pytest.approx((0, 10))
+    mapping = dots.color_mapping
+    assert mapping is not None
+    assert (mapping.vmin, mapping.vmax) == pytest.approx((0, 10))
     bar = ax.colorbar(dots)
     assert tuple(bar.y_range[:2]) == pytest.approx((0, 10))
 
@@ -144,18 +152,20 @@ def test_wt1_curves_laid_in_their_planes():
     ax = mp.ThreeDAxes()
     wf = ax.waterfall([0, 1, 2], [[0, 1, 0], [1, 2, 1]])
     assert isinstance(wf, mp.WaterfallPlot)
-    same_set(data(ax, anchors(wf.lines[1])), [(0, 1, 1), (1, 1, 2), (2, 1, 1)])
+    same_set(data(ax, vertices(wf.lines[1])), [(0, 1, 1), (1, 1, 2), (2, 1, 1)])
     fill = data(ax, anchors(wf.fills[0]))
     np.testing.assert_allclose(fill[:, 1], 0, atol=1e-9)
     assert fill[:, 2].min() == pytest.approx(-4)  # down to the floor
     assert wf.lines[0].get_color() != wf.lines[1].get_color()
-    assert wf.fills[0].get_fill_opacity() == pytest.approx(0.5)
+    first = wf.fills[0]
+    assert first is not None
+    assert first.get_fill_opacity() == pytest.approx(0.5)
 
 
 def test_wt1_positions_direction_and_no_fill():
     ax = mp.ThreeDAxes()
     wf = ax.waterfall([0, 1], [[1, 2]], positions=[3], zdir="x", fill=False)
-    same_set(data(ax, anchors(wf.lines[0])), [(3, 0, 1), (3, 1, 2)])
+    same_set(data(ax, vertices(wf.lines[0])), [(3, 0, 1), (3, 1, 2)])
     assert wf.fills[0] is None
 
 
@@ -233,12 +243,14 @@ def test_eb3_bars_on_three_axes():
         data(ax, ends(eb.xbars)), [(0.9, 2, 3), (1.2, 2, 3)], atol=1e-9
     )
     assert eb.ybars is None
+    assert eb.markers is not None
     np.testing.assert_allclose(eb.markers[0].get_center(), ax.c2p(1, 2, 3), atol=1e-9)
 
 
 def test_eb3_caps_face_the_default_view():
     ax = mp.ThreeDAxes()
     eb = ax.errorbar([1], [2], [3], xerr=0.5)
+    assert eb.xcaps is not None
     caps = np.asarray(eb.xcaps.get_all_points())
     assert np.ptp(caps[:, 1]) == pytest.approx(0.1, abs=1e-6)  # across the bar
     assert np.ptp(caps[:, 2]) == pytest.approx(0, abs=1e-9)  # in the facing plane
@@ -267,16 +279,39 @@ def test_tx1_zdir_turns_the_baseline():
 
 def test_tx2_an_annotation_points_at_its_point():
     ax = mp.ThreeDAxes()
-    note = ax.annotate("P", (1, 2, 3), (2, 2, 3))
-    assert isinstance(note, mp.HelperGroup)
+    note: Any = ax.annotate("P", (1, 2, 3), (2, 2, 3))
+    assert mp.HelperGroup in type(note).__mro__
     np.testing.assert_allclose(note.text.get_center(), ax.c2p(2, 2, 3), atol=1e-6)
     tip = np.asarray(note.arrow.get_all_points())
     assert np.min(np.linalg.norm(tip - ax.c2p(1, 2, 3), axis=1)) < 1e-6
-    plain = ax.annotate("Q", (0, 0, 0), arrow=False)
+    plain: Any = ax.annotate("Q", (0, 0, 0), arrow=False)
     np.testing.assert_allclose(
         plain.text.get_center(), ax.c2p(0, 0, 0) + np.array([0.6, 0.6, 0]), atol=1e-6
     )
     assert plain.arrow is None
+
+
+def test_tx2_in_a_three_d_scene_the_text_stays_at_its_point():
+    ax = mp.ThreeDAxes()
+    note: Any = ax.annotate("peak", (2, 2, 2), (3.5, 0.5, 3.5))
+    label = ax.text(0.5, 3.5, 4, "top")
+    seen: list[np.ndarray] = []
+
+    class Shot(ThreeDScene):
+        def construct(self) -> None:
+            self.set_camera_orientation(phi=65 * DEGREES, theta=-45 * DEGREES)
+            self.add(ax, note, label)
+            self.wait(1 / 6)
+            seen.extend([note.text.get_center(), label.get_center()])
+            tip = np.asarray(note.arrow.get_all_points())
+            seen.append(np.min(np.linalg.norm(tip - ax.c2p(2, 2, 2), axis=1)))
+
+    with tempconfig(RUN):
+        Shot().render()
+    # a turned text's bounding box centre is within a few hundredths of its anchor
+    np.testing.assert_allclose(seen[0], ax.c2p(3.5, 0.5, 3.5), atol=0.05)
+    np.testing.assert_allclose(seen[1], ax.c2p(0.5, 3.5, 4), atol=0.05)
+    assert seen[2] < 1e-6
 
 
 # --- PJ -------------------------------------------------------------------------------
@@ -300,7 +335,7 @@ def test_pj1_parallel_edges_stay_parallel(proj, parallel):
 
     class Shot(ThreeDScene):
         def construct(self) -> None:
-            self.set_camera_orientation(**ax.view(30, -60, proj_type=proj))
+            self.set_camera_orientation(**ax.view(30, -60, proj_type=proj))  # type: ignore[arg-type]
             self.add(ax)
             self.wait(1 / 6)
             seen.append(self.camera.project_points(edges)[:, :2])

@@ -53,6 +53,7 @@ from manim_plots.mobjects.artists import (
 )
 from manim_plots.mobjects.axis import Axis, TickDirection, _range
 from manim_plots.mobjects.context import _drawing_camera, _scene_camera
+from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.geometry import (
     AxLinePlot,
     PlanePlot,
@@ -71,6 +72,13 @@ from manim_plots.mobjects.leaves import (
     _VMStyle,
 )
 from manim_plots.mobjects.legend import Legend
+from manim_plots.mobjects.plots3d import (
+    BarPlot3D,
+    StemPlot,
+    WaterfallPlot,
+    _annotate,
+    _text,
+)
 from manim_plots.mobjects.projections import _juggle, _PlanePlot, _shadow
 from manim_plots.mobjects.surfaces import ContourPlot, SurfacePlot, WireframePlot
 from manim_plots.mobjects.system import CartesianAxes, _scale
@@ -550,6 +558,65 @@ class ThreeDAxes(CartesianAxes):
         """
         return _shadow(self, artist, zdir, offset, style)
 
+    def stem(
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        z: ArrayLike,
+        *,
+        bottom: float = 0,
+        orientation: str = "z",
+        **style: object,
+    ) -> StemPlot:
+        """Draw data stems.
+
+        Parameters
+        ----------
+        x, y, z, bottom, orientation, **style
+            Coordinates, baseline, stem axis and artist style.
+        """
+        return StemPlot(self, x, y, z, bottom=bottom, orientation=orientation, **style)
+
+    def waterfall(
+        self,
+        x: ArrayLike,
+        curves: ArrayLike,
+        positions: ArrayLike | None = None,
+        *,
+        zdir: str = "y",
+        fill: bool = True,
+        **style: object,
+    ) -> WaterfallPlot:
+        """Draw curves in parallel planes.
+
+        Parameters
+        ----------
+        x, curves, positions, zdir, fill, **style
+            Shared abscissae, ordinates, planes, axis, fill policy and style.
+        """
+        return WaterfallPlot(self, x, curves, positions, zdir=zdir, fill=fill, **style)
+
+    def bar3d(
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        z: ArrayLike,
+        dx: ArrayLike,
+        dy: ArrayLike,
+        dz: ArrayLike,
+        color: object = None,
+        shade: bool = True,
+        **style: object,
+    ) -> BarPlot3D:
+        """Draw shaded data boxes.
+
+        Parameters
+        ----------
+        x, y, z, dx, dy, dz, color, shade, **style
+            Corners, side lengths, colours, lighting policy and face style.
+        """
+        return BarPlot3D(self, x, y, z, dx, dy, dz, color, shade, **style)
+
     def intersection(
         self, a: object, b: object, **style: object
     ) -> AxLinePlot | ScatterPlot | ContourPlot:
@@ -1023,13 +1090,17 @@ class ThreeDAxes(CartesianAxes):
         return result
 
     def view(
-        self, elev: float = 30, azim: float = -60, roll: float = 0
+        self,
+        elev: float = 30,
+        azim: float = -60,
+        roll: float = 0,
+        proj_type: str = "persp",
     ) -> dict[str, float]:
         """Return Manim camera keywords for angles in degrees.
 
         Parameters
         ----------
-        elev, azim, roll
+        elev, azim, roll, proj_type
             Matplotlib elevation, azimuth and camera roll.
 
         Returns
@@ -1037,11 +1108,50 @@ class ThreeDAxes(CartesianAxes):
         dict
             Radian phi, theta and gamma for a ThreeDScene.
         """
+        if proj_type not in ("persp", "ortho"):
+            raise ValueError("proj_type must be persp or ortho")
         return {
             "phi": float(np.deg2rad(90 - elev)),
             "theta": float(np.deg2rad(azim)),
             "gamma": float(np.deg2rad(roll)),
+            **({"focal_distance": 1e6} if proj_type == "ortho" else {}),
         }
+
+    def text(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        s: str | Mobject,
+        zdir: str | None = None,
+        **kwargs: object,
+    ) -> Mobject:
+        """Place facing text at a data point.
+
+        Parameters
+        ----------
+        x, y, z, s, zdir, **kwargs
+            Data point, text or mobject, baseline axis and text options.
+        """
+        return _text(self, (x, y, z), s, zdir, **cast(dict[str, Any], kwargs))
+
+    def annotate(
+        self,
+        s: str | Mobject,
+        xyz: object,
+        xyztext: object = None,
+        *,
+        arrow: bool = True,
+        **kwargs: object,
+    ) -> HelperGroup:
+        """Label a bound point with an optional facing arrow.
+
+        Parameters
+        ----------
+        s, xyz, xyztext, arrow, **kwargs
+            Label, target, text anchor, arrow policy and text style.
+        """
+        return _annotate(self, s, xyz, xyztext, arrow=arrow, **kwargs)
 
     def get_family(self, recurse: bool = True) -> list[Mobject]:
         """Return the family after reading a camera that is drawing it.
@@ -1266,15 +1376,36 @@ class ThreeDAxes(CartesianAxes):
         """
         raise NotImplementedError("plot_implicit_curve is not available on ThreeDAxes")
 
-    def errorbar(self, *args: object, **kwargs: object) -> NoReturn:
-        """Refuse the two-dimensional errorbar helper.
+    def errorbar(  # type: ignore[override]  # 3D follows matplotlib's distinct argument order.
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        z: ArrayLike,
+        zerr: ArrayLike | None = None,
+        yerr: ArrayLike | None = None,
+        xerr: ArrayLike | None = None,
+        *,
+        capsize: float = 0.1,
+        **kwargs: object,
+    ) -> ErrorBars:
+        """Draw errors along three data axes.
 
         Parameters
         ----------
-        *args, **kwargs
-            Arguments reserved for the two-dimensional system.
+        x, y, z, zerr, yerr, xerr, capsize, **kwargs
+            Coordinates, errors, scene cap length and style options.
         """
-        raise NotImplementedError("errorbar is not available on ThreeDAxes")
+        artist = ErrorBars(
+            np.column_stack((x, y, z)),
+            self,
+            zerr=zerr,
+            yerr=yerr,
+            xerr=xerr,
+            capsize=capsize,
+            **cast(dict[str, Any], kwargs),
+        )
+        self.add(artist)
+        return artist
 
     def get_vertical_line(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional get_vertical_line helper.
@@ -1433,15 +1564,38 @@ class ThreeDAxes(CartesianAxes):
         """
         raise NotImplementedError("get_area is not available on ThreeDAxes")
 
-    def fill_between(self, *args: object, **kwargs: object) -> NoReturn:
-        """Refuse the two-dimensional fill_between helper.
+    def fill_between(  # type: ignore[override]  # 3D takes two data triples.
+        self,
+        x1: ArrayLike,
+        y1: ArrayLike,
+        z1: ArrayLike,
+        x2: ArrayLike,
+        y2: ArrayLike,
+        z2: ArrayLike,
+        **style: object,
+    ) -> SurfacePlot:
+        """Draw a surface band between matching polylines.
 
         Parameters
         ----------
-        *args, **kwargs
-            Arguments reserved for the two-dimensional system.
+        x1, y1, z1, x2, y2, z2, **style
+            Coordinates of both boundaries and surface style.
         """
-        raise NotImplementedError("fill_between is not available on ThreeDAxes")
+        from manim_plots.mobjects.artists import _cycle_style
+
+        arrays = [np.asarray(a, float) for a in (x1, y1, z1, x2, y2, z2)]
+        if arrays[0].ndim != 1 or any(a.shape != arrays[0].shape for a in arrays):
+            raise ValueError("x2 and all coordinates must match x1")
+        _cycle_style(self, cast(_VMStyle, style))
+        style.setdefault("fill_color", style.pop("color", style.get("stroke_color")))
+        style.setdefault("fill_opacity", 0.5)
+        style.setdefault("checkerboard_colors", False)
+        return self.surface(
+            np.stack((arrays[0], arrays[3])),
+            np.stack((arrays[1], arrays[4])),
+            np.stack((arrays[2], arrays[5])),
+            **cast(dict[str, Any], style),
+        )
 
     def get_riemann_rectangles(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional get_riemann_rectangles helper.

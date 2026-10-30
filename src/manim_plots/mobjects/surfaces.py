@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
+import copy
 import inspect
 from collections.abc import Callable, Sequence
 from typing import Any, Literal, Self, cast
 
 import numpy as np
-from manim import BLUE_D, BLUE_E, LIGHT_GREY, ManimColor, VGroup, VMobject
+from manim import (
+    BLUE_D,
+    BLUE_E,
+    LIGHT_GREY,
+    Animation,
+    ManimColor,
+    Mobject,
+    VGroup,
+    VMobject,
+)
 from manim.mobject.three_d.three_dimensions import ThreeDVMobject
 from manim.utils.color import ParsableManimColor
 from numpy.typing import ArrayLike
@@ -30,6 +40,7 @@ from manim_plots.mobjects.artists import (
     _validate_clip,
 )
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
+from manim_plots.mobjects.context import animation_context
 from manim_plots.mobjects.geometry import _ensure_binding
 from manim_plots.mobjects.helpers import _Binding
 from manim_plots.mobjects.leaves import _ClipInput
@@ -279,6 +290,108 @@ class SurfacePlot(VGroup):
         """Return the current value mapping, or None for a checkerboard."""
         self._driver._ensure()
         return self._color_mapping
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        result = type(self).__new__(type(self))
+        memo[id(self)] = result
+        for key, value in self.__dict__.items():
+            result.__dict__[key] = (
+                value if key == "_system" else copy.deepcopy(value, memo)
+            )
+        return result
+
+    def suspend_updating(self, recursive: bool = True) -> Self:
+        """Let native animations own the face buffers.
+
+        Parameters
+        ----------
+        recursive
+            Suspend descendants as on a native surface.
+        """
+        self._building = True
+        return super().suspend_updating(recursive)
+
+    def resume_updating(self, recursive: bool = True) -> Self:
+        """Restore binding and adopt a completed surface transform.
+
+        Parameters
+        ----------
+        recursive
+            Resume descendants as on a native surface.
+        """
+        animation = animation_context(finishing=True)
+        target = getattr(animation, "target_mobject", None)
+        if (
+            isinstance(target, SurfacePlot)
+            and animation is not None
+            and animation.rate_func(1) == 1
+        ):
+            self._adopt(target)
+        self._building = False
+        return super().resume_updating(recursive)
+
+    def _adopt(self, target: SurfacePlot) -> None:
+        for name in (
+            "_kind",
+            "_vertices",
+            "_triangles",
+            "_axis",
+            "_function",
+            "_parameters",
+            "_u_range",
+            "_v_range",
+            "_resolution",
+            "_clip",
+            "_colorscale",
+            "_color_axis",
+            "_vmin",
+            "_vmax",
+            "_norm",
+            "_checker",
+            "_fill",
+            "_opacity",
+            "_explicit_stroke",
+            "_stroke",
+            "_stroke_width",
+            "_jagged",
+        ):
+            setattr(self, name, copy.copy(getattr(target, name)))
+        self.faces = cast(FaceGroup, self.submobjects[0])
+        del self.faces.submobjects[len(target.faces) :]
+        self.faces._faces = dict(
+            zip(
+                target.faces._faces,
+                cast(list[_Face], self.faces.submobjects),
+                strict=False,
+            )
+        )
+        for face in self.faces:
+            cast(_Face, face)._owner = self
+        self._driver.parameters = self._parameters
+        self._driver._dirty = True
+
+    def become(
+        self,
+        mobject: Mobject,
+        match_height: bool = False,
+        match_width: bool = False,
+        match_depth: bool = False,
+        match_center: bool = False,
+        stretch: bool = False,
+    ) -> Self:
+        """Adopt another surface's bound definition after native alignment.
+
+        Parameters
+        ----------
+        mobject, match_height, match_width, match_depth, match_center, stretch
+            Native target and placement options.
+        """
+        super().become(
+            mobject, match_height, match_width, match_depth, match_center, stretch
+        )
+        if isinstance(mobject, SurfacePlot):
+            self._adopt(mobject)
+        return self
 
     def _evaluate(self, uv: FloatArray) -> FloatArray:
         u, v = uv[..., 0], uv[..., 1]
@@ -607,6 +720,67 @@ class SurfacePlot(VGroup):
         return ContourPlot(
             self, levels, zdir=zdir, offset=offset, colorscale=colorscale, **kwargs
         )
+
+
+class GrowSurface(Animation):
+    """Raise a bound surface from a coordinate plane.
+
+    Parameters
+    ----------
+    surface, zdir, offset, **kwargs
+        Surface, growth coordinate, starting plane and animation options.
+    """
+
+    def __init__(
+        self,
+        surface: SurfacePlot,
+        zdir: str = "z",
+        offset: float | None = None,
+        **kwargs: object,
+    ) -> None:
+        if zdir not in ("x", "y", "z"):
+            raise ValueError("zdir must be x, y or z")
+        self.surface = surface
+        self._axis = "xyz".index(zdir)
+        self._offset = (
+            min(surface._system._ranges[self._axis].range.value)
+            if offset is None
+            else float(offset)
+        )
+        if not np.isfinite(self._offset):
+            raise ValueError("offset must be finite")
+        super().__init__(surface, **cast(dict[str, Any], kwargs))
+
+    def begin(self) -> None:
+        """Capture final data buffers before animation takes ownership."""
+        surface = self.surface
+        surface._driver._ensure()
+        mapping = surface._system._mapping()
+        self._final = [mapping.inverse(face.points.copy()) for face in surface.faces]
+        super().begin()
+
+    def interpolate_mobject(self, alpha: float) -> None:
+        """Map one shared growth fraction through the coordinate system.
+
+        Parameters
+        ----------
+        alpha
+            Animation progress before the rate function.
+        """
+        progress = self.rate_func(alpha)
+        for face, final in zip(self.surface.faces, self._final, strict=True):
+            data = final.copy()
+            data[:, self._axis] = self._offset + progress * (
+                data[:, self._axis] - self._offset
+            )
+            face.set_points(self.surface._system._mapping().to_screen(data))
+
+    def finish(self) -> None:
+        """Restore the bound surface with its final colours and no new updater."""
+        super().finish()
+        self.surface._building = False
+        self.surface._driver._dirty = True
+        self.surface._driver._ensure()
 
 
 class _LineGroup(VGroup):
