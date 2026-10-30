@@ -465,39 +465,49 @@ defaults, round trips, clipping at the rim, an animated radius; visual pairs.
 
 ## Stage 4 — three dimensions (ADR 0006)
 
-After the 0.1.0 tag. Each task: acceptance table and tests first, then code.
+Before the 0.1.0 tag: 3D joins the first release. Each task: acceptance table and tests
+first, then code. Task 23 (the release) runs last, over everything.
 
 ### 24 — the 3D system
 
-**Modules.** `core/nodes.py`, `core/sources.py`, `core/shape.py` (by dimension),
-`mobjects/system.py`, `mobjects/axis.py`, `mobjects/artists.py`, `mobjects/three_d.py`
-(new).
-
-**Settles.**
-- The system generalized by dimension: scale nodes and the affine node at `dim=3`, boxes
-  for bounds, three `Axis` decorations, every 0/1 path a loop over the axes; 2D
-  unchanged, F-1001 unchanged.
-- `mp.ThreeDAxes` with Manim's signature and defaults; `get_z_axis`,
-  `get_z_axis_label`, `get_axis_labels(x, y, z)`; `plot` in `z = 0`;
-  `plot_parametric_curve` in 3D; `scatter` and `line` in 3D; `c2p`, `p2c`, `i2gp`.
-- Following: affine moves of the axes; changed and animated ranges on all three axes;
-  scales on all three; clipping to the box per axis; themes.
-- `apply_function` on a `ThreeDAxes` refused; twins, secondary axes and polar refused.
-
-**Tests.** `tests/mobjects/test_three_d.py`: Manim parity on defaults (axis endpoints,
-ticks, `c2p`), round trips, a log z axis, a helix clipped at the box, an animated
-`set_z_range`, a rotated system followed; visual pairs beside Manim's `ThreeDAxes` under
-a fixed camera; F-1001 unchanged.
+The system generalized by dimension (2D unchanged, F-1001 unchanged); `mp.ThreeDAxes`
+with Manim's signature and defaults; curves, `scatter` and `line` in 3D; following,
+ranges, scales, clipping to the box; frame styles `"origin"` and `"box"` in 3D (panes
+and edges from the camera) and 2D; `view`, `aspect`, camera-facing text. Table
+`docs/acceptance/24-three-d.md`; tests `tests/mobjects/test_three_d.py`,
+`tests/mobjects/test_frames.py`, `tests/visual/test_three_d_pictures.py`.
 
 ### 25 — surfaces
 
-`plot_surface` as a field artist (ADR 0006 §6): faces keyed by cell, clipped to the box
-in data space, following ranges and parameters, Manim's `resolution`, `colorscale`,
-`colorscale_axis`; parametric surfaces; a frame-cost reading for a 32×32 surface under
-an animated z range.
+From functions and arrays, parametric, of revolution, `plot_trisurf`; wireframes;
+colour by height or by hook, colormaps and a colorbar (2D too); NaN holes, opacity,
+checkerboard; contours on the surface and projected on the panes; clipped, bound,
+keyed by cell.
 
-### 26 — 3D polish and 0.2 documentation
+### 26 — geometry and coordinates
 
-Camera-facing numbers and labels (ADR 0006 §4); `marker="sphere"`; demos; the gallery's
-3D tab; *Coming from Manim* and *Differences* for 3D; the parity survey's *3D* section
-moved; the 0.2 changelog.
+Planes, lines, segments, `xline`/`yline`/`zline`, `get_lines_to_point` in 3D,
+intersections; spherical `(r, θ, φ)` (ISO 80000-2) and cylindrical `(ρ, φ, z)`
+conversions on every system, and curves, surfaces and fields defined in them.
+
+### 27 — fields in 3D
+
+Vector fields (flat camera-facing arrows by default, `arrow="3d"`), stream lines (plain
+lines by default, `line="3d"`), `Flow` in 3D.
+
+### 28 — slices and projections
+
+`surface.slice(...)`, `plot_slice` on a linked 2D `mp.Axes` following a tracker; shadows
+on the panes; matplotlib's `zdir`.
+
+### 29 — more plot types
+
+Value-mapped `scatter`, `stem`, waterfall, `fill_between` in 3D, `bar3d`, error bars in
+3D, `text` and `annotate` at a 3D point; orthographic projection; growing and morphing
+surfaces.
+
+### 30 — occlusion
+
+The occlusion step of ADR 0006 §7: a depth buffer (moderngl, NumPy fallback) deciding
+which pieces of curves and faces are visible, handed to Manim as vector paths; frame-cost
+readings; off by `occlusion=False`.
