@@ -194,3 +194,20 @@ Warnings
 --------
 
 .. autoclass:: ManimPlotsWarning
+
+Surfaces and colour
+-------------------
+
+.. autoclass:: SurfacePlot
+
+.. autoclass:: WireframePlot
+
+.. autoclass:: ContourPlot
+
+.. autoclass:: Colormap
+
+.. autoclass:: ColorMapping
+
+.. autoclass:: Colorbar
+
+.. autodata:: colormaps

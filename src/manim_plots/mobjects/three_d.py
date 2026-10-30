@@ -45,10 +45,12 @@ from manim_plots.mobjects.leaves import (
     BoundLabel,
     FrameLeaf,
     _ArtistOptions,
+    _ClipInput,
     _label,
     _VMStyle,
 )
 from manim_plots.mobjects.legend import Legend
+from manim_plots.mobjects.surfaces import SurfacePlot, WireframePlot
 from manim_plots.mobjects.system import CartesianAxes, _scale
 from manim_plots.mobjects.themes import Theme, _resolve_theme
 
@@ -450,6 +452,250 @@ class ThreeDAxes(CartesianAxes):
         artist = ScatterPlot(data, self, **cast(_VMStyle, kwargs))
         self.add(artist)
         return artist
+
+    def plot_surface(
+        self,
+        function: Callable[..., Any],
+        u_range: Sequence[float] | None = None,
+        v_range: Sequence[float] | None = None,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        resolution: int | tuple[int, int] = 32,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> SurfacePlot:
+        """Draw a bound height surface.
+
+        Parameters
+        ----------
+        function, u_range, v_range, colorscale, colorscale_axis
+            Surface data, parameter ranges, colours and rendering options.
+        resolution, vmin, vmax, norm, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        return SurfacePlot(
+            self,
+            function,
+            u_range,
+            v_range,
+            colorscale,
+            colorscale_axis,
+            resolution=resolution,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            clip=clip,
+            **cast(dict[str, Any], kwargs),
+        )
+
+    def plot_parametric_surface(
+        self,
+        function: Callable[..., Any],
+        u_range: Sequence[float] | None,
+        v_range: Sequence[float] | None,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        resolution: int | tuple[int, int] = 32,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> SurfacePlot:
+        """Draw a parametric surface in data coordinates.
+
+        Parameters
+        ----------
+        function, u_range, v_range, colorscale, colorscale_axis
+            Surface data, parameter ranges, colours and rendering options.
+        resolution, vmin, vmax, norm, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        if u_range is None:
+            raise ValueError("u_range is required")
+        if v_range is None:
+            raise ValueError("v_range is required")
+        return SurfacePlot(
+            self,
+            function,
+            u_range,
+            v_range,
+            colorscale,
+            colorscale_axis,
+            _kind="parametric",
+            resolution=resolution,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            clip=clip,
+            **cast(dict[str, Any], kwargs),
+        )
+
+    def plot_surface_of_revolution(
+        self,
+        function: Callable[..., Any],
+        t_range: Sequence[float] | None = None,
+        axis: str = "z",
+        angle_range: Sequence[float] = (0, 2 * np.pi),
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        resolution: int | tuple[int, int] = 32,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> SurfacePlot:
+        """Revolve a radius function about a data axis.
+
+        Parameters
+        ----------
+        function, t_range, axis, angle_range, colorscale, colorscale_axis
+            Surface data, parameter ranges, colours and rendering options.
+        resolution, vmin, vmax, norm, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        if axis not in "xyz" or len(axis) != 1:
+            raise ValueError("axis must be x, y or z")
+        return SurfacePlot(
+            self,
+            function,
+            t_range,
+            angle_range,
+            colorscale,
+            colorscale_axis,
+            _kind="revolution",
+            _axis="xyz".index(axis),
+            resolution=resolution,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            clip=clip,
+            **cast(dict[str, Any], kwargs),
+        )
+
+    def surface(
+        self,
+        X: ArrayLike,
+        Y: ArrayLike,
+        Z: ArrayLike,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> SurfacePlot:
+        """Draw quadrilateral cells from three matching coordinate grids.
+
+        Parameters
+        ----------
+        X, Y, Z, colorscale, colorscale_axis, vmin, vmax, norm, clip
+            Surface data, parameter ranges, colours and rendering options.
+        **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        x, y, z = (np.asarray(a, float) for a in (X, Y, Z))
+        if x.ndim != 2 or x.shape != y.shape or x.shape != z.shape or min(x.shape) < 2:
+            raise ValueError("X, Y and Z must have the same grid shape")
+        return SurfacePlot(
+            self,
+            lambda u, v: 0,
+            colorscale=colorscale,
+            colorscale_axis=colorscale_axis,
+            _kind="grid",
+            _vertices=np.stack((x, y, z), -1),
+            resolution=(x.shape[0] - 1, x.shape[1] - 1),
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            clip=clip,
+            **cast(dict[str, Any], kwargs),
+        )
+
+    def plot_trisurf(
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        z: ArrayLike,
+        triangles: ArrayLike | None = None,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        *,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> SurfacePlot:
+        """Draw explicit triangles or a Delaunay triangulation of scattered points.
+
+        Parameters
+        ----------
+        x, y, z, triangles, colorscale, colorscale_axis, vmin, vmax, norm
+            Surface data, parameter ranges, colours and rendering options.
+        clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        from scipy.spatial import Delaunay  # type: ignore[import-untyped]
+
+        vertices = np.column_stack((x, y, z)).astype(float)
+        indices = (
+            Delaunay(vertices[:, :2]).simplices
+            if triangles is None
+            else np.asarray(triangles, int)
+        )
+        if indices.ndim != 2 or indices.shape[1] != 3:
+            raise ValueError("triangles must have shape (k, 3)")
+        return SurfacePlot(
+            self,
+            lambda u, v: 0,
+            colorscale=colorscale,
+            colorscale_axis=colorscale_axis,
+            _kind="triangles",
+            _vertices=vertices,
+            _triangles=indices,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            clip=clip,
+            **cast(dict[str, Any], kwargs),
+        )
+
+    def plot_wireframe(
+        self,
+        function: Callable[..., Any],
+        u_range: Sequence[float] | None = None,
+        v_range: Sequence[float] | None = None,
+        *,
+        resolution: int | tuple[int, int] = 10,
+        clip: _ClipInput = True,
+        **kwargs: object,
+    ) -> WireframePlot:
+        """Draw a grid of adaptive three-dimensional surface curves.
+
+        Parameters
+        ----------
+        function, u_range, v_range, resolution, clip, **kwargs
+            Surface data, parameter ranges, colours and rendering options.
+        """
+        return WireframePlot(
+            self,
+            function,
+            u_range,
+            v_range,
+            resolution=resolution,
+            clip=clip,
+            **cast(dict[str, Any], kwargs),
+        )
 
     def legend(
         self,

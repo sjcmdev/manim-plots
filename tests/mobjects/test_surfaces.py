@@ -34,7 +34,7 @@ import manim_plots as mp
 
 from .helpers import RUN, dense, probe
 
-SQUARE = {"u_range": (0, 2), "v_range": (0, 2), "resolution": 2}
+SQUARE: dict[str, Any] = {"u_range": (0, 2), "v_range": (0, 2), "resolution": 2}
 
 
 def corners(face: Any) -> np.ndarray:
@@ -288,6 +288,7 @@ def test_cs1_pivots():
         **SQUARE,
     )
     assert close(fill(s.faces.at((0, 0))), mix(YELLOW, GREEN, 0.5), 1 / 255)
+    assert s.color_mapping is not None
     assert s.color_mapping.vmin == pytest.approx(-0.5)
     assert s.color_mapping.vmax == pytest.approx(0.5)
 
@@ -357,7 +358,7 @@ def test_cs4_an_explicit_stroke_is_kept():
     assert stroke(s.faces.at((0, 0))) == ManimColor(WHITE).to_hex()
     mapping = s.color_mapping
     assert isinstance(mapping, mp.ColorMapping)
-    assert (mapping.vmin, mapping.vmax) == (pytest.approx(-4), pytest.approx(4))
+    assert (mapping.vmin, mapping.vmax) == pytest.approx((-4, 4))
 
 
 def test_cs5_colours_follow_a_range_and_a_styled_face_is_kept():

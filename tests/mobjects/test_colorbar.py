@@ -47,6 +47,13 @@ def test_cb1_a_log_mapping_gives_a_log_axis():
     assert bar.p2c(middle)[1] == pytest.approx(10**1.5, rel=1e-6)
 
 
+def test_cb1_every_tick_is_numbered_zero_included():
+    ax = mp.Axes()
+    bar = ax.colorbar(colorscale="viridis", vmin=0, vmax=2)
+    assert bar.y.numbers.at(0.0) is not None
+    assert bar.y.numbers.at(2.0) is not None
+
+
 def test_cb2_the_strip():
     ax = mp.Axes(x_range=(0, 10, 1), y_range=(0, 5, 1))
     bar = ax.colorbar(colorscale="viridis", vmin=0, vmax=10)
@@ -71,8 +78,12 @@ def test_cb3_placed_right_of_the_axes_and_kept_there():
         scene.add(ax, bar)
         scene.play(ax.animate.shift(UP))
 
-    heights = probe(construct, lambda: float(bar.strip.get_center()[1]))
-    assert heights[-1] == pytest.approx(float(ax.get_center()[1]), abs=1e-6)
+    gaps = probe(
+        construct,
+        lambda: float(bar.strip.get_center()[1] - ax.get_center()[1]),
+    )
+    assert gaps == pytest.approx([0.0] * len(gaps), abs=1e-6)
+    assert bar.strip.get_center()[1] == pytest.approx(ax.get_center()[1])
 
 
 def test_cb4_a_bar_follows_its_surface():
@@ -81,10 +92,11 @@ def test_cb4_a_bar_follows_its_surface():
         lambda u, v: u + v, (0, 1), (0, 1), colorscale=[BLUE, RED]
     )
     bar = ax.colorbar(surface)
+    assert surface.color_mapping is not None
     assert tuple(bar.y_range[:2]) == (pytest.approx(-4), pytest.approx(4))
     np.testing.assert_allclose(
         rgb(bar.strip[0]),
-        surface.color_mapping(np.array([-4 + 8 / 128])),
+        surface.color_mapping(np.array([-4 + 8 / 128]))[0],
         atol=1 / 255,
     )
     tops: list[float] = []
@@ -100,7 +112,7 @@ def test_cb4_a_bar_follows_its_surface():
 
     with tempconfig(RUN):
         Shot().render()
-    assert tops[-1] == pytest.approx(8)
+    assert bar.y_range[1] == pytest.approx(8)
     assert all(b >= a - 1e-9 for a, b in pairwise(tops))
 
 
@@ -126,6 +138,6 @@ def test_cb4_a_field_has_a_mapping():
     field = ax.get_vector_field(lambda p: p)
     mapping = field.color_mapping
     assert isinstance(mapping, mp.ColorMapping)
-    assert (mapping.vmin, mapping.vmax) == (pytest.approx(0), pytest.approx(2))
+    assert (mapping.vmin, mapping.vmax) == pytest.approx((0, 2))
     bar = ax.colorbar(field)
     assert tuple(bar.y_range[:2]) == (pytest.approx(0), pytest.approx(2))
