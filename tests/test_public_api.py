@@ -77,6 +77,15 @@ EXPECTED = {
     "AffineNode",
     "ScaleNode",
     "FunctionNode",
+    # task 24: ThreeDAxes is an attribute only, as NumberPlane
+    # task 25
+    "SurfacePlot",
+    "WireframePlot",
+    "ContourPlot",
+    "Colormap",
+    "colormaps",
+    "ColorMapping",
+    "Colorbar",
 }
 
 
