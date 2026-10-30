@@ -20,6 +20,19 @@ is likewise reached as ``mp.NumberPlane``.
 .. autoclass:: manim_plots.mobjects.axis.Axis
    :members:
 
+Polar
+-----
+
+``PolarPlane`` is Manim's Cartesian plane with a polar grid, reached as
+``mp.PolarPlane`` because Manim has the name. ``PolarAxes`` is a true polar system: its
+data coordinates are ``(r, θ)``.
+
+.. autoclass:: manim_plots.mobjects.polar.PolarPlane
+   :members:
+
+.. autoclass:: PolarAxes
+   :members:
+
 Artists
 -------
 
@@ -125,6 +138,8 @@ Labels
 
 .. autoclass:: NullFormatter
 
+.. autoclass:: AngleFormatter
+
 Data
 ----
 
@@ -143,6 +158,14 @@ Data
 .. autoclass:: Payload
 
 .. autoclass:: CompiledMap
+
+.. autoclass:: Node
+
+.. autoclass:: AffineNode
+
+.. autoclass:: ScaleNode
+
+.. autoclass:: FunctionNode
 
 Warnings
 --------

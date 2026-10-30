@@ -201,6 +201,25 @@ ADDED_BY_TASK_19B = [
     "Camera.apply_fill",
 ]
 
+ADDED_BY_TASK_22 = [
+    "VMobject.get_subpath_split_indices_from_points",
+    "Camera.transform_points_pre_display",
+    "PolarPlane._init_background_lines",
+    "PolarPlane._get_lines",
+    "PolarPlane.get_axes",
+    "PolarPlane.get_vector",
+    "PolarPlane.prepare_for_nonlinear_transform",
+    "PolarPlane.get_coordinate_labels",
+    "PolarPlane.add_coordinates",
+    "PolarPlane.get_radian_label",
+    "PolarPlane.__init__",
+    "CoordinateSystem.polar_to_point",
+    "CoordinateSystem.point_to_polar",
+    "CoordinateSystem.pr2pt",
+    "CoordinateSystem.pt2pr",
+    "CoordinateSystem.plot_polar_graph",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -224,6 +243,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_17
         + ADDED_BY_TASK_18
         + ADDED_BY_TASK_19B
+        + ADDED_BY_TASK_22
     )
 
 
