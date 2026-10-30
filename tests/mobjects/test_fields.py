@@ -31,13 +31,13 @@ def uniform(p):
 
 
 def start(arrow) -> np.ndarray:
-    return np.asarray(arrow.points)[0]
+    return np.asarray(np.asarray(arrow.points)[0])
 
 
 def far(arrow) -> np.ndarray:
     points = np.asarray(arrow.get_all_points())
     s = start(arrow)
-    return points[np.argmax(np.linalg.norm(points - s, axis=1))]
+    return np.asarray(points[np.argmax(np.linalg.norm(points - s, axis=1))])
 
 
 def unit(v) -> np.ndarray:
