@@ -320,10 +320,10 @@ def test_fr6_numbers_stay_by_their_axis_through_an_orbit():
     ax = mp.ThreeDAxes(frame="box", **RANGES)
 
     def construct(scene: ThreeDScene) -> None:
-        scene.set_camera_orientation(**ax.view(25, -50))
+        scene.set_camera_orientation(**ax.view(25, -50))  # type: ignore[arg-type]
         scene.add(ax)
-        scene.move_camera(**ax.view(25, 130), run_time=5)
-        scene.move_camera(**ax.view(60, -50), run_time=3)
+        scene.move_camera(**ax.view(25, 130), run_time=5)  # type: ignore[arg-type]
+        scene.move_camera(**ax.view(60, -50), run_time=3)  # type: ignore[arg-type]
 
     def worst() -> float:
         return max(
