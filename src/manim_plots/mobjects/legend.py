@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from manim import ORIGIN, RIGHT, Mobject, Text, VGroup, VMobject
@@ -99,7 +101,16 @@ class Legend(VGroup):
     font_size
         Native Text font size.
     buff
-        Horizontal and vertical space between entries, in scene units.
+        Horizontal and vertical space between entries and frame padding.
+    frame
+        Draw a rectangle around the entries, defaulting to False.
+    frame_style
+        Frame VMobject styles, defaulting to white, width one and no fill.
+
+    Attributes
+    ----------
+    frame
+        Frame leaf, or None when the legend is unframed.
     """
 
     def __init__(
@@ -107,9 +118,18 @@ class Legend(VGroup):
         *artists: _CurvePlot | ScatterPlot | ErrorBars,
         font_size: float = 24,
         buff: float = 0.25,
+        frame: bool = False,
+        frame_style: Mapping[str, Any] | None = None,
     ) -> None:
         super().__init__()
         self.font_size, self.buff = font_size, buff
+        self.frame: Leaf | None = None
+        self._framed = frame
+        self._frame_style = {
+            "stroke_width": 1,
+            "fill_opacity": 0,
+            **(frame_style or {}),
+        }
         self.entries: list[LegendEntry] = []
         for artist in artists:
             if not isinstance(artist, (_CurvePlot, ScatterPlot, ErrorBars)):
@@ -137,9 +157,34 @@ class Legend(VGroup):
             row.shift(np.array([0.0, cursor - row.get_top()[1], 0.0]))
             cursor = row.get_bottom()[1] - self.buff
         self.move_to(ORIGIN)
+        self.frame = None
+        if self._framed and rows:
+            left = self.get_left()[0] - self.buff
+            right = self.get_right()[0] + self.buff
+            bottom = self.get_bottom()[1] - self.buff
+            top = self.get_top()[1] + self.buff
+            vertices = np.array(
+                [
+                    [left, bottom, 0],
+                    [right, bottom, 0],
+                    [right, top, 0],
+                    [left, top, 0],
+                    [left, bottom, 0],
+                ]
+            )
+            points = vertices[:-1, None] + np.linspace(0, 1, 4)[None, :, None] * (
+                vertices[1:, None] - vertices[:-1, None]
+            )
+            self.frame = Leaf(points.reshape(-1, 3), **self._frame_style)
+            self.add(self.frame)
 
     def _copy_entries(self, entries: list[LegendEntry]) -> Legend:
-        result = Legend(font_size=self.font_size, buff=self.buff)
+        result = Legend(
+            font_size=self.font_size,
+            buff=self.buff,
+            frame=self._framed,
+            frame_style=self._frame_style,
+        )
         result.entries = [
             LegendEntry(e.artist, e.handle.copy(), e.label.copy()) for e in entries
         ]

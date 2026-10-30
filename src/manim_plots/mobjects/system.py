@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import copy
 import weakref
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from dataclasses import replace
 from typing import Any, Literal, NoReturn, Self, Unpack, cast, overload
 
 import numpy as np
@@ -71,7 +72,6 @@ from manim_plots.mobjects.artists import (
 )
 from manim_plots.mobjects.axis import (
     Axis,
-    TickDirection,
     _LogExponentLocator,
     _LogMinorLocator,
     _range,
@@ -123,6 +123,7 @@ from manim_plots.mobjects.leaves import (
     _VMStyle,
 )
 from manim_plots.mobjects.legend import Legend, _handle
+from manim_plots.mobjects.themes import Theme, _resolve_cycle, _resolve_theme
 
 _DEFAULT_LENGTHS = (round(config.frame_width) - 2, round(config.frame_height) - 2)
 _AXIS_KEYS = frozenset(
@@ -203,6 +204,11 @@ class CartesianAxes(VGroup):
         explicit axis length sets the length; supplying both raises ValueError.
     tips
         Default for each axis's include_tip option.
+    theme
+        Named preset, Theme or mapping of Theme fields. None uses the module
+        default. Explicit constructor options and later decoration calls win.
+    cycle
+        Named colour cycle or nonempty colour sequence, overriding the theme.
     x_scale, y_scale
         Data scales or the names linear, log and symlog. Manim's scaling option
         retains its exponent-range convention for LogBase.
@@ -219,6 +225,8 @@ class CartesianAxes(VGroup):
         Root system for a twin, or None for an independent system.
     twins
         Twins created from this root, in creation order.
+    theme
+        Preset applied at construction, without any per-frame theme work.
 
     Notes
     -----
@@ -257,8 +265,10 @@ class CartesianAxes(VGroup):
         axis_config: dict[str, Any] | None = None,
         x_axis_config: dict[str, Any] | None = None,
         y_axis_config: dict[str, Any] | None = None,
-        tips: bool = True,
+        tips: bool | None = None,
         *,
+        theme: str | Theme | Mapping[str, Any] | None = None,
+        cycle: str | Sequence[ParsableManimColor] | None = None,
         x_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
         y_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
         aspect: float | None = None,
@@ -267,6 +277,9 @@ class CartesianAxes(VGroup):
     ) -> None:
         if config.renderer == RendererType.OPENGL:
             raise ValueError("CartesianAxes requires the Cairo renderer")
+        self.theme = _resolve_theme(theme)
+        self._cycle = _resolve_cycle(self.theme.cycle if cycle is None else cycle)
+        tips = self.theme.tips if tips is None else tips
         for options in (axis_config, x_axis_config, y_axis_config):
             if options is not None:
                 if not isinstance(options, dict):
@@ -472,6 +485,24 @@ class CartesianAxes(VGroup):
                 self.y_axis._configure()
             finally:
                 self._syncing = False
+        if not isinstance(self, NumberPlane):
+            for axis in (self.x, self.y):
+                if self.theme.position == "border":
+                    axis.set_position("bottom" if axis.index == 0 else "left")
+                if self.theme.tick_direction is not None:
+                    axis.set_tick_style(direction=self.theme.tick_direction)
+                if self.theme.minor_ticks:
+                    axis.set_locator(
+                        axis.locator,
+                        minor=MinorCountLocator(axis.locator, self.theme.minor_ticks),
+                    )
+                if self.theme.box:
+                    axis.mirror()
+                for level in self.theme.grid:
+                    style = dict(self.theme.grid_style)
+                    if level == "minor":
+                        style.update(self.theme.minor_grid_style)
+                    axis.set_grid(level, **style)
         self.add_updater(_synchronise)
 
     def __getattr__(self, name: str) -> NoReturn:
@@ -567,7 +598,11 @@ class CartesianAxes(VGroup):
             y_axis_config=configs[1],
             x_scale=scales[0],
             y_scale=scales[1],
+            # The root already supplies the box and grid for the shared frame.
+            theme=replace(root.theme, box=False, grid=()),
+            cycle=root._cycle,
         )
+        twin.theme = root.theme
         own = twin.get_axis(index)
         own._label_direction_custom = "label_direction" in (options or {})
         twin.parent, twin._twin_axis = root, index
@@ -583,7 +618,6 @@ class CartesianAxes(VGroup):
         twin._compile()
         previous = [t.get_axis(index) for t in root.twins if t._twin_axis == index]
         outward = previous[-1]._position_offset + distance if previous else 0.0
-        own.set_tick_style(direction=TickDirection.OUT)
         own.set_position("top" if index == 0 else "right", offset=outward)
         root._twins.append(twin)
         root.submobjects.insert(root.submobjects.index(root.frame), twin)
@@ -1313,8 +1347,18 @@ class CartesianAxes(VGroup):
         if direction is None:
             direction = (0.5 if index == 1 else 1) * np.eye(3)[index] + outward
         result = _label(label)
+        decoration: VMobject = axis
+        if self.theme.box or self.theme.grid:
+            # A theme's frame and grid must not move titles off the primary axis.
+            decoration = VGroup(
+                *(
+                    m
+                    for m in axis.submobjects
+                    if m not in axis._mirrors and m is not axis.grid
+                )
+            )
         result.next_to(
-            self.get_axis(index).get_edge_center(np.asarray(edge, dtype=float)),
+            decoration.get_edge_center(np.asarray(edge, dtype=float)),
             direction=np.asarray(direction, dtype=float),
             buff=buff,
         )
@@ -2252,25 +2296,34 @@ class CartesianAxes(VGroup):
 
     def legend(
         self,
-        location: str = "upper right",
+        location: str | None = None,
         *,
         font_size: float = 24,
         buff: float = 0.25,
+        frame: bool | None = None,
+        frame_style: Mapping[str, Any] | None = None,
     ) -> Legend:
         """Create a bound legend for labelled artists in registration order.
 
         Parameters
         ----------
         location
-            One of upper right, upper left, lower left or lower right.
+            One of upper right, upper left, lower left or lower right;
+            None uses the theme's corner.
         font_size, buff
             Native text size and entry/corner spacing in scene units.
+        frame
+            Draw a rectangle around the entries; None uses the theme's default.
+        frame_style
+            Frame VMobject styles, defaulting to the x axis's line colour,
+            stroke width one and no fill.
 
         Returns
         -------
         Legend
             The newly created legend, attached to this system's family.
         """
+        location = self.theme.legend_location if location is None else location
         locations = {
             "upper right": (1, 1),
             "upper left": (-1, 1),
@@ -2284,7 +2337,13 @@ class CartesianAxes(VGroup):
         artists = self._legend_artists()
         if not artists:
             raise ValueError("legend requires an artist with a label")
-        legend = Legend(*artists, font_size=font_size, buff=buff)
+        legend = Legend(
+            *artists,
+            font_size=font_size,
+            buff=buff,
+            frame=self.theme.legend_frame if frame is None else frame,
+            frame_style={"color": self.x.line.get_color(), **(frame_style or {})},
+        )
         corner = np.array([*locations[location], 0.0], dtype=float)
         local = np.where(corner[:2] > 0, self.bounds.upper, self.bounds.lower)
         legend.shift(
@@ -2456,6 +2515,9 @@ class NumberPlane(CartesianAxes):
         Number of subdivisions of each major interval.
     make_smooth_after_applying_functions
         Native VMobject nonlinear-transform smoothing option.
+    theme, cycle
+        Series and legend defaults, as on CartesianAxes. The axes and background
+        grid retain NumberPlane's defaults and explicit constructor styles.
     **kwargs
         CartesianAxes constructor options.
     """
@@ -2470,6 +2532,9 @@ class NumberPlane(CartesianAxes):
         faded_line_style: dict[str, Any] | None = None,
         faded_line_ratio: int = 1,
         make_smooth_after_applying_functions: bool = True,
+        *,
+        theme: str | Theme | Mapping[str, Any] | None = None,
+        cycle: str | Sequence[ParsableManimColor] | None = None,
         **kwargs: object,
     ) -> None:
         options: dict[str, Any] = dict(kwargs)
@@ -2535,6 +2600,8 @@ class NumberPlane(CartesianAxes):
             y_length,
             axis_config=common,
             y_axis_config=y_options,
+            theme=theme,
+            cycle=cycle,
             make_smooth_after_applying_functions=make_smooth_after_applying_functions,
             **options,
         )

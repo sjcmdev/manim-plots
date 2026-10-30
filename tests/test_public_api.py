@@ -56,6 +56,11 @@ EXPECTED = {
     # task 12
     "Legend",
     "ErrorBars",
+    "Theme",
+    "THEMES",
+    "CYCLES",
+    "set_theme",
+    "get_theme",
     "LineStyle",
     "Marker",
     "COLOR_CYCLE",

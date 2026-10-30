@@ -50,6 +50,19 @@ Legend and style
 
 .. autodata:: COLOR_CYCLE
 
+Themes
+------
+
+.. autoclass:: Theme
+
+.. autodata:: THEMES
+
+.. autodata:: CYCLES
+
+.. autofunction:: set_theme
+
+.. autofunction:: get_theme
+
 Animations
 ----------
 

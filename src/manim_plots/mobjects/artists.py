@@ -112,17 +112,18 @@ class Marker(Enum):
 
 def _cycle_style(
     system: mp.CartesianAxes, style: _VMStyle, *, scatter: bool = False
-) -> None:
+) -> int:
+    system = system.parent if system.parent is not None else system
+    index = system._color_index
     keys = (
         ("color", "stroke_color", "fill_color")
         if scatter
         else ("color", "stroke_color")
     )
     if not any(key in style for key in keys):
-        system = system.parent if system.parent is not None else system
-        index = getattr(system, "_color_index", 0)
-        style["color"] = COLOR_CYCLE[index % len(COLOR_CYCLE)]
+        style["color"] = system._cycle[index % len(system._cycle)]
         system._color_index = index + 1
+    return index
 
 
 def _validate_label(label: str | None) -> None:
@@ -238,7 +239,7 @@ class _CurvePlot(Leaf):
         *,
         use_smoothing: bool = True,
         label: str | None = None,
-        line_style: LineStyle = LineStyle.SOLID,
+        line_style: LineStyle | None = None,
         dash: tuple[float, float] | None = None,
         clip: _ClipInput = True,
         **kwargs: Unpack[_VMStyle],
@@ -249,6 +250,12 @@ class _CurvePlot(Leaf):
         self._label = label
         self._clip = clip_value
         self._clip_has_margin = _clip_has_margin(clip_value)
+        root = system.parent if system.parent is not None else system
+        if line_style is None:
+            styles = system.theme.line_styles
+            line_style = (
+                styles[root._color_index % len(styles)] if styles else LineStyle.SOLID
+            )
         self.line_style = line_style
         self.dash = dash
         self._dash = _dash_pattern(line_style, dash)
@@ -1163,7 +1170,9 @@ class ScatterPlot(VGroup):
         if marker is not None and not isinstance(marker, (Mobject, Marker)):
             raise TypeError("marker must be a Marker, Mobject or None")
         if marker is None or isinstance(marker, Marker):
-            _cycle_style(system, kwargs, scatter=True)
+            index = _cycle_style(system, kwargs, scatter=True)
+            if marker is None and system.theme.markers:
+                marker = system.theme.markers[index % len(system.theme.markers)]
             shape = Marker.DOT if marker is None else marker
             template: Mobject = {
                 Marker.DOT: Dot,

@@ -373,8 +373,39 @@ default.
 
 A user theme is a dict *(default taken)*. The names are the maintainer's to refine.
 
+Ticks at a border point inward unless a direction is set (ADR 0005 §1): an axis placed
+at a named border, a mirror, a twin's axis; an axis through the data keeps Manim's
+straddling ticks. `Theme.tick_direction=None` is that rule.
+
 **Tests.** `tests/mobjects/test_themes.py`: each theme equals the explicit calls it stands
-for; a visual baseline per theme.
+for; the inward rule on every kind of border axis and its exceptions; a visual baseline
+per theme.
+
+### 19b — an independent top axis
+
+After task 20 (ADR 0005 §2).
+
+**Modules.** `mobjects/axis.py`, `mobjects/system.py`.
+
+**Settles.**
+- Any pair of axes: `ax.twin(x=top, y=right)` returns the system of an existing x and y
+  axis, made once, drawing nothing; a twin's `twinx` and `twiny` share its own axis,
+  matplotlib's meaning, so `ax.twinx().twiny()` is the top and right pair.
+- `ax.secondary_xaxis(location="top", functions=None)` and `ax.secondary_yaxis(...)`,
+  matplotlib's names: ticks located and labelled in `forward(x)`, placed through
+  `inverse`; monotonic on the range or `ValueError`; following an animated range.
+- A mirror styled apart from its original: tick style, direction, locator, numbers.
+- A twin or a secondary axis on a side takes the place of that side's mirror.
+
+**Manim defects.** None: Manim has no top axis. Fixed here, from task 19: a twin of a
+twin shares the root's axis, so `ax.twinx().twiny()` plots against the left axis.
+
+**Tests.** `tests/mobjects/test_top_axis.py`: every pair of two x and three y axes
+mapping through its own axes, following their ranges, in the legend and the cycle; the
+ticks of a secondary axis against `inverse` of the locator's values (nm and eV, celsius
+and kelvin), an animated range, a non-monotonic function raising; a mirror styled alone;
+one line on a framed side under `twiny`; pictures of `twiny`, a secondary axis and the
+four corner pairs, a film.
 
 ### 21 — fields and flow
 

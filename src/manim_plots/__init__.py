@@ -63,11 +63,14 @@ from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.system import Axes as Axes
 from manim_plots.mobjects.system import CartesianAxes
 from manim_plots.mobjects.system import NumberPlane as NumberPlane
+from manim_plots.mobjects.themes import CYCLES, THEMES, Theme, get_theme, set_theme
 
 __version__ = version("manim-plots")
 
 __all__ = [
     "COLOR_CYCLE",
+    "CYCLES",
+    "THEMES",
     "ArraySource",
     "Bounds",
     "CartesianAxes",
@@ -110,8 +113,11 @@ __all__ = [
     "Source",
     "SymLogLocator",
     "SymLogScale",
+    "Theme",
     "TraceCurve",
     "__version__",
+    "get_theme",
+    "set_theme",
 ]
 
 
