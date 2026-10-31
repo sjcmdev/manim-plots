@@ -239,6 +239,10 @@ class Leaf(VMobject):
             and self._lifecycle.state not in (lc.State.TRANSIENT, lc.State.REMOVED)
         ):
             self._ensure()
+        elif self._lifecycle.state is lc.State.TRANSIENT:
+            presentation = self.__dict__.get("_presentation")
+            if presentation is not None:
+                presentation()
         drawn = self.__dict__.get("_occlusion_drawn")
         if drawn is not None and drawn[0] is self._cache:
             return cast(FloatArray, drawn[1])
@@ -502,6 +506,8 @@ class Leaf(VMobject):
         _, actions = lc.transition(self._lifecycle, lc.Copy())
         rebuilding = actions[0].kind is lc.Kind.COPY_REBUILT
         for key, value in self.__dict__.items():
+            if key == "_presentation":
+                continue
             if key == "_system":
                 result.__dict__[key] = memo.get(id(value), value)
             elif key in {

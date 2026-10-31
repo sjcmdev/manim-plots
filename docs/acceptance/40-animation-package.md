@@ -32,39 +32,77 @@ Types below describe the API; they are not extra public helper types.
 
 ```python
 class TraceCurve(Animation):
-    def __init__(self, artist, *, pacing="parameter", reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, artist, *, pacing="parameter", reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class ShowPoints(Animation):
-    def __init__(self, scatter, *, order="data", pop=False, lag_ratio=1.0,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        scatter,
+        *,
+        order="data",
+        pop=False,
+        lag_ratio=1.0,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class Morph(Animation):
     def __init__(self, a, b, **kwargs): ...
+
+
 class AppendData(Animation):
     def __init__(self, artist, x, y=None, *, autoscale=False, **kwargs): ...
+
+
 class DrawAxes(Create):
     def __init__(self, ax, *, reverse=False, remover=None, **kwargs): ...
+
+
 class BuildAxes(AnimationGroup):
-    def __init__(self, ax, lag_ratio=0.5, *, stages=None, reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, ax, lag_ratio=0.5, *, stages=None, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class HighlightTick(Indicate):
     def __init__(self, axis, value, color=YELLOW, scale_factor=1.5, **kwargs): ...
+
+
 class GrowBars(Animation):
-    def __init__(self, bars, lag_ratio=0.05, *, reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, bars, lag_ratio=0.05, *, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class ShrinkBars(GrowBars):
     def __init__(self, bars, lag_ratio=0.05, **kwargs): ...
+
+
 class SortBars(Animation):
     def __init__(self, bars, key=None, reverse=False, **kwargs): ...
+
+
 class HighlightBar(AnimationGroup):
     def __init__(self, bars, key, dim_opacity=0.25, **kwargs): ...
+
+
 class Flow(Animation):
     def __init__(self, field, *mobjects, speed=1, pointwise=False, **kwargs): ...
+
+
 class GrowSurface(Animation):
-    def __init__(self, surface, zdir="z", offset=None, *, reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, surface, zdir="z", offset=None, *, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class ShrinkSurface(GrowSurface):
-    def __init__(self, surface, zdir="z", offset=None, *, remover=None,
-                 **kwargs): ...
+    def __init__(self, surface, zdir="z", offset=None, *, remover=None, **kwargs): ...
 ```
 
 The `pacing` spelling and default `"parameter"`, the `"arc_length"` spelling,
@@ -118,7 +156,7 @@ moving suffix legitimately includes subsequent objects.
 |---|---|
 | LC-1 | Each entrance (TraceCurve, ShowPoints, DrawAxes, BuildAxes, GrowBars, GrowSurface) finishes with the same bound geometry and per-leaf styles as before the play. A subsequent `set_x_range((-2,8,2))` remaps its data: curve endpoint (2,2), scatter row (1,3), bar height 6 at x=1, surface z=2+x+y, and keyed tick x=2. Axis decorations remain addressable through `ax.x.line`, `.ticks`, `.numbers`, `.labels`, `.grid`; markers, bars and `surface.faces` remain addressable. |
 | LC-2 | Over **all 14 names**, finish/cleanup leaves precisely the preexisting updater identities on every surviving original family member; new members have no animation-owned updater. A sentinel updater survives, and binding updaters are retained, including on surface drivers. Shrink cleanup restores canonical geometry even though its target has left the scene. |
-| LC-3 | Each entrance, ShrinkBars, ShrinkSurface, Morph, AppendData, SortBars, HighlightTick and HighlightBar has history-independent progress: under `there_and_back`, the observed frame at 0.2 equals that at 0.8 and a second visit to 0.2, including points and style. Numerical equality uses 1e-8 scene units *(default taken)*. Flow is exempt from this exact frame-equality contract: its state is the integral of the field over signed elapsed field time. With velocity `(x,0)`, a complete `there_and_back` play returns a dot to its starting position within 1e-3 scene units *(default taken)*. Data-change target commit is separately LC-9; emphasis restoration is LC-10. |
+| LC-3 | Each entrance, ShrinkBars, ShrinkSurface, Morph, AppendData, SortBars, HighlightTick and HighlightBar has history-independent progress: under `there_and_back`, a second visit to 0.2 after 0.5 and 0.8 gives the frame of the first, including points and style (with lag, 0.2 and 0.8 differ: each part eases its own window). Numerical equality uses 1e-8 scene units *(default taken)*. Flow is exempt from this exact frame-equality contract: its state is the integral of the field over signed elapsed field time. With velocity `(x,0)`, a complete `there_and_back` play returns a dot to its starting position within 1e-3 scene units *(default taken)*. Data-change target commit is separately LC-9; emphasis restoration is LC-10. |
 | LC-4 | TraceCurve, ShowPoints, GrowBars and GrowSurface run beside a linear x-range change and use that frame's mapping. Curve source-index progress ends on the piecewise-linear data curve; marker centres stay at their rows; bar ends follow `height*clip(alpha*1.1-i*.05,0,1)`; surface anchors satisfy `z=alpha*(2+x+y)` from offset 0. Probe partial frames with a linear clock; a two-point trace also checks exact `(4*alpha,4*alpha)` under its current range. DrawAxes/BuildAxes canonical mapping is LC-1 and their native partial-frame geometry is AX-2/AX-3. |
 | LC-5 | Concurrent AppendData writers to the same line source raise `ValueError` with a writer/ownership/concurrency explanation before target data is committed; the source remains `[[0,1],[1,3],[2,2]]`. Error class, early atomic rejection, and message category are *(default taken)*. Presentation reveal and range change are allowed (LC-4), as are independent writers on distinct artists (LB-1 probes). |
 | LC-6 | F-915: every existing animation participates through the real `Scene.get_moving_mobjects` path before static-background compilation; drawable target parts are moving. All six entrances include their affected drawable family. AppendData with autoscale declares owning axis lines and a separately added linked line, whose endpoint remaps to data (1,2); an explicitly fixed tick x=1 moves during the film. TraceCurve includes a separately added earlier endpoint label in the moving set. GrowSurface beside a z-range animation declares a separately added, earlier linked colorbar: its strip moves, its range follows 8→12 during the film. An unrelated earlier plot on another system remains static. Growth alone does not invent a change to its axes or color mapping. |
@@ -176,7 +214,7 @@ progress, with no overshoot; `False` leaves size unchanged *(default taken)*.
 |---|---|
 | SP-1 | For x=[3,1,1], y=[2,3,1], c=[2,1,3], the order indices are data=[0,1,2], x=[1,2,0], y=[2,0,1], value=[1,0,2]. At alpha .5 with default lag, ranks have opacity [1,.5,0]. Callable `lambda row:-row[1]` introduces row 1 first. Stable ties retain data order; all final markers remain independently addressable. |
 | SP-2 | A custom Square marker at data (1,2), original fill opacity .4, with `pop=True`, at alpha .5 has half its canonical width, unchanged mapped centre and fill opacity .2. Finish restores its exact width and .4 fill. Pop is independently overridable, and does not replace the supplied marker shape. |
-| SP-3 | Input rows at x=10 outside [-1,4] and a NaN x remain without points throughout and after an x-ordered popping reveal. Source rows/markers are retained rather than deleted or made drawable by styling. |
+| SP-3 | Input rows at x=10 outside [-1,4] and a NaN x stay hidden — their points kept at zero fill and stroke opacity, the scatter convention — throughout and after an x-ordered popping reveal. Source rows/markers are retained rather than deleted or made drawable by styling. |
 | SP-4 | With n=3, lag .2 and alpha .5, factors are [.7,.5,.3]. Multiply each original fill, stroke and background-stroke opacity (.4,.6,.2) independently by its factor; do not replace any channel with the factor itself. |
 | SP-5 | Unknown order or `order="value"` without retained numeric c raises ValueError naming order/value before geometry/style mutation *(default taken)*. |
 

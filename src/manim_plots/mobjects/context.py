@@ -32,6 +32,7 @@ from manim import (
     FadeIn,
     FadeOut,
     Indicate,
+    LaggedStart,
     Line,
     Line3D,
     LogBase,
@@ -55,11 +56,14 @@ from manim import (
     ThreeDCamera,
     Transform,
     TransformFromCopy,
+    Uncreate,
+    Unwrite,
     Vector,
     VectorField,
     VGroup,
     VMobject,
     Wiggle,
+    Write,
     always_redraw,
 )
 from manim.animation.creation import DrawBorderThenFill, ShowPartial
@@ -80,6 +84,35 @@ from manim.utils.hashing import (
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    Animation,
+    Animation.__new__,
+    Animation.__init__,
+    Animation.interpolate,
+    Animation._setup_scene,
+    Animation.update_mobjects,
+    Animation.get_all_mobjects,
+    Animation.get_all_mobjects_to_update,
+    AnimationGroup,
+    AnimationGroup.__init__,
+    AnimationGroup._setup_scene,
+    AnimationGroup.interpolate,
+    AnimationGroup.update_mobjects,
+    AnimationGroup.init_run_time,
+    LaggedStart,
+    LaggedStart.__init__,
+    Uncreate,
+    Uncreate.__init__,
+    Write,
+    Write.__init__,
+    Write._set_default_config_from_length,
+    Write.reverse_submobjects,
+    Write.begin,
+    Write.finish,
+    Unwrite,
+    Unwrite.__init__,
+    FadeOut,
+    FadeOut.__init__,
+    FadeOut.create_target,
     Sector,
     Sector.__init__,
     AnnularSector,
@@ -355,6 +388,83 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Animation": "e78e125520ac3228288913c25c53abfb3ef4108b424fa2dcefe1f44e3012fb34",
+        "Animation.__new__": (
+            "3368aa91d93fcde302de391ceb71e1bcb3d99cb25958a167506416a45da5b819"
+        ),
+        "Animation.__init__": (
+            "1d1bde290ccbf7049af502ad1012c99f12c5d951fa72f1709730eb35a593cfc2"
+        ),
+        "Animation.interpolate": (
+            "ef6a9a690c6beb24d0040a04ea75e0d537ee0647d42ae63af5b8e45e42165693"
+        ),
+        "Animation._setup_scene": (
+            "ab4be56fdfd185a65678b0a45bcf840c4826518fb75d786430dbfc1e52072b7d"
+        ),
+        "Animation.update_mobjects": (
+            "5629df7ac89024b14dfa0fc4fe30ca61a734387fc8f121b6c3b0eda41ce93478"
+        ),
+        "Animation.get_all_mobjects": (
+            "72575a2dcaef276eb58210de7fffc8fb757e114a216f7f9d393ebd42176b9740"
+        ),
+        "Animation.get_all_mobjects_to_update": (
+            "2501639e4aaf8184855ac7c90bbc6e1f5aae23b34c720709362f3b73d8172ba0"
+        ),
+        "AnimationGroup": (
+            "63cc31ddd3cf7e02c7659287892811c98f712632e838217602e7d961b9db2bc1"
+        ),
+        "AnimationGroup.__init__": (
+            "a297ab07c0797cfc9e7273ecd2340de6f3baf0d041ee434a8c3b8afc3849a32a"
+        ),
+        "AnimationGroup._setup_scene": (
+            "b5af14f240591739f48d6a9702940952c6753b246fb4f165c0c99cdf5302e763"
+        ),
+        "AnimationGroup.interpolate": (
+            "777aed72eb93c35d55c49cbf433afa3a35615b2055cfd8e4f5edd0fa58478e63"
+        ),
+        "AnimationGroup.update_mobjects": (
+            "86707eb52cfc466318667fccc7992cf2860a4c25ef21f70ddecd731588966578"
+        ),
+        "AnimationGroup.init_run_time": (
+            "02411ece571a7868714b7cbf39d7596fae557a99e84f21fba3ded7615a34a064"
+        ),
+        "LaggedStart": (
+            "45aed5029bf09e8c20e835022803405049931aeacd0bc1232d4f951f77480c90"
+        ),
+        "LaggedStart.__init__": (
+            "a84ffb88ff3a11a72a817ed04ec1078e6c034a9d6576e6f3633f109cbb035600"
+        ),
+        "Uncreate": "0b985b7fc6bc363e09b0d01306c5b6beeb1c68ef07d5b9b1c10cbb3073017b3c",
+        "Uncreate.__init__": (
+            "ea142c4decb8e2df309b3af059d02b5df1e46fee2e31d468f4b6301e6a41cf7d"
+        ),
+        "Write": "4e363e011f0b541f949b5fad69f60974d9c60192a77fc2d5bdf033a649c83f85",
+        "Write.__init__": (
+            "8064ca956e6c5112e480c479713861eeb4d787cd38c9cde2d84fb30e895c26e4"
+        ),
+        "Write._set_default_config_from_length": (
+            "d76c136a68c1797e4ec28aa2fe58df6da445f975fa57334f47199d3c01ffd115"
+        ),
+        "Write.reverse_submobjects": (
+            "6213103f6dcb49c8a1f46a6b454064dca187da27d57d363cd5bb35f3c55b9d83"
+        ),
+        "Write.begin": (
+            "190e65a135d2493ad4e52c4a8b3fa98db0d59abd2953aff81a4342d4bb5c9c3d"
+        ),
+        "Write.finish": (
+            "2baee9fccc87adbcca2e130c10fa8913c10481003f0e99ebe74b8b63ae8ebe5a"
+        ),
+        "Unwrite": "66744282774fe977b0475efb9b3da388a3bc076907b0f3451c7bb45b3648bad6",
+        "Unwrite.__init__": (
+            "acecf9a290f9dd5ac1f292bdf682b276c6bd9f8c2b6416d6cb9c58deead4ad20"
+        ),
+        "FadeOut": "1a52d84df1bcdd37a5fee71e19f1d20ee3e57c916f84c4834089929bec15f5ed",
+        "FadeOut.__init__": (
+            "633e042dc516018ebab954d2ca1ebf49d74b18ee397e0dfe71a60defaba92f30"
+        ),
+        "FadeOut.create_target": (
+            "b0a5b60c75fd7f9ce1ceebc7c01866271967b6707807bb3d8bc789da27cd9483"
+        ),
         "ManimColor.__init__": (
             "3eda25e075202fb58fb262f996b2c657bc1994b2535465de8c779111abaa4312"
         ),
@@ -1154,6 +1264,83 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Animation": "e78e125520ac3228288913c25c53abfb3ef4108b424fa2dcefe1f44e3012fb34",
+        "Animation.__new__": (
+            "3368aa91d93fcde302de391ceb71e1bcb3d99cb25958a167506416a45da5b819"
+        ),
+        "Animation.__init__": (
+            "1d1bde290ccbf7049af502ad1012c99f12c5d951fa72f1709730eb35a593cfc2"
+        ),
+        "Animation.interpolate": (
+            "ef6a9a690c6beb24d0040a04ea75e0d537ee0647d42ae63af5b8e45e42165693"
+        ),
+        "Animation._setup_scene": (
+            "ab4be56fdfd185a65678b0a45bcf840c4826518fb75d786430dbfc1e52072b7d"
+        ),
+        "Animation.update_mobjects": (
+            "5629df7ac89024b14dfa0fc4fe30ca61a734387fc8f121b6c3b0eda41ce93478"
+        ),
+        "Animation.get_all_mobjects": (
+            "72575a2dcaef276eb58210de7fffc8fb757e114a216f7f9d393ebd42176b9740"
+        ),
+        "Animation.get_all_mobjects_to_update": (
+            "2501639e4aaf8184855ac7c90bbc6e1f5aae23b34c720709362f3b73d8172ba0"
+        ),
+        "AnimationGroup": (
+            "63cc31ddd3cf7e02c7659287892811c98f712632e838217602e7d961b9db2bc1"
+        ),
+        "AnimationGroup.__init__": (
+            "a297ab07c0797cfc9e7273ecd2340de6f3baf0d041ee434a8c3b8afc3849a32a"
+        ),
+        "AnimationGroup._setup_scene": (
+            "b5af14f240591739f48d6a9702940952c6753b246fb4f165c0c99cdf5302e763"
+        ),
+        "AnimationGroup.interpolate": (
+            "777aed72eb93c35d55c49cbf433afa3a35615b2055cfd8e4f5edd0fa58478e63"
+        ),
+        "AnimationGroup.update_mobjects": (
+            "86707eb52cfc466318667fccc7992cf2860a4c25ef21f70ddecd731588966578"
+        ),
+        "AnimationGroup.init_run_time": (
+            "02411ece571a7868714b7cbf39d7596fae557a99e84f21fba3ded7615a34a064"
+        ),
+        "LaggedStart": (
+            "45aed5029bf09e8c20e835022803405049931aeacd0bc1232d4f951f77480c90"
+        ),
+        "LaggedStart.__init__": (
+            "a84ffb88ff3a11a72a817ed04ec1078e6c034a9d6576e6f3633f109cbb035600"
+        ),
+        "Uncreate": "0b985b7fc6bc363e09b0d01306c5b6beeb1c68ef07d5b9b1c10cbb3073017b3c",
+        "Uncreate.__init__": (
+            "ea142c4decb8e2df309b3af059d02b5df1e46fee2e31d468f4b6301e6a41cf7d"
+        ),
+        "Write": "4e363e011f0b541f949b5fad69f60974d9c60192a77fc2d5bdf033a649c83f85",
+        "Write.__init__": (
+            "8064ca956e6c5112e480c479713861eeb4d787cd38c9cde2d84fb30e895c26e4"
+        ),
+        "Write._set_default_config_from_length": (
+            "d76c136a68c1797e4ec28aa2fe58df6da445f975fa57334f47199d3c01ffd115"
+        ),
+        "Write.reverse_submobjects": (
+            "6213103f6dcb49c8a1f46a6b454064dca187da27d57d363cd5bb35f3c55b9d83"
+        ),
+        "Write.begin": (
+            "190e65a135d2493ad4e52c4a8b3fa98db0d59abd2953aff81a4342d4bb5c9c3d"
+        ),
+        "Write.finish": (
+            "2baee9fccc87adbcca2e130c10fa8913c10481003f0e99ebe74b8b63ae8ebe5a"
+        ),
+        "Unwrite": "66744282774fe977b0475efb9b3da388a3bc076907b0f3451c7bb45b3648bad6",
+        "Unwrite.__init__": (
+            "acecf9a290f9dd5ac1f292bdf682b276c6bd9f8c2b6416d6cb9c58deead4ad20"
+        ),
+        "FadeOut": "1a52d84df1bcdd37a5fee71e19f1d20ee3e57c916f84c4834089929bec15f5ed",
+        "FadeOut.__init__": (
+            "633e042dc516018ebab954d2ca1ebf49d74b18ee397e0dfe71a60defaba92f30"
+        ),
+        "FadeOut.create_target": (
+            "b0a5b60c75fd7f9ce1ceebc7c01866271967b6707807bb3d8bc789da27cd9483"
+        ),
         "ManimColor.__init__": (
             "3eda25e075202fb58fb262f996b2c657bc1994b2535465de8c779111abaa4312"
         ),

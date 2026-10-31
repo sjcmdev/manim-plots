@@ -1139,6 +1139,16 @@ class ParametricPlot(_CurvePlot):
         dt: float = 1e-8,
         **kwargs: Unpack[_ArtistOptions],
     ) -> None:
+        if len(t_range) in (2, 3) and t_range[0] > t_range[1]:
+            original = function
+            total = float(t_range[0] + t_range[1])
+
+            def function(t: float | FloatArray) -> ArrayLike:
+                return cast(ArrayLike, original(total - t))
+
+            if discontinuities is not None:
+                discontinuities = [total - value for value in discontinuities]
+            t_range = (t_range[1], t_range[0], *t_range[2:])
         super().__init__(
             ParametricSource(
                 function,
@@ -1299,6 +1309,7 @@ class ScatterPlot(VGroup):
         self.source = ArraySource(xs, ys, kind="points", dim=len(system._ranges))
         count = len(self.source.data)
         self._color_mapping: mp.ColorMapping | None = None
+        self._color_values: FloatArray | None = None
         colors = None
         if isinstance(c, (str, ManimColor)):
             kwargs["color"] = c
@@ -1316,6 +1327,7 @@ class ScatterPlot(VGroup):
                 norm=cast(Any, norm),
                 default_range=(lo, hi if hi > lo else lo + 1),
             )
+            self._color_values = values.copy()
             colors = self._color_mapping(values)
         sizes = None
         if s is not None:

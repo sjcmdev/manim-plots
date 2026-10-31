@@ -83,6 +83,7 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "src/manim_plots/__init__.py" = ["TID251"]
 "src/manim_plots/mobjects/*" = ["TID251"]
+"src/manim_plots/animations/*" = ["TID251"]
 "tests/*" = ["D", "ANN", "TID251"]
 "tools/*" = ["TID251"]
 

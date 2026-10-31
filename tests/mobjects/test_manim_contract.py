@@ -375,6 +375,39 @@ def names() -> list[str]:
     return [context.symbol_name(symbol) for symbol in context.SYMBOLS]
 
 
+ADDED_BY_TASK_40 = [
+    "Animation",
+    "Animation.__new__",
+    "Animation.__init__",
+    "Animation.interpolate",
+    "Animation._setup_scene",
+    "Animation.update_mobjects",
+    "Animation.get_all_mobjects",
+    "Animation.get_all_mobjects_to_update",
+    "AnimationGroup",
+    "AnimationGroup.__init__",
+    "AnimationGroup._setup_scene",
+    "AnimationGroup.interpolate",
+    "AnimationGroup.update_mobjects",
+    "AnimationGroup.init_run_time",
+    "LaggedStart",
+    "LaggedStart.__init__",
+    "Uncreate",
+    "Uncreate.__init__",
+    "Write",
+    "Write.__init__",
+    "Write._set_default_config_from_length",
+    "Write.reverse_submobjects",
+    "Write.begin",
+    "Write.finish",
+    "Unwrite",
+    "Unwrite.__init__",
+    "FadeOut",
+    "FadeOut.__init__",
+    "FadeOut.create_target",
+]
+
+
 def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
     assert len(POC4_SYMBOLS) == 68
     assert sorted(names()) == sorted(
@@ -408,6 +441,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_32
         + ADDED_BY_TASK_39
         + ADDED_BY_TASK_34
+        + ADDED_BY_TASK_40
     )
 
 
