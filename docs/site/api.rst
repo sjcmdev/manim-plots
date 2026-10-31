@@ -114,7 +114,13 @@ Animations
 
 .. autoclass:: DrawAxes
 
+.. autoclass:: ExplodePie
+
 .. autoclass:: GrowBars
+
+.. autoclass:: GrowBoxPlot
+
+.. autoclass:: GrowStack
 
 .. autoclass:: GrowSurface
 
@@ -128,6 +134,10 @@ Animations
 
 .. autoclass:: RefineRiemann
 
+.. autoclass:: RevealCells
+
+.. autoclass:: RevealContours
+
 .. autoclass:: ShowPoints
 
 .. autoclass:: ShrinkBars
@@ -140,9 +150,13 @@ Animations
 
 .. autoclass:: SweepIsovalue
 
+.. autoclass:: SweepPie
+
 .. autoclass:: SweepSlice
 
 .. autoclass:: TraceCurve
+
+.. autoclass:: UnfoldViolin
 
 Scales
 ------

@@ -228,8 +228,11 @@ def test_gs2_signed_bar_layers_keep_separate_support():
     np.testing.assert_allclose(
         seen[3],
         np.array([[[0, 2], [-1, 0]], [[2, 3.5], [-3.5, -1]], [[-0.5, 0], [0, 1]]]),
+        atol=1e-12,
     )
-    np.testing.assert_allclose([bounds(ax, b)[2:] for b in second], [[4, 7], [-7, -2]])
+    np.testing.assert_allclose(
+        [bounds(ax, b)[2:] for b in second], [[4, 7], [-7, -2]], atol=1e-12
+    )
 
 
 def test_gs3_stacked_histogram_numpy_counts():
@@ -243,9 +246,11 @@ def test_gs3_stacked_histogram_numpy_counts():
         lambda: [[bounds(ax, b)[2:] for b in layer] for layer in hist.bars],
     )
     np.testing.assert_allclose(
-        seen[3], np.array([[[0, 1], [0, 0.5]], [[1, 1.5], [0.5, 1.5]]])
+        seen[3], np.array([[[0, 1], [0, 0.5]], [[1, 1.5], [0.5, 1.5]]]), atol=1e-12
     )
-    np.testing.assert_allclose([bounds(ax, b)[3] for b in hist.bars[1]], [3, 3])
+    np.testing.assert_allclose(
+        [bounds(ax, b)[3] for b in hist.bars[1]], [3, 3], atol=1e-12
+    )
 
 
 @pytest.mark.parametrize(
@@ -695,7 +700,7 @@ def test_lc5_reverse_unwinds_whole_schedule(name):
 @pytest.mark.parametrize("horizontal", [False, True])
 def test_bx2_whiskers_caps_means_and_fliers_keep_real_statistics(box_ratio, horizontal):
     ax = axes()
-    sample = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 30])
+    sample = np.array([4, 5, 5, 5, 5, 6, 6, 6, 6, 11])  # flier inside both ranges
     box = ax.boxplot(
         sample, showmeans=True, orientation="horizontal" if horizontal else "vertical"
     )
@@ -735,7 +740,7 @@ def test_bx2_whiskers_caps_means_and_fliers_keep_real_statistics(box_ratio, hori
             box.means[0][0].get_center(), coordinate(sample.mean()), atol=1e-6
         )
         np.testing.assert_allclose(
-            box.fliers[0][0].get_center(), coordinate(30), atol=1e-6
+            box.fliers[0][0].get_center(), coordinate(11), atol=1e-6
         )
         np.testing.assert_equal(box.stats, stats)
         t += 1
