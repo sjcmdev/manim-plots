@@ -121,12 +121,16 @@ def test_gf1_tails_direction_length_colour_and_lag():
     )
     animation = cast(Any, mp).GrowField(field, lag_ratio=1, rate_func=linear)
     colors = [a.get_color() for a in field.arrows]
+    # Grid ends are inclusive: x in {0, 1}, y in {0, 0.1}, four arrows in data order.
+    tails = [ax.p2c(a.points[0]) for a in field.arrows]
+    n = len(tails)
     animation.begin()
     for alpha in (0, 0.25, 0.5, 0.75, 1):
         at(animation, alpha)
         for i, arrow in enumerate(field.arrows):
-            p = np.clip(2 * alpha - i, 0, 1)
-            tail = ax.c2p(i, 0)
+            p = np.clip(n * alpha - i, 0, 1)
+            x, y = tails[i][:2]
+            tail = ax.c2p(x, y)
             if p > 0:
                 np.testing.assert_allclose(arrow.points[0], tail, atol=1e-7)
                 distance = np.linalg.norm(arrow.get_all_points() - tail, axis=1).max()
@@ -135,7 +139,7 @@ def test_gf1_tails_direction_length_colour_and_lag():
                 assert arrow.get_stroke_opacity() == pytest.approx(0.4)
                 points = arrow.get_all_points()
                 far = points[np.argmax(np.linalg.norm(points - tail, axis=1))]
-                direction = ax.c2p(i + 1, 0) - tail
+                direction = ax.c2p(x + 1, y) - tail
                 direction /= np.linalg.norm(direction)
                 np.testing.assert_allclose(far, tail + 0.6 * p * direction, atol=1e-6)
             else:

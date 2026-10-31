@@ -158,7 +158,7 @@ Plane, cut, profile and profile axes retain their addressable public attributes.
 | ID | Row |
 |---|---|
 | SS-1 | On z=xy/2, a SliceView swept x=−1→1 has plane and cut x=−1+2p and profile ordinate x*y/2 on that same frame. Finish is x=1, inverse returns to −1. Both constant and tracker inputs work, and an original tracker still drives the view after the sweep. |
-| SS-2 | Plane, cut and profile participate in actual Cairo moving detection before static compilation (F-915, caching enabled). An unrelated still function remains static and is not resampled (F-918); no obsolete drawable parts are left outside current scene families. |
+| SS-2 | Plane, cut and profile participate in actual Cairo moving detection before static compilation (F-915, caching enabled). An unrelated still function, added before them (Manim moves everything after the first moving mobject), remains static and is not resampled (F-918); no obsolete drawable parts are left outside current scene families. |
 | SS-3 | Bare x/y/z slices preserve their tracker binding, lie on z=x+y at the swept coordinate, become empty outside the surface domain, and return when swept back. This includes contour slices whose number of parts can change. |
 | SS-4 | Plane/cut/profile identities and separate style overrides survive the sweep; each part retains its original updaters. Nonfinite stops fail without changing the original tracker *(default taken)*. |
 

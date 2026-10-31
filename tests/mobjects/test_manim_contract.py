@@ -376,6 +376,7 @@ def names() -> list[str]:
 
 
 ADDED_BY_TASK_41 = ["Transform.get_all_mobjects"]
+ADDED_BY_TASK_42 = ["VMobject.get_style"]
 
 
 ADDED_BY_TASK_40 = [
@@ -446,6 +447,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_34
         + ADDED_BY_TASK_40
         + ADDED_BY_TASK_41
+        + ADDED_BY_TASK_42
     )
 
 

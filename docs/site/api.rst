@@ -114,17 +114,23 @@ Animations
 
 .. autoclass:: DrawAxes
 
+.. autoclass:: ExplodePie
+
 .. autoclass:: ExtendReference
 
 .. autoclass:: FillColorbar
 
 .. autoclass:: GrowBars
 
+.. autoclass:: GrowBoxPlot
+
 .. autoclass:: GrowErrorBars
 
 .. autoclass:: GrowRegion
 
 .. autoclass:: GrowRiemann
+
+.. autoclass:: GrowStack
 
 .. autoclass:: GrowSurface
 
@@ -135,6 +141,10 @@ Animations
 .. autoclass:: Morph
 
 .. autoclass:: RevealAnnotation
+
+.. autoclass:: RevealCells
+
+.. autoclass:: RevealContours
 
 .. autoclass:: RevealCrosshair
 
@@ -148,11 +158,15 @@ Animations
 
 .. autoclass:: SortBars
 
+.. autoclass:: SweepPie
+
 .. autoclass:: SweepRegion
 
 .. autoclass:: SweepSpan
 
 .. autoclass:: TraceCurve
+
+.. autoclass:: UnfoldViolin
 
 Scales
 ------
@@ -243,8 +257,6 @@ Surfaces and colour
 -------------------
 
 .. autoclass:: SurfacePlot
-
-.. autoclass:: GrowSurface
 
 .. autoclass:: StemPlot
 
