@@ -2428,6 +2428,192 @@ class CartesianAxes(VGroup):
         self.add(artist)
         return artist
 
+    def imshow(
+        self,
+        Z: ArrayLike,
+        *,
+        extent: Sequence[float] | None = None,
+        origin: str = "upper",
+        colorscale: object = "viridis",
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        **style: object,
+    ) -> mp.HeatmapPlot:
+        """Draw an image as bound data cells.
+
+        Parameters
+        ----------
+        Z, extent, origin, colorscale, vmin, vmax, norm, **style
+            Values, data rectangle, row direction, colour mapping and cell style.
+        """
+        from manim_plots.mobjects.heatmaps import _imshow
+
+        return _imshow(
+            self,
+            Z,
+            extent=extent,
+            origin=origin,
+            colorscale=colorscale,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            **cast(dict[str, Any], style),
+        )
+
+    def pcolormesh(
+        self,
+        X: ArrayLike,
+        Y: ArrayLike | None = None,
+        C: ArrayLike | None = None,
+        *,
+        shading: str = "auto",
+        colorscale: object = "viridis",
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        **style: object,
+    ) -> mp.HeatmapPlot:
+        """Draw scalar cells from corner grids or nearest centres.
+
+        Parameters
+        ----------
+        X, Y, C, shading, colorscale, vmin, vmax, norm, **style
+            Coordinates, values, grid interpretation, colour mapping and cell style.
+        """
+        from manim_plots.mobjects.heatmaps import _pcolormesh
+
+        return _pcolormesh(
+            self,
+            X,
+            Y,
+            C,
+            shading=shading,
+            colorscale=colorscale,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            **cast(dict[str, Any], style),
+        )
+
+    def hist2d(
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        bins: int | Sequence[ArrayLike] = 10,
+        *,
+        range: Sequence[Sequence[float]] | None = None,
+        density: bool = False,
+        weights: ArrayLike | None = None,
+        cmin: float | None = None,
+        cmax: float | None = None,
+        colorscale: object = "viridis",
+        **style: object,
+    ) -> mp.HeatmapPlot:
+        """Draw NumPy's two-dimensional histogram as scalar cells.
+
+        Parameters
+        ----------
+        x, y, bins, range, density, weights, cmin, cmax, colorscale, **style
+            Samples, histogram arguments, count limits, colormap and cell style.
+        """
+        from manim_plots.mobjects.heatmaps import _hist2d
+
+        return _hist2d(
+            self,
+            x,
+            y,
+            bins,
+            range=range,
+            density=density,
+            weights=weights,
+            cmin=cmin,
+            cmax=cmax,
+            colorscale=colorscale,
+            **cast(dict[str, Any], style),
+        )
+
+    def hexbin(
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        C: ArrayLike | None = None,
+        *,
+        gridsize: int = 10,
+        reduce_C_function: Callable[[FloatArray], float] = np.mean,
+        mincnt: int | None = None,
+        extent: Sequence[float] | None = None,
+        colorscale: object = "viridis",
+        **style: object,
+    ) -> mp.HexbinPlot:
+        """Bin samples into two interleaved hexagonal lattices.
+
+        Parameters
+        ----------
+        x, y, C, gridsize, reduce_C_function, mincnt, extent, colorscale, **style
+            Samples, lattice size, aggregation, limits, colormap and cell style.
+        """
+        from manim_plots.mobjects.heatmaps import HexbinPlot
+
+        return HexbinPlot(
+            self,
+            x,
+            y,
+            C,
+            gridsize=gridsize,
+            reduce_C_function=reduce_C_function,
+            mincnt=mincnt,
+            extent=extent,
+            colorscale=colorscale,
+            **cast(dict[str, Any], style),
+        )
+
+    def contour(
+        self,
+        X: ArrayLike,
+        Y: ArrayLike,
+        Z: ArrayLike,
+        levels: Sequence[float] | int | None = None,
+        *,
+        colorscale: object = None,
+        **style: object,
+    ) -> mp.ContourSetPlot:
+        """Draw marching-squares level lines of a scalar grid.
+
+        Parameters
+        ----------
+        X, Y, Z, levels, colorscale, **style
+            Grid coordinates and values, levels, optional colormap and line style.
+        """
+        from manim_plots.mobjects.heatmaps import ContourSetPlot
+
+        return ContourSetPlot(
+            self, X, Y, Z, levels, colorscale=colorscale, **cast(dict[str, Any], style)
+        )
+
+    def contourf(
+        self,
+        X: ArrayLike,
+        Y: ArrayLike,
+        Z: ArrayLike,
+        levels: Sequence[float] | int | None = None,
+        *,
+        colorscale: object = "viridis",
+        **style: object,
+    ) -> mp.ContourSetPlot:
+        """Draw filled marching-squares bands of a scalar grid.
+
+        Parameters
+        ----------
+        X, Y, Z, levels, colorscale, **style
+            Grid coordinates and values, band edges, colormap and fill style.
+        """
+        from manim_plots.mobjects.heatmaps import ContourSetPlot
+
+        return ContourSetPlot(
+            self, X, Y, Z, levels, filled=True, colorscale=colorscale, **style
+        )
+
     def colorbar(
         self,
         mappable: object = None,

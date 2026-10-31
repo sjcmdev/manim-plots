@@ -867,3 +867,56 @@ def _subdivide_at_fractions(
     return _restrict(curves[indices[:-1]], parameters[:-1], upper).reshape(
         -1, curves.shape[2]
     )
+
+
+def _cut_polygon(points: FloatArray, axis: int, edge: float, above: bool) -> FloatArray:
+    if not len(points):
+        return points
+    result = []
+    for a, b in zip(points, np.roll(points, -1, axis=0), strict=True):
+        inside_a = a[axis] >= edge if above else a[axis] <= edge
+        inside_b = b[axis] >= edge if above else b[axis] <= edge
+        if inside_a:
+            result.append(a)
+        if inside_a != inside_b:
+            result.append(a + (edge - a[axis]) / (b[axis] - a[axis]) * (b - a))
+    return np.asarray(result, float).reshape(-1, points.shape[1])
+
+
+def filled_marching_squares(
+    X: FloatArray, Y: FloatArray, Z: FloatArray, lo: float, hi: float
+) -> list[FloatArray]:
+    """Cut grid quadrilaterals into a scalar band using edge interpolation.
+
+    Parameters
+    ----------
+    X, Y, Z
+        Matching two-dimensional coordinate and scalar grids.
+    lo, hi
+        Lower and upper band edges.
+
+    Returns
+    -------
+    list of ndarray
+        Closed data polygons, one per nonempty finite cell.
+    """
+    if X.ndim != 2 or X.shape != Y.shape or X.shape != Z.shape:
+        raise ValueError("X, Y and Z must be matching two-dimensional grids")
+    if not np.isfinite([lo, hi]).all() or hi <= lo:
+        raise ValueError("band edges must be finite and increasing")
+    grid = np.stack((X, Y, Z), axis=-1)
+    cells = np.stack(
+        (grid[:-1, :-1], grid[:-1, 1:], grid[1:, 1:], grid[1:, :-1]), axis=-2
+    ).reshape(-1, 4, 3)
+    polygons = []
+    for cell in cells:
+        if (
+            not np.isfinite(cell).all()
+            or cell[:, 2].max() < lo
+            or cell[:, 2].min() >= hi
+        ):
+            continue
+        piece = _cut_polygon(_cut_polygon(cell, 2, lo, True), 2, hi, False)
+        if len(piece) >= 3:
+            polygons.append(np.vstack((piece[:, :2], piece[:1, :2])))
+    return polygons

@@ -8,6 +8,7 @@ import numpy as np
 from manim import LogBase, MathTex, Tex, VGroup, VMobject
 
 from manim_plots.core import FloatArray
+from manim_plots.core.formatters import DecimalFormatter
 from manim_plots.core.scales import LinearScale
 from manim_plots.core.ticks import Level, round_key
 from manim_plots.mobjects import axis as axis_module
@@ -160,7 +161,14 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                 )
                 if axis._decoration_color is not None:
                     label.set_color(axis._decoration_color)
-            if axis._formatter_custom or round_key(float(x)) in explicit:
+            if (
+                axis._formatter_custom
+                or round_key(float(x)) in explicit
+                or (
+                    isinstance(axis.formatter, DecimalFormatter)
+                    and axis.formatter.num_decimal_places is None
+                )
+            ):
                 label._set_text(text, text_mode=mode)
             elif isinstance(axis.scaling, LogBase) and axis.scaling.custom_labels:
                 exponent = float(axis._scale.forward(x))
