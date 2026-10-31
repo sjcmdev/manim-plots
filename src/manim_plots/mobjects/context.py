@@ -293,10 +293,30 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     Line3D.__init__,
     Line3D.get_start,
     Line3D.get_end,
+    ThreeDCamera.project_points,
+    ThreeDCamera.get_focal_distance,
+    ThreeDCamera.get_zoom,
+    Camera.points_to_pixel_coords,
+    Camera.points_to_subpixel_coords,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "ThreeDCamera.project_points": (
+            "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
+        ),
+        "ThreeDCamera.get_focal_distance": (
+            "297e2da7a4029ac706ad638ac5face90ff2c5aa2cd0a605f1ba1aac569ad944a"
+        ),
+        "ThreeDCamera.get_zoom": (
+            "64f4c43ef900c52d437d2b9ecf6bb0cb4d7f61f1434da9e5d03ac9e1d5387b9f"
+        ),
+        "Camera.points_to_pixel_coords": (
+            "35664b1a5868743c690fb33cf0f56b6cbc7c08887893ea9338bf8b18de2e9a41"
+        ),
+        "Camera.points_to_subpixel_coords": (
+            "5220cd1f87dc3c380d76320d7bcfcd0e637e94c1c69afb03533ad47d9905dfab"
+        ),
         "Arrow3D.get_end": (
             "15089dbdeef393857a1a974e9866ea0e78d6178ed80235e62d3ed8e2273ee85f"
         ),
@@ -957,6 +977,21 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "ThreeDCamera.project_points": (
+            "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
+        ),
+        "ThreeDCamera.get_focal_distance": (
+            "297e2da7a4029ac706ad638ac5face90ff2c5aa2cd0a605f1ba1aac569ad944a"
+        ),
+        "ThreeDCamera.get_zoom": (
+            "64f4c43ef900c52d437d2b9ecf6bb0cb4d7f61f1434da9e5d03ac9e1d5387b9f"
+        ),
+        "Camera.points_to_pixel_coords": (
+            "35664b1a5868743c690fb33cf0f56b6cbc7c08887893ea9338bf8b18de2e9a41"
+        ),
+        "Camera.points_to_subpixel_coords": (
+            "5220cd1f87dc3c380d76320d7bcfcd0e637e94c1c69afb03533ad47d9905dfab"
+        ),
         "Arrow3D.get_end": (
             "15089dbdeef393857a1a974e9866ea0e78d6178ed80235e62d3ed8e2273ee85f"
         ),

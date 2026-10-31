@@ -613,6 +613,36 @@ class _CurvePlot(Leaf):
             self._shape = self._shape[::-1].copy()
         return super().reverse_points()
 
+    def get_family(self, recurse: bool = True) -> list[Mobject]:
+        """Return the family after refreshing camera-dependent drawn geometry.
+
+        Parameters
+        ----------
+        recurse
+            Include descendants when requested by Manim.
+
+        Returns
+        -------
+        list of Mobject
+            This leaf and its requested descendants.
+        """
+        system = self.__dict__.get("_system")
+        if (
+            system is not None
+            and system.__dict__.get("_occlusion", False)
+            and not system.__dict__.get("_occluding", False)
+        ):
+            from manim import ThreeDCamera
+
+            from manim_plots.mobjects.context import _drawing_camera
+            from manim_plots.mobjects.occlusion import occlude
+
+            camera = _drawing_camera()
+            if isinstance(camera, ThreeDCamera):
+                system._read_camera()
+                occlude(system, camera)
+        return super().get_family(recurse)
+
     @property
     def points(self) -> FloatArray:
         """Return the current derived or animation-owned buffer itself."""
@@ -623,6 +653,9 @@ class _CurvePlot(Leaf):
             and not buffer_write()
         ):
             self._ensure()
+        drawn = self.__dict__.get("_occlusion_drawn")
+        if drawn is not None and drawn[0] is self._cache:
+            return cast(FloatArray, drawn[1])
         return self._cache
 
     @points.setter
