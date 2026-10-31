@@ -19,7 +19,15 @@ def test_voxel_sphere_coloured_by_height(visual):
 
     def construct(scene: Scene) -> None:
         camera(scene)
-        ax = mp.ThreeDAxes(x_range=(0, 8, 2), y_range=(0, 8, 2), z_range=(0, 8, 2))
+        ax = mp.ThreeDAxes(
+            x_range=(0, 8, 2),
+            y_range=(0, 8, 2),
+            z_range=(0, 8, 2),
+            x_length=5,
+            y_length=5,
+            z_length=3.5,
+            frame="box",
+        )
         i, j, k = np.indices((8, 8, 8)) + 0.5
         filled = (i - 4) ** 2 + (j - 4) ** 2 + (k - 4) ** 2 < 12
         scene.add(ax, ax.voxels(filled, c=k, colorscale="plasma"))

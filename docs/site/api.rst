@@ -214,6 +214,8 @@ Surfaces and colour
 
 .. autoclass:: BarPlot3D
 
+.. autoclass:: VoxelPlot
+
 .. autoclass:: HistPlot
    :members:
 

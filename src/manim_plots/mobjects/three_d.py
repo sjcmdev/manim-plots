@@ -44,6 +44,7 @@ from manim_plots.core.scales import (
     Scale,
     SymLogScale,
 )
+from manim_plots.core.shape import marching_cubes
 from manim_plots.core.sources import Box
 from manim_plots.core.ticks import LogLocator, SymLogLocator
 from manim_plots.mobjects.artists import (
@@ -76,6 +77,7 @@ from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.plots3d import (
     BarPlot3D,
     StemPlot,
+    VoxelPlot,
     WaterfallPlot,
     _annotate,
     _text,
@@ -992,6 +994,119 @@ class ThreeDAxes(CartesianAxes):
             norm=norm,
             clip=clip,
             **cast(dict[str, Any], kwargs),
+        )
+
+    def voxels(
+        self,
+        *args: ArrayLike,
+        facecolors: object = None,
+        edgecolors: object = None,
+        shade: bool = True,
+        c: ArrayLike | None = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        **style: object,
+    ) -> VoxelPlot:
+        """Draw exposed voxel faces, optionally coloured by scalar values.
+
+        Parameters
+        ----------
+        *args
+            Filled array, or x, y, z corner arrays followed by filled.
+        facecolors, edgecolors, shade, c, colorscale, vmin, vmax, norm, **style
+            Face colours, lighting, value normalisation and Manim style.
+
+        Returns
+        -------
+        VoxelPlot
+            Bound exposed faces addressable by voxel index.
+        """
+        return VoxelPlot(
+            self,
+            *args,
+            facecolors=facecolors,
+            edgecolors=edgecolors,
+            shade=shade,
+            c=c,
+            colorscale=colorscale,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            **style,
+        )
+
+    def plot_isosurface(
+        self,
+        F: ArrayLike | Callable[..., Any],
+        level: float = 0.0,
+        *,
+        x_range: Sequence[float] | None = None,
+        y_range: Sequence[float] | None = None,
+        z_range: Sequence[float] | None = None,
+        resolution: int = 24,
+        colorscale: object = None,
+        colorscale_axis: int | str | Callable[..., Any] = 2,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        **style: object,
+    ) -> SurfacePlot:
+        """Draw a sampled scalar field's level surface as triangle cells.
+
+        Parameters
+        ----------
+        F, level
+            Vectorised function of x, y, z or a three-dimensional sample array.
+        x_range, y_range, z_range, resolution
+            Sampling intervals and number of cells per axis for functions.
+        colorscale, colorscale_axis, vmin, vmax, norm, **style
+            Triangle surface colour mapping and Manim style.
+
+        Returns
+        -------
+        SurfacePlot
+            Bound, clipped triangle surface.
+        """
+        ranges = [
+            r if r is not None else self._ranges[i].range.value
+            for i, r in enumerate((x_range, y_range, z_range))
+        ]
+        if not isinstance(resolution, int) or resolution < 1:
+            raise ValueError("resolution must be a positive integer")
+        samples = (
+            np.asarray(
+                F(
+                    *np.meshgrid(
+                        *(np.linspace(r[0], r[1], resolution + 1) for r in ranges),
+                        indexing="ij",
+                    )
+                ),
+                float,
+            )
+            if callable(F)
+            else np.asarray(F, float)
+        )
+        if samples.ndim != 3 or min(samples.shape) < 2:
+            raise ValueError("samples must have at least two values per axis")
+        spacing = [
+            (r[1] - r[0]) / (n - 1) for r, n in zip(ranges, samples.shape, strict=True)
+        ]
+        vertices, triangles = marching_cubes(
+            samples, level, spacing, [r[0] for r in ranges]
+        )
+        return self.plot_trisurf(
+            vertices[:, 0],
+            vertices[:, 1],
+            vertices[:, 2],
+            triangles=triangles,
+            colorscale=colorscale,
+            colorscale_axis=colorscale_axis,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            **cast(dict[str, Any], style),
         )
 
     def plot_trisurf(
