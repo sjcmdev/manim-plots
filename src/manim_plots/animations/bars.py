@@ -24,7 +24,102 @@ from manim_plots.mobjects.bars import BarPlot, _Bar
 from manim_plots.mobjects.heatmaps import ContourSetPlot, HeatmapPlot, _Cell
 from manim_plots.mobjects.histograms import HistPlot, _stairs_vertices
 
-from ._base import MappedPresentation, flags, window
+from ._base import MappedPresentation, Presentation, flags, window
+
+
+class RebinHistogram(Presentation):
+    """Transport histogram mass across the union of old and target bins.
+
+    Parameters
+    ----------
+    hist, bins, **kwargs
+        Bound histogram, NumPy bin specification and native animation options.
+    """
+
+    def __init__(self, hist: HistPlot, bins: object, **kwargs: object) -> None:
+        if not isinstance(hist, HistPlot):
+            raise TypeError("hist must be a HistPlot")
+        self.hist, self.bins = hist, bins
+        self._involved_system = hist._system if hist._color_by is not None else None
+        kwargs.setdefault("suspend_mobject_updating", False)
+        super().__init__(hist, **cast(dict[str, Any], kwargs))
+
+    def begin(self) -> None:
+        """Validate retained samples and compute both atom mass distributions."""
+        hist = self.hist
+        if hist.__dict__.get("_data_writer") is not None:
+            raise ValueError("concurrent histogram writers conflict")
+        if any(w is not None and np.any(w < 0) for w in hist._weights):
+            raise ValueError("negative weights cannot be rebinned")
+        edges = np.histogram_bin_edges(
+            np.concatenate(hist._samples),
+            bins=cast(Any, self.bins),
+            range=cast(Any, hist._range),
+        )
+        if not np.isfinite(edges).all() or np.any(np.diff(edges) <= 0):
+            raise ValueError("edges must be finite and strictly increasing")
+        if not np.allclose(edges[[0, -1]], hist.edges[[0, -1]]):
+            raise ValueError("rebinning requires common outer endpoints")
+        self._old_edges = hist.edges.copy()
+        self._old_counts = hist._counts.copy()
+        self._target_edges = edges
+        self._union = np.union1d(hist.edges, edges)
+        masses = []
+        for bins in (hist.edges, edges):
+            counts = np.array(
+                [
+                    np.histogram(data, bins=bins, weights=weight)[0]
+                    for data, weight in zip(hist._samples, hist._weights, strict=True)
+                ],
+                dtype=float,
+            )
+            if hist._density:
+                totals = counts.sum(axis=1)
+                if np.any(totals <= 0):
+                    raise ValueError("density requires positive total weight")
+                counts /= totals[:, None]
+            indices = np.searchsorted(bins, self._union[:-1], side="right") - 1
+            masses.append(
+                counts[:, indices] * np.diff(self._union) / np.diff(bins)[indices]
+            )
+        self._masses = masses
+        hist.__dict__["_data_writer"] = self
+        super().begin()
+
+    def interpolate_mobject(self, alpha: float) -> None:
+        """Draw canonical endpoints or the absolute intermediate atom masses."""
+        hist = self.hist
+        p = self.rate_func(alpha)
+        if p <= 0:
+            hist.edges, hist._counts = self._old_edges, self._old_counts
+        elif p >= 1:
+            self._commit()
+        else:
+            hist.edges = self._union
+            counts = (1 - p) * self._masses[0] + p * self._masses[1]
+            if hist._cumulative:
+                counts = (
+                    np.cumsum(counts[:, ::-1], axis=1)[:, ::-1]
+                    if hist._cumulative == -1
+                    else np.cumsum(counts, axis=1)
+                )
+            elif hist._density:
+                counts /= np.diff(self._union)
+            hist._counts = counts
+        hist.counts = hist._counts[0] if len(hist._counts) == 1 else hist._counts
+        hist._draw()
+
+    def _commit(self) -> None:
+        hist = self.hist
+        weights = None if all(w is None for w in hist._weights) else hist._weights
+        hist._count(hist._samples, self._target_edges, weights)
+
+    def restore(self) -> None:
+        """Commit NumPy's target estimator and release the data writer."""
+        if self.hist.__dict__.get("_data_writer") is self:
+            self._commit()
+            self.hist._draw()
+            self.hist.__dict__.pop("_data_writer")
 
 
 class GrowBars(MappedPresentation):

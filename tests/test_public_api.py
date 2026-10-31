@@ -21,6 +21,11 @@ EXPECTED = {
     "RevealWireframe",
     "SweepPolar",
     "SweepSurface",
+    "RebinHistogram",
+    "RefineRiemann",
+    "StackVoxels",
+    "SweepIsovalue",
+    "SweepSlice",
     # task 42
     "ExplodePie",
     "GrowBoxPlot",

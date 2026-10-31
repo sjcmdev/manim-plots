@@ -138,6 +138,10 @@ Animations
 
 .. autoclass:: OpenInset
 
+.. autoclass:: RebinHistogram
+
+.. autoclass:: RefineRiemann
+
 .. autoclass:: RevealCells
 
 .. autoclass:: RevealContours
@@ -154,9 +158,15 @@ Animations
 
 .. autoclass:: SortBars
 
+.. autoclass:: StackVoxels
+
+.. autoclass:: SweepIsovalue
+
 .. autoclass:: SweepPie
 
 .. autoclass:: SweepPolar
+
+.. autoclass:: SweepSlice
 
 .. autoclass:: SweepSurface
 

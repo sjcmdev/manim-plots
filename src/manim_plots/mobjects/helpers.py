@@ -921,6 +921,7 @@ class _RiemannGroup(HelperGroup):
         self._region_ready = False
         self._binding_seen = -1
         self._cache = np.empty((0, 3))
+        self._follow_dx = False
         super().__init__()
         self._region_ready = True
         self._ensure_regions()
@@ -964,6 +965,8 @@ class _RiemannGroup(HelperGroup):
                     rect._binding, rect._part = self._binding, str(i)
                     rect._binding_seen = -1
         binding = self._binding
+        if self._follow_dx:
+            binding.parameters["dx"].poll(binding.version + 1)
         binding.ensure()
         if self._binding_seen == binding.version:
             return

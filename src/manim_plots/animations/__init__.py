@@ -5,6 +5,7 @@ from .bars import (
     GrowBars,
     GrowStack,
     HighlightBar,
+    RebinHistogram,
     RevealCells,
     RevealContours,
     ShrinkBars,
@@ -13,6 +14,7 @@ from .bars import (
 from .curves import AppendData, Morph, ShowPoints, TraceCurve
 from .decorations import CloseInset, OpenInset
 from .fields import Flow, GrowField
+from .helpers import RefineRiemann
 from .statistics import ExplodePie, GrowBoxPlot, SweepPie, UnfoldViolin
 from .surfaces import (
     GrowStems,
@@ -22,6 +24,7 @@ from .surfaces import (
     ShrinkSurface,
     SweepSurface,
 )
+from .volumes import StackVoxels, SweepIsovalue, SweepSlice
 
 __all__ = [
     "AppendData",
@@ -40,6 +43,8 @@ __all__ = [
     "HighlightTick",
     "Morph",
     "OpenInset",
+    "RebinHistogram",
+    "RefineRiemann",
     "RevealCells",
     "RevealContours",
     "RevealWaterfall",
@@ -48,8 +53,11 @@ __all__ = [
     "ShrinkBars",
     "ShrinkSurface",
     "SortBars",
+    "StackVoxels",
+    "SweepIsovalue",
     "SweepPie",
     "SweepPolar",
+    "SweepSlice",
     "SweepSurface",
     "TraceCurve",
     "UnfoldViolin",
