@@ -103,7 +103,7 @@ def test_hi3_datasets_side_by_side_and_stacked():
 
 
 def test_hi4_step_and_stepfilled_outlines():
-    ax = axes()
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(0, 400, 50))  # 4 bins: counts near 240
     h = ax.hist(SAMPLE, bins=4, range=(-4, 4), histtype="step")
     assert h.bars is None
     c, e = h.counts, h.edges
@@ -143,7 +143,8 @@ def test_hi5_colour_by_count_and_by_x():
 def test_hi6_horizontal():
     ax = mp.Axes(x_range=(0, 200, 50), y_range=(-4, 4, 1))
     h = ax.hist(SAMPLE, bins=8, range=(-4, 4), orientation="horizontal")
-    assert box(ax, h.bars[3]) == pytest.approx((0, h.counts[3], -1, 0), abs=1e-9)
+    bars: Any = h.bars
+    assert box(ax, bars[3]) == pytest.approx((0, h.counts[3], -1, 0), abs=1e-9)
 
 
 def test_hi7_set_data_keeps_the_edges_and_the_bars():
@@ -162,8 +163,9 @@ def test_hi7_set_data_keeps_the_edges_and_the_bars():
 
 def test_hi7_a_legend_entry_per_dataset():
     ax = axes()
-    ax.hist([SAMPLE[:200], SAMPLE[200:]], bins=8, range=(-4, 4), label=["a", "b"])
-    assert len(ax.legend().entries) == 2
+    h = ax.hist([SAMPLE[:200], SAMPLE[200:]], bins=8, range=(-4, 4), label=["a", "b"])
+    assert len(ax.legend().entries) == 2  # h held: the axes keep artists weakly
+    assert h.counts.shape == (2, 8)
 
 
 # --- SP -------------------------------------------------------------------------------
@@ -205,6 +207,12 @@ def test_sp3_stackplot_regions():
     top = data(ax, corners(st.regions[1]))
     assert top[:, 1].max() == pytest.approx(40)
     assert fill_rgb(st.regions[0]) != pytest.approx(fill_rgb(st.regions[1]))
+    entries = ax.legend().entries
+    assert len(entries) == 2
+    handle = entries[1].handle
+    assert handle.get_fill_opacity() > 0
+    assert handle.width == pytest.approx(handle.height, rel=1e-6)
+    np.testing.assert_allclose(fill_rgb(handle), fill_rgb(st.regions[1]), atol=1e-6)
     sym = ax.stackplot(x, [10, 20, 10], [10, 20, 10], baseline="sym")
     low = data(ax, corners(sym.regions[0]))
     assert low[:, 1].min() == pytest.approx(-20)
