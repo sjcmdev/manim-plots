@@ -110,7 +110,7 @@ class _Face(_FaceStyle, ThreeDVMobject):
         elif self._owner._building:
             presentation = self.__dict__.get("_presentation")
             if presentation is not None:
-                presentation()
+                presentation(self)
         return self._face_points
 
     @points.setter
