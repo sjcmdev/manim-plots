@@ -1,6 +1,6 @@
 # Acceptance table — task 35, 2D helpers
 
-**Status: Living until task 35 merges, then Record.** Written 2026-10-31 before any code,
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code,
 per ADR 0003 §9. Rows marked *(default taken)* were settled here without the maintainer
 and stand unless vetoed. Contracts: ADR 0007 §1 (2D helpers); task 16 (HB rows: helpers
 are bound artists, number inputs take trackers and callables); task 17 (`FilledRegion`,

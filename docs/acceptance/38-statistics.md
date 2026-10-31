@@ -1,6 +1,6 @@
 # Acceptance table — task 38, statistics: pie, box, violin
 
-**Status: Living until task 38 merges, then Record.** Written 2026-10-31 before any code,
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code,
 per ADR 0003 §9. Rows marked *(default taken)* were settled here without the maintainer
 and stand unless vetoed. Contracts: ADR 0007 §1 (`pie`, `boxplot`, `violinplot` taken
 into the release); ADR 0004 §9 (every part addressable and styleable); task 31 (bars,

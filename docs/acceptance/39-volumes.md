@@ -1,6 +1,6 @@
 # Acceptance table — task 39, voxels and isosurfaces
 
-**Status: Living until task 39 merges, then Record.** Written 2026-10-31 before any code,
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code,
 per ADR 0003 §9. Rows marked *(default taken)* were settled here without the maintainer
 and stand unless vetoed. Contracts: ADR 0007 §1 (voxels, isosurfaces by marching cubes in
 NumPy, no new dependency); task 25 (`SurfacePlot`, colorscales, `ColorMapping`); task 29

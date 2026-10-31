@@ -1,6 +1,6 @@
 # Acceptance table — task 34, data animation
 
-**Status: Living until task 34 merges, then Record.** Written 2026-10-31 before any code,
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code,
 per ADR 0003 §9. Rows marked *(default taken)* were settled here without the maintainer
 and stand unless vetoed. Contracts: ADR 0007 §1 (data animation); task 11b (the data
 channel under `.animate`, MX rows); task 12 (`DrawAxes`, `TraceCurve`, `ShowPoints`,

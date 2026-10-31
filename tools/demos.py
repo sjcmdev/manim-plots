@@ -795,6 +795,107 @@ def flow_3d(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def bar_race(scene: Scene) -> None:
+    """Race five bars: each year's values arrive, then the bars sort themselves.
+
+    `mp.GrowBars` raises the bars from their base with a lag; `bars.animate.set_data`
+    moves every bar to its new height by its category; `mp.SortBars` slides them to
+    their places, and the category names travel with them.
+    """
+    shown: list[Text] = []
+    names = ["Ada", "Bob", "Cy", "Dee", "Eve"]
+    years = [
+        [3, 5, 2, 4, 1],
+        [4, 5, 6, 4, 3],
+        [6, 5, 7, 8, 5],
+        [9, 6, 7, 8, 10],
+    ]
+    ax = mp.Axes(y_range=(0, 10, 2), x_length=9, y_length=5).shift(0.3 * DOWN)
+    bars = ax.bar(names, years[0], c="height", colorscale="viridis", vmin=0, vmax=10)
+    scene.add(ax)
+    show_call(scene, shown, "self.play(mp.GrowBars(bars))")
+    scene.play(mp.GrowBars(bars, lag_ratio=0.15), run_time=1.5)
+    for values in years[1:]:
+        show_call(scene, shown, f"bars.animate.set_data(height={values})")
+        scene.play(bars.animate.set_data(x=names, height=values), run_time=1)
+        show_call(scene, shown, "self.play(mp.SortBars(bars, reverse=True))")
+        scene.play(mp.SortBars(bars, reverse=True), run_time=1)
+    scene.play(mp.HighlightBar(bars, bars.at(ax.x.categories[0])), run_time=1.5)
+    scene.wait(0.5)
+
+
+def grow_histogram(scene: Scene) -> None:
+    """Grow a histogram coloured by count, then let it follow a moving sample.
+
+    `ax.hist(..., color_by="count")` maps every bin's count through viridis, with a
+    colorbar; `h.animate.set_data(sample)` recounts into the same bins and the colours
+    pass through the mapping of the counts in between.
+    """
+    shown: list[Text] = []
+    rng = np.random.default_rng(3)
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(0, 300, 100), x_length=8, y_length=5)
+    ax.shift(0.6 * LEFT + 0.3 * DOWN)
+    ax.y.set_position("left")
+    h = ax.hist(rng.normal(-1, 0.8, 1500), bins=24, range=(-4, 4), color_by="count",
+                vmin=0, vmax=300)  # fmt: skip
+    bar = ax.colorbar(h, label="n")
+    scene.add(ax, bar)
+    show_call(scene, shown, 'ax.hist(sample, color_by="count")')
+    scene.play(mp.GrowBars(h.bars, lag_ratio=0.03), run_time=2)
+    for centre in (0.5, 1.5):
+        show_call(scene, shown, "self.play(h.animate.set_data(new_sample))")
+        scene.play(h.animate.set_data(rng.normal(centre, 0.8, 1500)), run_time=1.5)
+    scene.wait(0.5)
+
+
+def live_append(scene: Scene) -> None:
+    """Append data live while the axes widen to keep it in view.
+
+    `mp.AppendData(line, x, y, autoscale=True)` draws the new points on one after
+    another and grows the ranges with matplotlib's margins; a label pinned to the end
+    of the line reads the latest value.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(0, 2, 1), y_range=(0, 2, 1), x_length=9, y_length=5)
+    ax.shift(0.3 * DOWN)
+    xs = np.arange(0, 41) / 4
+    ys = 1 + xs / 3 + np.sin(xs)
+    line = ax.line(xs[:3], ys[:3], color=YELLOW)
+    label = ax.end_label(line)
+    scene.add(ax, line, label)
+    show_call(scene, shown, "mp.AppendData(line, x, y, autoscale=True)")
+    scene.play(mp.AppendData(line, xs[3:], ys[3:], autoscale=True), run_time=5)
+    scene.wait(0.5)
+
+
+def hist3d_orbit(scene: Scene) -> None:
+    """Grow a 3D histogram coloured by count and turn the camera around it.
+
+    `ax.hist3d` counts with `numpy.histogram2d` and draws shaded columns coloured by
+    viridis; `mp.GrowBars` raises them; the faces are drawn far to near as the camera
+    turns.
+    """
+    shown: list[Text] = []
+    rng = np.random.default_rng(5)
+    ax = mp.ThreeDAxes(
+        x_range=(-3, 3, 1),
+        y_range=(-3, 3, 1),
+        z_range=(0, 180, 60),
+        x_length=5,
+        y_length=5,
+        z_length=3.5,
+        frame="box",
+    )
+    scene.set_camera_orientation(**ax.view(25, -55))  # type: ignore[attr-defined]
+    x, y = rng.normal(0, 1, 2000), rng.normal(0, 1, 2000)
+    h = ax.hist3d(x, y, bins=8, range=((-3, 3), (-3, 3)))
+    scene.add(ax)
+    show_call(scene, shown, "self.play(mp.GrowBars(ax.hist3d(x, y)))")
+    scene.play(mp.GrowBars(h, lag_ratio=0.02), run_time=2.5)
+    scene.move_camera(**ax.view(35, 30), run_time=4)  # type: ignore[attr-defined]
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -824,9 +925,13 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     box_orbit,
     z_range_3d,
     flow_3d,
+    bar_race,
+    grow_histogram,
+    live_append,
+    hist3d_orbit,
 ]
 
-THREE_D = {box_orbit, z_range_3d, flow_3d}
+THREE_D = {box_orbit, z_range_3d, flow_3d, hist3d_orbit}
 
 
 def render(demo: Callable[[Scene], None]) -> Path:

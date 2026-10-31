@@ -1,6 +1,6 @@
 # Acceptance table — task 33, histograms and bars in 3D
 
-**Status: Living until task 33 merges, then Record.** Written 2026-10-31 before any code,
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code,
 per ADR 0003 §9. Rows marked *(default taken)* were settled here without the maintainer
 and stand unless vetoed. Contracts: ADR 0007 §1-§2 (coloured 3D histograms asked for by
 name); task 29 (BR rows: `bar3d`, matplotlib's shading); task 28 (ZD-1: `zs`, `zdir`);
