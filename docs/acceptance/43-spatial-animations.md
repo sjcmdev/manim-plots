@@ -191,6 +191,7 @@ No animation replaces these addressable parts or their individual styles.
 | SC-4 | Reject unknown field order/family/axis, direction other than ±1, negative or nonfinite lag, and nonfinite angular options with ValueError before changing any point or style. Parameter surfaces accept u/v; triangle surfaces accept x/y/z; unsupported combinations are errors *(default taken)*. No new baseline option is introduced; task 40 owns GrowSurface's invalid-log-origin coverage. |
 | SC-5 | Reverse at a raw partial time uses the backwards whole schedule, not reversed data or a second application of easing; independent field, stem, line, surface, polar and inset geometry oracles still hold. Forward `remover=True` also removes after restoring canonical state. |
 | SC-6 | All eight public classes have the same identity at top level, package and documented family module; instances are Manim Animation subclasses. This row does not retest task 40's legacy-path move. |
+| SC-7 | In a `ThreeDScene`, a second animation on a surface after a first one plays: copying the artist for Manim's starting mobject shares the scene's camera with the copy instead of copying it (`tests/animations/test_three_d_scene.py`). Added 2026-10-31 after the 3D demo film failed with `cannot pickle 'mgl.Context'`. |
 
 ## Oracle and review notes
 
