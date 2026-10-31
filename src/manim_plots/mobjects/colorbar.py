@@ -15,6 +15,7 @@ from manim import (
     config,
 )
 
+from manim_plots.core.formatters import DecimalFormatter
 from manim_plots.core.scales import LinearScale, Scale
 from manim_plots.core.ticks import MaxNLocator
 from manim_plots.mobjects.axis import Axis, _scale_range
@@ -90,6 +91,7 @@ class Colorbar(CartesianAxes):
         self.y.exclude_origin_tick = False
         if isinstance(mapping.scale, LinearScale):
             self.y.locator = MaxNLocator()
+            self.y.formatter = DecimalFormatter(None)
         self.y.set_position("right")
         self.y.add_numbers(excluding=())
         self.axis: Axis = self.y
