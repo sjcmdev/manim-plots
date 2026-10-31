@@ -935,6 +935,121 @@ def enter_and_exit(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def helpers_enter(scene: Scene) -> None:
+    """Bring 2D helpers in by their meaning, then take them out with `reverse=True`.
+
+    An area grows from the curve below it, a span sweeps across, Riemann rectangles
+    rise from the axis, error bars open from their samples, an annotation draws its
+    arrow then writes, and a colorbar fills from the bottom.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(0, 6, 1), y_range=(0, 6, 1), x_length=7, y_length=5)
+    ax.shift(0.6 * LEFT + 0.3 * DOWN)
+    top = ax.plot(lambda x: 3 + np.sin(x), color=BLUE)
+    low = ax.plot(lambda x: 1 + 0.2 * x, color=GREEN)
+    area = ax.get_area(top, x_range=(0.5, 5.5), bounded_graph=low)
+    span = ax.axvspan(2, 3, color=YELLOW, fill_opacity=0.2)
+    rects = ax.get_riemann_rectangles(low, x_range=(0, 6), dx=0.5)
+    x = np.arange(0.5, 6, 1.0)
+    errors = ax.errorbar(x, 4.5 + 0.3 * np.cos(x), yerr=0.4, color=RED)
+    note = ax.annotate("peak", xy=(PI / 2, 4), xytext=(3.2, 5.4))
+    # A colorbar needs a mapping; this heatmap supplies one and stays off the scene.
+    heat = ax.imshow(np.outer(np.linspace(0, 1, 6), np.ones(6)))
+    bar = ax.colorbar(heat, label="v")
+    scene.add(ax, top, low)
+    steps = [
+        ("mp.GrowRegion(area)", mp.GrowRegion(area)),
+        ("mp.SweepSpan(span)", mp.SweepSpan(span)),
+        ("mp.GrowRiemann(rects, lag_ratio=0.1)", mp.GrowRiemann(rects, lag_ratio=0.1)),
+        ("mp.GrowErrorBars(errors)", mp.GrowErrorBars(errors, lag_ratio=0.15)),
+        ("mp.RevealAnnotation(note)", mp.RevealAnnotation(note)),
+        ("mp.FillColorbar(bar)", mp.FillColorbar(bar)),
+    ]
+    for call, animation in steps:
+        show_call(scene, shown, call)
+        scene.play(animation, run_time=1.5)
+    show_call(scene, shown, "the same classes with reverse=True")
+    scene.play(
+        mp.GrowRegion(area, reverse=True),
+        mp.SweepSpan(span, reverse=True),
+        mp.GrowRiemann(rects, lag_ratio=0.1, reverse=True),
+        mp.GrowErrorBars(errors, reverse=True),
+        mp.RevealAnnotation(note, reverse=True),
+        mp.FillColorbar(bar, reverse=True),
+        run_time=2,
+    )
+    scene.wait(0.5)
+
+
+def charts_enter(scene: Scene) -> None:
+    """Grow a stack, sweep a pie, open box plots from their medians.
+
+    `GrowStack` lifts each layer on the current top of the one below; `SweepPie`
+    sweeps the wedges by angle and `ExplodePie` pulls one out and back;
+    `GrowBoxPlot` opens each box from its median and `UnfoldViolin` from its centre.
+    """
+    shown: list[Text] = []
+    rng = np.random.default_rng(4)
+    left = mp.Axes(x_range=(0, 6, 1), y_range=(0, 9, 3), x_length=5, y_length=4)
+    right = mp.Axes(x_range=(0, 5, 1), y_range=(-3, 5, 1), x_length=5, y_length=4)
+    left.to_edge(LEFT).shift(0.4 * DOWN)
+    right.to_edge(RIGHT).shift(0.4 * DOWN)
+    x = np.linspace(0, 6, 25)
+    stack = left.stackplot(x, 1 + np.sin(x) ** 2, 2 + 0.3 * x, 1.5 + np.cos(x) ** 2)
+    samples = [rng.normal(m, s, 200) for m, s in ((0, 1), (1.5, 0.6), (2, 1.2))]
+    boxes = right.boxplot(samples[:2], positions=[1, 2])
+    violins = right.violinplot(samples[1:], positions=[3, 4])
+    scene.add(left, right)
+    show_call(scene, shown, "mp.GrowStack(stack)")
+    scene.play(mp.GrowStack(stack), run_time=2)
+    show_call(scene, shown, "mp.GrowBoxPlot(boxes), mp.UnfoldViolin(violins)")
+    scene.play(mp.GrowBoxPlot(boxes), mp.UnfoldViolin(violins), run_time=2)
+    scene.play(FadeOut(left, stack, right, boxes, violins))
+    pie = mp.PieChart([35, 25, 20, 20], radius=2, labels=["a", "b", "c", "d"])
+    pie.shift(0.3 * DOWN)
+    show_call(scene, shown, "mp.SweepPie(pie)")
+    scene.play(mp.SweepPie(pie), run_time=2)
+    show_call(scene, shown, "mp.ExplodePie(pie, indices=[1], amount=0.25)")
+    scene.play(mp.ExplodePie(pie, indices=[1], amount=0.25), run_time=1.5)
+    show_call(scene, shown, "mp.SweepPie(pie, reverse=True)")
+    scene.play(mp.SweepPie(pie, reverse=True), run_time=1.5)
+    scene.wait(0.5)
+
+
+def spatial_enter(scene: Scene) -> None:
+    """Build in 3D: sweep a surface, trace its wireframe, stack voxels, sweep a level.
+
+    `SweepSurface` reveals the surface along u; `RevealWireframe` traces its lines;
+    `StackVoxels` lays a block layer by layer, with shared faces gone as layers meet;
+    `SweepIsovalue` moves an isosurface's level and the shape changes its topology.
+    """
+    ax = mp.ThreeDAxes(
+        x_range=(-3, 3, 1), y_range=(-3, 3, 1), z_range=(-2, 3, 1),
+        x_length=5, y_length=5, z_length=3.5, frame="box",
+    )  # fmt: skip
+    scene.set_camera_orientation(phi=65 * DEGREES, theta=-50 * DEGREES)  # type: ignore[attr-defined]
+    surface = ax.plot_surface(
+        lambda u, v: np.sin(u) * np.cos(v), (-3, 3), (-3, 3), colorscale="viridis"
+    )
+    scene.add(ax)
+    scene.play(mp.SweepSurface(surface), run_time=2.5)
+    scene.play(mp.SweepSurface(surface, reverse=True), run_time=1.5)
+    filled = np.zeros((4, 4, 4), dtype=bool)
+    filled[:3, :3, :] = True
+    block = ax.voxels(filled, facecolors=BLUE)
+    scene.play(mp.StackVoxels(block, lag_ratio=0.3), run_time=2.5)
+    scene.play(mp.StackVoxels(block, lag_ratio=0.3, reverse=True), run_time=1.5)
+    blob = ax.plot_isosurface(
+        lambda x, y, z: np.minimum((x + 1.2) ** 2, (x - 1.2) ** 2) + y**2 + z**2,
+        level=0.6, x_range=(-3, 3), y_range=(-2, 2), z_range=(-2, 2), resolution=20,
+        color=YELLOW,
+    )  # fmt: skip
+    scene.play(FadeIn(blob))
+    scene.play(mp.SweepIsovalue(blob, 2.2), run_time=2.5)
+    scene.play(mp.SweepIsovalue(blob, 0.6), run_time=2)
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -969,9 +1084,12 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     live_append,
     hist3d_orbit,
     enter_and_exit,
+    helpers_enter,
+    charts_enter,
+    spatial_enter,
 ]
 
-THREE_D = {box_orbit, z_range_3d, flow_3d, hist3d_orbit}
+THREE_D = {box_orbit, z_range_3d, flow_3d, hist3d_orbit, spatial_enter}
 
 
 def render(demo: Callable[[Scene], None]) -> Path:

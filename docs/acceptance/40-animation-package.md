@@ -1,6 +1,6 @@
 # Acceptance table — task 40, animation package and reversible lifecycle
 
-**Status: Draft, written 2026-10-31 before any code, per ADR 0003 §9.**
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code, per ADR 0003 §9.
 Rows marked *(default taken)* settle choices not fixed by ADR 0008 and stand unless
 vetoed. Contracts: ADR 0008 §1–§4, §5 first bullet and §6; ADR 0004 §9
 (addressable parts and overridable defaults); task 12 (existing artist animations);

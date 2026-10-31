@@ -1,6 +1,6 @@
 # Acceptance table — task 44, topology-changing transitions
 
-**Status: Draft, written 2026-10-31 before any code, per ADR 0003 §9.**
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code, per ADR 0003 §9.
 Choices not settled by ADR 0008 are marked *(default taken)* and stand unless vetoed.
 Contracts: ADR 0008 §§3–6 (inverse data transitions, reversible entrances, lifecycle,
 exports); ADR 0004 §9 (customisation); F-706 (viewport clipping), F-915 (moving

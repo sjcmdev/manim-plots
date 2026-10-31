@@ -1,6 +1,6 @@
 # Acceptance table — task 43, spatial construction
 
-**Status: Draft, written 2026-10-31 before any code, per ADR 0003 §9.**
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code, per ADR 0003 §9.
 Contracts: ADR 0008 §§2–6 (spatial construction, reversible presentation state,
 canonical finish, F-915 and F-918); ADR 0004 §9 (customisation); tasks 21/27
 (fields), 22 (polar), 25/29 (surfaces and composed 3D artists), 35 (insets).

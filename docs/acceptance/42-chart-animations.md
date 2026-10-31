@@ -1,6 +1,6 @@
 # Acceptance table — task 42, chart animations
 
-**Status: Draft, written 2026-10-31 before any code, per ADR 0003 §9.**
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code, per ADR 0003 §9.
 Rows and API choices marked *(default taken)* are proposed here and stand unless
 vetoed. Contracts: ADR 0008 §§3–6 (flags, lifecycle, chart families, task split),
 ADR 0004 §9 (customisation), tasks 31–32 (bars and stacks), 34 (GrowBars and

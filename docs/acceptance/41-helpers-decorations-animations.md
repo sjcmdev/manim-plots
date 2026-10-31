@@ -1,6 +1,6 @@
 # Acceptance table — task 41, 2D helpers and decorations
 
-**Status: Draft, written 2026-10-31 before any code, per ADR 0003 §9.**
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code, per ADR 0003 §9.
 Contracts: ADR 0008 §§1–6 (package, flags, lifecycle, names); ADR 0004 §9
 (customisation); task 34 AX-1 and LB-1; tasks 10, 12, 25, 35 and 37 (bound artists).
 Choices not settled by the ADR are marked *(default taken)* and stand unless vetoed.
