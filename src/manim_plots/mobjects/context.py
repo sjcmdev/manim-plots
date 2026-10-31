@@ -352,6 +352,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     CoordinateSystem.plot_surface,
     ThreeDVMobject,
     VMobject.set_points_as_corners,
+    VMobject.get_style,
     VMobject.set_style,
     VMobject.get_fill_color,
     VMobject.get_stroke_color,
@@ -645,6 +646,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.set_points_as_corners": (
             "da22591520b847b12ba20d1dc0dfe9d44b591f03ff14f4e349fcf5f1374e1ad7"
+        ),
+        "VMobject.get_style": (
+            "077727354e4d7adf03b29f8bb732b40849cc21ac96415f350456e5d30889fa9c"
         ),
         "VMobject.set_style": (
             "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"
@@ -1521,6 +1525,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.set_points_as_corners": (
             "da22591520b847b12ba20d1dc0dfe9d44b591f03ff14f4e349fcf5f1374e1ad7"
+        ),
+        "VMobject.get_style": (
+            "077727354e4d7adf03b29f8bb732b40849cc21ac96415f350456e5d30889fa9c"
         ),
         "VMobject.set_style": (
             "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"

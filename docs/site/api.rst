@@ -108,31 +108,45 @@ Themes
 Animations
 ----------
 
-.. autoclass:: DrawAxes
-
-.. autoclass:: TraceCurve
-
-.. autoclass:: ShowPoints
-
-.. autoclass:: Morph
-
-.. autoclass:: GrowBars
-
-.. autoclass:: GrowSurface
-
-.. autoclass:: ShrinkSurface
-
-.. autoclass:: ShrinkBars
-
-.. autoclass:: SortBars
-
 .. autoclass:: AppendData
 
 .. autoclass:: BuildAxes
 
-.. autoclass:: HighlightTick
+.. autoclass:: DrawAxes
+
+.. autoclass:: ExplodePie
+
+.. autoclass:: GrowBars
+
+.. autoclass:: GrowBoxPlot
+
+.. autoclass:: GrowStack
+
+.. autoclass:: GrowSurface
 
 .. autoclass:: HighlightBar
+
+.. autoclass:: HighlightTick
+
+.. autoclass:: Morph
+
+.. autoclass:: RevealCells
+
+.. autoclass:: RevealContours
+
+.. autoclass:: ShowPoints
+
+.. autoclass:: ShrinkBars
+
+.. autoclass:: ShrinkSurface
+
+.. autoclass:: SortBars
+
+.. autoclass:: SweepPie
+
+.. autoclass:: TraceCurve
+
+.. autoclass:: UnfoldViolin
 
 Scales
 ------
