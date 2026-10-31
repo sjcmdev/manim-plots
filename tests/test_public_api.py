@@ -124,6 +124,10 @@ EXPECTED = {
     "LogitLocator",
     "LogitFormatter",
     "BrokenScale",
+    # task 38
+    "PieChart",
+    "BoxPlot",
+    "ViolinPlot",
     # task 37
     "HeatmapPlot",
     "HexbinPlot",
