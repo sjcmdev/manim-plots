@@ -76,6 +76,7 @@ from manim_plots.mobjects.helpers import FilledRegion as FilledRegion
 from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
 from manim_plots.mobjects.histograms import HistPlot, StackPlot
+from manim_plots.mobjects.inset import InsetAxes
 from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.plots3d import BarPlot3D, StemPlot, WaterfallPlot
 from manim_plots.mobjects.polar import PolarAxes
@@ -131,6 +132,7 @@ __all__ = [
     "HeatmapPlot",
     "HexbinPlot",
     "HistPlot",
+    "InsetAxes",
     "Labels",
     "Legend",
     "LinePlot",

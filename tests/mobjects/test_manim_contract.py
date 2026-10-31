@@ -327,6 +327,22 @@ ADDED_BY_TASK_31 = [
 
 
 ADDED_BY_TASK_32 = ["VGroup.__init__"]
+ADDED_BY_TASK_35 = [
+    "Dot.__init__",
+    "Mobject.next_to",
+    "Mobject.move_to",
+    "Mobject.get_center",
+    "Mobject.get_left",
+    "Mobject.get_right",
+    "Mobject.get_top",
+    "Mobject.get_bottom",
+    "Mobject.add_updater",
+    "VMobject.match_style",
+    "VMobject.clear_points",
+    "VMobject.get_color",
+    "Line.put_start_and_end_on",
+    "TipableVMobject.get_end",
+]
 
 
 def names() -> list[str]:
@@ -358,6 +374,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_29
         + ADDED_BY_TASK_30
         + ADDED_BY_TASK_31
+        + ADDED_BY_TASK_35
         + ADDED_BY_TASK_37
         + ADDED_BY_TASK_32
     )

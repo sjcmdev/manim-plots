@@ -13,11 +13,14 @@ from manim import (
     DOWN,
     RIGHT,
     UP,
+    Arrow,
     ArrowTriangleFilledTip,
     DashedLine,
+    Dot,
     Line,
     Mobject,
     RegularPolygon,
+    Text,
     VGroup,
     VMobject,
 )
@@ -459,6 +462,7 @@ class _RegionBinding(_Binding):
         self.colors: list[ManimColor] = []
         self.rectangle_style: dict[str, object] = {}
         self.rectangle_blend = False
+        self.transpose = False
 
     def local(self, points: ArrayLike) -> FloatArray:
         coords = np.asarray(points, dtype=float)
@@ -617,13 +621,19 @@ class FilledRegion(_CurvePlot):
         parts: list[FloatArray] = []
         if binding.valid:
             for upper, lower in binding.boundaries.get(self._part, []):
+                order = [1, 0] if binding.transpose else [0, 1]
+                region_bounds = Box(bounds.lower[order], bounds.upper[order])
                 payload = clip_region(
-                    upper,
-                    lower,
-                    bounds,
-                    clip_x=axes[0] is not False,
-                    clip_y=axes[1] is not False,
+                    upper[:, order],
+                    lower[:, order],
+                    region_bounds,
+                    clip_x=axes[order[0]] is not False,
+                    clip_y=axes[order[1]] is not False,
                 )
+                if binding.transpose:
+                    payload = Payload._trusted(
+                        "path", payload.coords[:, order], payload.segments
+                    )
                 parts.extend(payload.coords[a:b] for a, b in payload.segments)
         self._geometry_payload = _assemble(parts, 2)
         self._place(self._frame())
@@ -786,6 +796,8 @@ def _fill_between(
     y2: object,
     where: ArrayLike | None,
     interpolate: bool,
+    *,
+    transpose: bool = False,
     **style: object,
 ) -> FilledRegion:
     xs = np.array(x, dtype=float, copy=True)
@@ -855,8 +867,12 @@ def _fill_between(
                         )
             if len(grid) < 2:
                 continue
-            upper = binding.local(np.column_stack((grid, top)))
-            lower = binding.local(np.column_stack((grid, bottom)))
+            columns = [1, 0] if transpose else [0, 1]
+            upper = binding.local(np.column_stack((grid, top))[:, columns])
+            lower = binding.local(np.column_stack((grid, bottom))[:, columns])
+            if transpose:
+                pairs.append((upper, lower))
+                continue
             for boundary, source in ((upper, y1), (lower, y2)):
                 if isinstance(source, _CurvePlot) and source._own.nodes:
                     boundary[:] = source._own.forward(
@@ -882,6 +898,7 @@ def _fill_between(
         binding.boundaries["area"] = pairs
 
     binding = _RegionBinding(system, derive, {}, graphs)
+    binding.transpose = transpose
     _cycle_style(system, cast(_VMStyle, style), scatter=True)
     style.setdefault("fill_opacity", 0.3)
     style.setdefault("stroke_width", 0)
@@ -1591,3 +1608,309 @@ def _secant(
         group.secant_line = HelperLine(binding, "secant_line", color=secant_line_color)
         group.add(group.secant_line)
     return group
+
+
+def _span(
+    system: mp.CartesianAxes,
+    index: int,
+    minimum: object,
+    maximum: object,
+    fraction_min: object,
+    fraction_max: object,
+    **style: object,
+) -> FilledRegion:
+    def derive(base: _Binding) -> None:
+        binding = cast(_RegionBinding, base)
+        other = system.get_axis(1 - index)
+        ends = other._scale.forward(other.range.value)
+        fractions = np.array([binding.number("fmin"), binding.number("fmax")])
+        extents = other._scale.inverse(ends[0] + fractions * (ends[1] - ends[0]))
+        limits = [binding.number("minimum"), binding.number("maximum")]
+        upper = np.column_stack((limits, np.full(2, extents[1])))
+        lower = np.column_stack((limits, np.full(2, extents[0])))
+        order = [0, 1] if index == 0 else [1, 0]
+        binding.boundaries["area"] = [
+            (binding.local(upper[:, order]), binding.local(lower[:, order]))
+        ]
+
+    binding = _RegionBinding(
+        system,
+        derive,
+        dict(minimum=minimum, maximum=maximum, fmin=fraction_min, fmax=fraction_max),
+        [],
+    )
+    binding.transpose = index == 1
+    _cycle_style(system, cast(_VMStyle, style), scatter=True)
+    style.setdefault("fill_opacity", 0.25)
+    style.setdefault("stroke_width", 0)
+    return FilledRegion(binding, "area", **style)
+
+
+class _NativeBinding:
+    def __init__(self, mob: Mobject, place: Callable[[], None]) -> None:
+        self.mob, self.place = mob, place
+        self.busy = False
+        if isinstance(mob, _LivePoints):
+            mob.__dict__["_helper_driver"] = self
+        mob.add_updater(lambda _: self._ensure())
+
+    def glyphs(self, native: Mobject) -> None:
+        if isinstance(native, VMobject):
+            glyphs = list(_label(native).submobjects)
+            if isinstance(self.mob, VMobject):
+                self.mob.clear_points()
+            self.mob.submobjects = list(glyphs)
+            for leaf in self.mob.get_family():
+                if isinstance(leaf, Leaf):
+                    cast(Any, leaf)._label_owner = self
+
+    def _ensure(self) -> None:
+        if self.busy:
+            return
+        self.busy = True
+        try:
+            self.place()
+        finally:
+            self.busy = False
+
+
+class _LivePoints:
+    @property
+    def points(self) -> FloatArray:
+        driver = self.__dict__.get("_helper_driver")
+        if driver is not None:
+            driver._ensure()
+        return cast(FloatArray, self.__dict__.get("_helper_points", np.empty((0, 3))))
+
+    @points.setter
+    def points(self, value: ArrayLike) -> None:
+        self._helper_points = np.asarray(value, dtype=float)
+
+
+class _LiveArrow(_LivePoints, Arrow):
+    def get_end(self) -> FloatArray:
+        driver = self.__dict__.get("_helper_driver")
+        if driver is not None:
+            driver._ensure()
+        return super().get_end()
+
+
+class _LiveDot(_LivePoints, Dot):
+    pass
+
+
+class _LiveLine(_LivePoints, Line):
+    pass
+
+
+class _LiveShape(_LivePoints, VMobject):
+    pass
+
+
+class _LiveText(_LivePoints, Text):
+    pass
+
+
+def _annotate_2d(
+    system: mp.CartesianAxes,
+    s: str | Mobject,
+    xy: Sequence[object],
+    xytext: Sequence[object] | None = None,
+    *,
+    arrow: bool = True,
+    buff: float = 0.1,
+    arrow_config: dict[str, Any] | None = None,
+    **text_style: object,
+) -> HelperGroup:
+    if len(xy) != 2 or (xytext is not None and len(xytext) != 2):
+        raise ValueError("xy and xytext must have two coordinates")
+    buff = _number(buff, "buff")
+    text = (
+        s
+        if isinstance(s, Mobject)
+        else _LiveText(s, **cast(Any, {"font_size": 24, **text_style}))
+    )
+    inputs = {f"p{i}": v for i, v in enumerate(xy)}
+    if xytext is not None:
+        inputs.update({f"t{i}": v for i, v in enumerate(xytext)})
+    binding = _Binding(system, lambda _: None, inputs)
+    shaft = _LiveArrow(**{**(arrow_config or {}), "buff": 0}) if arrow else None
+    seen = -1
+
+    def place() -> None:
+        nonlocal seen
+        binding.poll()
+        binding.ensure()
+        if seen == binding.version:
+            return
+        end = system.c2p(binding.number("p0"), binding.number("p1"))
+        center = (
+            end + np.array([0.6, 0.6, 0])
+            if xytext is None
+            else system.c2p(binding.number("t0"), binding.number("t1"))
+        )
+        text.move_to(center)
+        if shaft is not None:
+            delta = end - center
+            length = float(np.linalg.norm(delta))
+            ratios = [
+                size / 2 / abs(d)
+                for size, d in zip((text.width, text.height), delta[:2], strict=True)
+                if d != 0
+            ]
+            t = min(ratios, default=0)
+            start = center + t * delta + buff * delta / max(length, 1e-12)
+            fresh = Arrow(start, end, **{**(arrow_config or {}), "buff": 0})
+            shaft.become(fresh)
+        seen = binding.version
+
+    driver = _NativeBinding(text, place)
+    driver.glyphs(text)
+    if shaft is not None:
+        shaft.__dict__["_helper_driver"] = driver
+        for leaf in shaft.get_family():
+            if leaf is not shaft and isinstance(leaf, VMobject):
+                # Arrow tips must also trigger derivation before their points are read.
+                leaf.add_updater(lambda _: driver._ensure())
+    group = HelperGroup(cast(VMobject, text))
+    cast(Any, group).text, cast(Any, group).arrow = text, shaft
+    if shaft is not None:
+        group.add(shaft)
+    group.add_updater(lambda _: driver._ensure())
+    driver._ensure()
+    return group
+
+
+def _crosshair(
+    system: mp.CartesianAxes,
+    x: object,
+    y: object = None,
+    *,
+    graph: FunctionPlot | None = None,
+    readout: bool = True,
+    fmt: str = "({:.2f}, {:.2f})",
+    **style: object,
+) -> HelperGroup:
+    if y is None and graph is None:
+        raise ValueError("supply y or graph")
+    if graph is not None:
+        _graph(system, graph)
+    binding = _Binding(
+        system, lambda _: None, {"x": x, **({"y": y} if y is not None else {})}, graph
+    )
+
+    def values() -> tuple[float, float]:
+        binding.poll()
+        binding.ensure()
+        xx = binding.number("x")
+        yy = (
+            binding.number("y")
+            if y is not None
+            else float(cast(FunctionPlot, graph).source.at(xx)[0, 1])
+        )
+        return xx, yy
+
+    line_style = {
+        "color": system.x_axis.get_color(),
+        "stroke_width": 2,
+        "stroke_opacity": 0.6,
+        **style,
+    }
+    vline = system.axvline(lambda: values()[0], **cast(Any, line_style))
+    hline = system.axhline(lambda: values()[1], **cast(Any, line_style))
+    dot = _LiveDot(color=cast(Any, line_style["color"]))
+    text = _LiveText(fmt.format(*values()), font_size=24) if readout else None
+    current = fmt.format(*values())
+    group = HelperGroup(vline, hline, dot)
+    cast(Any, group).vline, cast(Any, group).hline = vline, hline
+    cast(Any, group).dot, cast(Any, group).readout = dot, text
+
+    def place() -> None:
+        nonlocal current
+        xx, yy = values()
+        dot.move_to(system.c2p(xx, yy))
+        if text is None:
+            return
+        formatted = fmt.format(xx, yy)
+        if formatted != current:
+            fresh = Text(formatted, font_size=24)
+            fresh.match_style(text)
+            driver.glyphs(fresh)
+            text.text, current = formatted, formatted
+        direction = np.array([1.0, 1.0, 0.0])
+        text.next_to(dot, direction, buff=0.1)
+        box = system.c2p(
+            np.array(
+                [
+                    [system.x_range[0], system.y_range[0]],
+                    [system.x_range[1], system.y_range[1]],
+                ]
+            )
+        )
+        if text.get_right()[0] > box[:, 0].max():
+            direction[0] = -1
+        if text.get_top()[1] > box[:, 1].max():
+            direction[1] = -1
+        text.next_to(dot, direction, buff=0.1)
+
+    driver = _NativeBinding(dot if text is None else text, place)
+    dot.__dict__["_helper_driver"] = driver
+    if text is not None:
+        driver.glyphs(text)
+        group.add(text)
+    group.add_updater(lambda _: driver._ensure())
+    driver._ensure()
+    return group
+
+
+def _end_label(
+    system: mp.CartesianAxes,
+    graph: _CurvePlot,
+    label: str | Mobject | None = None,
+    *,
+    fmt: str = "{:.2f}",
+    direction: ArrayLike = RIGHT,
+    buff: float = 0.15,
+    **text_style: object,
+) -> Mobject:
+    _graph(system, graph)
+    text_style.setdefault("color", graph.get_stroke_color())
+    text = (
+        label
+        if isinstance(label, Mobject)
+        else _LiveText(label or "", **cast(Any, {"font_size": 24, **text_style}))
+    )
+    if not isinstance(label, Mobject):
+        # Empty Text has no glyphs to carry its colour into match_style.
+        text.set_color(cast(ParsableManimColor, text_style["color"]))
+    current: str | None = None
+    template = text.copy()
+    hidden = False
+
+    def place() -> None:
+        nonlocal current, hidden
+        points = graph.points
+        if not len(points):
+            for leaf in text.family_members_with_points():
+                leaf.clear_points()
+            hidden = True
+            return
+        end = points[-1]
+        formatted = fmt.format(system.p2c(end)[1]) if label is None else label
+        if formatted != current or hidden:
+            fresh = (
+                Text(formatted, **cast(Any, {"font_size": 24, **text_style}))
+                if isinstance(formatted, str)
+                else template.copy()
+            )
+            fresh.match_style(text)
+            driver.glyphs(fresh)
+            if isinstance(text, Text) and isinstance(fresh, Text):
+                text.text = fresh.text
+            current = cast(str | None, formatted)
+            hidden = False
+        text.next_to(end, np.asarray(direction), buff=buff)
+
+    driver = _NativeBinding(text, place)
+    driver._ensure()
+    return text

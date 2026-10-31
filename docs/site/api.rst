@@ -236,6 +236,9 @@ Surfaces and colour
 
 .. autoclass:: ColorMapping
 
+.. autoclass:: InsetAxes
+   :members:
+
 .. autoclass:: Colorbar
 
 .. autodata:: colormaps
