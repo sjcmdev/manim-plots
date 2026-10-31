@@ -53,6 +53,7 @@ from manim_plots.mobjects.artists import (
     ScatterPlot,
 )
 from manim_plots.mobjects.axis import Axis, TickDirection, _range
+from manim_plots.mobjects.bars import BarPlot
 from manim_plots.mobjects.context import _drawing_camera, _scene_camera
 from manim_plots.mobjects.errorbar import ErrorBars
 from manim_plots.mobjects.geometry import (
@@ -62,6 +63,7 @@ from manim_plots.mobjects.geometry import (
     _intersection,
 )
 from manim_plots.mobjects.helpers import HelperGroup, _DropOptions
+from manim_plots.mobjects.histograms import HistPlot
 from manim_plots.mobjects.leaves import (
     AxisLine,
     BoundLabel,
@@ -75,6 +77,7 @@ from manim_plots.mobjects.leaves import (
 from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.plots3d import (
     BarPlot3D,
+    Hist3DPlot,
     StemPlot,
     WaterfallPlot,
     _annotate,
@@ -605,6 +608,85 @@ class ThreeDAxes(CartesianAxes):
         """
         return WaterfallPlot(self, x, curves, positions, zdir=zdir, fill=fill, **style)
 
+    def bar(  # type: ignore[override]
+        self,
+        left: object,
+        height: object,
+        zs: object = 0,
+        zdir: str = "z",
+        *,
+        width: object = 0.8,
+        **kwargs: object,
+    ) -> BarPlot:
+        """Lay flat bars in a coordinate plane.
+
+        Parameters
+        ----------
+        left, height, zs, zdir, width, **kwargs
+            Bar positions, heights, plane coordinates, direction, widths and styles.
+        """
+        planes = np.asarray(zs, float)
+        lift = self._bar_lift(planes, zdir)
+        shape = np.broadcast_shapes(
+            *(
+                np.asarray(value).shape
+                for value in (left, height, width, kwargs.get("bottom", 0))
+            )
+        ) or (1,)
+        if planes.ndim and planes.shape != shape:
+            raise ValueError("zs must be scalar or contain one value per bar")
+        return BarPlot(self, left, height, width, _lift=lift, **cast(Any, kwargs))
+
+    def hist(  # type: ignore[override]
+        self,
+        x: object,
+        bins: object = 10,
+        *,
+        zs: object = 0,
+        zdir: str = "y",
+        **kwargs: object,
+    ) -> HistPlot:
+        """Lay a histogram in a coordinate plane.
+
+        Parameters
+        ----------
+        x, bins, zs, zdir, **kwargs
+            Samples, bins, plane coordinates, direction and histogram options.
+        """
+        return HistPlot(
+            self, x, bins, _lift=self._bar_lift(zs, zdir), **cast(Any, kwargs)
+        )
+
+    def _bar_lift(
+        self, zs: object, zdir: str
+    ) -> Callable[[FloatArray, int], FloatArray]:
+        planes = np.asarray(zs, float)
+        _juggle(0, 0, planes, zdir)
+        if planes.ndim > 1 or not np.isfinite(planes).all():
+            raise ValueError("zs must be finite and scalar or one per bar")
+
+        def lift(points: FloatArray, index: int) -> FloatArray:
+            return _juggle(
+                points[:, 0],
+                points[:, 1],
+                planes if planes.ndim == 0 else planes[index],
+                zdir,
+            )
+
+        return lift
+
+    def hist3d(
+        self, x: ArrayLike, y: ArrayLike, bins: object = 10, **kwargs: object
+    ) -> Hist3DPlot:
+        """Draw a two-dimensional histogram as columns.
+
+        Parameters
+        ----------
+        x, y, bins, **kwargs
+            Paired samples, bins and histogram options.
+        """
+        return Hist3DPlot(self, x, y, bins, **cast(Any, kwargs))
+
     def bar3d(
         self,
         x: ArrayLike,
@@ -615,6 +697,12 @@ class ThreeDAxes(CartesianAxes):
         dz: ArrayLike,
         color: object = None,
         shade: bool = True,
+        *,
+        c: object = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: object = None,
         **style: object,
     ) -> BarPlot3D:
         """Draw shaded data boxes.
@@ -623,8 +711,26 @@ class ThreeDAxes(CartesianAxes):
         ----------
         x, y, z, dx, dy, dz, color, shade, **style
             Corners, side lengths, colours, lighting policy and face style.
+        c, colorscale, vmin, vmax, norm
+            Per-bar values and colour normalization.
         """
-        return BarPlot3D(self, x, y, z, dx, dy, dz, color, shade, **style)
+        return BarPlot3D(
+            self,
+            x,
+            y,
+            z,
+            dx,
+            dy,
+            dz,
+            color,
+            shade,
+            c=c,
+            colorscale=colorscale,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            **style,
+        )
 
     def intersection(
         self, a: object, b: object, **style: object

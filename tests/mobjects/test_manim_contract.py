@@ -343,6 +343,7 @@ ADDED_BY_TASK_35 = [
     "Line.put_start_and_end_on",
     "TipableVMobject.get_end",
 ]
+ADDED_BY_TASK_33: list[str] = []
 
 
 def names() -> list[str]:
@@ -376,6 +377,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_31
         + ADDED_BY_TASK_35
         + ADDED_BY_TASK_37
+        + ADDED_BY_TASK_33
         + ADDED_BY_TASK_32
     )
 

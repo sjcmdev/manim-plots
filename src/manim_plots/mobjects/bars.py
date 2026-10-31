@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from functools import partial
 from numbers import Real
 from typing import Any, Self, Unpack, cast
 
@@ -22,6 +23,7 @@ from manim import (
 )
 
 import manim_plots as mp
+from manim_plots.core import FloatArray
 from manim_plots.core.payload import Payload
 from manim_plots.core.shape import corners
 from manim_plots.core.sources import ArraySource
@@ -44,14 +46,22 @@ def _entries(value: object) -> np.ndarray[Any, np.dtype[np.object_]]:
     return np.fromiter(entries, dtype=object)
 
 
+def _lift_bar(
+    lift: Callable[[FloatArray, int], FloatArray], index: int, points: FloatArray
+) -> FloatArray:
+    return lift(points, index)
+
+
 class _Bar(_CurvePlot):
     def __init__(
         self,
         system: CartesianAxes,
         values: Sequence[object],
         horizontal: bool,
+        lift: Callable[[FloatArray], FloatArray] | None = None,
         **style: Unpack[_ArtistOptions],
     ) -> None:
+        self._lift = lift
         self.horizontal = horizontal
         self._label_bindings: list[_LabelBinding] = []
         self.parameters = {
@@ -80,6 +90,28 @@ class _Bar(_CurvePlot):
         )
         if self.horizontal:
             a, b = a[::-1], b[::-1]
+        if self._lift is not None:
+            polygon = self._lift(np.array([b, [a[0], b[1]], a, [b[0], a[1]], b]))
+            for i, axis in enumerate(system._ranges):
+                invalid = ~np.isfinite(axis._scale.forward(polygon[:, i]))
+                polygon[invalid, i] = min(axis.range.value)
+            native = system._data.forward(polygon)
+            outside = np.any(native.max(axis=0) < system.bounds.lower) or np.any(
+                native.min(axis=0) > system.bounds.upper
+            )
+            native = (
+                native[:0]
+                if outside
+                else np.clip(native, system.bounds.lower, system.bounds.upper)
+            )
+            self._geometry_payload = corners(Payload.path(native), system.bounds)
+            self._place(self._frame())
+            self._data_seen = system._data_version
+            self._parameter_versions = {
+                name: p.version for name, p in self.parameters.items()
+            }
+            self._dirty = False
+            return
         for i, axis in enumerate(system._ranges):
             low = min(axis.range.value)
             if not np.isfinite(axis._scale.forward([a[i]])).all():
@@ -180,6 +212,7 @@ class BarPlot(VGroup):
         vmax: float | None = None,
         norm: object = None,
         label: str | None = None,
+        _lift: Callable[[FloatArray, int], FloatArray] | None = None,
         **style: object,
     ) -> None:
         if align not in ("center", "edge"):
@@ -249,6 +282,7 @@ class BarPlot(VGroup):
                 system,
                 bar_values,
                 horizontal,
+                None if _lift is None else partial(_lift_bar, _lift, i),
                 **cast(_ArtistOptions, own),
             )
             self.add(bar)

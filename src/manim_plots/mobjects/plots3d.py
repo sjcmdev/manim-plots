@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any, Self, cast
 
 import numpy as np
 from manim import Arrow, ManimColor, Mobject, Text, ThreeDCamera, VGroup, VMobject
@@ -12,12 +12,14 @@ import manim_plots as mp
 from manim_plots.core import FloatArray
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import LinePlot, _CurvePlot, _cycle_style
+from manim_plots.mobjects.colormaps import resolve_colorscale
+from manim_plots.mobjects.context import _drawing_camera
 from manim_plots.mobjects.fields import _facing_basis, _VectorGroup
 from manim_plots.mobjects.geometry import _data_point, _ensure_binding, _inputs, _read
 from manim_plots.mobjects.helpers import HelperGroup, _Binding, _HelperShape
 from manim_plots.mobjects.leaves import _ArtistOptions, _VMStyle
 from manim_plots.mobjects.projections import _juggle
-from manim_plots.mobjects.surfaces import SurfacePlot
+from manim_plots.mobjects.surfaces import SurfacePlot, _Face
 
 
 class StemPlot(VGroup):
@@ -126,9 +128,18 @@ class WaterfallPlot(VGroup):
 
 
 class _BarSurface(SurfacePlot):
+    _histogram: Hist3DPlot | None = None
+    _depth_version = 0
+
+    def _place_faces(self) -> None:
+        super()._place_faces()
+        self._depth_version += 1
+
     def _derive(self) -> None:
         self._building = True
         try:
+            if self._histogram is not None:
+                self._bar_corners = self._histogram._corners()
             self._corner_data = self._bar_corners
             self._centres = self._corner_data.mean(axis=1)
             mapped = self._system._data.forward(self._corner_data.reshape(-1, 3))
@@ -137,6 +148,10 @@ class _BarSurface(SurfacePlot):
                 for c in mapped.reshape(-1, 4, 3)
             ]
             self._clip_faces()
+            if self._histogram is not None:
+                for i, points in enumerate(self._local_faces):
+                    if self._histogram.counts.ravel()[i // 6] < self._histogram._cmin:
+                        self._local_faces[i] = points[:0]
             self._place_faces()
         finally:
             self._building = False
@@ -151,6 +166,8 @@ class BarPlot3D(VGroup):
     ----------
     system, x, y, z, dx, dy, dz, color, shade, **style
         Axes, corners, side lengths, bar colours and fixed face lighting.
+    c, colorscale, vmin, vmax, norm
+        Per-bar values and colour normalization.
     """
 
     def __init__(
@@ -164,6 +181,12 @@ class BarPlot3D(VGroup):
         dz: ArrayLike,
         color: object = None,
         shade: bool = True,
+        *,
+        c: object = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: object = None,
         **style: object,
     ) -> None:
         arrays = np.broadcast_arrays(
@@ -183,6 +206,25 @@ class BarPlot3D(VGroup):
                 [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]],
             ]
         )
+        self._color_mapping: mp.ColorMapping | None = None
+        if c is not None:
+            values = (
+                arrays[5].ravel()
+                if isinstance(c, str) and c == "height"
+                else np.asarray(c, float)
+            )
+            if values.shape != (len(xyz),) or not np.isfinite(values).all():
+                raise ValueError("c must contain one finite value per bar")
+            self._color_mapping = resolve_colorscale(
+                "viridis" if colorscale is None else colorscale,
+                vmin=vmin,
+                vmax=vmax,
+                norm=cast(Any, norm),
+                default_range=self._color_range(values),
+            )
+            color = self._color_mapping(values)
+        self._shade = shade
+        self._unit = unit
         options = style.copy()
         if color is None:
             _cycle_style(system, cast(_VMStyle, options))
@@ -224,6 +266,220 @@ class BarPlot3D(VGroup):
             self.bars.add(faces)
         self._surface = surface
         super().__init__(self.bars)
+
+    def get_family(self, recurse: bool = True) -> list[Mobject]:
+        """Return the family after refreshing camera-space face depths.
+
+        Parameters
+        ----------
+        recurse
+            Passed through to Manim's family traversal.
+
+        Returns
+        -------
+        list of Mobject
+            The family with face identities and addressing unchanged.
+        """
+        surface = cast(_BarSurface | None, self.__dict__.get("_surface"))
+        camera = _drawing_camera() if recurse and surface is not None else None
+        if isinstance(camera, ThreeDCamera) and surface is not None:
+            surface._driver._ensure()
+            signature = (
+                id(camera),
+                camera.get_phi(),
+                camera.get_theta(),
+                camera.get_gamma(),
+                surface._depth_version,
+            )
+            if self.__dict__.get("_depth_signature") != signature:
+                rotation = camera.generate_rotation_matrix()
+                for face in surface.faces:
+                    face.z_index = float((face.get_center() @ rotation.T)[2])
+                self._depth_signature = signature
+        return super().get_family(recurse)
+
+    def _color_range(self, values: FloatArray) -> tuple[float, float]:
+        lo, hi = (
+            (float(values.min()), float(values.max())) if len(values) else (0.0, 1.0)
+        )
+        return lo, hi if hi > lo else lo + 1
+
+    @property
+    def color_mapping(self) -> mp.ColorMapping | None:
+        """Return the value colour mapping, when supplied."""
+        return self._color_mapping
+
+
+class Hist3DPlot(BarPlot3D):
+    """Count paired samples into stable, shaded columns.
+
+    Parameters
+    ----------
+    system, x, y, bins, range, density, weights
+        Owning axes and NumPy histogram2d counting arguments.
+    rwidth, cmin
+        Relative cell width and minimum visible count.
+    color, color_by, colorscale, vmin, vmax, norm, shade, **style
+        Fixed colour, mapped values, normalization, lighting and face styles.
+    """
+
+    counts: FloatArray
+    xedges: FloatArray
+    yedges: FloatArray
+
+    def __init__(
+        self,
+        system: mp.ThreeDAxes,
+        x: ArrayLike,
+        y: ArrayLike,
+        bins: object = 10,
+        *,
+        range: object = None,
+        density: bool = False,
+        weights: ArrayLike | None = None,
+        rwidth: float = 0.8,
+        cmin: float = 1,
+        color: object = None,
+        color_by: str = "count",
+        colorscale: object = "viridis",
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: object = None,
+        shade: bool = True,
+        **style: object,
+    ) -> None:
+        if color_by not in ("count", "x", "y"):
+            raise ValueError("color_by must be count, x or y")
+        if not np.isfinite([rwidth, cmin]).all() or rwidth < 0:
+            raise ValueError("rwidth must be nonnegative and rwidth and cmin finite")
+        self._hist_system = system
+        self._density, self._rwidth, self._cmin = density, rwidth, cmin
+        self._color_by, self._fixed_color = color_by, color
+        self._mapping_options = dict(
+            colorscale=colorscale, vmin=vmin, vmax=vmax, norm=norm
+        )
+        self.counts, self.xedges, self.yedges = np.histogram2d(
+            np.asarray(x, float),
+            np.asarray(y, float),
+            bins=cast(Any, bins),
+            range=cast(Any, range),
+            density=density,
+            weights=None if weights is None else np.asarray(weights, float),
+        )
+        cx, cy = np.meshgrid(
+            (self.xedges[:-1] + self.xedges[1:]) / 2,
+            (self.yedges[:-1] + self.yedges[1:]) / 2,
+            indexing="ij",
+        )
+        wx, wy = np.meshgrid(
+            np.diff(self.xedges) * rwidth, np.diff(self.yedges) * rwidth, indexing="ij"
+        )
+        self._xy, self._widths = (
+            np.stack((cx - wx / 2, cy - wy / 2), -1),
+            np.stack((wx, wy), -1),
+        )
+        values = self._values()
+        super().__init__(
+            system,
+            cx - wx / 2,
+            cy - wy / 2,
+            self._floor(),
+            wx,
+            wy,
+            self.counts,
+            color,
+            shade,
+            c=values,
+            **cast(Any, self._mapping_options),
+            **cast(Any, style),
+        )
+        self._surface._histogram = self
+        self._surface._derive()
+        for face in self._surface.faces:
+            cast(_Face, face)._styled = False
+
+    def _floor(self) -> float:
+        lo, hi = sorted(self._hist_system.z.range.value)
+        return 0.0 if lo <= 0 <= hi else float(lo)
+
+    def _color_range(self, values: FloatArray) -> tuple[float, float]:
+        if self._color_by == "count":
+            return super()._color_range(values[values >= self._cmin])
+        edges = self.xedges if self._color_by == "x" else self.yedges
+        return float(edges[0]), float(edges[-1])
+
+    def _values(self) -> FloatArray | None:
+        if self._fixed_color is not None:
+            return None
+        if self._color_by == "count":
+            return self.counts.ravel()
+        edges = self.xedges if self._color_by == "x" else self.yedges
+        centres = (edges[:-1] + edges[1:]) / 2
+        values: FloatArray = np.broadcast_to(
+            centres[:, None] if self._color_by == "x" else centres[None, :],
+            self.counts.shape,
+        ).ravel()
+        return values
+
+    def _corners(self) -> FloatArray:
+        xyz = np.column_stack(
+            (self._xy.reshape(-1, 2), np.full(self.counts.size, self._floor()))
+        )
+        sizes = np.column_stack((self._widths.reshape(-1, 2), self.counts.ravel()))
+        result: FloatArray = (
+            xyz[:, None, None, :] + sizes[:, None, None, :] * self._unit
+        ).reshape(-1, 4, 3)
+        return result
+
+    def at(self, key: tuple[int, int]) -> VGroup:
+        """Return the six faces of a bin.
+
+        Parameters
+        ----------
+        key
+            X and y bin indices.
+        """
+        i, j = key
+        if not (0 <= i < self.counts.shape[0] and 0 <= j < self.counts.shape[1]):
+            raise KeyError(key)
+        return cast(VGroup, self.bars[i * self.counts.shape[1] + j])
+
+    def set_data(
+        self, x: ArrayLike, y: ArrayLike, *, weights: ArrayLike | None = None
+    ) -> Self:
+        """Recount into stored edges and update existing faces.
+
+        Parameters
+        ----------
+        x, y, weights
+            Paired samples and optional sample weights.
+        """
+        self.counts = np.histogram2d(
+            np.asarray(x, float),
+            np.asarray(y, float),
+            bins=cast(Any, (self.xedges, self.yedges)),
+            density=self._density,
+            weights=None if weights is None else np.asarray(weights, float),
+        )[0]
+        values = self._values()
+        if values is not None:
+            self._color_mapping = resolve_colorscale(
+                default_range=self._color_range(values),
+                **cast(Any, self._mapping_options),
+            )
+            colors = self._color_mapping(values)
+            normals = np.array(
+                [[0, 0, -1], [0, 0, 1], [0, -1, 0], [0, 1, 0], [-1, 0, 0], [1, 0, 0]]
+            )
+            factors = 0.3 + 0.35 * (1 + normals @ (np.array([-2, -2, 1]) / 3))
+            for i, bar in enumerate(self.bars):
+                for j, face in enumerate(bar):
+                    if not face._styled:
+                        face._paint(
+                            ManimColor(colors[i] * (factors[j] if self._shade else 1))
+                        )
+        self._surface._derive()
+        return self
 
 
 class _TextDriver(_CurvePlot):

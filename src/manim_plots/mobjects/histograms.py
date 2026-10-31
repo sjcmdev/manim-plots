@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from builtins import range as builtins_range
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from functools import partial
 from typing import Any, Self, cast
 
 import numpy as np
@@ -11,6 +12,7 @@ from manim import VGroup
 from numpy.typing import NDArray
 
 import manim_plots as mp
+from manim_plots.core import FloatArray
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import LinePlot, _cycle_style
 from manim_plots.mobjects.bars import BarPlot
@@ -111,6 +113,7 @@ class HistPlot(VGroup):
         vmax: float | None = None,
         norm: object = None,
         label: object = None,
+        _lift: Callable[[FloatArray, int], FloatArray] | None = None,
         **style: object,
     ) -> None:
         if histtype not in ("bar", "barstacked", "step", "stepfilled"):
@@ -125,6 +128,7 @@ class HistPlot(VGroup):
             color_by is not None and histtype in ("step", "stepfilled")
         ):
             raise ValueError("color_by requires bars and must be count or x")
+        self._lift = _lift
         self._system = system
         self._range, self._density, self._cumulative = range, density, cumulative
         self._bottom = 0 if bottom is None else bottom
@@ -194,6 +198,8 @@ class HistPlot(VGroup):
         n = len(self._counts)
         for k, count in enumerate(self._counts):
             own = dict(self._styles[k])
+            if self._lift is not None:
+                own["_lift"] = self._lift
             if self._histtype in ("step", "stepfilled"):
                 points = _stairs_vertices(
                     base + count,
@@ -205,10 +211,19 @@ class HistPlot(VGroup):
                 if self._histtype == "stepfilled":
                     own = {"fill_opacity": 1, "stroke_width": 0, **own}
                 if self.outlines:
-                    self.outlines[k].source = ArraySource(points)
+                    self.outlines[k].source = ArraySource(
+                        points if self._lift is None else self._lift(points, k),
+                        dim=2 if self._lift is None else 3,
+                    )
                     self.outlines[k].refresh()
                 else:
-                    plots.append(self._system.line(points, **cast(Any, own)))
+                    own.pop("_lift", None)
+                    plots.append(
+                        self._system.line(
+                            points if self._lift is None else self._lift(points, k),
+                            **cast(Any, own),
+                        )
+                    )
             else:
                 dr = (
                     self._rwidth
@@ -242,7 +257,13 @@ class HistPlot(VGroup):
                         bars.submobjects = bars.submobjects[: len(count)]
                     if len(bars) < len(count):
                         method = (
-                            self._system.barh
+                            partial(
+                                BarPlot,
+                                self._system,
+                                horizontal=self._orientation == "horizontal",
+                            )
+                            if self._lift is not None
+                            else self._system.barh
                             if self._orientation == "horizontal"
                             else self._system.bar
                         )
@@ -264,7 +285,13 @@ class HistPlot(VGroup):
                     )
                 else:
                     method = (
-                        self._system.barh
+                        partial(
+                            BarPlot,
+                            self._system,
+                            horizontal=self._orientation == "horizontal",
+                        )
+                        if self._lift is not None
+                        else self._system.barh
                         if self._orientation == "horizontal"
                         else self._system.bar
                     )
