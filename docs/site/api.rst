@@ -118,11 +118,21 @@ Animations
 
 .. autoclass:: ExplodePie
 
+.. autoclass:: ExtendReference
+
+.. autoclass:: FillColorbar
+
 .. autoclass:: GrowBars
 
 .. autoclass:: GrowBoxPlot
 
+.. autoclass:: GrowErrorBars
+
 .. autoclass:: GrowField
+
+.. autoclass:: GrowRegion
+
+.. autoclass:: GrowRiemann
 
 .. autoclass:: GrowStack
 
@@ -142,9 +152,15 @@ Animations
 
 .. autoclass:: RefineRiemann
 
+.. autoclass:: RevealAnnotation
+
 .. autoclass:: RevealCells
 
 .. autoclass:: RevealContours
+
+.. autoclass:: RevealCrosshair
+
+.. autoclass:: RevealLegend
 
 .. autoclass:: RevealWaterfall
 
@@ -166,7 +182,11 @@ Animations
 
 .. autoclass:: SweepPolar
 
+.. autoclass:: SweepRegion
+
 .. autoclass:: SweepSlice
+
+.. autoclass:: SweepSpan
 
 .. autoclass:: SweepSurface
 

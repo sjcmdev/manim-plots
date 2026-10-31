@@ -156,6 +156,17 @@ EXPECTED = {
     "HeatmapPlot",
     "HexbinPlot",
     "ContourSetPlot",
+    # task 41 public API pins
+    "ExtendReference",
+    "FillColorbar",
+    "GrowErrorBars",
+    "GrowRegion",
+    "GrowRiemann",
+    "RevealAnnotation",
+    "RevealCrosshair",
+    "RevealLegend",
+    "SweepRegion",
+    "SweepSpan",
 }
 
 

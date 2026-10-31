@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable, Mapping
 from contextlib import suppress
 from typing import Any, cast
 
@@ -19,8 +19,10 @@ from manim import (
     Indicate,
     Mobject,
     Scene,
+    Uncreate,
     VGroup,
     VMobject,
+    linear,
 )
 from manim.utils.color import ParsableManimColor
 
@@ -149,6 +151,13 @@ class BuildAxes(AnimationGroup):
     ----------
     ax, lag_ratio, **kwargs
         Coordinate system, stage stagger and native group options.
+    stages
+        Ordered stage names or tuples of simultaneous names; None keeps the
+        existing lines/tips, ticks, numbers, labels/grid schedule.
+    stage_animations
+        Native animation factories keyed by stage name.
+    reverse, remover
+        Playback direction and independent scene removal.
     """
 
     def __init__(
@@ -156,7 +165,8 @@ class BuildAxes(AnimationGroup):
         ax: CartesianAxes,
         lag_ratio: float = 0.5,
         *,
-        stages: Iterable[str] | None = None,
+        stages: Iterable[str | tuple[str, ...]] | None = None,
+        stage_animations: Mapping[str, Callable[[VGroup], Animation]] | None = None,
         reverse: bool = False,
         remover: bool | None = None,
         **kwargs: object,
@@ -172,33 +182,81 @@ class BuildAxes(AnimationGroup):
             "panes",
             "breaks",
         }
-        if stages is not None and any(stage not in known for stage in stages):
-            raise ValueError("unknown stages")
+        selected = (
+            list(stages)
+            if stages is not None
+            else [("lines", "tips"), "ticks", "numbers", ("labels", "grid")]
+        )
+        factories = dict(stage_animations or {})
+        if any(
+            name not in known
+            for stage in selected
+            for name in ((stage,) if isinstance(stage, str) else stage)
+        ) or any(name not in known for name in factories):
+            raise ValueError("unknown stage")
         self.ax = ax
+        self._involved_system = ax
         flags(reverse, remover, kwargs)
-        lines = VGroup(
-            *(
-                part
-                for axis in ax._ranges
-                for part in (axis.line, axis.tip)
-                if part is not None
+        attributes = {"lines": "line", "tips": "tip", "breaks": "break_marks"}
+        parts = {}
+        for name in known:
+            if name == "panes":
+                pane = getattr(ax, "panes", None)
+                parts[name] = VGroup() if pane is None else VGroup(pane)
+            else:
+                parts[name] = VGroup(
+                    *(
+                        part
+                        for axis in ax._ranges
+                        if (part := getattr(axis, attributes.get(name, name), None))
+                        is not None
+                    )
+                )
+        children: list[Animation] = []
+        rate = cast(Callable[[float], float], kwargs.get("rate_func", linear))
+        for stage in selected:
+            animations = []
+            for name in (stage,) if isinstance(stage, str) else stage:
+                group = parts[name]
+                if name in factories:
+                    animation = factories[name](group)
+                elif name in {"lines", "tips", "ticks", "minor_ticks", "breaks"}:
+                    animation = (Uncreate if reverse else Create)(group, rate_func=rate)
+                elif reverse:
+                    animation = FadeOut(group, rate_func=rate)
+                else:
+                    animation = (_FadeInParts if name == "numbers" else FadeIn)(
+                        group, rate_func=rate
+                    )
+                animations.append(animation)
+            children.append(AnimationGroup(*animations, run_time=1))
+        if stages is None and not factories:
+            # Preserve the original native family order and timing for existing callers.
+            lines = VGroup(
+                *(
+                    part
+                    for axis in ax._ranges
+                    for part in (axis.line, axis.tip)
+                    if part is not None
+                )
             )
-        )
-        ticks = VGroup(*(axis.ticks for axis in ax._ranges))
-        numbers = VGroup(*(axis.numbers for axis in ax._ranges))
-        labels = VGroup(
-            *(part for axis in ax._ranges for part in (axis.labels, axis.grid))
-        )
-        children = (
-            [
-                FadeOut(labels),
-                FadeOut(numbers),
-                Create(ticks, reverse_rate_function=True, introducer=False),
-                Create(lines, reverse_rate_function=True, introducer=False),
+            labels = VGroup(
+                *(part for axis in ax._ranges for part in (axis.labels, axis.grid))
+            )
+            children = [
+                (Uncreate if reverse else Create)(lines),
+                (Uncreate if reverse else Create)(parts["ticks"]),
+                FadeOut(parts["numbers"])
+                if reverse
+                else _FadeInParts(parts["numbers"]),
+                FadeOut(labels) if reverse else FadeIn(labels),
             ]
-            if reverse
-            else [Create(lines), Create(ticks), _FadeInParts(numbers), FadeIn(labels)]
-        )
+        else:
+            kwargs.pop("rate_func", None)
+        if reverse:
+            children.reverse()
+        if not children:
+            children = [Animation(ax)]
         super().__init__(
             *children,
             group=ax,
