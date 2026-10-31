@@ -561,3 +561,5 @@ class RevealCrosshair(_Composition):
         cross.hline._rebuild()
         driver = cross.dot.__dict__["_helper_driver"]
         driver._ensure()
+        # A sibling tracker may finish later; let the scene's final update poll again.
+        cross.vline._binding.system._poll_token = None
