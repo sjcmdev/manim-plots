@@ -10,7 +10,7 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
-from manim import ORIGIN, RED, ManimColor
+from manim import BLACK, ORIGIN, RED, WHITE, ManimColor
 
 import manim_plots as mp
 
@@ -68,11 +68,12 @@ def test_pi2_explode_labels_and_percentages():
     apex = pts[np.argmin(np.linalg.norm(pts - (-0.2, 0), axis=1))]
     np.testing.assert_allclose(apex, (-0.2, 0), atol=1e-6)  # moved 0.1 * radius 2
     assert pie.texts is not None and pie.autotexts is not None
-    np.testing.assert_allclose(
-        pie.texts[0].get_center()[:2],
-        2.2 * np.array([np.cos(np.pi / 4)] * 2),
-        atol=1e-6,
-    )
+    c45 = np.cos(np.pi / 4)
+    assert pie.texts[0].get_left()[0] == pytest.approx(2.2 * c45, abs=1e-6)
+    assert pie.texts[0].get_center()[1] == pytest.approx(2.2 * c45, abs=1e-6)
+    assert pie.texts[1].get_right()[0] == pytest.approx(-0.2 - 2.2, abs=1e-6)
+    assert pie.texts[0].font_size == pytest.approx(24)
+    assert pie.autotexts[1].font_size == pytest.approx(24)
     assert text_of(pie.autotexts[1]) == "50.0%"
     np.testing.assert_allclose(
         pie.autotexts[1].get_center()[:2], (-0.2 - 1.2, 0), atol=1e-6
@@ -81,6 +82,13 @@ def test_pi2_explode_labels_and_percentages():
     assert called.autotexts is not None
     assert text_of(called.autotexts[1]) == "75"
     assert mp.PieChart([1, 1]).texts is None
+    contrast = mp.PieChart([1, 1], colors=["#ffffff", "#000000"], autopct="%d%%")
+    assert contrast.autotexts is not None
+    dark, light = (
+        ManimColor(t.family_members_with_points()[0].get_fill_color())
+        for t in contrast.autotexts
+    )
+    assert dark == ManimColor(BLACK) and light == ManimColor(WHITE)
 
 
 def test_pi3_style_and_pi4_set_data():
@@ -114,8 +122,9 @@ def test_bx1_stats_are_matplotlibs():
     assert (s["whislo"], s["whishi"]) == pytest.approx((1, 9))
     np.testing.assert_allclose(s["fliers"], [30])
     assert s["mean"] == pytest.approx(7.5)
-    wide = ax.boxplot(D, whis=(0, 100))
+    wide = ax.boxplot(D, whis=(0, 100))  # no fliers: an empty part, no warning
     assert wide.stats[0]["whishi"] == pytest.approx(30)
+    assert len(wide.stats[0]["fliers"]) == 0
 
 
 def test_bx2_parts_in_data():
