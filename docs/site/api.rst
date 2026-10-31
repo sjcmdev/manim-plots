@@ -118,6 +118,10 @@ Animations
 
 .. autoclass:: GrowBars
 
+.. autoclass:: GrowSurface
+
+.. autoclass:: ShrinkSurface
+
 .. autoclass:: ShrinkBars
 
 .. autoclass:: SortBars

@@ -12,7 +12,6 @@ from manim import (
     BLUE_D,
     BLUE_E,
     LIGHT_GREY,
-    Animation,
     ManimColor,
     Mobject,
     VGroup,
@@ -107,6 +106,10 @@ class _Face(_FaceStyle, ThreeDVMobject):
         driver = self._owner.__dict__.get("_driver")
         if driver is not None and not self._owner._building:
             driver._ensure()
+        elif self._owner._building:
+            presentation = self.__dict__.get("_presentation")
+            if presentation is not None:
+                presentation()
         return self._face_points
 
     @points.setter
@@ -294,6 +297,10 @@ class SurfacePlot(VGroup):
     def color_mapping(self) -> ColorMapping | None:
         """Return the current value mapping, or None for a checkerboard."""
         self._driver._ensure()
+        if self._building:
+            # Buffer ownership suspends geometry, not the bound colour range.
+            self._system._sync_data()
+            self._paint_faces()
         return self._color_mapping
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
@@ -725,67 +732,6 @@ class SurfacePlot(VGroup):
         return ContourPlot(
             self, levels, zdir=zdir, offset=offset, colorscale=colorscale, **kwargs
         )
-
-
-class GrowSurface(Animation):
-    """Raise a bound surface from a coordinate plane.
-
-    Parameters
-    ----------
-    surface, zdir, offset, **kwargs
-        Surface, growth coordinate, starting plane and animation options.
-    """
-
-    def __init__(
-        self,
-        surface: SurfacePlot,
-        zdir: str = "z",
-        offset: float | None = None,
-        **kwargs: object,
-    ) -> None:
-        if zdir not in ("x", "y", "z"):
-            raise ValueError("zdir must be x, y or z")
-        self.surface = surface
-        self._axis = "xyz".index(zdir)
-        self._offset = (
-            min(surface._system._ranges[self._axis].range.value)
-            if offset is None
-            else float(offset)
-        )
-        if not np.isfinite(self._offset):
-            raise ValueError("offset must be finite")
-        super().__init__(surface, **cast(dict[str, Any], kwargs))
-
-    def begin(self) -> None:
-        """Capture final data buffers before animation takes ownership."""
-        surface = self.surface
-        surface._driver._ensure()
-        mapping = surface._system._mapping()
-        self._final = [mapping.inverse(face.points.copy()) for face in surface.faces]
-        super().begin()
-
-    def interpolate_mobject(self, alpha: float) -> None:
-        """Map one shared growth fraction through the coordinate system.
-
-        Parameters
-        ----------
-        alpha
-            Animation progress before the rate function.
-        """
-        progress = self.rate_func(alpha)
-        for face, final in zip(self.surface.faces, self._final, strict=True):
-            data = final.copy()
-            data[:, self._axis] = self._offset + progress * (
-                data[:, self._axis] - self._offset
-            )
-            face.set_points(self.surface._system._mapping().to_screen(data))
-
-    def finish(self) -> None:
-        """Restore the bound surface with its final colours and no new updater."""
-        super().finish()
-        self.surface._building = False
-        self.surface._driver._dirty = True
-        self.surface._driver._ensure()
 
 
 class _LineGroup(VGroup):
@@ -1310,3 +1256,6 @@ class _PlaneProfile(_SliceArtist, FunctionPlot):
         source = cast(FunctionSource, self.source)
         self.source = FunctionSource(source.function, self._interval, dim=2)
         super()._rebuild()
+
+
+from manim_plots.animations.surfaces import GrowSurface as GrowSurface  # noqa: E402

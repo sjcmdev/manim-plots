@@ -13,6 +13,7 @@ animated.
    coming-from-manim
    differences
    gallery
+   animations
    api
 
 
