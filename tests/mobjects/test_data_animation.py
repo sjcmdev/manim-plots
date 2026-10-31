@@ -58,7 +58,8 @@ def test_gr1_bars_grow_from_their_base():
     assert np.all(np.diff(tops, axis=0) >= -1e-9)  # never shrinking
     mid = tops[len(tops) // 2]
     assert mid[0] / 4 >= mid[2] / 8 - 1e-9  # the first bar leads
-    np.testing.assert_allclose(tops[-1], [4, 6, 8], atol=1e-9)
+    final = [box(ax, b)[3] for b in bars]  # after the play's finish
+    np.testing.assert_allclose(final, [4, 6, 8], atol=1e-9)
     for b in bars:
         assert box(ax, b)[2] == pytest.approx(0, abs=1e-9)
     ax.set_y_range((0, 20, 5))
@@ -87,7 +88,7 @@ def test_gr2_shrink_removes_and_keeps_the_data():
 
 
 def test_gr1_histograms_and_3d_bars_grow():
-    ax = axes()
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(0, 40, 10))  # counts reach 17
     h = ax.hist(np.random.default_rng(0).normal(2, 1, 40), bins=4, range=(0, 4))
     probe(lambda s: s.play(mp.GrowBars(h.bars)), lambda: None)
     assert box(ax, h.bars[1])[3] == pytest.approx(h.counts[1], abs=1e-9)
@@ -229,7 +230,7 @@ def test_ap1_append_draws_on():
 def test_ap2_margins_and_autoscale():
     ax = mp.Axes(x_range=(0, 1, 1), y_range=(0, 1, 1))
     assert ax.margins() == pytest.approx((0.05, 0.05))
-    ax.line([0, 10], [-2, 2])
+    held = ax.line([0, 10], [-2, 2])  # the axes keep artists weakly
     ax.autoscale()
     assert tuple(ax.x_range[:2]) == pytest.approx((-0.5, 10.5))
     assert tuple(ax.y_range[:2]) == pytest.approx((-2.2, 2.2))
@@ -238,6 +239,7 @@ def test_ap2_margins_and_autoscale():
     assert tuple(ax.y_range[:2]) == pytest.approx((-4, 4))
     ax.autoscale(tight=True)
     assert tuple(ax.x_range[:2]) == pytest.approx((0, 10))
+    assert held is not None
 
 
 def test_ap3_append_with_autoscale_keeps_the_data_inside():
@@ -247,12 +249,13 @@ def test_ap3_append_with_autoscale_keeps_the_data_inside():
 
     def record() -> None:
         pts = np.array([ax.p2c(p) for p in np.asarray(line.points)[::4]])
-        lo, hi = ax.x_range[:2], ax.y_range[:2]
+        (x0, x1), (y0, y1) = ax.x_range[:2], ax.y_range[:2]
         inside.append(
             bool(
-                pts[:, 0].min() >= lo[0] - 1e-9
-                and pts[:, 0].max() <= hi[0] + 1e-9
-                and pts[:, 1].max() <= hi[1] + 1e-9
+                pts[:, 0].min() >= x0 - 1e-9
+                and pts[:, 0].max() <= x1 + 1e-9
+                and pts[:, 1].min() >= y0 - 1e-9
+                and pts[:, 1].max() <= y1 + 1e-9
             )
         )
 
@@ -270,6 +273,7 @@ def test_ap3_append_with_autoscale_keeps_the_data_inside():
 
 def test_ax1_build_axes_ends_where_it_started():
     ax = axes()
+    ax.x.add_numbers()
     before = [np.array(m.points, copy=True) for m in ax.family_members_with_points()]
     opacities: list[float] = []
 
