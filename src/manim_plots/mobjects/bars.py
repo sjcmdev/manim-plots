@@ -18,6 +18,7 @@ from manim import (
     Mobject,
     Tex,
     Text,
+    ThreeDCamera,
     VGroup,
     VMobject,
     config,
@@ -34,7 +35,11 @@ from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import _CurvePlot, _cycle_style
 from manim_plots.mobjects.axis import resolve_categories
 from manim_plots.mobjects.colormaps import resolve_colorscale
-from manim_plots.mobjects.context import animation_context
+from manim_plots.mobjects.context import (
+    _depth_order,
+    _drawing_camera,
+    animation_context,
+)
 from manim_plots.mobjects.helpers import _parameter
 from manim_plots.mobjects.leaves import (
     _STRAIGHT,
@@ -88,6 +93,26 @@ class _Bar(_CurvePlot):
         super().__init__(
             ArraySource(np.empty((0, 2))), system, use_smoothing=False, **style
         )
+
+    def get_family(self, recurse: bool = True) -> list[Mobject]:
+        """Return the family after refreshing lifted bars' camera-space depths.
+
+        Parameters
+        ----------
+        recurse
+            Passed through to Manim's family traversal.
+
+        Returns
+        -------
+        list of Mobject
+            The unchanged family, with depth ordering only for lifted bars.
+        """
+        if recurse and self.__dict__.get("_lift") is not None:
+            camera = _drawing_camera()
+            if isinstance(camera, ThreeDCamera) and "_cache" in self.__dict__:
+                self._ensure()
+                _depth_order(self, camera, (self,), self._cache)
+        return super().get_family(recurse)
 
     def _data_limits(self) -> FloatArray:
         x, h, w, b = (
