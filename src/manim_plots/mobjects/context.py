@@ -7,7 +7,7 @@ import sys
 import textwrap
 import warnings
 import weakref
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from types import FrameType
 from typing import Any, cast
@@ -2294,3 +2294,20 @@ def _drawing_camera() -> Camera | None:
     finally:
         del frame
     return None
+
+
+def _depth_order(
+    owner: Mobject, camera: ThreeDCamera, pieces: Iterable[Mobject], geometry: object
+) -> None:
+    signature = (id(camera), camera.get_phi(), camera.get_theta(), camera.get_gamma())
+    if (
+        owner.__dict__.get("_depth_signature") == signature
+        and owner.__dict__.get("_depth_geometry") is geometry
+    ):
+        return
+    # Centre queries traverse the family again.
+    owner.__dict__["_depth_signature"] = signature
+    owner.__dict__["_depth_geometry"] = geometry
+    rotation = camera.generate_rotation_matrix()
+    for piece in pieces:
+        piece.z_index = float((piece.get_center() @ rotation.T)[2])

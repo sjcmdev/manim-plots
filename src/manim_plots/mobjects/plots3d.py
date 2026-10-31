@@ -16,7 +16,11 @@ from manim_plots.core.scales import Scale
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import LinePlot, _CurvePlot, _cycle_style
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
-from manim_plots.mobjects.context import _drawing_camera, animation_context
+from manim_plots.mobjects.context import (
+    _depth_order,
+    _drawing_camera,
+    animation_context,
+)
 from manim_plots.mobjects.fields import _facing_basis, _VectorGroup
 from manim_plots.mobjects.geometry import _data_point, _ensure_binding, _inputs, _read
 from manim_plots.mobjects.heatmaps import _mapping
@@ -204,18 +208,7 @@ class _DepthOrderedPlot(VGroup):
         camera = _drawing_camera() if recurse and surface is not None else None
         if isinstance(camera, ThreeDCamera) and surface is not None:
             surface._driver._ensure()
-            signature = (
-                id(camera),
-                camera.get_phi(),
-                camera.get_theta(),
-                camera.get_gamma(),
-                surface._depth_version,
-            )
-            if self.__dict__.get("_depth_signature") != signature:
-                rotation = camera.generate_rotation_matrix()
-                for face in surface.faces:
-                    face.z_index = float((face.get_center() @ rotation.T)[2])
-                self._depth_signature = signature
+            _depth_order(self, camera, surface.faces, surface._depth_version)
         return super().get_family(recurse)
 
 
