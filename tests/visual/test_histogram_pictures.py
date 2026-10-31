@@ -12,7 +12,9 @@ RNG = np.random.default_rng(2)
 
 
 def axes() -> mp.Axes:
-    return mp.Axes(x_range=(-4, 4, 1), y_range=(0, 400, 100), x_length=9, y_length=5)
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(0, 500, 100), x_length=9, y_length=5)
+    ax.y.set_position("left")  # not through the bars at x = 0
+    return ax
 
 
 @pytest.mark.render
@@ -56,11 +58,11 @@ def test_two_datasets_side_by_side_and_steps(visual):
             RNG.normal(1, 0.8, 1500),
             RNG.normal(0, 2, 3000),
         )
-        ax.hist([a, b], bins=16, range=(-4, 4), label=["left", "right"])
-        ax.hist(
+        pair = ax.hist([a, b], bins=16, range=(-4, 4), label=["left", "right"])
+        wide = ax.hist(
             c, bins=16, range=(-4, 4), histtype="step", label="wide", stroke_width=3
         )
-        scene.add(ax, *ax.artists, ax.legend())
+        scene.add(ax, pair, wide, ax.legend())
 
     visual(construct)
 

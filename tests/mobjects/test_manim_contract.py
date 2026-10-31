@@ -324,6 +324,9 @@ ADDED_BY_TASK_31 = [
 ]
 
 
+ADDED_BY_TASK_32 = ["VGroup.__init__"]
+
+
 def names() -> list[str]:
     return [context.symbol_name(symbol) for symbol in context.SYMBOLS]
 
@@ -353,6 +356,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_29
         + ADDED_BY_TASK_30
         + ADDED_BY_TASK_31
+        + ADDED_BY_TASK_32
     )
 
 

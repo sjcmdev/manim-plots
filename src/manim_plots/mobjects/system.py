@@ -2159,6 +2159,82 @@ class CartesianAxes(VGroup):
         self.add(artist)
         return artist
 
+    def hist(self, x: object, bins: object = 10, **kwargs: object) -> mp.HistPlot:
+        """Create a histogram from samples.
+
+        Parameters
+        ----------
+        x, bins, **kwargs
+            Samples, NumPy bins and histogram counting, geometry and style options.
+        """
+        return mp.HistPlot(self, x, bins, **cast(Any, kwargs))
+
+    def step(
+        self, x: object, y: object, *, where: str = "pre", **kwargs: object
+    ) -> LinePlot:
+        """Create a line stepping before, after or between samples.
+
+        Parameters
+        ----------
+        x, y, where, **kwargs
+            Coordinates, step placement and line options.
+        """
+        from manim_plots.mobjects.histograms import _step_vertices
+
+        return self.line(_step_vertices(x, y, where), **cast(Any, kwargs))
+
+    def stairs(
+        self,
+        values: object,
+        edges: object = None,
+        *,
+        baseline: object = 0,
+        fill: bool = False,
+        orientation: str = "vertical",
+        **style: object,
+    ) -> LinePlot:
+        """Create steps across explicit bin edges.
+
+        Parameters
+        ----------
+        values, edges, baseline, fill, orientation, **style
+            Bin heights, edges, baseline, fill, direction and line styles.
+        """
+        from manim_plots.mobjects.histograms import _stairs_vertices
+
+        if fill:
+            style = {"fill_opacity": 1, "stroke_width": 0, **style}
+        return self.line(
+            _stairs_vertices(values, edges, baseline, orientation, fill),
+            **cast(Any, style),
+        )
+
+    def stackplot(
+        self,
+        x: object,
+        *ys: object,
+        labels: Sequence[str] = (),
+        colors: object = None,
+        baseline: str = "zero",
+        **style: object,
+    ) -> mp.StackPlot:
+        """Fill cumulative series.
+
+        Parameters
+        ----------
+        x, ys, labels, colors, baseline, **style
+            Coordinates, series, labels, colours, baseline and fill styles.
+        """
+        return mp.StackPlot(
+            self,
+            x,
+            ys,
+            labels=labels,
+            colors=colors,
+            baseline=baseline,
+            **cast(Any, style),
+        )
+
     def bar(
         self,
         x: object,

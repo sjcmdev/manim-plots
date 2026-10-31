@@ -72,7 +72,7 @@ class HistPlot(VGroup):  # mp.HistPlot
 |---|---|
 | SP-1 | `ax.step(x, y, where="pre")` is a `LinePlot` through matplotlib's vertices: `"pre"` `(x0, y0), (x0, y1), (x1, y1), (x1, y2), …`; `"post"` `(x0, y0), (x1, y0), (x1, y1), (x2, y1), …`; `"mid"` steps at the midpoints between the `x`. Any other `where` raises `ValueError` naming `where` |
 | SP-2 | `ax.stairs(values, edges)` (edges default `0 … n`) draws the steps `(e_i, v_i)–(e_{i+1}, v_i)` joined by verticals, down to `baseline` at both ends; `fill=True` closes and fills it to the baseline; `orientation="horizontal"` swaps the axes |
-| SP-3 | `ax.stackplot(x, y0, y1, …)` is a `StackPlot` of one `fill_between` region per series, region `k` between the cumulative sums `Σ_{j<k} y_j` and `Σ_{j≤k} y_j` (baseline `"zero"`), `"sym"` centring the stack on 0 (matplotlib's); each region the next colour of the cycle or `colors[k]`, labelled `labels[k]`; `stack.regions[k]` |
+| SP-3 | `ax.stackplot(x, y0, y1, …)` is a `StackPlot` of one `fill_between` region per series, region `k` between the cumulative sums `Σ_{j<k} y_j` and `Σ_{j≤k} y_j` (baseline `"zero"`), `"sym"` centring the stack on 0 (matplotlib's); each region the next colour of the cycle or `colors[k]`, labelled `labels[k]` with a legend entry whose handle is a filled square in the region's colour (BA-6's) *(review: the handles were missing)*; `stack.regions[k]` |
 
 ## Frame cost
 
