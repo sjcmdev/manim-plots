@@ -14,13 +14,30 @@ no implementation. Task 40 supplies `_base`; all tests observe public behaviour.
 ```python
 class RefineRiemann(Animation):
     def __init__(self, rectangles, dx, *, lag_ratio=0, order="data", **kwargs): ...
+
+
 class RebinHistogram(Animation):
     def __init__(self, hist, bins, **kwargs): ...
+
+
 class StackVoxels(Animation):
-    def __init__(self, voxels, *, axis="z", direction=1, lag_ratio=0.1,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        voxels,
+        *,
+        axis="z",
+        direction=1,
+        lag_ratio=0.1,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class SweepIsovalue(Animation):
     def __init__(self, surface, level, **kwargs): ...
+
+
 class SweepSlice(Animation):
     def __init__(self, view, stop, **kwargs): ...
 ```

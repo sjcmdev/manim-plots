@@ -18,29 +18,73 @@ This specification changes only this table and `tests/animations/`.
 ```python
 # New signatures; every parameter default here is (default taken).
 class GrowField(Animation):
-    def __init__(self, field, *, order="data", lag_ratio=0.02,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        field,
+        *,
+        order="data",
+        lag_ratio=0.02,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class GrowStems(Animation):
-    def __init__(self, stems, *, lag_ratio=0.05,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, stems, *, lag_ratio=0.05, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class RevealWireframe(Animation):
-    def __init__(self, wireframe, *, families=("u", "v"), lag_ratio=0.05,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        wireframe,
+        *,
+        families=("u", "v"),
+        lag_ratio=0.05,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class RevealWaterfall(Animation):
-    def __init__(self, waterfall, *, lag_ratio=0.15,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, waterfall, *, lag_ratio=0.15, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class SweepSurface(Animation):
-    def __init__(self, surface, *, axis="u", direction=1,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, surface, *, axis="u", direction=1, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class SweepPolar(Animation):
-    def __init__(self, ax, *, start_angle=0, angle=2 * PI, lag_ratio=0,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        ax,
+        *,
+        start_angle=0,
+        angle=2 * PI,
+        lag_ratio=0,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class OpenInset(AnimationGroup):
-    def __init__(self, inset, *, lag_ratio=0.25,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, inset, *, lag_ratio=0.25, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class CloseInset(OpenInset):
-    def __init__(self, inset, *, lag_ratio=0.25,
-                 reverse=True, remover=None, **kwargs): ...
+    def __init__(
+        self, inset, *, lag_ratio=0.25, reverse=True, remover=None, **kwargs
+    ): ...
 ```
 
 `Animation` can be a subclass; `AnimationGroup` can be its `LaggedStart` or
