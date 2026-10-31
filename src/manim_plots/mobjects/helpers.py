@@ -56,6 +56,7 @@ from manim_plots.mobjects.leaves import (
     Leaf,
     _ArtistOptions,
     _label,
+    _replace_glyphs,
     _VMStyle,
 )
 
@@ -1660,9 +1661,7 @@ class _NativeBinding:
     def glyphs(self, native: Mobject) -> None:
         if isinstance(native, VMobject):
             glyphs = list(_label(native).submobjects)
-            if isinstance(self.mob, VMobject):
-                self.mob.clear_points()
-            self.mob.submobjects = list(glyphs)
+            _replace_glyphs(self.mob, glyphs)
             for leaf in self.mob.get_family():
                 if isinstance(leaf, Leaf):
                     cast(Any, leaf)._label_owner = self

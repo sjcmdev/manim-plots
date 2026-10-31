@@ -12,7 +12,7 @@ from manim_plots.core.formatters import DecimalFormatter
 from manim_plots.core.scales import LinearScale
 from manim_plots.core.ticks import Level, round_key
 from manim_plots.mobjects import axis as axis_module
-from manim_plots.mobjects.leaves import Leaf, NumberLabel, _label
+from manim_plots.mobjects.leaves import Leaf, NumberLabel, _label, _replace_glyphs
 
 T = TypeVar("T", bound=VMobject)
 
@@ -184,7 +184,7 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                 fresh.font_size = axis.font_size
                 if key in axis._number_leaves:
                     fresh.match_style(label)
-                label.submobjects = fresh.submobjects
+                _replace_glyphs(label, fresh.submobjects)
             elif changed or style_changed:
                 fresh = NumberLabel(
                     float(x),
@@ -199,7 +199,7 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                     },
                 )
                 fresh.match_style(label)
-                label.submobjects = fresh.submobjects
+                _replace_glyphs(label, fresh.submobjects)
             direction = axis._number_options.get(
                 "direction", axis._number_direction(float(x))
             )
@@ -377,7 +377,7 @@ def _configure_labels(axis: axis_module.Axis) -> None:
             else:
                 _restore_overlap(label)
                 fresh.match_style(label)
-                label.submobjects = fresh.submobjects
+                _replace_glyphs(label, fresh.submobjects)
             label.next_to(
                 anchor,
                 direction=axis._label_options["direction"],

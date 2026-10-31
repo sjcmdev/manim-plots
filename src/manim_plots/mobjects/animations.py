@@ -172,9 +172,13 @@ class SortBars(Animation):
             reverse=self.reverse,
         )
         self._starts = np.array([b.parameters["x"].value for b in self._items])
+        axis = self.bars._system.y if self.bars.horizontal else self.bars._system.x
+        slots = (
+            np.arange(len(self._items)) if axis.categories else np.sort(self._starts)
+        )
         self._ends = self._starts.copy()
         for slot, index in enumerate(self._order):
-            self._ends[index] = self._starts[slot]
+            self._ends[index] = slots[slot]
         super().begin()
 
     def interpolate_mobject(self, alpha: float) -> None:

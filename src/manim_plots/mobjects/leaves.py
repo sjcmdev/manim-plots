@@ -771,7 +771,7 @@ class NumberLabel(VGroup):
             glyphs = _label(constructor(text, font_size=self._font_size))
         else:
             glyphs = _formatted_glyphs(text, self._font_size)
-        self.submobjects = glyphs.submobjects
+        _replace_glyphs(self, glyphs.submobjects)
         self.text = text
         self.initial_height = self.height or 1.0
         self.set_style(**style)
@@ -793,6 +793,15 @@ class NumberLabel(VGroup):
     def get_value(self) -> float:
         """Return the represented numeric value."""
         return self.number
+
+
+def _replace_glyphs(label: Mobject, glyphs: Sequence[Mobject]) -> None:
+    retained = {id(member) for glyph in glyphs for member in glyph.get_family()}
+    for member in label.get_family():
+        if id(member) not in retained:
+            # Manim may still draw retired glyphs from its flat moving-mobject list.
+            member.points = np.empty((0, 3))
+    label.submobjects = list(glyphs)
 
 
 def _label(value: object, *, text_mode: bool = False, font_size: float = 48) -> VGroup:
