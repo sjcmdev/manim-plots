@@ -7,7 +7,7 @@ The oracles: `numpy.histogram2d`, the bar geometry written out, matplotlib's
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -164,8 +164,8 @@ def test_b3_2_two_d_bars_in_a_plane():
 
 def test_b3_3_histograms_in_planes():
     ax = axes()
-    h = ax.hist(X, bins=6, range=(-3, 3), zs=-1, zdir="y", color_by="count")
-    assert isinstance(h, mp.HistPlot)
+    h: Any = ax.hist(X, bins=6, range=(-3, 3), zs=-1, zdir="y", color_by="count")
+    assert isinstance(cast(object, h), mp.HistPlot)
     pts = data(ax, corners(h.bars[2]))
     np.testing.assert_allclose(pts[:, 1], -1, atol=1e-9)
     assert pts[:, 2].max() == pytest.approx(h.counts[2])

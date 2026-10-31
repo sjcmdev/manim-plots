@@ -7,7 +7,7 @@ the axes' state before and after each animation.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -89,7 +89,7 @@ def test_gr2_shrink_removes_and_keeps_the_data():
 
 def test_gr1_histograms_and_3d_bars_grow():
     ax = mp.Axes(x_range=(-1, 5, 1), y_range=(0, 40, 10))  # counts reach 17
-    h = ax.hist(np.random.default_rng(0).normal(2, 1, 40), bins=4, range=(0, 4))
+    h: Any = ax.hist(np.random.default_rng(0).normal(2, 1, 40), bins=4, range=(0, 4))
     probe(lambda s: s.play(mp.GrowBars(h.bars)), lambda: None)
     assert box(ax, h.bars[1])[3] == pytest.approx(h.counts[1], abs=1e-9)
     ax3 = mp.ThreeDAxes(z_range=(0, 10, 2))
@@ -132,7 +132,7 @@ def test_sd2_histogram_counts_interpolate():
     ax = mp.Axes(x_range=(-1, 5, 1), y_range=(0, 200, 50))  # no count is clipped
     rng = np.random.default_rng(1)
     first, second = rng.normal(1, 0.5, 200), rng.normal(3, 0.5, 200)
-    h = ax.hist(first, bins=4, range=(0, 4))
+    h: Any = ax.hist(first, bins=4, range=(0, 4))
     start = h.counts.copy()
     end = np.histogram(second, 4, (0, 4))[0]
     seen: list[np.ndarray] = []
@@ -202,7 +202,7 @@ def test_sb2_a_race():
         for values in steps:
             scene.play(
                 Succession(
-                    bars.animate.set_data(x=["a", "b", "c"], height=values),
+                    cast(Any, bars.animate).set_data(x=["a", "b", "c"], height=values),
                     mp.SortBars(bars, reverse=True),
                 )
             )
