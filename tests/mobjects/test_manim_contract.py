@@ -375,6 +375,9 @@ def names() -> list[str]:
     return [context.symbol_name(symbol) for symbol in context.SYMBOLS]
 
 
+ADDED_BY_TASK_42 = ["VMobject.get_style"]
+
+
 ADDED_BY_TASK_40 = [
     "Animation",
     "Animation.__new__",
@@ -442,6 +445,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_39
         + ADDED_BY_TASK_34
         + ADDED_BY_TASK_40
+        + ADDED_BY_TASK_42
     )
 
 

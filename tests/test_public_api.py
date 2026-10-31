@@ -13,6 +13,14 @@ from manim_plots.core import ManimPlotsWarning
 from manim_plots.core.nodes import CompiledMap
 
 EXPECTED = {
+    # task 42
+    "ExplodePie",
+    "GrowBoxPlot",
+    "GrowStack",
+    "RevealCells",
+    "RevealContours",
+    "SweepPie",
+    "UnfoldViolin",
     "__version__",
     "ManimPlotsWarning",
     "Scale",
