@@ -120,7 +120,7 @@ def test_sd1_keyed_change_moves_grows_and_removes():
     probe(construct, record)
     tops_b = np.array([s[0] for s in seen])
     assert np.all(np.diff(tops_b) >= -1e-9)
-    assert tops_b[-1] == pytest.approx(8, abs=1e-9)
+    assert box(ax, b)[3] == pytest.approx(8, abs=1e-9)  # after the play's finish
     tops_a = np.array([s[1] for s in seen])
     assert np.all(np.diff(tops_a) <= 1e-9)
     assert a not in list(bars)
@@ -129,7 +129,7 @@ def test_sd1_keyed_change_moves_grows_and_removes():
 
 
 def test_sd2_histogram_counts_interpolate():
-    ax = axes()
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(0, 200, 50))  # no count is clipped
     rng = np.random.default_rng(1)
     first, second = rng.normal(1, 0.5, 200), rng.normal(3, 0.5, 200)
     h = ax.hist(first, bins=4, range=(0, 4))
@@ -146,7 +146,8 @@ def test_sd2_histogram_counts_interpolate():
         alpha = (tops - start) / np.where(end != start, end - start, 1)
         moving = end != start
         assert np.ptp(alpha[moving]) < 1e-6  # one alpha for every bin
-    np.testing.assert_allclose(seen[-1], end, atol=1e-9)
+    final = np.array([box(ax, b)[3] for b in h.bars])  # after the play's finish
+    np.testing.assert_allclose(final, end, atol=1e-9)
 
 
 def test_sd2_heatmap_values_interpolate_through_the_mapping():
