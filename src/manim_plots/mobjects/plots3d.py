@@ -172,7 +172,40 @@ class _BarSurface(SurfacePlot):
     _bar_corners: FloatArray
 
 
-class BarPlot3D(VGroup):
+class _DepthOrderedPlot(VGroup):
+    def get_family(self, recurse: bool = True) -> list[Mobject]:
+        """Return the family after refreshing camera-space face depths.
+
+        Parameters
+        ----------
+        recurse
+            Passed through to Manim's family traversal.
+
+        Returns
+        -------
+        list of Mobject
+            The family with face identities and addressing unchanged.
+        """
+        surface = cast(_BarSurface | None, self.__dict__.get("_surface"))
+        camera = _drawing_camera() if recurse and surface is not None else None
+        if isinstance(camera, ThreeDCamera) and surface is not None:
+            surface._driver._ensure()
+            signature = (
+                id(camera),
+                camera.get_phi(),
+                camera.get_theta(),
+                camera.get_gamma(),
+                surface._depth_version,
+            )
+            if self.__dict__.get("_depth_signature") != signature:
+                rotation = camera.generate_rotation_matrix()
+                for face in surface.faces:
+                    face.z_index = float((face.get_center() @ rotation.T)[2])
+                self._depth_signature = signature
+        return super().get_family(recurse)
+
+
+class BarPlot3D(_DepthOrderedPlot):
     """Draw six clipped, independently styleable faces per data box.
 
     Parameters
@@ -270,37 +303,6 @@ class BarPlot3D(VGroup):
             self.bars.add(faces)
         self._surface = surface
         super().__init__(self.bars)
-
-    def get_family(self, recurse: bool = True) -> list[Mobject]:
-        """Return the family after refreshing camera-space face depths.
-
-        Parameters
-        ----------
-        recurse
-            Passed through to Manim's family traversal.
-
-        Returns
-        -------
-        list of Mobject
-            The family with face identities and addressing unchanged.
-        """
-        surface = cast(_BarSurface | None, self.__dict__.get("_surface"))
-        camera = _drawing_camera() if recurse and surface is not None else None
-        if isinstance(camera, ThreeDCamera) and surface is not None:
-            surface._driver._ensure()
-            signature = (
-                id(camera),
-                camera.get_phi(),
-                camera.get_theta(),
-                camera.get_gamma(),
-                surface._depth_version,
-            )
-            if self.__dict__.get("_depth_signature") != signature:
-                rotation = camera.generate_rotation_matrix()
-                for face in surface.faces:
-                    face.z_index = float((face.get_center() @ rotation.T)[2])
-                self._depth_signature = signature
-        return super().get_family(recurse)
 
     def _color_range(self, values: FloatArray) -> tuple[float, float]:
         lo, hi = (
@@ -486,7 +488,7 @@ class Hist3DPlot(BarPlot3D):
         return self
 
 
-class VoxelPlot(VGroup):
+class VoxelPlot(_DepthOrderedPlot):
     """Draw the exposed faces of a boolean voxel grid.
 
     Parameters
