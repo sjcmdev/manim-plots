@@ -45,13 +45,14 @@ def drawn(ax: Any, mob: Any) -> np.ndarray:
 def shoot(
     ax: Any, *mobs: Any, phi: float, theta: float, record: Callable[[], Any]
 ) -> Any:
-    """Render one still frame from the given camera and return ``record()``."""
+    """Render one still frame of the axes and their artists from the given camera
+    and return ``record()``."""
     out: list[Any] = []
 
     class Shot(ThreeDScene):
         def construct(self) -> None:
             self.set_camera_orientation(phi=phi * DEGREES, theta=theta * DEGREES)
-            self.add(ax, *mobs)
+            self.add(ax, *ax.artists, *mobs)
             self.wait(1 / 6)
             out.append(record())
 

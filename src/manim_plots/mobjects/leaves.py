@@ -229,6 +229,9 @@ class Leaf(VMobject):
             and self._lifecycle.state not in (lc.State.TRANSIENT, lc.State.REMOVED)
         ):
             self._ensure()
+        drawn = self.__dict__.get("_occlusion_drawn")
+        if drawn is not None and drawn[0] is self._cache:
+            return cast(FloatArray, drawn[1])
         return self._cache
 
     @points.setter

@@ -124,6 +124,8 @@ class ThreeDAxes(CartesianAxes):
         Origin or camera-following box; optionally orient text to the camera.
     aspect
         Equal data units or a positive three-component box ratio.
+    occlusion
+        Enable automatic depth occlusion, force numpy or gpu, or disable it.
     theme, cycle
         Decoration defaults and artist colour cycle.
     **kwargs
@@ -151,10 +153,14 @@ class ThreeDAxes(CartesianAxes):
         frame: Literal["origin", "box"] | None = None,
         aspect: str | Sequence[float] | None = None,
         face_camera: bool | None = None,
+        occlusion: bool | Literal["numpy", "gpu"] = True,
         theme: str | Theme | Mapping[str, Any] | None = None,
         cycle: str | Sequence[ParsableManimColor] | None = None,
         **kwargs: object,
     ) -> None:
+        if not (type(occlusion) is bool or occlusion in ("numpy", "gpu")):
+            raise ValueError("occlusion must be True, False, numpy or gpu")
+        self._occlusion = occlusion
         chosen = _resolve_theme(theme)
         style = frame or (
             "box" if chosen.position == "border" and chosen.box else "origin"
@@ -285,7 +291,7 @@ class ThreeDAxes(CartesianAxes):
             self._update_view(0, -PI / 2)
             for axis in self._ranges:
                 axis.add_numbers()
-        if style == "box" or self.face_camera:
+        if style == "box" or self.face_camera or self._occlusion:
             self.add_updater(_camera_update)
 
     def _add_3d_pieces(self) -> None:
@@ -1170,7 +1176,8 @@ class ThreeDAxes(CartesianAxes):
             The unchanged family returned by Manim.
         """
         if (
-            self._field_views
+            self.__dict__.get("_occlusion", False)
+            or self._field_views
             or self.face_camera
             or self.__dict__.get("_frame_style") == "box"
         ):
@@ -1180,6 +1187,10 @@ class ThreeDAxes(CartesianAxes):
                     self._camera = camera
                     self._camera_angles = None
                 self._read_camera()
+                if self._occlusion and isinstance(camera, ThreeDCamera):
+                    from manim_plots.mobjects.occlusion import occlude
+
+                    occlude(self, camera)
         return super().get_family(recurse)
 
     def set_camera(self, camera: Camera) -> Self:
@@ -1817,6 +1828,10 @@ def _camera_update(mobject: Mobject, dt: float) -> None:
         axes._camera.add_fixed_in_frame_mobjects(axes._legend_pending)
         axes._legend_pending = None
     axes._read_camera()
+    if axes._occlusion and isinstance(axes._camera, ThreeDCamera):
+        from manim_plots.mobjects.occlusion import occlude
+
+        occlude(axes, axes._camera)
 
 
 def _validate_coords(coords: object) -> None:
