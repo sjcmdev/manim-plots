@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
-from manim import Scene, Succession, linear
+from manim import ManimColor, Scene, Succession, ValueTracker, linear
 
 import manim_plots as mp
 
@@ -209,6 +209,88 @@ def test_sb2_a_race():
 
     probe(construct, lambda: None)
     assert ax.x.categories == ("c", "a", "b")
+
+
+def test_sb1_slots_follow_the_categories_after_several_sorts():
+    names = ["a", "b", "c", "d", "e"]
+    ax = mp.Axes(y_range=(0, 10, 2))
+    bars = ax.bar(names, [3, 5, 2, 4, 1])
+
+    def construct(scene: Scene) -> None:
+        scene.add(ax, bars)
+        for values in ([4, 5, 6, 4, 3], [6, 5, 7, 8, 5]):
+            scene.play(cast(Any, bars.animate).set_data(x=names, height=values))
+            scene.play(mp.SortBars(bars, reverse=True))
+
+    probe(construct, lambda: None)
+    assert ax.x.categories == ("d", "c", "a", "b", "e")
+    for name in names:
+        x0, x1, _, _ = box(ax, bars.at(name))
+        assert (x0 + x1) / 2 == pytest.approx(ax.x.categories.index(name), abs=1e-9)
+
+
+def test_sd1_colour_by_height_follows_the_data():
+    ax = mp.Axes(y_range=(0, 10, 2))
+    bars = ax.bar(["a", "b"], [2, 8], c="height", vmin=0, vmax=10)
+    viridis = mp.colormaps["viridis"]
+
+    def colour(name: str) -> np.ndarray:
+        return np.asarray(ManimColor(bars.at(name).get_fill_color()).to_rgb())
+
+    def construct(scene: Scene) -> None:
+        scene.add(ax, bars)
+        scene.play(cast(Any, bars.animate).set_data(x=["a", "b"], height=[8, 2]))
+
+    probe(construct, lambda: None)
+    np.testing.assert_allclose(colour("a"), viridis(0.8), atol=1.5 / 255)
+    np.testing.assert_allclose(colour("b"), viridis(0.2), atol=1.5 / 255)
+    bars.set_data(x=["a", "b"], height=[5, 5])
+    np.testing.assert_allclose(colour("a"), viridis(0.5), atol=1.5 / 255)
+
+
+# --- LB -------------------------------------------------------------------------------
+
+
+def no_ghosts(scene: Scene) -> list[str]:
+    """Names of moving mobjects that left every family but still have points."""
+    alive = {id(m) for top in scene.mobjects for m in top.get_family()}
+    return [
+        type(m).__name__
+        for m in scene.moving_mobjects
+        if id(m) not in alive and m.has_points()
+    ]
+
+
+def test_lb1_rebuilt_labels_leave_no_ghosts():
+    ax = mp.Axes(x_range=(0, 4, 1), y_range=(0, 10, 2))
+    line = ax.line([0, 0.5, 1], [1, 1.2, 1.65])
+    end = ax.end_label(line)
+    bars = ax.bar([3], [2])
+    values = ax.bar_label(bars)
+    t = ValueTracker(0.5)
+    cross = ax.crosshair(t, 2)
+    ghosts: list[str] = []
+
+    class Shot(Scene):
+        def update_to_time(self, time: float) -> None:
+            super().update_to_time(time)
+            ghosts.extend(no_ghosts(self))
+
+        def construct(self) -> None:
+            self.add(ax, line, end, bars, values, cross)
+            self.play(
+                mp.AppendData(line, [2, 3], [5, 8]),
+                cast(Any, bars.animate).set_data(x=[3], height=[9]),
+                t.animate.set_value(3.5),
+            )
+
+    from manim import tempconfig
+
+    from .helpers import RUN
+
+    with tempconfig(RUN):
+        Shot().render()
+    assert ghosts == []
 
 
 # --- AP -------------------------------------------------------------------------------

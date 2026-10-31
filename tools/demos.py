@@ -820,7 +820,7 @@ def bar_race(scene: Scene) -> None:
         scene.play(bars.animate.set_data(x=names, height=values), run_time=1)
         show_call(scene, shown, "self.play(mp.SortBars(bars, reverse=True))")
         scene.play(mp.SortBars(bars, reverse=True), run_time=1)
-    scene.play(mp.HighlightBar(bars, bars.at(ax.x.categories[0])), run_time=1.5)
+    scene.play(mp.HighlightBar(bars, ax.x.categories[0]), run_time=1.5)
     scene.wait(0.5)
 
 

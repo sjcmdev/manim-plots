@@ -39,7 +39,7 @@ a `BarPlot3D` or `Hist3DPlot` (tasks 29, 33), or a `BarChart`'s `bars`.
 
 | ID | Row |
 |---|---|
-| SD-1 | `bars.animate.set_data(x=…, height=…)` on a `BarPlot` interpolates by key (the category name or the `x`): a key present before and after moves its height (and position, when its `x` changed) linearly in data with the rate function; a new key grows from its base as GR-1; a key that leaves shrinks to its base and its bar is removed at the end. On every frame each bar equals the bar of the interpolated data |
+| SD-1 | `bars.animate.set_data(x=…, height=…)` on a `BarPlot` interpolates by key (the category name or the `x`): a key present before and after moves its height (and position, when its `x` changed) linearly in data with the rate function; a new key grows from its base as GR-1; a key that leaves shrinks to its base and its bar is removed at the end. On every frame each bar equals the bar of the interpolated data, its colour too when it is coloured by value (BA-4's `c="height"` maps the interpolated heights) *(review: the race kept its first colours)* |
 | SD-2 | `hist.animate.set_data(x)` (task 32, same edges) interpolates the counts bin by bin; `hist3d.animate.set_data(x, y)` likewise; `heatmap.animate.set_data(C)` (task 37) interpolates the values, so the colours pass through the mapping of the interpolated values (not a colour blend) |
 | SD-3 | `chart.animate.change_bar_values(values)` on a `BarChart` is SD-1 on its bars (BC-4) |
 
@@ -47,7 +47,7 @@ a `BarPlot3D` or `Hist3DPlot` (tasks 29, 33), or a `BarChart`'s `bars`.
 
 | ID | Row |
 |---|---|
-| SB-1 | `mp.SortBars(bars, key=None, reverse=False)` moves every bar to its place in the order of `key(height)` (heights by default; ascending, `reverse=True` descending): bar `i` slides along the category axis from its position to its new slot linearly, its height fixed; ties keep their order. On a categorical axis the category names travel with their bars and `ax.x.categories` is the new order at the end |
+| SB-1 | `mp.SortBars(bars, key=None, reverse=False)` moves every bar to its place in the order of `key(height)` (heights by default; ascending, `reverse=True` descending): bar `i` slides along the category axis from its position to its new slot linearly, its height fixed; ties keep their order. On a categorical axis the category names travel with their bars and `ax.x.categories` is the new order at the end; after any number of sorts every bar sits at its category's index in `ax.x.categories` *(review: a second sort placed bars by their original order)* |
 | SB-2 | Run after each `set_data` in a `Succession`, it gives a bar-chart race: test scene: three successive data sets, each `set_data` then `SortBars`, ends with the bars sorted by the last data |
 
 ## AP — appending data, autoscale and margins
@@ -65,6 +65,12 @@ a `BarPlot3D` or `Hist3DPlot` (tasks 29, 33), or a `BarChart`'s `bars`.
 | AX-1 | `mp.BuildAxes(ax, lag_ratio=0.5)` draws the system in stages with Manim's `Create`/`FadeIn`: the axis lines, then the ticks, then the numbers, then the axis labels and grid, each stage starting `lag_ratio` into the previous one; at the end every leaf is as before |
 | AX-2 | `mp.HighlightTick(axis, value)` is Manim's `Indicate` on the tick at `value` and its number together (colour, `scale_factor`), and leaves them as before; a value with no tick raises `KeyError` |
 | AX-3 | `mp.HighlightBar(bars, key)` dims every other bar to `dim_opacity` and indicates bar `key`, then restores every bar's opacity |
+
+## LB — labels that change during a play
+
+| ID | Row |
+|---|---|
+| LB-1 | A text that is rebuilt while a play runs — `end_label` (task 35), `bar_label` and `get_bar_labels` (task 31), the crosshair readout (task 35), axis numbers and colorbar numbers — leaves no replaced glyph that still has points. Manim takes a play's moving mobjects as a flat list at its start and draws that list every frame, so a glyph swapped out of the family but left with its points draws on as a ghost *(review: the live-append film showed the first value standing still)*. Test: on every frame, no mobject in `scene.moving_mobjects` that is outside the current families of the scene's mobjects has points |
 
 ## Frame cost
 
