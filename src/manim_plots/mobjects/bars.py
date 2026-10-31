@@ -41,6 +41,7 @@ from manim_plots.mobjects.leaves import (
     Leaf,
     _ArtistOptions,
     _label,
+    _replace_glyphs,
     _VMStyle,
 )
 from manim_plots.mobjects.system import CartesianAxes
@@ -110,7 +111,7 @@ class _Bar(_CurvePlot):
             Native endpoints, progress and path.
         """
         super().interpolate(mobject1, mobject2, alpha, path_func)
-        mapping = self.__dict__.get("_height_mapping")
+        mapping = getattr(mobject2, "_height_mapping", None)
         if self._parameter_animation and mapping is not None:
             self.set_color(ManimColor(mapping(self.parameters["height"].value)))
         return self
@@ -196,7 +197,7 @@ class _LabelBinding:
 
     def _glyphs(self, text: VMobject) -> None:
         glyphs = _label(text)
-        self.text.submobjects = glyphs.submobjects
+        _replace_glyphs(self.text, glyphs.submobjects)
         for leaf in self.text.get_family():
             if isinstance(leaf, Leaf):
                 cast(Any, leaf)._label_owner = self
@@ -345,6 +346,8 @@ class BarPlot(VGroup):
                 None if _lift is None else partial(_lift_bar, _lift, i),
                 **cast(_ArtistOptions, own),
             )
+            if isinstance(c, str) and c == "height":
+                bar._height_mapping = self._color_mapping
             self.add(bar)
             system.add(bar)
 
@@ -464,6 +467,7 @@ class BarPlot(VGroup):
                 self.submobjects, self._color_mapping(values), strict=True
             ):
                 mob.set_color(ManimColor(color.tolist()))
+                cast(_Bar, mob)._height_mapping = None
         updates = dict(x=x, height=height, width=width, bottom=bottom)
         if x is not None:
             self._keys = list(np.broadcast_to(np.asarray(x), (len(self),)))
@@ -492,6 +496,10 @@ class BarPlot(VGroup):
                 bar.parameters[name] = _parameter(value, name)
             bar._dirty = True
             bar._ensure()
+            if bar._height_mapping is not None:
+                bar.set_color(
+                    ManimColor(bar._height_mapping(bar.parameters["height"].value))
+                )
             for binding in bar._label_bindings:
                 binding._ensure()
         return self
