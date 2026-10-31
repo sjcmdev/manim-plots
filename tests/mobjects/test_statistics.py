@@ -42,7 +42,8 @@ def test_pi1_wedges_follow_the_fractions():
     a0, a1 = angles(pie.wedges[0], ORIGIN), angles(pie.wedges[1], ORIGIN)
     assert a0.min() >= -1e-6 and a0.max() <= np.pi / 2 + 1e-6
     assert a1.min() >= np.pi / 2 - 1e-6 and a1.max() <= 3 * np.pi / 2 + 1e-6
-    radii = np.linalg.norm(np.asarray(pie.wedges[1].points)[:, :2], axis=1)
+    anchors = np.asarray(pie.wedges[1].points)[::4]  # Bezier handles bulge past r
+    radii = np.linalg.norm(anchors[:, :2], axis=1)
     assert radii.max() == pytest.approx(2, abs=1e-6)
 
 
@@ -187,7 +188,8 @@ def test_vi1_vi2_body_from_the_kde():
     factor = len(sample) ** (-1 / 5)
     grid = np.linspace(sample.min(), sample.max(), 100)
     peak = kde(sample, grid, factor).max()
-    right = body[body[:, 0] > 1 + 1e-9]
+    anchors = data(ax, np.asarray(v.bodies[0].points)[::4])  # no handles
+    right = anchors[anchors[:, 0] > 1 + 1e-9]
     expected = 0.25 * kde(sample, right[:, 1], factor) / peak
     np.testing.assert_allclose(right[:, 0] - 1, expected, atol=1e-3)
     assert (body[:, 0].max() - 1) == pytest.approx(0.25, abs=1e-6)
