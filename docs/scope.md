@@ -232,6 +232,7 @@ choosing it later breaks nothing.
 | F-920 | The tick pool is built from the parameter path at four times the animation's frame density, with spare hidden leaves; a key first seen at render time takes a spare and fades in; out of spares, a render warns once through `ManimPlotsWarning`, which the test suite turns into an error *(ADR 0003)*. Inactive pool leaves contribute no boundary anchors | **0.1** | D24, D25 |
 | F-921 | `mp.NumberPlane` follows Manim's `NumberPlane`: its signature, its defaults (the table below), its `background_line_style` and its faded lines *(ADR 0003)*. A standalone `NumberLine` and `ComplexPlane` | **0.1** / **0.2** | D27, ADR 0003 |
 | F-922 | Library mobjects work with Manim's scene caching on, hashed by their derived state, and keep identity hashing | **0.1** | D27 |
+| F-923 | `manim_plots.animations` holds every library animation, one module per family, old import paths kept. Every artist family has an entrance that follows its data (grow from a baseline, median or centre line, sweep, reveal in an order) and an exit through `reverse=True` / `remover=True` on the same class; data transitions (refine, rebin, isovalue, slice) have inverses, not removers. Each animation restores the canonical bound artist, leaves no updater of its own, declares the systems it changes (F-915) and samples nothing new (F-918) *(ADR 0008)* | **0.1** | ADR 0008 |
 
 ## F-10xx — Quality gates
 
