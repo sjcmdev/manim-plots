@@ -31,6 +31,7 @@ from manim import (
     Line,
     Line3D,
     LogBase,
+    ManimColor,
     Mobject,
     MoveAlongPath,
     NumberLine,
@@ -326,10 +327,18 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VMobject.get_color,
     Line.put_start_and_end_on,
     Arrow.get_end,
+    ManimColor.__init__,
+    ManimColor.to_rgb,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "ManimColor.__init__": (
+            "3eda25e075202fb58fb262f996b2c657bc1994b2535465de8c779111abaa4312"
+        ),
+        "ManimColor.to_rgb": (
+            "62b4ec147b506020b8b25253ba67c7c3fa66da48e05f716d1c79faade7eb4326"
+        ),
         "Dot.__init__": (
             "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
         ),
@@ -1078,6 +1087,12 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "ManimColor.__init__": (
+            "3eda25e075202fb58fb262f996b2c657bc1994b2535465de8c779111abaa4312"
+        ),
+        "ManimColor.to_rgb": (
+            "62b4ec147b506020b8b25253ba67c7c3fa66da48e05f716d1c79faade7eb4326"
+        ),
         "Dot.__init__": (
             "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
         ),

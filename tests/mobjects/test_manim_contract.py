@@ -327,6 +327,7 @@ ADDED_BY_TASK_31 = [
 
 
 ADDED_BY_TASK_32 = ["VGroup.__init__"]
+ADDED_BY_TASK_39 = ["ManimColor.__init__", "ManimColor.to_rgb"]
 ADDED_BY_TASK_35 = [
     "Dot.__init__",
     "Mobject.next_to",
@@ -379,6 +380,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_37
         + ADDED_BY_TASK_33
         + ADDED_BY_TASK_32
+        + ADDED_BY_TASK_39
     )
 
 

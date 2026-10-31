@@ -10,16 +10,29 @@ from numpy.typing import ArrayLike
 
 import manim_plots as mp
 from manim_plots.core import FloatArray
+from manim_plots.core.scales import Scale
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import LinePlot, _CurvePlot, _cycle_style
-from manim_plots.mobjects.colormaps import resolve_colorscale
+from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
 from manim_plots.mobjects.context import _drawing_camera
 from manim_plots.mobjects.fields import _facing_basis, _VectorGroup
 from manim_plots.mobjects.geometry import _data_point, _ensure_binding, _inputs, _read
+from manim_plots.mobjects.heatmaps import _mapping
 from manim_plots.mobjects.helpers import HelperGroup, _Binding, _HelperShape
 from manim_plots.mobjects.leaves import _ArtistOptions, _VMStyle
 from manim_plots.mobjects.projections import _juggle
 from manim_plots.mobjects.surfaces import SurfacePlot, _Face
+
+_BOX_FACES = np.array(
+    [
+        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+        [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
+        [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]],
+        [[0, 1, 0], [1, 1, 0], [1, 1, 1], [0, 1, 1]],
+        [[0, 0, 0], [0, 1, 0], [0, 1, 1], [0, 0, 1]],
+        [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]],
+    ]
+)
 
 
 class StemPlot(VGroup):
@@ -196,16 +209,7 @@ class BarPlot3D(VGroup):
             raise ValueError("bar coordinates and sizes must be finite")
         xyz = np.stack(arrays[:3], -1).reshape(-1, 3)
         sizes = np.stack(arrays[3:], -1).reshape(-1, 3)
-        unit = np.array(
-            [
-                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-                [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
-                [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]],
-                [[0, 1, 0], [1, 1, 0], [1, 1, 1], [0, 1, 1]],
-                [[0, 0, 0], [0, 1, 0], [0, 1, 1], [0, 0, 1]],
-                [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]],
-            ]
-        )
+        unit = _BOX_FACES
         self._color_mapping: mp.ColorMapping | None = None
         if c is not None:
             values = (
@@ -480,6 +484,159 @@ class Hist3DPlot(BarPlot3D):
                         )
         self._surface._derive()
         return self
+
+
+class VoxelPlot(VGroup):
+    """Draw the exposed faces of a boolean voxel grid.
+
+    Parameters
+    ----------
+    system, *args
+        Owning axes and filled array, or x, y, z corner arrays and filled.
+    facecolors, edgecolors, shade
+        Per-voxel or uniform fill, edge colour and fixed face lighting.
+    c, colorscale, vmin, vmax, norm, **style
+        Per-voxel scalar values, colour normalisation and face style.
+    """
+
+    def __init__(
+        self,
+        system: mp.ThreeDAxes,
+        *args: ArrayLike,
+        facecolors: object = None,
+        edgecolors: object = None,
+        shade: bool = True,
+        c: ArrayLike | None = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: Scale | str | None = None,
+        **style: object,
+    ) -> None:
+        if len(args) not in (1, 4):
+            raise TypeError("voxels expects filled or x, y, z, filled")
+        filled = np.asarray(args[-1], bool)
+        if filled.ndim != 3:
+            raise ValueError("filled must be three-dimensional")
+        shape = tuple(n + 1 for n in filled.shape)
+        coordinates = (
+            np.indices(shape, dtype=float)
+            if len(args) == 1
+            else np.stack(
+                np.broadcast_arrays(*(np.asarray(a, float) for a in args[:3]))
+            )
+        )
+        if coordinates.shape != (3, *shape) or not np.isfinite(coordinates).all():
+            raise ValueError("corner arrays must match filled.shape + 1 and be finite")
+        options = style.copy()
+        self.color_mapping: ColorMapping | None = None
+        if c is not None:
+            if facecolors is not None:
+                raise ValueError("c and facecolors are mutually exclusive")
+            values = np.asarray(c, float)
+            if values.shape != filled.shape or not np.isfinite(values[filled]).all():
+                raise ValueError("c must match filled and be finite in filled voxels")
+            self.color_mapping = _mapping(
+                values[filled],
+                "viridis" if colorscale is None else colorscale,
+                vmin,
+                vmax,
+                norm,
+            )
+            colors = np.zeros((*filled.shape, 3))
+            colors[filled] = self.color_mapping(values[filled])
+        else:
+            if facecolors is None:
+                _cycle_style(system, cast(_VMStyle, options))
+                facecolors = options.pop("color")
+            if isinstance(facecolors, (str, ManimColor)):
+                colors = np.broadcast_to(
+                    ManimColor(facecolors).to_rgb(), (*filled.shape, 3)
+                )
+            else:
+                supplied = np.asarray(facecolors)
+                if supplied.shape in ((3,), (4,)) and supplied.dtype.kind in "biuf":
+                    colors = np.broadcast_to(
+                        ManimColor(supplied).to_rgb(), (*filled.shape, 3)
+                    )
+                elif supplied.shape == filled.shape or supplied.shape in (
+                    (*filled.shape, 3),
+                    (*filled.shape, 4),
+                ):
+                    colors = np.array(
+                        [
+                            ManimColor(v).to_rgb()
+                            for v in supplied.reshape(
+                                (-1,)
+                                if supplied.shape == filled.shape
+                                else (-1, supplied.shape[-1])
+                            )
+                        ]
+                    ).reshape(*filled.shape, 3)
+                else:
+                    raise ValueError("facecolors must contain one colour per voxel")
+        masks = []
+        for axis, direction in ((2, -1), (2, 1), (1, -1), (1, 1), (0, -1), (0, 1)):
+            neighbour = np.zeros_like(filled)
+            target, source = [slice(None)] * 3, [slice(None)] * 3
+            target[axis] = slice(1, None) if direction < 0 else slice(None, -1)
+            source[axis] = slice(None, -1) if direction < 0 else slice(1, None)
+            neighbour[tuple(target)] = filled[tuple(source)]
+            masks.append(filled & ~neighbour)
+        exposed = np.stack(masks, axis=-1)
+        keys = np.argwhere(exposed)
+        indices = keys[:, :3]
+        corner_indices = indices[:, None, :] + _BOX_FACES[keys[:, 3]]
+        corners = coordinates[
+            tuple([slice(None), *corner_indices.transpose(2, 0, 1)])
+        ].transpose(1, 2, 0)
+        surface = _BarSurface.__new__(_BarSurface)
+        surface._bar_corners = corners
+        options.setdefault("stroke_width", 0 if edgecolors is None else 1)
+        if edgecolors is not None:
+            options["stroke_color"] = edgecolors
+        _BarSurface.__init__(
+            surface,
+            system,
+            lambda u, v: 0,
+            resolution=(len(keys), 1),
+            **cast(dict[str, Any], options),
+        )
+        normals = np.array(
+            [[0, 0, -1], [0, 0, 1], [0, -1, 0], [0, 1, 0], [-1, 0, 0], [1, 0, 0]]
+        )
+        factors = 0.3 + 0.35 * (1 + normals @ (np.array([-2, -2, 1]) / 3))
+        self._voxels: dict[tuple[int, int, int], VGroup] = {}
+        for row, face in zip(keys, surface.faces, strict=True):
+            key = (int(row[0]), int(row[1]), int(row[2]))
+            self._voxels.setdefault(key, VGroup()).add(face)
+            face.shade_in_3d = False
+            face.set_fill(
+                ManimColor(colors[key] * (factors[row[3]] if shade else 1)),
+                opacity=cast(float, style.get("fill_opacity", 1)),
+            )
+            if edgecolors is not None:
+                face.set_stroke(
+                    cast(Any, edgecolors),
+                    width=cast(float, options["stroke_width"]),
+                )
+        self._surface = surface
+        super().__init__(surface)
+
+    def at(self, key: tuple[int, int, int]) -> VGroup:
+        """Return stable exposed faces in bottom, top, y, x order.
+
+        Parameters
+        ----------
+        key
+            Voxel indices; unfilled and interior voxels have no drawn faces.
+
+        Returns
+        -------
+        VGroup
+            Independently styleable faces of the voxel.
+        """
+        return self._voxels.get(key, VGroup())
 
 
 class _TextDriver(_CurvePlot):
