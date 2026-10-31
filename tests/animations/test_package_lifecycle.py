@@ -130,8 +130,8 @@ def existing(name: str) -> tuple[Any, Any, Any, list[Any]]:
 def test_pk1_exports_are_identical_classes():
     pkg = package()
     expected = {n for names in FAMILIES.values() for n in names}
-    assert set(pkg.__all__) == expected
-    assert len(pkg.__all__) == len(expected)
+    assert expected <= set(pkg.__all__)  # tasks 41-44 add their own names
+    assert len(pkg.__all__) == len(set(pkg.__all__))
     old = importlib.import_module("manim_plots.mobjects.animations")
     for family, names in FAMILIES.items():
         module = importlib.import_module(f"manim_plots.animations.{family}")

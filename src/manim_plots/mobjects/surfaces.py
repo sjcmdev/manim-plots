@@ -297,6 +297,10 @@ class SurfacePlot(VGroup):
     def color_mapping(self) -> ColorMapping | None:
         """Return the current value mapping, or None for a checkerboard."""
         self._driver._ensure()
+        if self._building:
+            # Buffer ownership suspends geometry, not the bound colour range.
+            self._system._sync_data()
+            self._paint_faces()
         return self._color_mapping
 
     def __deepcopy__(self, memo: dict[int, Any]) -> Self:
