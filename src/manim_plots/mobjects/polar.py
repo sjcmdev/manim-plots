@@ -724,7 +724,7 @@ class _MappedAxis(Axis):
     def _configure_grid(self) -> None:
         self._polar_system._configure_grid()
 
-    def number_to_point(self, number: ArrayLike) -> FloatArray:
+    def number_to_point(self, number: object) -> FloatArray:
         values = np.asarray(number, dtype=float)
         local = self._anchors(values.ravel())
         result = self._system.frame.mapping.forward(local)

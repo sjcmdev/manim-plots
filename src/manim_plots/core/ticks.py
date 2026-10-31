@@ -918,3 +918,44 @@ def plan_pool(
         (tick.level, tick.key) for alpha in alphas for tick in ticks_at(alpha)
     )
     return Pool(tuple(keys), spares)
+
+
+class LogitLocator(_LocatorBase):
+    """Locate probability decades, their complements, and one half."""
+
+    _rounded_keys = False
+
+    def key(self, value: float) -> float:
+        """Keep distinct probability ticks near one distinct.
+
+        Parameters
+        ----------
+        value
+            Finite probability tick position.
+
+        Returns
+        -------
+        float
+            Exact, range-independent probability identity.
+        """
+        return _finite(value, "value")
+
+    def _values(self, lo: float, hi: float, scale: Scale, max_ticks: int) -> FloatArray:
+        lower, upper = sorted((lo, hi))
+        if lower <= 0 or upper >= 1:
+            raise ValueError("logit range must be inside (0, 1)")
+        if max_ticks == 0:
+            return np.empty(0, dtype=float)
+        count = min(323, ceil(-log10(min(lower, 1 - upper))))
+        decades = 10.0 ** -np.arange(1, count + 1, dtype=float)
+        stride = 1
+        while True:
+            selected = decades[::stride]
+            values: FloatArray = np.unique(np.r_[selected, 0.5, 1 - selected])
+            values = values[(values >= lower) & (values <= upper)]
+            if len(values) <= max_ticks:
+                return values
+            if stride >= count:
+                kept: FloatArray = values[values == 0.5]
+                return kept
+            stride *= 2

@@ -73,6 +73,9 @@ from manim.utils.hashing import (
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    Mobject.next_to,
+    Mobject.get_end,
+    VMobject.get_color,
     BarChart.__init__,
     BarChart._add_x_axis_labels,
     BarChart._create_bar,
@@ -314,6 +317,15 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Mobject.next_to": (
+            "7549416a44449a31d4b029e048d9274328065587053fa6616a27c31eab022ce7"
+        ),
+        "Mobject.get_end": (
+            "1bce30a148b51017eabf3b4e60aa82b0e69ec6ae70b8b4c7cd32879b9cebe036"
+        ),
+        "VMobject.get_color": (
+            "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"
+        ),
         "BarChart.__init__": (
             "ffee8386f40624010f023dc4de4988b04c1c6a78ba3ed4c1ecdbe59829c39854"
         ),
@@ -1017,6 +1029,15 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Mobject.next_to": (
+            "7549416a44449a31d4b029e048d9274328065587053fa6616a27c31eab022ce7"
+        ),
+        "Mobject.get_end": (
+            "1bce30a148b51017eabf3b4e60aa82b0e69ec6ae70b8b4c7cd32879b9cebe036"
+        ),
+        "VMobject.get_color": (
+            "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"
+        ),
         "BarChart.__init__": (
             "b65de39e4131cc183d2b714d8cdf17359a5f55dc73dd67a1c70dd31306f30fc0"
         ),

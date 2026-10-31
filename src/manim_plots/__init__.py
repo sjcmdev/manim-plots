@@ -6,6 +6,12 @@ from collections.abc import Mapping
 from importlib.metadata import version
 
 from manim_plots.core import ManimPlotsWarning
+from manim_plots.core.dates import (
+    AutoDateLocator,
+    ConciseDateFormatter,
+    date2num,
+    num2date,
+)
 from manim_plots.core.formatters import (
     AngleFormatter,
     DecimalFormatter,
@@ -14,7 +20,9 @@ from manim_plots.core.formatters import (
     FormatStrFormatter,
     Formatter,
     Labels,
+    LogitFormatter,
     NullFormatter,
+    PercentFormatter,
     ScientificFormatter,
 )
 from manim_plots.core.nodes import (
@@ -26,8 +34,10 @@ from manim_plots.core.nodes import (
 )
 from manim_plots.core.payload import Payload
 from manim_plots.core.scales import (
+    BrokenScale,
     FunctionScale,
     LinearScale,
+    LogitScale,
     LogScale,
     Scale,
     SymLogScale,
@@ -43,6 +53,7 @@ from manim_plots.core.sources import (
 from manim_plots.core.ticks import (
     FixedLocator,
     Locator,
+    LogitLocator,
     LogLocator,
     MaxNLocator,
     MinorCountLocator,
@@ -101,15 +112,18 @@ __all__ = [
     "AffineNode",
     "AngleFormatter",
     "ArraySource",
+    "AutoDateLocator",
     "AxLinePlot",
     "BarPlot",
     "BarPlot3D",
     "Bounds",
+    "BrokenScale",
     "CartesianAxes",
     "ColorMapping",
     "Colorbar",
     "Colormap",
     "CompiledMap",
+    "ConciseDateFormatter",
     "ContourPlot",
     "ContourSetPlot",
     "DecimalFormatter",
@@ -137,6 +151,9 @@ __all__ = [
     "Locator",
     "LogLocator",
     "LogScale",
+    "LogitFormatter",
+    "LogitLocator",
+    "LogitScale",
     "ManimPlotsWarning",
     "Marker",
     "MaxNLocator",
@@ -149,6 +166,7 @@ __all__ = [
     "ParametricPlot",
     "ParametricSource",
     "Payload",
+    "PercentFormatter",
     "PlanePlot",
     "PolarAxes",
     "Scale",
@@ -169,7 +187,9 @@ __all__ = [
     "WireframePlot",
     "__version__",
     "colormaps",
+    "date2num",
     "get_theme",
+    "num2date",
     "set_theme",
 ]
 

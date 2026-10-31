@@ -576,6 +576,8 @@ class _CurvePlot(Leaf):
         system = self._system
         assert system is not None
         payload = self._geometry_payload
+        if system._has_breaks:
+            payload = _cut_breaks(system, payload)
         self._dense = not frame.is_affine
         count = len(payload.coords) // 4
         if self._dense and 0 < count < 64:
@@ -1088,11 +1090,12 @@ class LinePlot(_CurvePlot):
 
     def __init__(
         self,
-        xs: ArrayLike,
+        xs: object,
         system: mp.CartesianAxes,
-        ys: ArrayLike | None = None,
+        ys: object = None,
         **kwargs: Unpack[_ArtistOptions],
     ) -> None:
+        xs, ys = _resolve_coordinates(system, xs, ys)
         super().__init__(
             ArraySource(xs, ys, dim=len(system._ranges)),
             system,
@@ -1195,6 +1198,12 @@ class _MarkerLeaf(_CurvePlot):
             )
         axes = _clip_axes(self._clip, len(system._ranges))
         visible = payload.valid is None or bool(payload.valid[0])
+        if visible and system._has_breaks:
+            visible = not any(
+                a < data[0, axis.index] < b
+                for axis in system._ranges
+                for a, b in axis.breaks
+            )
         if visible and any(axis is not False for axis in axes):
             bounds = _clip_box(system, self._clip)
             if any(axis is False for axis in axes):
@@ -1267,9 +1276,9 @@ class ScatterPlot(VGroup):
 
     def __init__(
         self,
-        xs: ArrayLike,
+        xs: object,
         system: mp.CartesianAxes,
-        ys: ArrayLike | None = None,
+        ys: object = None,
         *,
         marker: Mobject | Marker | None = None,
         label: str | None = None,
@@ -1286,6 +1295,7 @@ class ScatterPlot(VGroup):
         clip_value = _validate_clip(clip, len(system._ranges))
         _clip_box(system, clip_value)
         self._label, self._clip = label, clip_value
+        xs, ys = _resolve_coordinates(system, xs, ys)
         self.source = ArraySource(xs, ys, kind="points", dim=len(system._ranges))
         count = len(self.source.data)
         self._color_mapping: mp.ColorMapping | None = None
@@ -1536,3 +1546,61 @@ class ScatterPlot(VGroup):
             else:
                 result.__dict__[key] = copy.deepcopy(value, memo)
         return result
+
+
+def _resolve_coordinates(
+    system: mp.CartesianAxes, xs: object, ys: object
+) -> tuple[ArrayLike, ArrayLike | None]:
+    from manim_plots.mobjects.axis import _coordinate_array, resolve_categories
+
+    if ys is not None:
+        return (
+            cast(ArrayLike, resolve_categories(system.x, xs)),
+            cast(ArrayLike, resolve_categories(system.y, ys)),
+        )
+    entries = _coordinate_array(xs)
+    if entries.dtype.kind not in ("U", "S", "O", "M"):
+        return cast(ArrayLike, xs), None
+    if entries.ndim == 2 and entries.shape[1] == len(system._ranges):
+        return np.column_stack(
+            [
+                cast(ArrayLike, resolve_categories(axis, entries[:, i]))
+                for i, axis in enumerate(system._ranges)
+            ]
+        ), None
+    return cast(ArrayLike, xs), None
+
+
+def _cut_breaks(system: mp.CartesianAxes, payload: Payload) -> Payload:
+    if not len(payload.coords):
+        return payload
+    for axis in system._ranges:
+        for a, b in axis.breaks:
+            coords = np.array([r.range.value for r in system._ranges]).T
+            coords[:, axis.index] = (a, b)
+            left, right = sorted(system._data.forward(coords)[:, axis.index])
+            lower = payload.coords.min(axis=0) - 1
+            upper = payload.coords.max(axis=0) + 1
+            parts = []
+            for lo, hi in ((lower[axis.index], left), (right, upper[axis.index])):
+                if hi <= lo:
+                    continue
+                bottom, top = lower.copy(), upper.copy()
+                bottom[axis.index], top[axis.index] = lo, hi
+                part = clip_path(payload, Box(bottom, top))
+                if len(part.coords):
+                    parts.append(part)
+            if not parts:
+                return Payload.empty("path", payload.coords.shape[1])
+            offsets = np.r_[0, np.cumsum([len(p.coords) for p in parts])]
+            payload = Payload(
+                "path",
+                np.concatenate([p.coords for p in parts]),
+                np.concatenate(
+                    [
+                        p.segments + offset
+                        for p, offset in zip(parts, offsets[:-1], strict=True)
+                    ]
+                ),
+            )
+    return payload

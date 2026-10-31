@@ -6,6 +6,7 @@ import copy
 import weakref
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import replace
+from datetime import date
 from typing import Any, Literal, NoReturn, Self, Unpack, cast, overload
 
 import numpy as np
@@ -39,6 +40,7 @@ from numpy.typing import ArrayLike
 import manim_plots as mp
 from manim_plots.core import FloatArray
 from manim_plots.core import lifecycle as lc
+from manim_plots.core.dates import date2num
 from manim_plots.core.nodes import (
     FRAME_NODES,
     AffineNode,
@@ -49,7 +51,9 @@ from manim_plots.core.nodes import (
 )
 from manim_plots.core.scales import (
     MINPOS_UNKNOWN,
+    BrokenScale,
     LinearScale,
+    LogitScale,
     LogScale,
     Scale,
     SymLogScale,
@@ -57,6 +61,7 @@ from manim_plots.core.scales import (
 from manim_plots.core.sources import Box
 from manim_plots.core.ticks import (
     Locator,
+    LogitLocator,
     LogLocator,
     MinorCountLocator,
     MultipleLocator,
@@ -73,6 +78,7 @@ from manim_plots.mobjects.artists import (
 )
 from manim_plots.mobjects.axis import (
     Axis,
+    _coordinate_array,
     _LogExponentLocator,
     _LogMinorLocator,
     _range,
@@ -189,9 +195,11 @@ def _scale(value: Scale | str, name: str) -> Scale:
             return LinearScale()
         if value == "log":
             return LogScale()
+        if value == "logit":
+            return LogitScale()
         if value == "symlog":
             return SymLogScale()
-        raise ValueError(f"{name} must be linear, log or symlog")
+        raise ValueError(f"{name} must be linear, log, symlog or logit")
     if not isinstance(value, Scale):
         raise TypeError(f"{name} must be a Scale or scale name")
     return value
@@ -220,7 +228,7 @@ class CartesianAxes(VGroup):
     cycle
         Named colour cycle or nonempty colour sequence, overriding the theme.
     x_scale, y_scale
-        Data scales or the names linear, log and symlog. Manim's scaling option
+        Data scales or the names linear, log, symlog and logit. Manim's scaling option
         retains its exponent-range convention for LogBase.
     aspect
         Optional ratio of a y unit's scene length to an x unit's scene length.
@@ -268,8 +276,8 @@ class CartesianAxes(VGroup):
 
     def __init__(
         self,
-        x_range: Sequence[float] | None = None,
-        y_range: Sequence[float] | None = None,
+        x_range: Sequence[object] | None = None,
+        y_range: Sequence[object] | None = None,
         x_length: float | None = None,
         y_length: float | None = None,
         axis_config: dict[str, Any] | None = None,
@@ -280,8 +288,8 @@ class CartesianAxes(VGroup):
         frame: Literal["origin", "box"] | None = None,
         theme: str | Theme | Mapping[str, Any] | None = None,
         cycle: str | Sequence[ParsableManimColor] | None = None,
-        x_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
-        y_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
+        x_scale: Scale | Literal["linear", "log", "symlog", "logit"] = "linear",
+        y_scale: Scale | Literal["linear", "log", "symlog", "logit"] = "linear",
         aspect: float | None = None,
         adjustable: Literal["length", "range"] = "length",
         **kwargs: Unpack[_VMStyle],
@@ -320,14 +328,22 @@ class CartesianAxes(VGroup):
             self.axis_config, {"label_direction": [-1, 0, 0]}, y_axis_config or {}
         )
         configs = (self.x_axis_config, self.y_axis_config)
+        date_ranges = {
+            i: limits[:2]
+            for i, limits in enumerate((x_range, y_range))
+            if limits is not None
+            and any(isinstance(v, (date, np.datetime64)) for v in limits[:2])
+        }
         ranges: list[list[float]] = [
-            list(x_range)
+            list(cast(Sequence[float], x_range))
             if x_range is not None
             else [-round(config.frame_x_radius), round(config.frame_x_radius), 1],
-            list(y_range)
+            list(cast(Sequence[float], y_range))
             if y_range is not None
             else [-round(config.frame_y_radius), round(config.frame_y_radius), 1],
         ]
+        for i, dates in date_ranges.items():
+            ranges[i][:2] = np.asarray(date2num(dates), dtype=float).tolist()
         scales = [_scale(x_scale, "x_scale"), _scale(y_scale, "y_scale")]
         native_ranges = []
         locators: list[Locator | None] = [None, None]
@@ -366,6 +382,8 @@ class CartesianAxes(VGroup):
                     subs = tuple(value for value in range(2, 10) if value < tick_base)
                     if subs:
                         minors[i] = _LogMinorLocator(base=tick_base, subs=subs)
+                elif isinstance(scale, LogitScale):
+                    locators[i] = LogitLocator()
                 elif isinstance(scale, SymLogScale):
                     locators[i] = SymLogLocator(
                         base=scale.base, linthresh=scale.linthresh
@@ -451,6 +469,7 @@ class CartesianAxes(VGroup):
         self._moving_query: tuple[frozenset[Mobject], bool] | None = None
         self._actual_updaters: list[Callable[..., Any]] = []
         self._syncing = True
+        self._has_breaks = False
         self._data_version = 0
         self._poll_token: _PlaybackToken | None = None
         self._token = 0
@@ -533,6 +552,8 @@ class CartesianAxes(VGroup):
                     if level == "minor":
                         style.update(self.theme.minor_grid_style)
                     axis.set_grid(level, **style)
+        for i, dates in date_ranges.items():
+            resolve_categories(self._ranges[i], dates, data=False)
         self.add_updater(_synchronise)
 
     def __getattr__(self, name: str) -> NoReturn:
@@ -552,7 +573,7 @@ class CartesianAxes(VGroup):
         self,
         y_range: Sequence[float] | None = None,
         *,
-        y_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
+        y_scale: Scale | Literal["linear", "log", "symlog", "logit"] = "linear",
         y_axis_config: dict[str, Any] | None = None,
         offset: float | None = None,
     ) -> CartesianAxes:
@@ -577,7 +598,7 @@ class CartesianAxes(VGroup):
         self,
         x_range: Sequence[float] | None = None,
         *,
-        x_scale: Scale | Literal["linear", "log", "symlog"] = "linear",
+        x_scale: Scale | Literal["linear", "log", "symlog", "logit"] = "linear",
         x_axis_config: dict[str, Any] | None = None,
         offset: float | None = None,
     ) -> CartesianAxes:
@@ -749,7 +770,7 @@ class CartesianAxes(VGroup):
         self,
         index: int,
         limits: Sequence[float] | None,
-        scale: Scale | Literal["linear", "log", "symlog"],
+        scale: Scale | Literal["linear", "log", "symlog", "logit"],
         options: dict[str, Any] | None,
         offset: float | None,
     ) -> CartesianAxes:
@@ -1338,6 +1359,15 @@ class CartesianAxes(VGroup):
                 axis._resize(self.x_length if axis.index == 0 else self.y_length)
         axes = self._ranges
         dim = len(axes)
+        self._has_breaks = False
+        for axis in axes:
+            if isinstance(axis._scale, BrokenScale):
+                self._has_breaks |= bool(axis.breaks)
+                axis._scale.limit_range(
+                    float(axis.range.value[0]),
+                    float(axis.range.value[1]),
+                    MINPOS_UNKNOWN,
+                )
         scaled = [axis._scale.forward(axis.range.value) for axis in axes]
         if self.aspect is not None:
             self._enforce_aspect(scaled)
@@ -1491,7 +1521,7 @@ class CartesianAxes(VGroup):
         local[0, 1 - index] += axis._outward_offset()[1 - index]
         return float(self._data.inverse(local)[0, 1 - index])
 
-    def c2p(self, *coords: ArrayLike) -> FloatArray:
+    def c2p(self, *coords: object) -> FloatArray:
         """Convert scalar coordinates, coordinate arrays or rows to scene points.
 
         Parameters
@@ -1511,14 +1541,40 @@ class CartesianAxes(VGroup):
             configured data range is collapsed. Conversions raise instead of
             returning NaN and never clamp a value into the domain.
         """
-        coords = (
-            tuple(
-                cast(ArrayLike, resolve_categories(axis, value))
-                for axis, value in zip(self._ranges, coords, strict=False)
-            )
-            if any(np.asarray(value).dtype.kind in ("U", "S", "O") for value in coords)
-            else coords
-        )
+        if any(
+            _coordinate_array(value).dtype.kind in ("U", "S", "O", "M")
+            for value in coords
+        ):
+            if len(coords) == 1:
+                entries = _coordinate_array(coords[0])
+                if entries.dtype.kind != "M":
+                    entries = np.asarray(coords[0], dtype=object)
+                if entries.ndim == 0:
+                    coords = (resolve_categories(self.x, coords[0], data=False),)
+                elif entries.ndim == 1:
+                    coords = tuple(
+                        resolve_categories(axis, value, data=False)
+                        for axis, value in zip(self._ranges, entries, strict=False)
+                    )
+                elif entries.ndim == 2:
+                    coords = (
+                        np.column_stack(
+                            [
+                                cast(
+                                    ArrayLike,
+                                    resolve_categories(axis, entries[:, i], data=False),
+                                )
+                                for i, axis in enumerate(
+                                    self._ranges[: entries.shape[1]]
+                                )
+                            ]
+                        ),
+                    )
+            else:
+                coords = tuple(
+                    resolve_categories(axis, value, data=False)
+                    for axis, value in zip(self._ranges, coords, strict=False)
+                )
         values = np.asarray(coords, dtype=float)
         if not np.isfinite(values).all():
             index = tuple(int(i) for i in np.argwhere(~np.isfinite(values))[0])
@@ -1694,10 +1750,10 @@ class CartesianAxes(VGroup):
         self.add(artist)
         return artist
 
-    def __matmul__(self, coords: ArrayLike) -> FloatArray:
+    def __matmul__(self, coords: object) -> FloatArray:
         return self.c2p(coords)
 
-    def set_x_range(self, x_range: Sequence[float]) -> Self:
+    def set_x_range(self, x_range: Sequence[object]) -> Self:
         """Set x endpoints, retaining the existing locator.
 
         Parameters
@@ -1705,12 +1761,20 @@ class CartesianAxes(VGroup):
         x_range
             New endpoints and an optional ignored locator step.
         """
-        self.x_axis.range = _range(x_range, "x_range")
+        self.x_axis.range = _range(
+            [
+                *np.asarray(
+                    resolve_categories(self.x, x_range[:2], data=False), dtype=float
+                ),
+                *x_range[2:],
+            ],
+            "x_range",
+        )
         if len(x_range) == 3:
-            self._field_steps = (float(x_range[2]), *self._field_steps[1:])
+            self._field_steps = (float(cast(Any, x_range[2])), *self._field_steps[1:])
         return self
 
-    def set_y_range(self, y_range: Sequence[float]) -> Self:
+    def set_y_range(self, y_range: Sequence[object]) -> Self:
         """Set y endpoints, retaining the existing locator.
 
         Parameters
@@ -1718,11 +1782,19 @@ class CartesianAxes(VGroup):
         y_range
             New endpoints and an optional ignored locator step.
         """
-        self.y_axis.range = _range(y_range, "y_range")
+        self.y_axis.range = _range(
+            [
+                *np.asarray(
+                    resolve_categories(self.y, y_range[:2], data=False), dtype=float
+                ),
+                *y_range[2:],
+            ],
+            "y_range",
+        )
         if len(y_range) == 3:
             self._field_steps = (
                 self._field_steps[0],
-                float(y_range[2]),
+                float(cast(Any, y_range[2])),
                 *self._field_steps[2:],
             )
         return self
@@ -2025,8 +2097,8 @@ class CartesianAxes(VGroup):
     @overload
     def plot(
         self,
-        xs: ArrayLike,
-        ys: ArrayLike | None = None,
+        xs: object,
+        ys: object = None,
         **kwargs: Unpack[_ArtistOptions],
     ) -> LinePlot: ...
 
@@ -2141,8 +2213,8 @@ class CartesianAxes(VGroup):
 
     def line(
         self,
-        xs: ArrayLike,
-        ys: ArrayLike | None = None,
+        xs: object,
+        ys: object = None,
         **kwargs: Unpack[_ArtistOptions],
     ) -> LinePlot:
         """Create and register a straight array line.
@@ -2297,8 +2369,8 @@ class CartesianAxes(VGroup):
 
     def scatter(
         self,
-        xs: ArrayLike,
-        ys: ArrayLike | None = None,
+        xs: object,
+        ys: object = None,
         *,
         marker: Mobject | Marker | None = None,
         label: str | None = None,
@@ -2358,8 +2430,8 @@ class CartesianAxes(VGroup):
 
     def errorbar(
         self,
-        x: ArrayLike,
-        y: ArrayLike | None = None,
+        x: object,
+        y: object = None,
         yerr: ArrayLike | None = None,
         xerr: ArrayLike | None = None,
         *,
@@ -2829,8 +2901,8 @@ class CartesianAxes(VGroup):
 
     def plot_line_graph(
         self,
-        x_values: ArrayLike,
-        y_values: ArrayLike,
+        x_values: object,
+        y_values: object,
         z_values: ArrayLike | None = None,
         line_color: ParsableManimColor = PURE_YELLOW,
         add_vertex_dots: bool = True,

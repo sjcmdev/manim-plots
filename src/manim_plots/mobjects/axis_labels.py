@@ -112,13 +112,15 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
             float(x)
             for x in candidates
             if (
-                x not in excluded
+                not any(a < x < b for a, b in axis.breaks)
+                and x not in excluded
                 and (lo <= x <= hi or (axis._pool is not None and axis._pool.building))
                 and (x != 0 or not hides_zero)
             )
         ]
     )
     formatted = axis.formatter.format_ticks(values)
+    axis._configure_offset(formatted.offset)
     if len(formatted.text) != len(values):
         raise ValueError("formatter must return one label per value")
     system = axis._system
