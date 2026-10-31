@@ -7,7 +7,9 @@ from collections.abc import Callable, Sequence
 from typing import Any, Self, cast
 
 import numpy as np
-from manim import ManimColor, Text, VGroup, VMobject
+from manim import ManimColor, Mobject, Text, VGroup, VMobject
+from manim.animation.transform import _MethodAnimation
+from manim.typing import PathFuncType
 from numpy.typing import ArrayLike
 
 import manim_plots as mp
@@ -27,6 +29,8 @@ from manim_plots.core.shape import clip as clip_path
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import _CurvePlot
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
+from manim_plots.mobjects.context import animation_context
+from manim_plots.mobjects.leaves import _STRAIGHT
 from manim_plots.mobjects.surfaces import _FaceStyle
 
 
@@ -59,6 +63,27 @@ class _Cell(_FaceStyle, _CurvePlot):
     def get_fill_color(self) -> ManimColor:
         self._ensure()
         return super().get_fill_color()
+
+    def _data_limits(self) -> FloatArray:
+        return self._polygon
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Keep scalar animation colours derived from the current values.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native interpolation endpoints, progress and path.
+        """
+        if self._owner.__dict__.get("_value_animation", False):
+            return self
+        return super().interpolate(mobject1, mobject2, alpha, path_func)
 
     def _rebuild(self) -> None:
         system = self._owner._system
@@ -246,6 +271,69 @@ class HeatmapPlot(VGroup):
         if hasattr(self, "_labels"):
             self._update_labels()
         return self
+
+    def align_data(self, mobject: Mobject, skip_point_alignment: bool = False) -> Self:
+        """Select scalar interpolation for native method animations.
+
+        Parameters
+        ----------
+        mobject, skip_point_alignment
+            Native target and alignment option.
+        """
+        self._value_animation = isinstance(mobject, HeatmapPlot) and isinstance(
+            animation_context(transform_only=True), _MethodAnimation
+        )
+        if isinstance(mobject, HeatmapPlot):
+            mobject._value_animation = self._value_animation
+        super().align_data(mobject, skip_point_alignment)
+        return self
+
+    def family_members_with_points(self) -> list[Mobject]:
+        """Run scalar mapping after all native cell interpolation."""
+        if self.__dict__.get("_value_animation", False):
+            return [
+                m for m in self.get_family() if isinstance(m, _Cell) or m.has_points()
+            ] + [self]
+        return super().family_members_with_points()
+
+    def resume_updating(self, recursive: bool = True) -> Self:
+        """Restore ordinary cell binding after scalar interpolation.
+
+        Parameters
+        ----------
+        recursive
+            Whether to resume descendants.
+        """
+        super().resume_updating(recursive)
+        self._value_animation = False
+        for cell in self.cells._cells.values():
+            cell.refresh()
+        self._paint_cells()
+        return self
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Interpolate values and remap their colours on the retained grid.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native interpolation endpoints, progress and path.
+        """
+        if self.__dict__.get("_value_animation", False):
+            assert isinstance(mobject1, HeatmapPlot) and isinstance(
+                mobject2, HeatmapPlot
+            )
+            self.set_data((1 - alpha) * mobject1._data + alpha * mobject2._data)
+            for cell in self.cells._cells.values():
+                cell._rebuild()
+            return self
+        return super().interpolate(mobject1, mobject2, alpha, path_func)
 
     def label_cells(
         self,

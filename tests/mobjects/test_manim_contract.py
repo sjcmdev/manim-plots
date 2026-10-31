@@ -356,6 +356,20 @@ ADDED_BY_TASK_35 = [
 ]
 ADDED_BY_TASK_33: list[str] = []
 
+ADDED_BY_TASK_34 = [
+    "AnimationGroup.build_animations_with_timings",
+    "Indicate",
+    "Indicate.__init__",
+    "Indicate.create_target",
+    "Create",
+    "Create.__init__",
+    "Create._get_bounds",
+    "FadeIn",
+    "FadeIn.__init__",
+    "FadeIn.create_target",
+    "FadeIn.create_starting_mobject",
+]
+
 
 def names() -> list[str]:
     return [context.symbol_name(symbol) for symbol in context.SYMBOLS]
@@ -393,6 +407,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_38
         + ADDED_BY_TASK_32
         + ADDED_BY_TASK_39
+        + ADDED_BY_TASK_34
     )
 
 
