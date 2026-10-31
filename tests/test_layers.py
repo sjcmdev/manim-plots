@@ -33,21 +33,22 @@ def forbidden_imports(path: Path) -> list[str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 top = alias.name.split(".")[0]
-                if top == "manim" or alias.name.startswith("manim_plots.mobjects"):
+                if top == "manim" or alias.name.startswith(
+                    ("manim_plots.mobjects", "manim_plots.animations")
+                ):
                     found.append(alias.name)
         elif isinstance(node, ast.ImportFrom):
             module = node.module or ""
             if node.level == 0:
                 if module.split(".")[0] == "manim" or module.startswith(
-                    "manim_plots.mobjects"
+                    ("manim_plots.mobjects", "manim_plots.animations")
                 ):
                     found.append(module)
             elif node.level >= 2:
-                # From core/, two dots reach the package: `..mobjects`, or
-                # `.. import mobjects`.
+                # Both packages belong to the Manim layer (ADR 0008 §1).
                 names = {alias.name for alias in node.names}
-                if module.split(".")[0] == "mobjects" or (
-                    not module and "mobjects" in names
+                if module.split(".")[0] in {"mobjects", "animations"} or (
+                    not module and names & {"mobjects", "animations"}
                 ):
                     found.append("." * node.level + module)
     return found
