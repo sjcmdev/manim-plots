@@ -11,9 +11,11 @@ from typing import Any
 
 import numpy as np
 import pytest
-from manim import RED, ManimColor
+from manim import DEGREES, RED, ManimColor, ThreeDScene, tempconfig
 
 import manim_plots as mp
+
+from .helpers import RUN
 
 RNG = np.random.default_rng(4)
 X, Y = RNG.normal(0, 1, 400), RNG.normal(0, 1, 400)
@@ -111,6 +113,31 @@ def test_h3_3_set_data_in_place():
     np.testing.assert_allclose(
         h.counts, np.histogram2d(more_x, more_y, 6, ((-3, 3), (-3, 3)))[0]
     )
+
+
+def test_h3_4_faces_drawn_far_to_near():
+    ax = axes()
+    h = ax.hist3d(X, Y, bins=6, range=((-3, 3), (-3, 3)))
+    seen: list[np.ndarray] = []
+
+    class Shot(ThreeDScene):
+        def construct(self) -> None:
+            self.set_camera_orientation(phi=65 * DEGREES, theta=-50 * DEGREES)
+            self.add(ax, h)
+            self.wait(1 / 15)
+            camera: Any = self.renderer.camera
+            faces = {id(f) for f in h.family_members_with_points()}
+            shown = camera.get_mobjects_to_display(self.mobjects)
+            rot = camera.get_rotation_matrix()
+            seen.append(
+                np.array([(f.get_center() @ rot.T)[2] for f in shown if id(f) in faces])
+            )
+
+    with tempconfig(RUN):
+        Shot().render()
+    depths = seen[0]
+    assert len(depths) == len(h.family_members_with_points())
+    assert np.all(np.diff(depths) >= -1e-9)
 
 
 # --- B3 -------------------------------------------------------------------------------
