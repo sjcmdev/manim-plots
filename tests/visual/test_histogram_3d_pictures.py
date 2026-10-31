@@ -27,7 +27,7 @@ def test_hist3d_coloured_by_count(visual):
         ax = mp.ThreeDAxes(
             x_range=(-3, 3, 1),
             y_range=(-3, 3, 1),
-            z_range=(0, 120, 40),
+            z_range=(0, 180, 60),
             x_length=5,
             y_length=5,
             z_length=3.5,
@@ -35,7 +35,7 @@ def test_hist3d_coloured_by_count(visual):
         )
         x, y = RNG.normal(0, 1, 2000), RNG.normal(0, 1, 2000)
         h = ax.hist3d(x, y, bins=8, range=((-3, 3), (-3, 3)))
-        scene.add(ax, h, ax.colorbar(h, label="count"))
+        scene.add(ax, h, ax.colorbar(h, label="n"))
 
     visual(construct, three_d=True)
 

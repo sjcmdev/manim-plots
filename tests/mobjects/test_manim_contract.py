@@ -327,6 +327,7 @@ ADDED_BY_TASK_31 = [
 
 
 ADDED_BY_TASK_32 = ["VGroup.__init__"]
+ADDED_BY_TASK_33: list[str] = []
 
 
 def names() -> list[str]:
@@ -359,6 +360,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_30
         + ADDED_BY_TASK_31
         + ADDED_BY_TASK_37
+        + ADDED_BY_TASK_33
         + ADDED_BY_TASK_32
     )
 

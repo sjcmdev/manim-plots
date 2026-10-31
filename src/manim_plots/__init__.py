@@ -77,7 +77,7 @@ from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
 from manim_plots.mobjects.histograms import HistPlot, StackPlot
 from manim_plots.mobjects.legend import Legend
-from manim_plots.mobjects.plots3d import BarPlot3D, StemPlot, WaterfallPlot
+from manim_plots.mobjects.plots3d import BarPlot3D, Hist3DPlot, StemPlot, WaterfallPlot
 from manim_plots.mobjects.polar import PolarAxes
 from manim_plots.mobjects.polar import PolarPlane as PolarPlane
 from manim_plots.mobjects.slice_view import SliceView
@@ -130,6 +130,7 @@ __all__ = [
     "GrowSurface",
     "HeatmapPlot",
     "HexbinPlot",
+    "Hist3DPlot",
     "HistPlot",
     "Labels",
     "Legend",
