@@ -6,10 +6,12 @@ from collections.abc import Callable, Iterable, Mapping
 from contextlib import suppress
 from typing import Any, cast
 
+import numpy as np
 from manim import (
     YELLOW,
     Animation,
     AnimationGroup,
+    Arc,
     Create,
     FadeIn,
     FadeOut,
@@ -26,9 +28,108 @@ from manim.utils.color import ParsableManimColor
 
 from manim_plots.mobjects.axis import Axis
 from manim_plots.mobjects.leaves import FrameLeaf
+from manim_plots.mobjects.polar import PolarAxes, PolarPlane
 from manim_plots.mobjects.system import CartesianAxes
 
 from ._base import flags
+from ._spatial import _Spatial
+
+
+class SweepPolar(_Spatial):
+    """Reveal polar decorations over a directed source-angle interval.
+
+    Parameters
+    ----------
+    ax, start_angle, angle, lag_ratio, reverse, remover, **kwargs
+        Polar system, angular interval, ring stagger, playback flags and native options.
+    """
+
+    def __init__(
+        self,
+        ax: PolarPlane | PolarAxes,
+        *,
+        start_angle: float = 0,
+        angle: float = 2 * np.pi,
+        lag_ratio: float = 0,
+        reverse: bool = False,
+        remover: bool | None = None,
+        **kwargs: object,
+    ) -> None:
+        if not isinstance(ax, (PolarAxes, PolarPlane)):
+            raise TypeError("ax must be PolarPlane or PolarAxes")
+        if not np.isfinite([start_angle, angle]).all():
+            raise ValueError("angular options must be finite")
+        self.ax, self.start_angle, self.angle = ax, start_angle, angle
+        self._involved_system = ax
+        parts = VGroup(*(part for part in ax.submobjects if part is not ax.frame))
+        super().__init__(
+            parts, lag_ratio=lag_ratio, reverse=reverse, remover=remover, **kwargs
+        )
+
+    def _setup_scene(self, scene: Scene) -> None:
+        if self.is_introducer():
+            scene.add(self.ax)
+
+    def clean_up_from_scene(self, scene: Scene) -> None:
+        """Restore decorations and remove only the system root when requested.
+
+        Parameters
+        ----------
+        scene
+            Scene containing the system and independently added plots.
+        """
+        remove = self.remover
+        self.remover = False
+        try:
+            super().clean_up_from_scene(scene)
+        finally:
+            self.remover = remove
+        if remove:
+            scene.remove(self.ax)
+        else:
+            scene.add(self.ax)
+
+    def _reached(self, theta: float, progress: float) -> bool:
+        delta = ((theta - self.start_angle) * (1 if self.angle >= 0 else -1)) % (
+            2 * np.pi
+        )
+        return bool(progress > 0 and delta <= abs(self.angle) * progress + 1e-10)
+
+    def _draw(self) -> None:
+        ax = cast(Any, self.ax)
+        ax._sync_data()
+        rings = sorted(ax.circles, key=lambda ring: ring.value)
+        origin = ax.get_origin()
+        for i, ring in enumerate(rings):
+            p = self._progress(i, len(rings))
+            arc = Arc(start_angle=self.start_angle, angle=p * self.angle)
+            x = ax.polar_to_point(ring.value, 0) - origin
+            y = ax.polar_to_point(ring.value, np.pi / 2) - origin
+            ring.points = origin + arc.points[:, :1] * x + arc.points[:, 1:2] * y
+            self._visibility(ring, float(p > 0))
+        p = self._progress(len(rings) - 1, len(rings)) if rings else self._progress()
+        for spoke in ax.spokes:
+            spoke.points = ax.frame.mapping.forward(ax._spoke(spoke.value))
+            self._visibility(spoke, float(self._reached(spoke.value, p)))
+        labels = ax.__dict__.get("coordinate_labels")
+        if labels is not None:
+            for index, group in enumerate((labels[0], labels[1])):
+                for label in group:
+                    value = label._anchor.__defaults__[0]
+                    if index == 1:
+                        shown = self._reached(value, p)
+                    else:
+                        rank = next(
+                            (i for i, ring in enumerate(rings) if ring.value >= value),
+                            0,
+                        )
+                        shown = self._progress(rank, len(rings)) > 0
+                    self._visibility(label, float(shown))
+
+    def restore(self) -> None:
+        """Restore the complete bound decorations and independent plots."""
+        super().restore()
+        self.ax._configure_grid()
 
 
 class _FadeInParts(FadeIn):

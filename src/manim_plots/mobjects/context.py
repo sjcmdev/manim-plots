@@ -18,6 +18,7 @@ from manim import (
     Animation,
     AnimationGroup,
     AnnularSector,
+    Arc,
     Arrow,
     Arrow3D,
     ArrowVectorField,
@@ -99,6 +100,10 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     AnimationGroup.interpolate,
     AnimationGroup.update_mobjects,
     AnimationGroup.init_run_time,
+    Arc,
+    Arc.__init__,
+    Arc._set_pre_positioned_points,
+    Arc.generate_points,
     LaggedStart,
     LaggedStart.__init__,
     Uncreate,
@@ -432,6 +437,16 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "AnimationGroup.init_run_time": (
             "02411ece571a7868714b7cbf39d7596fae557a99e84f21fba3ded7615a34a064"
+        ),
+        "Arc": ("c2d82ff7e077b0d8cef33af9920bb4a2cdeaaa688392b40080a7720fb8d64342"),
+        "Arc.__init__": (
+            "046d0d70251b0c2d70a2c1711f49f09d6fd23d71cdf93bcb475346fc61698525"
+        ),
+        "Arc._set_pre_positioned_points": (
+            "790f4b51f346f5870df6ff0a60adad87343fc7c41da19ba701e236d1a67156d7"
+        ),
+        "Arc.generate_points": (
+            "9096ad9cc913ba934428db784a6e5bf8b73cf19440de4a6d7fbe84435b352a33"
         ),
         "LaggedStart": (
             "45aed5029bf09e8c20e835022803405049931aeacd0bc1232d4f951f77480c90"
@@ -1314,6 +1329,16 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "AnimationGroup.init_run_time": (
             "02411ece571a7868714b7cbf39d7596fae557a99e84f21fba3ded7615a34a064"
+        ),
+        "Arc": ("c2d82ff7e077b0d8cef33af9920bb4a2cdeaaa688392b40080a7720fb8d64342"),
+        "Arc.__init__": (
+            "046d0d70251b0c2d70a2c1711f49f09d6fd23d71cdf93bcb475346fc61698525"
+        ),
+        "Arc._set_pre_positioned_points": (
+            "790f4b51f346f5870df6ff0a60adad87343fc7c41da19ba701e236d1a67156d7"
+        ),
+        "Arc.generate_points": (
+            "9096ad9cc913ba934428db784a6e5bf8b73cf19440de4a6d7fbe84435b352a33"
         ),
         "LaggedStart": (
             "45aed5029bf09e8c20e835022803405049931aeacd0bc1232d4f951f77480c90"
