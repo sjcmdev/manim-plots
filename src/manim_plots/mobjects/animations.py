@@ -238,6 +238,7 @@ class AppendData(Animation):
         if artist._system is None:
             raise ValueError("artist must be bound to axes")
         self.artist, self.autoscale = artist, autoscale
+        self._involved_system = artist._system if autoscale else None
         self._new = ArraySource(x, y, dim=len(artist._system._ranges)).data
         if not np.isfinite(self._new).all():
             raise ValueError("appended coordinates must be finite")
