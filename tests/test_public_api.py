@@ -99,6 +99,9 @@ EXPECTED = {
     # task 31: BarChart is an attribute only, as ThreeDAxes
     "BarPlot",
     "GroupedBarPlot",
+    # task 32
+    "HistPlot",
+    "StackPlot",
     # task 37
     "HeatmapPlot",
     "HexbinPlot",
