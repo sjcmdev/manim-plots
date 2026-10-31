@@ -13,6 +13,14 @@ from manim_plots.core import ManimPlotsWarning
 from manim_plots.core.nodes import CompiledMap
 
 EXPECTED = {
+    "CloseInset",
+    "GrowField",
+    "GrowStems",
+    "OpenInset",
+    "RevealWaterfall",
+    "RevealWireframe",
+    "SweepPolar",
+    "SweepSurface",
     "__version__",
     "ManimPlotsWarning",
     "Scale",

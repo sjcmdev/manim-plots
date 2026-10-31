@@ -4096,7 +4096,7 @@ class CartesianAxes(VGroup):
                 result.__dict__[key] = value
             elif key == "_moving_query":
                 result.__dict__[key] = None
-            elif key != "_artists":
+            elif key not in {"_artists", "_autoscale_artists"}:
                 result.__dict__[key] = copy.deepcopy(value, memo)
         result._autoscale_artists = self.artists or self.__dict__.get(
             "_autoscale_artists", ()

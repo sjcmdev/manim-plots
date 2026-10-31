@@ -108,6 +108,22 @@ Themes
 Animations
 ----------
 
+.. autoclass:: CloseInset
+
+.. autoclass:: GrowField
+
+.. autoclass:: GrowStems
+
+.. autoclass:: OpenInset
+
+.. autoclass:: RevealWaterfall
+
+.. autoclass:: RevealWireframe
+
+.. autoclass:: SweepPolar
+
+.. autoclass:: SweepSurface
+
 .. autoclass:: DrawAxes
 
 .. autoclass:: TraceCurve
