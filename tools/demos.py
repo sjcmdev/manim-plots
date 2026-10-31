@@ -901,6 +901,40 @@ def hist3d_orbit(scene: Scene) -> None:
     scene.wait(0.5)
 
 
+def enter_and_exit(scene: Scene) -> None:
+    """Enter and leave with the library's animations, the exit a flag on the same class.
+
+    A spiral is traced by its parameter, so each turn takes the same time; points pop
+    in left to right; bars grow from their base and leave last bar first with
+    `reverse=True`, which also removes them, as Manim's `Uncreate` does.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(-4, 4, 1), x_length=6, y_length=6)
+    ax.shift(0.3 * DOWN)
+    t_max = 4 * PI
+    spiral = ax.plot_parametric_curve(
+        lambda t: (0.3 * t * np.cos(t), 0.3 * t * np.sin(t)), t_range=(0, t_max)
+    )
+    rng = np.random.default_rng(5)
+    x = rng.uniform(-3.5, 3.5, 12)
+    points = ax.scatter(x, 0.5 * x + rng.normal(0, 0.6, 12), color=YELLOW)
+    bars = ax.bar([-3, -1, 1, 3], [2, 3.5, 1.5, 3], width=1.2, color=GREEN)
+    scene.add(ax)
+    show_call(scene, shown, 'mp.TraceCurve(spiral, pacing="parameter")')
+    scene.play(mp.TraceCurve(spiral, pacing="parameter"), run_time=3)
+    show_call(scene, shown, "mp.TraceCurve(spiral, reverse=True)")
+    scene.play(mp.TraceCurve(spiral, reverse=True), run_time=1.5)
+    show_call(scene, shown, 'mp.ShowPoints(points, order="x", pop=True)')
+    scene.play(mp.ShowPoints(points, order="x", pop=True, lag_ratio=0.3), run_time=2)
+    show_call(scene, shown, "mp.GrowBars(bars, lag_ratio=0.2)")
+    scene.play(mp.GrowBars(bars, lag_ratio=0.2), run_time=1.5)
+    show_call(scene, shown, "mp.GrowBars(bars, lag_ratio=0.2, reverse=True)")
+    scene.play(mp.GrowBars(bars, lag_ratio=0.2, reverse=True), run_time=1.5)
+    show_call(scene, shown, "mp.ShowPoints(points, reverse=True)")
+    scene.play(mp.ShowPoints(points, order="x", reverse=True, lag_ratio=0.3))
+    scene.wait(0.5)
+
+
 DEMO_LIST: list[Callable[[Scene], None]] = [
     create_sine,
     follow,
@@ -934,6 +968,7 @@ DEMO_LIST: list[Callable[[Scene], None]] = [
     grow_histogram,
     live_append,
     hist3d_orbit,
+    enter_and_exit,
 ]
 
 THREE_D = {box_orbit, z_range_3d, flow_3d, hist3d_orbit}
