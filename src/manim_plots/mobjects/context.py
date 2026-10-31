@@ -218,6 +218,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     VMobject.set_stroke,
     VMobject.interpolate_color,
     VMobject.pointwise_become_partial,
+    VGroup.__init__,
     VGroup.add,
     Mobject.remove,
     Mobject.reduce_across_dimension,
@@ -1006,6 +1007,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "VMobject.pointwise_become_partial": (
             "c78b17aeb714c07dc36e800a54c642f1226503698ed9a38224322eb45ac1f21d"
         ),
+        "VGroup.__init__": (
+            "72cee23eee8accbe91f891aee7a0f4dcbe55bdeba2825c4b4d9419e208ebb42b"
+        ),
         "VGroup.add": (
             "0c23544a19789dd871a576725ac0832fe2a0af89a75dac8c7c26eb598edd515a"
         ),
@@ -1708,6 +1712,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.pointwise_become_partial": (
             "c78b17aeb714c07dc36e800a54c642f1226503698ed9a38224322eb45ac1f21d"
+        ),
+        "VGroup.__init__": (
+            "72cee23eee8accbe91f891aee7a0f4dcbe55bdeba2825c4b4d9419e208ebb42b"
         ),
         "VGroup.add": (
             "0c23544a19789dd871a576725ac0832fe2a0af89a75dac8c7c26eb598edd515a"

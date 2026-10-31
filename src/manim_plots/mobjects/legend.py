@@ -35,8 +35,9 @@ def _leaves(native: Mobject) -> VMobject:
 
 def _handle(artist: _CurvePlot | ScatterPlot | ErrorBars) -> VMobject:
     from manim_plots.mobjects.bars import _Bar
+    from manim_plots.mobjects.helpers import FilledRegion
 
-    if isinstance(artist, _Bar):
+    if isinstance(artist, (_Bar, FilledRegion)):
         bar_handle = Leaf()
         bar_handle.set_points_as_corners(
             np.array(

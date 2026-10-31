@@ -12,6 +12,7 @@ from manim import (
     MED_SMALL_BUFF,
     RIGHT,
     UP,
+    ManimColor,
     Mobject,
     Tex,
     Text,
@@ -275,6 +276,11 @@ class BarPlot(VGroup):
         height: object = None,
         width: object = None,
         bottom: object = None,
+        c: object = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: object = None,
     ) -> Self:
         """Rewrite existing bars while retaining their styles and identities.
 
@@ -282,7 +288,29 @@ class BarPlot(VGroup):
         ----------
         x, height, width, bottom
             Replacement coordinates; omitted coordinates retain their values.
+        c, colorscale, vmin, vmax, norm
+            Optional replacement colour values and mapping.
         """
+        if c is not None:
+            values = np.asarray(c, dtype=float)
+            if values.shape != (len(self),) or not np.isfinite(values).all():
+                raise ValueError("c must contain one finite value per bar")
+            lo, hi = (
+                (float(values.min()), float(values.max()))
+                if len(values)
+                else (0.0, 1.0)
+            )
+            self._color_mapping = resolve_colorscale(
+                "viridis" if colorscale is None else colorscale,
+                vmin=vmin,
+                vmax=vmax,
+                norm=cast(Any, norm),
+                default_range=(lo, hi if hi > lo else lo + 1),
+            )
+            for mob, color in zip(
+                self.submobjects, self._color_mapping(values), strict=True
+            ):
+                mob.set_color(ManimColor(color.tolist()))
         updates = dict(x=x, height=height, width=width, bottom=bottom)
         if x is not None:
             self._keys = list(np.broadcast_to(np.asarray(x), (len(self),)))

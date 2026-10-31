@@ -214,6 +214,12 @@ Surfaces and colour
 
 .. autoclass:: BarPlot3D
 
+.. autoclass:: HistPlot
+   :members:
+
+.. autoclass:: StackPlot
+   :members:
+
 .. autoclass:: BarPlot
 
 .. autoclass:: GroupedBarPlot

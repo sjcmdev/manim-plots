@@ -13,26 +13,34 @@ label), `mobjects/inset.py` (new: `InsetAxes`), `mobjects/system.py` (the method
 
 ```python
 # on CartesianAxes (2D)
-def annotate(self, s, xy, xytext=None, *, arrow=True, buff=0.1, arrow_config=None,
-             **text_style) -> HelperGroup: ...                 # .text, .arrow
+def annotate(
+    self, s, xy, xytext=None, *, arrow=True, buff=0.1, arrow_config=None, **text_style
+) -> HelperGroup: ...  # .text, .arrow
 def axvspan(self, xmin, xmax, ymin=0, ymax=1, **style) -> FilledRegion: ...
 def axhspan(self, ymin, ymax, xmin=0, xmax=1, **style) -> FilledRegion: ...
-def fill_betweenx(self, y, x1, x2=0, *, where=None, interpolate=False,
-                  **style) -> FilledRegion: ...
-def crosshair(self, x, y=None, *, graph=None, readout=True,
-              fmt="({:.2f}, {:.2f})", **style) -> HelperGroup: ...
-                                          # .vline, .hline, .dot, .readout
-def end_label(self, graph, label=None, *, fmt="{:.2f}", direction=RIGHT, buff=0.15,
-              **text_style) -> Mobject: ...
-def inset(self, bounds, x_range, y_range, *, connectors=True, mirror=(),
-          **axes_kwargs) -> InsetAxes: ...
+def fill_betweenx(
+    self, y, x1, x2=0, *, where=None, interpolate=False, **style
+) -> FilledRegion: ...
+def crosshair(
+    self, x, y=None, *, graph=None, readout=True, fmt="({:.2f}, {:.2f})", **style
+) -> HelperGroup:
+    ...
+    # .vline, .hline, .dot, .readout
+
+
+def end_label(
+    self, graph, label=None, *, fmt="{:.2f}", direction=RIGHT, buff=0.15, **text_style
+) -> Mobject: ...
+def inset(
+    self, bounds, x_range, y_range, *, connectors=True, mirror=(), **axes_kwargs
+) -> InsetAxes: ...
 
 
 class InsetAxes(Axes):  # mp.InsetAxes
     parent: CartesianAxes
-    zoom_box: VMobject           # the region on the parent, in its data
-    connectors: VGroup           # two lines, empty with connectors=False
-    mirrored: list[Mobject]      # the artists of `mirror`, re-plotted on the inset
+    zoom_box: VMobject  # the region on the parent, in its data
+    connectors: VGroup  # two lines, empty with connectors=False
+    mirrored: list[Mobject]  # the artists of `mirror`, re-plotted on the inset
 ```
 
 ## AN — `annotate` in 2D
