@@ -54,6 +54,15 @@ def test_cb1_every_tick_is_numbered_zero_included():
     assert bar.y.numbers.at(2.0) is not None
 
 
+def test_cb1_a_wide_range_gets_few_nice_ticks():
+    ax = mp.Axes()
+    bar = ax.colorbar(colorscale="viridis", vmin=0, vmax=107)
+    assert isinstance(bar.axis.locator, mp.MaxNLocator)
+    assert 3 <= len(bar.axis.ticks) <= 12
+    assert bar.y.numbers.at(0.0) is not None
+    assert bar.y.numbers.at(100.0) is not None
+
+
 def test_cb2_the_strip():
     ax = mp.Axes(x_range=(0, 10, 1), y_range=(0, 5, 1))
     bar = ax.colorbar(colorscale="viridis", vmin=0, vmax=10)

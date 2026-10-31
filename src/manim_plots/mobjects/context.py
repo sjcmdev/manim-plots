@@ -42,6 +42,7 @@ from manim import (
     Succession,
     Surface,
     TangentLine,
+    Text,
     ThreeDAxes,
     ThreeDCamera,
     Transform,
@@ -298,10 +299,16 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     ThreeDCamera.get_zoom,
     Camera.points_to_pixel_coords,
     Camera.points_to_subpixel_coords,
+    Text,
+    Text.__init__,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Text": "7309c3da35c7a3f3637ce23ef5f6e22545f090d18dd78b1d4e47ec610839b444",
+        "Text.__init__": (
+            "29f31b1e7da83530ca933772008400a653e611709beb867e811852f154f6e407"
+        ),
         "ThreeDCamera.project_points": (
             "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
         ),
@@ -977,6 +984,10 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Text": "dcfdf52dad55d9508709687203f4f9d9523dc7b27af966236bf66a9a12233743",
+        "Text.__init__": (
+            "70a2bf58dc91d8fc106bf56d596ac5edd8894d34c871264ac59d0a08315092e0"
+        ),
         "ThreeDCamera.project_points": (
             "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
         ),

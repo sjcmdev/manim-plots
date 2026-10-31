@@ -307,6 +307,8 @@ ADDED_BY_TASK_27 = [
     "Line3D.get_end",
 ]
 
+ADDED_BY_TASK_37 = ["Text", "Text.__init__"]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -340,6 +342,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_28
         + ADDED_BY_TASK_29
         + ADDED_BY_TASK_30
+        + ADDED_BY_TASK_37
     )
 
 

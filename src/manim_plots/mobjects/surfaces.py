@@ -65,7 +65,36 @@ def _parameterize_surface(
     return _parameterize(point_function, options)
 
 
-class _Face(ThreeDVMobject):
+class _FaceStyle(VMobject):
+    _styled: bool
+    _owner: Any
+
+    def set_fill(
+        self,
+        color: ParsableManimColor | None = None,
+        opacity: float | None = None,
+        family: bool = True,
+    ) -> Self:
+        self._styled = True
+        return super().set_fill(color, opacity, family)
+
+    def set_color(self, *args: object, **kwargs: object) -> Self:
+        self._styled = True
+        return cast(Self, cast(Any, super().set_color)(*args, **kwargs))
+
+    def set_style(self, *args: object, **kwargs: object) -> Self:
+        self._styled = True
+        return cast(Self, cast(Any, super().set_style)(*args, **kwargs))
+
+    def _paint(
+        self, rgb_fill: ParsableManimColor, rgb_stroke: ParsableManimColor | None = None
+    ) -> None:
+        VMobject.set_fill(self, rgb_fill, opacity=self._owner._opacity)
+        if rgb_stroke is not None:
+            VMobject.set_stroke(self, rgb_stroke)
+
+
+class _Face(_FaceStyle, ThreeDVMobject):
     def __init__(self, owner: SurfacePlot, **kwargs: object) -> None:
         self._owner = owner
         self._styled = False
@@ -91,30 +120,6 @@ class _Face(ThreeDVMobject):
     def get_stroke_color(self, background: bool = False) -> ManimColor:
         _ = self.points
         return cast(ManimColor, super().get_stroke_color(background))
-
-    def set_fill(
-        self,
-        color: ParsableManimColor | None = None,
-        opacity: float | None = None,
-        family: bool = True,
-    ) -> Self:
-        self._styled = True
-        return super().set_fill(color, opacity, family)
-
-    def set_color(self, *args: object, **kwargs: object) -> Self:
-        self._styled = True
-        return cast(Self, cast(Any, super().set_color)(*args, **kwargs))
-
-    def set_style(self, *args: object, **kwargs: object) -> Self:
-        self._styled = True
-        return cast(Self, cast(Any, super().set_style)(*args, **kwargs))
-
-    def _paint(
-        self, rgb_fill: ParsableManimColor, rgb_stroke: ParsableManimColor | None = None
-    ) -> None:
-        VMobject.set_fill(self, rgb_fill, opacity=self._owner._opacity)
-        if rgb_stroke is not None:
-            VMobject.set_stroke(self, rgb_stroke)
 
 
 class FaceGroup(VGroup):

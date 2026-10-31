@@ -227,3 +227,12 @@ Surfaces and colour
 .. autoclass:: Colorbar
 
 .. autodata:: colormaps
+
+.. autoclass:: HeatmapPlot
+   :members:
+
+.. autoclass:: HexbinPlot
+   :members:
+
+.. autoclass:: ContourSetPlot
+   :members:

@@ -15,7 +15,8 @@ from manim import (
     config,
 )
 
-from manim_plots.core.scales import Scale
+from manim_plots.core.scales import LinearScale, Scale
+from manim_plots.core.ticks import MaxNLocator
 from manim_plots.mobjects.axis import Axis, _scale_range
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
 from manim_plots.mobjects.placement import _place_beside
@@ -87,6 +88,8 @@ class Colorbar(CartesianAxes):
         )
         self.submobjects.remove(self.x_axis)
         self.y.exclude_origin_tick = False
+        if isinstance(mapping.scale, LinearScale):
+            self.y.locator = MaxNLocator()
         self.y.set_position("right")
         self.y.add_numbers(excluding=())
         self.axis: Axis = self.y

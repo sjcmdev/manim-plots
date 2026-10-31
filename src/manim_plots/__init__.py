@@ -69,6 +69,7 @@ from manim_plots.mobjects.fields import ArrowVectorField as ArrowVectorField
 from manim_plots.mobjects.fields import Flow
 from manim_plots.mobjects.fields import StreamLines as StreamLines
 from manim_plots.mobjects.geometry import AxLinePlot, PlanePlot
+from manim_plots.mobjects.heatmaps import ContourSetPlot, HeatmapPlot, HexbinPlot
 from manim_plots.mobjects.helpers import FilledRegion as FilledRegion
 from manim_plots.mobjects.helpers import HelperGroup as HelperGroup
 from manim_plots.mobjects.helpers import HelperLine as HelperLine
@@ -107,6 +108,7 @@ __all__ = [
     "Colormap",
     "CompiledMap",
     "ContourPlot",
+    "ContourSetPlot",
     "DecimalFormatter",
     "DrawAxes",
     "EngFormatter",
@@ -121,6 +123,8 @@ __all__ = [
     "FunctionScale",
     "FunctionSource",
     "GrowSurface",
+    "HeatmapPlot",
+    "HexbinPlot",
     "Labels",
     "Legend",
     "LinePlot",

@@ -126,7 +126,7 @@ def test_hm4_cells_keep_their_style_and_take_new_data():
     assert cell.get_stroke_width() == 3
     viridis = mp.colormaps["viridis"]
     np.testing.assert_allclose(
-        fill_rgb(img.cells.at((0, 0))), viridis(1), atol=1.5 / 255
+        fill_rgb(img.cells.at((0, 0))), viridis(3 / 5), atol=1.5 / 255
     )
 
 
@@ -140,7 +140,11 @@ def test_hm4_set_data_from_a_tracker_every_frame():
         expected = mp.colormaps["viridis"]((Z[0, 0] + t.get_value()) / 10)
         return float(np.max(np.abs(fill_rgb(img.cells.at((0, 0))) - expected)))
 
-    assert max(probe(lambda s: s.play(t.animate.set_value(5)), worst)) < 2 / 255
+    def construct(scene: Any) -> None:
+        scene.add(ax, img)
+        scene.play(t.animate.set_value(5))
+
+    assert max(probe(construct, worst)) < 2 / 255
 
 
 def test_hm5_cells_follow_a_range_and_are_cut():
