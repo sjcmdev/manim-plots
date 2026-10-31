@@ -94,6 +94,7 @@ EXPECTED = {
     "WaterfallPlot",
     "BarPlot3D",
     "GrowSurface",
+    "ShrinkSurface",
     # task 28b
     "SliceView",
     # task 31: BarChart is an attribute only, as ThreeDAxes

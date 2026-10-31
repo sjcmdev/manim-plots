@@ -32,39 +32,77 @@ Types below describe the API; they are not extra public helper types.
 
 ```python
 class TraceCurve(Animation):
-    def __init__(self, artist, *, pacing="parameter", reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, artist, *, pacing="parameter", reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class ShowPoints(Animation):
-    def __init__(self, scatter, *, order="data", pop=False, lag_ratio=1.0,
-                 reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        scatter,
+        *,
+        order="data",
+        pop=False,
+        lag_ratio=1.0,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class Morph(Animation):
     def __init__(self, a, b, **kwargs): ...
+
+
 class AppendData(Animation):
     def __init__(self, artist, x, y=None, *, autoscale=False, **kwargs): ...
+
+
 class DrawAxes(Create):
     def __init__(self, ax, *, reverse=False, remover=None, **kwargs): ...
+
+
 class BuildAxes(AnimationGroup):
-    def __init__(self, ax, lag_ratio=0.5, *, stages=None, reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, ax, lag_ratio=0.5, *, stages=None, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class HighlightTick(Indicate):
     def __init__(self, axis, value, color=YELLOW, scale_factor=1.5, **kwargs): ...
+
+
 class GrowBars(Animation):
-    def __init__(self, bars, lag_ratio=0.05, *, reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, bars, lag_ratio=0.05, *, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class ShrinkBars(GrowBars):
     def __init__(self, bars, lag_ratio=0.05, **kwargs): ...
+
+
 class SortBars(Animation):
     def __init__(self, bars, key=None, reverse=False, **kwargs): ...
+
+
 class HighlightBar(AnimationGroup):
     def __init__(self, bars, key, dim_opacity=0.25, **kwargs): ...
+
+
 class Flow(Animation):
     def __init__(self, field, *mobjects, speed=1, pointwise=False, **kwargs): ...
+
+
 class GrowSurface(Animation):
-    def __init__(self, surface, zdir="z", offset=None, *, reverse=False,
-                 remover=None, **kwargs): ...
+    def __init__(
+        self, surface, zdir="z", offset=None, *, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class ShrinkSurface(GrowSurface):
-    def __init__(self, surface, zdir="z", offset=None, *, remover=None,
-                 **kwargs): ...
+    def __init__(self, surface, zdir="z", offset=None, *, remover=None, **kwargs): ...
 ```
 
 The `pacing` spelling and default `"parameter"`, the `"arc_length"` spelling,
