@@ -149,7 +149,7 @@ def test_hi6_horizontal():
 
 def test_hi7_set_data_keeps_the_edges_and_the_bars():
     ax = mp.Axes(x_range=(-4, 4, 1), y_range=(0, 400, 50))  # the new counts reach 230
-    h = ax.hist(SAMPLE, bins=8, range=(-4, 4), color_by="count")
+    h: Any = ax.hist(SAMPLE, bins=8, range=(-4, 4), color_by="count")
     bar = h.bars[4]
     other = RNG.normal(1, 0.5, 500)
     h.set_data(other)
