@@ -112,6 +112,8 @@ EXPECTED = {
     "BuildAxes",
     "HighlightTick",
     "HighlightBar",
+    # task 35
+    "InsetAxes",
     # task 37
     "HeatmapPlot",
     "HexbinPlot",
