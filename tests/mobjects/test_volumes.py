@@ -13,7 +13,7 @@ import pytest
 from manim import RED, ManimColor
 
 import manim_plots as mp
-from manim_plots.core.shape import marching_cubes
+from manim_plots.core import shape
 
 LIGHT = np.array([-2, -2, 1]) / 3
 
@@ -114,7 +114,7 @@ def sphere_grid(n: int = 24) -> tuple[np.ndarray, float, np.ndarray]:
 
 def test_is1_marching_cubes_sphere_is_closed_and_outward():
     volume, h, origin = sphere_grid()
-    vertices, triangles = marching_cubes(volume, 1.0, (h, h, h), origin)
+    vertices, triangles = shape.marching_cubes(volume, 1.0, (h, h, h), origin)
     r = np.linalg.norm(vertices, axis=1)
     assert np.max(np.abs(r - 1)) < 0.02
     edges = np.sort(
