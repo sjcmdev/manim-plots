@@ -190,7 +190,7 @@ choosing it later breaks nothing.
 | F-708 | `ax.add(artist)` and `ax.plot(...)` register; an artist is never a submobject of the coordinate system. A registered artist follows the system's frame and also has a geometric channel of its own (F-904). After `ReplacementTransform(ax, new_ax)` the artists bound to `ax` belong to `new_ax`. `ax.remove(artist)` unregisters *(ADR 0003)* | **0.1** | D11, D19, D20, A2.1, ADR 0003 |
 | F-709 | Adding the coordinate system to a scene does not add or remove the artists, and adding an artist separately is allowed | **0.1** | A6.1, D11 |
 | F-710 | `Morph(a, b)` resamples `a` on `b`'s parameterisation along arc length, and raises on a topology pair it cannot honestly resample | **0.1** | D8 |
-| F-711 | Step, bars, histograms, error bars, filled regions, drop lines, reference lines, annotations | **0.2** | mpl 2.1, manim drop lines |
+| F-711 | Step, bars, histograms, error bars, filled regions, drop lines, reference lines, annotations; categorical, date, percent, logit and broken axes; heatmaps; pie, box and violin plots; voxels and isosurfaces; data animation (grow, keyed `set_data`, sort, append with autoscale) *(ADR 0007)* | **0.1** | mpl 2.1, manim drop lines, ADR 0007 |
 | F-712 | Field sources: implicit curves, contours, vector fields, stream lines, surfaces — one source, five artists | **later** | D15 |
 
 ## F-8xx — Legend, style, colour
@@ -424,19 +424,19 @@ been enough.**
 
 ## Deferred
 
-**0.2:** autoscale and margins; an independent second scale; linked axes; polar; broken
-axes; `fill_between`; error bars; `step`; histograms and bars; value-mapped colour and
-colorbars; annotations and arrows; drop lines and reference lines; inset axes; date/time
-axes; categorical axes; percent and logit formatters; label wrapping; rug plots; jitter;
-legend layout; `AppendData`, `Rescale`, `HighlightTick`; one artist shared across two
-systems; `rangelimited` axes; the Origin scale library.
+**0.2:** linked axes; label wrapping; rug plots; jitter; legend layout; `Rescale`; one
+artist shared across two systems; `rangelimited` axes; the Origin scale library. *(ADR
+0007 moved into the first release: autoscale and margins, broken axes, histograms and
+bars, annotations and arrows, inset axes, date/time, categorical, percent and logit
+axes, `AppendData`, `HighlightTick`; the other former 0.2 rows joined it through ADR 0004
+and its tasks.)*
 
 **Later:** 3D; field sources and the five artists over them (implicit curves, contours,
 vector fields, stream lines, surfaces); zoom plots; colour themes.
 
 ## Non-goals
 
-Pie, box and violin plots; statistics and curve fitting; spectral transforms; unstructured
+Statistics beyond pie, box and violin plots (those joined the release, ADR 0007) and curve fitting; spectral transforms; unstructured
 meshes; a GL backend; an interactive GUI; interaction and picking; subclassing Manim's
 `Axes` / `NumberLine` / `NumberPlane`; matplotlib parity as an end in itself; figure
 layout and subplot management; tick-label tables; copying settings between axes as an API.

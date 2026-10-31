@@ -1,6 +1,6 @@
 # Acceptance table — task 31, bars and categorical axes
 
-**Status: Living until task 31 merges, then Record.** Written 2026-10-31 before any code,
+**Status: Record (merged 2026-10-31).** Written 2026-10-31 before any code,
 per ADR 0003 §9. Rows marked *(default taken)* were settled here without the maintainer
 and stand unless vetoed. Contracts: ADR 0007 §1-§2; ADR 0004 §9 (customisation); task 11a
 (artists: cycle, legend, clip, keys); task 25 (`ColorMapping`, `colorbar`); task 29
