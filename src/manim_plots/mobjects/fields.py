@@ -791,12 +791,16 @@ class ArrowVectorField(_Field):
                 end = point + length * direction
                 if i == len(self._solid_arrows):
                     arrow: VMobject = self._solid_arrow(point, end, float(length))
-                    arrow.set_color(self._color(vector)).set_opacity(self.opacity)
+                    arrow.set_color(
+                        self._color(vector if valid[i] else np.zeros_like(vector))
+                    ).set_opacity(self.opacity)
                     self._solid_arrows.append(arrow)
-                    self._solid_colors.append(self._color(vector))
+                    self._solid_colors.append(
+                        self._color(vector if valid[i] else np.zeros_like(vector))
+                    )
                 else:
                     arrow = self._solid_arrows[i]
-                    color = self._color(vector)
+                    color = self._color(vector if valid[i] else np.zeros_like(vector))
                     if arrow.get_color() == self._solid_colors[i]:
                         arrow.set_color(color)
                     self._solid_colors[i] = color
@@ -938,6 +942,13 @@ class ArrowVectorField(_Field):
         self, start: FloatArray, end: FloatArray, length: float
     ) -> Arrow3D:
         config = self.vector_config.copy()
+        if length == 0:
+            # Cone cannot construct a zero-height tip; collapse a valid template.
+            arrow = Arrow3D(start, start + np.array([1.0, 0.0, 0.0]), **config)
+            for part in arrow.get_family():
+                part.points = np.broadcast_to(start, part.points.shape).copy()
+            arrow.start = start.copy()
+            return arrow
         height = config.get("height", 0.3)
         if length < 2 * height:
             config["height"] = length / 2

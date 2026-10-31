@@ -411,6 +411,12 @@ ADDED_BY_TASK_40 = [
 ]
 
 
+ADDED_BY_TASK_43 = [
+    "Arc",
+    "Arc.__init__",
+    "Arc._set_pre_positioned_points",
+    "Arc.generate_points",
+]
 ADDED_BY_TASK_44: list[str] = []  # VMobject.get_style came with task 42
 
 
@@ -448,6 +454,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_39
         + ADDED_BY_TASK_34
         + ADDED_BY_TASK_40
+        + ADDED_BY_TASK_43
         + ADDED_BY_TASK_44
         + ADDED_BY_TASK_42
     )

@@ -180,6 +180,8 @@ class _SurfaceDriver(_CurvePlot):
         # The curve driver owns dependency polling and the dirty fast path.
         if self.owner._building:
             return
+        for parameter in self.parameters.values():
+            parameter.poll(self.owner._system._token)
         old = self._frame_seen
         if old != self.owner._system.frame.version and _clip_has_margin(
             self.owner._clip

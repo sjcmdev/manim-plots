@@ -112,6 +112,8 @@ Animations
 
 .. autoclass:: BuildAxes
 
+.. autoclass:: CloseInset
+
 .. autoclass:: DrawAxes
 
 .. autoclass:: ExplodePie
@@ -120,7 +122,11 @@ Animations
 
 .. autoclass:: GrowBoxPlot
 
+.. autoclass:: GrowField
+
 .. autoclass:: GrowStack
+
+.. autoclass:: GrowStems
 
 .. autoclass:: GrowSurface
 
@@ -130,6 +136,8 @@ Animations
 
 .. autoclass:: Morph
 
+.. autoclass:: OpenInset
+
 .. autoclass:: RebinHistogram
 
 .. autoclass:: RefineRiemann
@@ -137,6 +145,10 @@ Animations
 .. autoclass:: RevealCells
 
 .. autoclass:: RevealContours
+
+.. autoclass:: RevealWaterfall
+
+.. autoclass:: RevealWireframe
 
 .. autoclass:: ShowPoints
 
@@ -152,7 +164,11 @@ Animations
 
 .. autoclass:: SweepPie
 
+.. autoclass:: SweepPolar
+
 .. autoclass:: SweepSlice
+
+.. autoclass:: SweepSurface
 
 .. autoclass:: TraceCurve
 

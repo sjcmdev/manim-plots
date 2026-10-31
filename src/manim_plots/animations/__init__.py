@@ -1,6 +1,6 @@
 """Artist-aware animations and reversible presentation lifecycles."""
 
-from .axes import BuildAxes, DrawAxes, HighlightTick
+from .axes import BuildAxes, DrawAxes, HighlightTick, SweepPolar
 from .bars import (
     GrowBars,
     GrowStack,
@@ -12,29 +12,43 @@ from .bars import (
     SortBars,
 )
 from .curves import AppendData, Morph, ShowPoints, TraceCurve
-from .fields import Flow
+from .decorations import CloseInset, OpenInset
+from .fields import Flow, GrowField
 from .helpers import RefineRiemann
 from .statistics import ExplodePie, GrowBoxPlot, SweepPie, UnfoldViolin
-from .surfaces import GrowSurface, ShrinkSurface
+from .surfaces import (
+    GrowStems,
+    GrowSurface,
+    RevealWaterfall,
+    RevealWireframe,
+    ShrinkSurface,
+    SweepSurface,
+)
 from .volumes import StackVoxels, SweepIsovalue, SweepSlice
 
 __all__ = [
     "AppendData",
     "BuildAxes",
+    "CloseInset",
     "DrawAxes",
     "ExplodePie",
     "Flow",
     "GrowBars",
     "GrowBoxPlot",
+    "GrowField",
     "GrowStack",
+    "GrowStems",
     "GrowSurface",
     "HighlightBar",
     "HighlightTick",
     "Morph",
+    "OpenInset",
     "RebinHistogram",
     "RefineRiemann",
     "RevealCells",
     "RevealContours",
+    "RevealWaterfall",
+    "RevealWireframe",
     "ShowPoints",
     "ShrinkBars",
     "ShrinkSurface",
@@ -42,7 +56,9 @@ __all__ = [
     "StackVoxels",
     "SweepIsovalue",
     "SweepPie",
+    "SweepPolar",
     "SweepSlice",
+    "SweepSurface",
     "TraceCurve",
     "UnfoldViolin",
 ]

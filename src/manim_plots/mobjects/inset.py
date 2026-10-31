@@ -122,6 +122,12 @@ class InsetAxes(Axes):
             top = self.c2p(self.x_range[1], self.y_range[1])
             size = top - bottom
             desired = np.array([w, h, 0]) * (hi - lo)
+            progress = self.__dict__.get("_inset_expansion", 1.0)
+            if progress != 1:
+                origin = parent.c2p(self.x_range[0], self.y_range[0])
+                extent = parent.c2p(self.x_range[1], self.y_range[1]) - origin
+                target = (1 - progress) * origin + progress * target
+                desired = (1 - progress) * extent + progress * desired
             factors = np.divide(
                 desired[:2], size[:2], out=np.ones(2), where=size[:2] != 0
             )
@@ -150,7 +156,7 @@ class InsetAxes(Axes):
                 )
             ]
             for line, i in zip(self.connectors, candidates[:2], strict=False):
-                cast(Line, line).put_start_and_end_on(box[i], inner[i])
+                cast(Line, line).set_points_as_corners([box[i], inner[i]])
         finally:
             self._following = False
 
