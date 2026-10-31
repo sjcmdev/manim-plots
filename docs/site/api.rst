@@ -108,47 +108,61 @@ Themes
 Animations
 ----------
 
+.. autoclass:: AppendData
+
+.. autoclass:: BuildAxes
+
 .. autoclass:: CloseInset
+
+.. autoclass:: DrawAxes
+
+.. autoclass:: ExplodePie
+
+.. autoclass:: GrowBars
+
+.. autoclass:: GrowBoxPlot
 
 .. autoclass:: GrowField
 
+.. autoclass:: GrowStack
+
 .. autoclass:: GrowStems
 
+.. autoclass:: GrowSurface
+
+.. autoclass:: HighlightBar
+
+.. autoclass:: HighlightTick
+
+.. autoclass:: Morph
+
 .. autoclass:: OpenInset
+
+.. autoclass:: RevealCells
+
+.. autoclass:: RevealContours
 
 .. autoclass:: RevealWaterfall
 
 .. autoclass:: RevealWireframe
 
+.. autoclass:: ShowPoints
+
+.. autoclass:: ShrinkBars
+
+.. autoclass:: ShrinkSurface
+
+.. autoclass:: SortBars
+
+.. autoclass:: SweepPie
+
 .. autoclass:: SweepPolar
 
 .. autoclass:: SweepSurface
 
-.. autoclass:: DrawAxes
-
 .. autoclass:: TraceCurve
 
-.. autoclass:: ShowPoints
-
-.. autoclass:: Morph
-
-.. autoclass:: GrowBars
-
-.. autoclass:: GrowSurface
-
-.. autoclass:: ShrinkSurface
-
-.. autoclass:: ShrinkBars
-
-.. autoclass:: SortBars
-
-.. autoclass:: AppendData
-
-.. autoclass:: BuildAxes
-
-.. autoclass:: HighlightTick
-
-.. autoclass:: HighlightBar
+.. autoclass:: UnfoldViolin
 
 Scales
 ------
@@ -239,8 +253,6 @@ Surfaces and colour
 -------------------
 
 .. autoclass:: SurfacePlot
-
-.. autoclass:: GrowSurface
 
 .. autoclass:: StemPlot
 

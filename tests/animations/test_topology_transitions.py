@@ -443,7 +443,7 @@ def test_ss2_f915_dependencies_move_before_static_compilation():
             )
 
         def construct(self):
-            self.add(ax, surface, view, still_axes, still)
+            self.add(still_axes, still, ax, surface, view)  # Manim moves the suffix
             calls.clear()
             self.play(mp.SweepSlice(view, 1))
 
