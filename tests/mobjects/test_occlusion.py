@@ -45,6 +45,8 @@ def drawn(ax: Any, mob: Any) -> np.ndarray:
 def shoot(
     ax: Any, *mobs: Any, phi: float, theta: float, record: Callable[[], Any]
 ) -> Any:
+    # The axes hold their artists weakly: a test keeps every occluder it makes and
+    # passes it here, or the collector may take it before the frame.
     """Render one still frame of the axes and their artists from the given camera
     and return ``record()``."""
     out: list[Any] = []
@@ -83,9 +85,9 @@ def test_oc1_the_keyword():
 @pytest.mark.parametrize("engine", engines())
 def test_oc1_oc3_a_wall_hides_the_far_part_of_a_segment(engine):
     ax = cube(occlusion=engine)
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     seg = ax.segment((-3, -2, 0), (3, 2, 0))
-    xs = shoot(ax, phi=90, theta=0, record=lambda: drawn(ax, seg)[:, 0])
+    xs = shoot(ax, wall, phi=90, theta=0, record=lambda: drawn(ax, seg)[:, 0])
     assert xs.min() == pytest.approx(0, abs=PIXEL)  # cut at the wall
     assert xs.max() == pytest.approx(3, abs=1e-9)
 
@@ -93,18 +95,18 @@ def test_oc1_oc3_a_wall_hides_the_far_part_of_a_segment(engine):
 @pytest.mark.parametrize("engine", engines())
 def test_oc3_from_the_other_side_the_other_part(engine):
     ax = cube(occlusion=engine)
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     seg = ax.segment((-3, -2, 0), (3, 2, 0))
-    xs = shoot(ax, phi=90, theta=180, record=lambda: drawn(ax, seg)[:, 0])
+    xs = shoot(ax, wall, phi=90, theta=180, record=lambda: drawn(ax, seg)[:, 0])
     assert xs.max() == pytest.approx(0, abs=PIXEL)
     assert xs.min() == pytest.approx(-3, abs=1e-9)
 
 
 def test_oc1_off_draws_everything():
     ax = cube(occlusion=False)
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     seg = ax.segment((-3, -2, 0), (3, 2, 0))
-    xs = shoot(ax, phi=90, theta=0, record=lambda: drawn(ax, seg)[:, 0])
+    xs = shoot(ax, wall, phi=90, theta=0, record=lambda: drawn(ax, seg)[:, 0])
     assert xs.min() == pytest.approx(-3, abs=1e-9)
 
 
@@ -113,37 +115,39 @@ def test_oc1_off_draws_everything():
 
 def test_oc2_a_translucent_wall_hides_nothing():
     ax = cube()
-    ax.plane(x=0)  # fill_opacity 0.25 by default
+    wall = ax.plane(x=0)  # fill_opacity 0.25 by default
     seg = ax.segment((-3, -2, 0), (3, 2, 0))
-    xs = shoot(ax, phi=90, theta=0, record=lambda: drawn(ax, seg)[:, 0])
+    xs = shoot(ax, wall, phi=90, theta=0, record=lambda: drawn(ax, seg)[:, 0])
     assert xs.min() == pytest.approx(-3, abs=1e-9)
 
 
 def test_oc2_an_opaque_surface_hides_what_is_below_it():
     ax = cube()
-    ax.plot_surface(lambda u, v: 0 * u, (-3, 3), (-3, 3), resolution=4)
+    floor = ax.plot_surface(lambda u, v: 0 * u, (-3, 3), (-3, 3), resolution=4)
     helix = ax.plot_parametric_curve(
         lambda t: np.array([np.cos(t), np.sin(t), t / 3]), t_range=(-6, 6)
     )
-    zs = shoot(ax, phi=0, theta=-90, record=lambda: drawn(ax, helix)[:, 2])
+    zs = shoot(ax, floor, phi=0, theta=-90, record=lambda: drawn(ax, helix)[:, 2])
     assert zs.min() == pytest.approx(0, abs=PIXEL)
     assert zs.max() == pytest.approx(2, abs=1e-6)
 
 
 def test_oc3_a_curve_with_nothing_in_front_keeps_its_path():
     ax = cube()
-    ax.plane(x=-2, fill_opacity=1)  # behind everything seen from +x
+    wall = ax.plane(x=-2, fill_opacity=1)  # behind everything seen from +x
     seg = ax.segment((-1, -2, 0), (3, 2, 0))
     before = np.asarray(seg.points).copy()
-    after = shoot(ax, phi=90, theta=0, record=lambda: np.asarray(seg.points).copy())
+    after = shoot(
+        ax, wall, phi=90, theta=0, record=lambda: np.asarray(seg.points).copy()
+    )
     np.testing.assert_allclose(after, before, atol=1e-12)
 
 
 def test_oc3_a_hidden_curve_draws_nothing():
     ax = cube()
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     seg = ax.segment((-3, -2, 0), (-1, 2, 0))
-    count = shoot(ax, phi=90, theta=0, record=lambda: len(seg.points))
+    count = shoot(ax, wall, phi=90, theta=0, record=lambda: len(seg.points))
     assert count == 0
 
 
@@ -152,10 +156,11 @@ def test_oc3_a_hidden_curve_draws_nothing():
 
 def test_oc4_markers_behind_are_hidden_whole():
     ax = cube()
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     dots = ax.scatter([-2, 2], [0, 0], [0, 0])
     opacities = shoot(
         ax,
+        wall,
         phi=90,
         theta=0,
         record=lambda: [d.get_fill_opacity() for d in dots],
@@ -166,9 +171,9 @@ def test_oc4_markers_behind_are_hidden_whole():
 
 def test_oc4_text_is_never_occluded():
     ax = cube(frame="box")
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     label = ax.text(-2, 0, 0, "behind")
-    count = shoot(ax, phi=90, theta=0, record=lambda: len(label.get_all_points()))
+    count = shoot(ax, wall, phi=90, theta=0, record=lambda: len(label.get_all_points()))
     assert count > 0
 
 
@@ -177,9 +182,9 @@ def test_oc4_text_is_never_occluded():
 
 def test_oc5_the_data_and_later_derivations_are_untouched():
     ax = cube()
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     seg = ax.segment((-3, -2, 0), (3, 2, 0))
-    shoot(ax, phi=90, theta=0, record=lambda: None)
+    shoot(ax, wall, phi=90, theta=0, record=lambda: None)
     # outside the scene, no camera: the next derivation draws the whole segment
     ax.set_z_range((-4, 4, 1))
     xs = drawn(ax, seg)[:, 0]
@@ -188,6 +193,7 @@ def test_oc5_the_data_and_later_derivations_are_untouched():
 
 def test_oc5_no_scene_no_step():
     ax = cube()
-    ax.plane(x=0, fill_opacity=1)
+    wall = ax.plane(x=0, fill_opacity=1)
     seg = ax.segment((-3, -2, 0), (3, 2, 0))
     assert drawn(ax, seg)[:, 0].min() == pytest.approx(-3, abs=1e-9)
+    assert wall.get_fill_opacity() == 1  # an opaque wall was there all along
