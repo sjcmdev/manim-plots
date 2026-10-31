@@ -351,6 +351,37 @@ def test_ap3_append_with_autoscale_keeps_the_data_inside():
     assert ax.x_range[1] >= 8 and ax.y_range[1] >= 9
 
 
+def test_ap3_the_axes_are_redrawn_while_they_widen():
+    ax = mp.Axes(x_range=(0, 2, 1), y_range=(0, 2, 1))
+    line = ax.line([0, 1], [0, 1])
+    moving: list[bool] = []
+    ticks: list[float] = []
+
+    class Shot(Scene):
+        def begin_animations(self) -> None:
+            super().begin_animations()
+            members = {id(m) for m in self.moving_mobjects}
+            moving.append(id(ax) in members or id(ax.x.line) in members)
+
+        def update_to_time(self, time: float) -> None:
+            super().update_to_time(time)
+            ticks.append(float(ax.x.ticks.at(1.0).get_center()[0]))
+
+        def construct(self) -> None:
+            self.add(ax, line)
+            self.play(mp.AppendData(line, [2, 4, 8], [3, 5, 9], autoscale=True))
+
+    from manim import tempconfig
+
+    from .helpers import RUN
+
+    with tempconfig(RUN):
+        Shot().render()
+    assert moving == [True]  # not frozen in the static background (F-915)
+    assert ticks[-1] < ticks[0] - 1e-3  # the tick at 1 slides left as x widens
+    assert line is not None
+
+
 # --- AX -------------------------------------------------------------------------------
 
 

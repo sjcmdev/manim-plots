@@ -56,7 +56,7 @@ a `BarPlot3D` or `Hist3DPlot` (tasks 29, 33), or a `BarChart`'s `bars`.
 |---|---|
 | AP-1 | `mp.AppendData(line, x, y)` on a `LinePlot` (or `ScatterPlot`) adds the new points one after another over the run: at α the artist holds its old data plus the first `⌊α · k⌋` new points and a partial segment towards the next (for a scatter: the next marker fading in), so the curve draws on; at the end its data is old + new |
 | AP-2 | `ax.margins(x, y)` sets the fractions added on each side when autoscaling (default `0.05` and `0.05`, matplotlib's); `ax.margins()` reads them. `ax.autoscale(axis="both", tight=False)` sets the ranges to the data limits of every registered artist, widened by the margins (`tight=True`: no margins), keeping each axis's step rule; a log axis widens by the margins in log space |
-| AP-3 | `mp.AppendData(..., autoscale=True)` changes the ranges on every frame so that the data drawn so far stays inside with the margins, never shrinking them; `ax.animate.autoscale()` animates to the autoscaled ranges as `ax.animate.set_x_range` does |
+| AP-3 | `mp.AppendData(..., autoscale=True)` changes the ranges on every frame so that the data drawn so far stays inside with the margins, never shrinking them, and the system counts as moving for that play (F-915), so its line, ticks, numbers and grid are redrawn on every frame, not frozen in Cairo's static background *(review: the live-append film kept the start's ticks until the end)*; `ax.animate.autoscale()` animates to the autoscaled ranges as `ax.animate.set_x_range` does |
 
 ## AX — building and highlighting
 
