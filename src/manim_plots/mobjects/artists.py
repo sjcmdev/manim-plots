@@ -658,7 +658,7 @@ class _CurvePlot(Leaf):
         elif self._lifecycle.state is lc.State.TRANSIENT:
             presentation = self.__dict__.get("_presentation")
             if presentation is not None:
-                presentation()
+                presentation(self)
         drawn = self.__dict__.get("_occlusion_drawn")
         if drawn is not None and drawn[0] is self._cache:
             return cast(FloatArray, drawn[1])
