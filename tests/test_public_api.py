@@ -114,6 +114,16 @@ EXPECTED = {
     "HighlightBar",
     # task 35
     "InsetAxes",
+    # task 36
+    "date2num",
+    "num2date",
+    "AutoDateLocator",
+    "ConciseDateFormatter",
+    "PercentFormatter",
+    "LogitScale",
+    "LogitLocator",
+    "LogitFormatter",
+    "BrokenScale",
     # task 37
     "HeatmapPlot",
     "HexbinPlot",
