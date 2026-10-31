@@ -41,7 +41,7 @@ from manim_plots.mobjects.artists import (
 )
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
 from manim_plots.mobjects.context import animation_context
-from manim_plots.mobjects.geometry import _ensure_binding
+from manim_plots.mobjects.geometry import PlanePlot, _ensure_binding
 from manim_plots.mobjects.helpers import _Binding
 from manim_plots.mobjects.leaves import _ClipInput
 
@@ -1224,4 +1224,84 @@ class _SliceProfile(_SliceArtist, FunctionPlot):
 
         source = cast(FunctionSource, self.source)
         self.source = FunctionSource(source.function, self._interval(), dim=2)
+        super()._rebuild()
+
+
+def _plane_trace(
+    surface: SurfacePlot, plane: PlanePlot
+) -> tuple[FloatArray, FloatArray, tuple[float, float] | None]:
+    _ensure_binding(plane._binding)
+    p0 = plane._point.copy()
+    h = np.cross([0, 0, 1], plane._normal)
+    length = np.linalg.norm(h)
+    if length == 0:
+        raise ValueError("plane must not be horizontal")
+    h /= length
+    lower, upper = -np.inf, np.inf
+    for i, interval in enumerate((surface._u_range, surface._v_range)):
+        lo, hi = sorted(
+            interval
+            if interval is not None
+            else surface._system.get_axis(i).range.value
+        )
+        if abs(h[i]) < 1e-15:
+            if not lo <= p0[i] <= hi:
+                return p0, h, None
+        else:
+            a, b = sorted(((lo - p0[i]) / h[i], (hi - p0[i]) / h[i]))
+            lower, upper = max(lower, a), min(upper, b)
+    return p0, h, (float(lower), float(upper)) if lower < upper else None
+
+
+def _plane_profile(
+    system: mp.CartesianAxes, surface: SurfacePlot, plane: object, **style: object
+) -> FunctionPlot:
+    if not isinstance(plane, PlanePlot):
+        raise TypeError("plane must be a PlanePlot")
+    if plane._input_name in ("x", "y"):
+        axis = "xy".index(plane._input_name)
+        parameter = plane._binding.parameters[f"point{axis}"]
+        return _SliceProfile(
+            system,
+            surface,
+            axis,
+            parameter.tracker if parameter.tracker is not None else parameter.value,
+            **style,
+        )
+    return _PlaneProfile(system, surface, plane, **style)
+
+
+class _PlaneProfile(_SliceArtist, FunctionPlot):
+    def __init__(
+        self,
+        system: mp.CartesianAxes,
+        surface: SurfacePlot,
+        plane: PlanePlot,
+        **style: object,
+    ) -> None:
+        def revision() -> str:
+            _ensure_binding(plane._binding)
+            return repr((plane._binding.version, _surface_revision(surface)))
+
+        def derive(binding: _Binding) -> None:
+            self._p0, self._h, interval = _plane_trace(surface, plane)
+            binding.valid = interval is not None
+            if interval is None and binding.version == 0:
+                raise ValueError("plane trace misses the surface domain")
+            self._interval = (0.0, 1.0) if interval is None else interval
+
+        self._binding = _Binding(system, derive, {"dependency": revision})
+        self._binding_seen = -1
+        self._binding.ensure()
+
+        def height(s: float) -> float:
+            return float(surface._evaluate((self._p0 + s * self._h)[:2])[2])
+
+        super().__init__(height, system, self._interval, **cast(Any, style))
+
+    def _rebuild(self) -> None:
+        from manim_plots.core.sources import FunctionSource
+
+        source = cast(FunctionSource, self.source)
+        self.source = FunctionSource(source.function, self._interval, dim=2)
         super()._rebuild()

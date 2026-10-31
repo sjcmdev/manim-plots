@@ -76,6 +76,7 @@ from manim_plots.mobjects.legend import Legend
 from manim_plots.mobjects.plots3d import BarPlot3D, StemPlot, WaterfallPlot
 from manim_plots.mobjects.polar import PolarAxes
 from manim_plots.mobjects.polar import PolarPlane as PolarPlane
+from manim_plots.mobjects.slice_view import SliceView
 from manim_plots.mobjects.surfaces import (
     ContourPlot,
     GrowSurface,
@@ -148,6 +149,7 @@ __all__ = [
     "ScientificFormatter",
     "Shape",
     "ShowPoints",
+    "SliceView",
     "Source",
     "StemPlot",
     "SurfacePlot",

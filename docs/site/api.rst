@@ -218,6 +218,8 @@ Surfaces and colour
 
 .. autoclass:: ContourPlot
 
+.. autoclass:: SliceView
+
 .. autoclass:: Colormap
 
 .. autoclass:: ColorMapping

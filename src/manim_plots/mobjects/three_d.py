@@ -13,6 +13,7 @@ import numpy as np
 from manim import (
     DOWN,
     LEFT,
+    MED_LARGE_BUFF,
     OUT,
     PI,
     RIGHT,
@@ -80,6 +81,7 @@ from manim_plots.mobjects.plots3d import (
     _text,
 )
 from manim_plots.mobjects.projections import _juggle, _PlanePlot, _shadow
+from manim_plots.mobjects.slice_view import SliceView
 from manim_plots.mobjects.surfaces import ContourPlot, SurfacePlot, WireframePlot
 from manim_plots.mobjects.system import CartesianAxes, _scale
 from manim_plots.mobjects.themes import Theme, _resolve_theme
@@ -433,7 +435,8 @@ class ThreeDAxes(CartesianAxes):
             self.get_y_axis_label(y_label),
             self.get_z_axis_label(z_label),
         )
-        for title in labels:
+        for index, title in enumerate(labels):
+            title.__dict__["_box_axis"] = index
             if isinstance(title, BoundLabel) and title not in self._axis_titles:
                 self._axis_titles.append(title)
         return labels
@@ -1193,6 +1196,104 @@ class ThreeDAxes(CartesianAxes):
         self._read_camera()
         return self
 
+    def slice_view(
+        self,
+        surface: SurfacePlot,
+        *,
+        x: object = None,
+        y: object = None,
+        plane: PlanePlot | None = None,
+        axes: CartesianAxes | None = None,
+        side: str = "right",
+        plane_config: dict[str, Any] | None = None,
+        cut_config: dict[str, Any] | None = None,
+        axes_config: dict[str, Any] | None = None,
+        profile_config: dict[str, Any] | None = None,
+    ) -> SliceView:
+        """Build a bound slice and its profile beside this system.
+
+        Parameters
+        ----------
+        surface, x, y, plane
+            Height surface and exactly one bound coordinate or cutting plane.
+        axes, side
+            Optional existing profile axes and placement side.
+        plane_config, cut_config, axes_config, profile_config
+            Overrides for the four ordinary artists.
+
+        Returns
+        -------
+        SliceView
+            Plane, cut, axes and profile driven by the same input.
+        """
+        from manim_plots.mobjects.artists import _cycle_style
+        from manim_plots.mobjects.placement import _place_beside
+        from manim_plots.mobjects.surfaces import _plane_trace, _slice_input
+        from manim_plots.mobjects.system import Axes
+
+        index, value = _slice_input("slice_view", (x, y, plane))
+        if side not in ("right", "left", "up", "down"):
+            raise ValueError("side must be right, left, up or down")
+        if not isinstance(surface, SurfacePlot) or surface._kind != "height":
+            raise TypeError("slice_view requires a surface from plot_surface")
+        wall = plane if plane is not None else self.plane(**{"xy"[index]: value})
+        if plane_config:
+            options = dict(plane_config)
+            if "color" in options:
+                wall.set_color(options.pop("color"))
+            wall.set_style(**options)
+        aligned = "xy".find(wall._input_name)
+        if aligned >= 0:
+            interval = surface._v_range if aligned == 0 else surface._u_range
+            if interval is None:
+                interval = tuple(self.get_axis(1 - aligned).range.value)
+            label = "yx"[aligned]
+        else:
+            _, _, interval = _plane_trace(surface, wall)
+            if interval is None:
+                raise ValueError("plane trace misses the surface domain")
+            label = "s"
+        if axes is None:
+            options = {
+                "x_range": interval,
+                "y_range": self.z_range,
+                "x_length": 4,
+                "y_length": 3,
+                **(axes_config or {}),
+            }
+            axes = Axes(**options)
+            axes.submobjects.append(axes.get_axis_labels(label, "z"))
+        shared: dict[str, Any] = {}
+        _cycle_style(self, cast(_VMStyle, shared))
+        cut = (
+            cast(ContourPlot, self.intersection(wall, surface, **shared))
+            if plane is not None
+            else surface.slice(**{"xy"[index]: value}, **shared)
+        )
+        profile_style = {
+            **shared,
+            "stroke_width": cut.get_stroke_width()
+            if isinstance(cut, ParametricPlot)
+            else cut[0].get_stroke_width(),
+            **(profile_config or {}),
+        }
+        if cut_config:
+            options = dict(cut_config)
+            if "color" in options:
+                cut.set_color(options.pop("color"))
+            cut.set_style(**options)
+        profile = axes.plot_slice(surface, plane=wall, **profile_style)
+
+        def place(mob: Mobject, dt: float = 0) -> None:
+            _place_beside(mob, self, side, MED_LARGE_BUFF)
+            camera = _scene_camera()
+            if isinstance(camera, ThreeDCamera):
+                camera.add_fixed_in_frame_mobjects(profile)
+
+        place(axes)
+        axes.add_updater(place)
+        return SliceView(wall, cut, axes, profile)
+
     def _save_flat_text(self, axis: Axis) -> None:
         for number in (*axis.numbers, *axis.labels):
             members = number.family_members_with_points()
@@ -1302,7 +1403,8 @@ class ThreeDAxes(CartesianAxes):
                 self._save_flat_text(axis)
         self._refresh_pieces()
         if self.face_camera and isinstance(self._camera, ThreeDCamera):
-            rotation = self._camera.generate_rotation_matrix()
+            self._camera.reset_rotation_matrix()
+            rotation = self._camera.get_rotation_matrix()
             texts = [
                 number
                 for axis in self._ranges
@@ -1315,6 +1417,88 @@ class ThreeDAxes(CartesianAxes):
                     if not hasattr(leaf, "_flat_offset"):
                         leaf._flat_offset = leaf.points - number._flat_anchor
                     leaf.set_points(number._flat_anchor + leaf._flat_offset @ rotation)
+        if self.frame_style == "box" and isinstance(self._camera, ThreeDCamera):
+            self._place_box_text()
+
+    def _place_box_text(self) -> None:
+        assert isinstance(self._camera, ThreeDCamera)
+        camera = self._camera
+        rotation = camera.get_rotation_matrix()
+
+        def screen(points: FloatArray) -> FloatArray:
+            return ((points - camera.frame_center) @ rotation.T)[:, :2]
+
+        def project(points: FloatArray) -> FloatArray:
+            return camera.project_points(points)[:, :2]
+
+        box_centre = np.array(
+            [self.c2p(*[np.mean(a.range.value) for a in self._ranges])]
+        )
+        centre = screen(box_centre)[0]
+        occupied: list[tuple[FloatArray, FloatArray]] = []
+        for index, axis in enumerate(self._ranges):
+            endpoints = np.array([axis.get_start(), axis.get_end()])
+            edge = screen(endpoints)
+            direction = edge[1] - edge[0]
+            normal = np.array([-direction[1], direction[0]])
+            normal /= np.linalg.norm(normal)
+            if (centre - edge[0]) @ normal > 0:
+                normal = -normal
+            lift = np.append(normal, 0) @ rotation
+            projected_edge = project(endpoints)
+            projected_direction = projected_edge[1] - projected_edge[0]
+            projected_normal = np.array(
+                [-projected_direction[1], projected_direction[0]]
+            )
+            projected_normal /= np.linalg.norm(projected_normal)
+            if (project(box_centre)[0] - projected_edge[0]) @ projected_normal > 0:
+                projected_normal = -projected_normal
+
+            def place(
+                text: Mobject,
+                distance: float,
+                edge: FloatArray = edge,
+                normal: FloatArray = normal,
+                lift: FloatArray = lift,
+                projected_edge: FloatArray = projected_edge,
+                projected_normal: FloatArray = projected_normal,
+            ) -> FloatArray:
+                raw = text.get_all_points()
+                near = np.min((screen(raw) - edge[0]) @ normal)
+                text.shift((distance - near) * lift)
+                raw = text.get_all_points()
+                points = project(raw)
+                distances = (points - projected_edge[0]) @ projected_normal
+                correction = np.append(projected_normal, 0) @ rotation
+                factors = (project(raw + correction) - points) @ projected_normal
+                text.shift(np.max((distance - distances) / factors) * correction)
+                return project(text.get_all_points())
+
+            current: list[tuple[FloatArray, FloatArray]] = []
+            far = 0.0
+            for number in axis.numbers:
+                saved = number.__dict__.pop("_box_opacity", ())
+                for leaf, fill, stroke in saved:
+                    leaf.set_fill(opacity=fill)
+                    leaf.set_stroke(opacity=stroke)
+                points = place(number, 0.15)
+                low, high = points.min(axis=0), points.max(axis=0)
+                if any(np.all(low < b) and np.all(a < high) for a, b in occupied):
+                    number.__dict__["_box_opacity"] = [
+                        (leaf, leaf.get_fill_opacity(), leaf.get_stroke_opacity())
+                        for leaf in number.family_members_with_points()
+                    ]
+                    number.set_opacity(0)
+                else:
+                    current.append((low, high))
+                    far = max(
+                        far,
+                        float(np.max((points - projected_edge[0]) @ projected_normal)),
+                    )
+            occupied.extend(current)
+            for title in self._axis_titles:
+                if title.__dict__.get("_box_axis") == index:
+                    place(title, far + 0.15)
 
     def twinx(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional twinx helper.
