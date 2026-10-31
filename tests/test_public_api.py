@@ -102,6 +102,8 @@ EXPECTED = {
     # task 32
     "HistPlot",
     "StackPlot",
+    # task 33
+    "Hist3DPlot",
     # task 37
     "HeatmapPlot",
     "HexbinPlot",
