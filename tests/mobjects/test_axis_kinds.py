@@ -70,7 +70,8 @@ def test_dt3_months_hours_and_years():
     months = ticks(loc, datetime(2024, 1, 1), datetime(2024, 12, 31))
     assert months == [datetime(2024, m, 1) for m in range(1, 13)]
     hours = ticks(loc, datetime(2024, 1, 1), datetime(2024, 1, 4))
-    assert hours == [datetime(2024, 1, 1) + timedelta(hours=6 * k) for k in range(13)]
+    # matplotlib: 72 <= 6 * 11 fails, 72 <= 12 * 11 holds; both ends included
+    assert hours == [datetime(2024, 1, 1) + timedelta(hours=12 * k) for k in range(7)]
     years = ticks(loc, datetime(2000, 1, 1), datetime(2030, 1, 1))
     assert years == [datetime(y, 1, 1) for y in range(2000, 2030, 4)]
 
@@ -97,12 +98,26 @@ def test_dt4_concise_labels_and_offset():
 
 
 def test_dt5_the_offset_label_is_shown():
-    ax = mp.Axes(y_range=(0, 1, 1))
+    ax = mp.Axes(y_range=(0, 1, 1), tips=False)  # F-411: no tick under a tip
     hold = ax.line([datetime(2024, 1, 1), datetime(2024, 1, 4)], [0, 1])
     assert ax.x.offset_label is not None
     assert str(getattr(ax.x.offset_label, "text", "")) == "2024-Jan-04"
     assert ax.x.offset_label.get_top()[1] < ax.x.line.get_bottom()[1]
     assert mp.Axes().x.offset_label is None
+    assert hold is not None
+
+
+def test_dt4_lg3_labels_sit_on_a_baseline():
+    ax = mp.Axes(y_range=(0, 1, 1))
+    hold = ax.line([datetime(2024, 1, 1), datetime(2024, 12, 31)], [0, 1])
+    s, _, p = ax.x.numbers.at(
+        mp.date2num(datetime(2024, 9, 1))
+    ).family_members_with_points()
+    assert p.get_bottom()[1] < s.get_bottom()[1] - 0.02  # the descender of "p"
+    logit = mp.Axes(y_scale="logit", y_range=(0.001, 0.999))
+    one, minus = logit.y.numbers.at(0.9).family_members_with_points()[:2]
+    middle = (one.get_bottom()[1] + one.get_top()[1]) / 2
+    assert abs(minus.get_center()[1] - middle) < 0.25 * one.height  # not an underscore
     assert hold is not None
 
 
