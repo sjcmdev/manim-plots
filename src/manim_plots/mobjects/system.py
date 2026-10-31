@@ -2090,13 +2090,19 @@ class CartesianAxes(VGroup):
         )
 
     def plot_slice(
-        self, surface: object, *, x: object = None, y: object = None, **style: object
+        self,
+        surface: object,
+        *,
+        x: object = None,
+        y: object = None,
+        plane: object = None,
+        **style: object,
     ) -> FunctionPlot:
         """Draw a bound height-surface profile on this two-dimensional system.
 
         Parameters
         ----------
-        surface, x, y, **style
+        surface, x, y, plane, **style
             A plot_surface artist, exactly one bound coordinate and curve options.
 
         Returns
@@ -2106,16 +2112,21 @@ class CartesianAxes(VGroup):
         """
         from manim_plots.mobjects.surfaces import (
             SurfacePlot,
+            _plane_profile,
             _slice_input,
             _SliceProfile,
         )
 
         if len(self._ranges) == 3:
             raise NotImplementedError("plot_slice is unavailable on ThreeDAxes")
-        axis, value = _slice_input("plot_slice", (x, y))
+        axis, value = _slice_input("plot_slice", (x, y, plane))
         if not isinstance(surface, SurfacePlot) or surface._kind != "height":
             raise TypeError("plot_slice requires a surface from plot_surface")
-        artist = _SliceProfile(self, surface, axis, value, **style)
+        artist = (
+            _plane_profile(self, surface, value, **style)
+            if axis == 2
+            else _SliceProfile(self, surface, axis, value, **style)
+        )
         self.add(artist)
         return artist
 

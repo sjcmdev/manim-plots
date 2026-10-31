@@ -269,6 +269,8 @@ ADDED_BY_TASK_22 = [
     "CoordinateSystem.plot_polar_graph",
 ]
 
+ADDED_BY_TASK_24C = ["ThreeDCamera.project_points"]
+
 ADDED_BY_TASK_25 = [
     "Surface",
     "Surface.__init__",
@@ -325,6 +327,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_21
         + ADDED_BY_TASK_22
         + ADDED_BY_TASK_24
+        + ADDED_BY_TASK_24C
         + ADDED_BY_TASK_25
         + ADDED_BY_TASK_26
         + ADDED_BY_TASK_27

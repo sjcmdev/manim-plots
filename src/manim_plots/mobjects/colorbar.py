@@ -8,11 +8,9 @@ from typing import Any, Protocol, cast
 import numpy as np
 from manim import (
     MED_SMALL_BUFF,
-    RIGHT,
     ManimColor,
     Mobject,
     Rectangle,
-    ThreeDCamera,
     VGroup,
     config,
 )
@@ -20,7 +18,7 @@ from manim import (
 from manim_plots.core.scales import Scale
 from manim_plots.mobjects.axis import Axis, _scale_range
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
-from manim_plots.mobjects.context import _scene_camera
+from manim_plots.mobjects.placement import _place_beside
 from manim_plots.mobjects.system import CartesianAxes
 
 
@@ -124,17 +122,15 @@ class Colorbar(CartesianAxes):
             cell.set_fill(ManimColor.from_rgb(colors[k]), opacity=1)
 
     def _follow_parent(self) -> None:
-        if self._fixed:
-            return
-        parent = self._parent_axes
-        right, centre = parent.get_right(), parent.get_center()
-        box = (float(right[0]), float(centre[1]))
-        if box != self._parent_box:
-            target = np.array([right[0] + self._bar_buff, centre[1], 0])
-            current = self.strip.get_left().copy()
-            current[1] = self.strip.get_center()[1]
-            self.shift(target - current)
-            self._parent_box = box
+        _place_beside(
+            self,
+            self._parent_axes,
+            "right",
+            self._bar_buff,
+            anchor=self.strip,
+            frame_offset=config.frame_width / 2 - 1,
+        )
+        self._fixed = self.__dict__.get("_beside_fixed", False)
 
 
 def _colorbar_update(mobject: Mobject, dt: float) -> None:
@@ -147,11 +143,4 @@ def _colorbar_update(mobject: Mobject, dt: float) -> None:
             bar.set_y_range((mapping.vmin, mapping.vmax))
             bar._paint_strip(mapping)
             bar._last_mapping = mapping
-    if not bar._fixed:
-        camera = _scene_camera()
-        if isinstance(camera, ThreeDCamera):
-            camera.add_fixed_in_frame_mobjects(bar)
-            bar._fixed = True
-            bar.move_to(RIGHT * (config.frame_width / 2 - 1))
-        else:
-            bar._follow_parent()
+    bar._follow_parent()

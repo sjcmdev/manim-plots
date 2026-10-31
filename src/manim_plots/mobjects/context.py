@@ -267,6 +267,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     ThreeDCamera.get_rotation_matrix,
     ThreeDCamera.reset_rotation_matrix,
     ThreeDCamera.generate_rotation_matrix,
+    ThreeDCamera.project_points,
     Scene.update_mobjects,
     Mobject.get_pieces,
     Camera,
@@ -399,6 +400,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "ThreeDCamera.generate_rotation_matrix": (
             "c5e496e456b3ffa908d20bd64d26b055c4e7fc4bf39fd178b0f957ed6216f444"
+        ),
+        "ThreeDCamera.project_points": (
+            "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
         ),
         "Scene.update_mobjects": (
             "8d4edd0afd900f5993f878c3ad6d7ab5a8d29872c3682523551da4b1cd4e77dc"
@@ -1059,6 +1063,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "ThreeDCamera.generate_rotation_matrix": (
             "c5e496e456b3ffa908d20bd64d26b055c4e7fc4bf39fd178b0f957ed6216f444"
+        ),
+        "ThreeDCamera.project_points": (
+            "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
         ),
         "Scene.update_mobjects": (
             "8d4edd0afd900f5993f878c3ad6d7ab5a8d29872c3682523551da4b1cd4e77dc"
