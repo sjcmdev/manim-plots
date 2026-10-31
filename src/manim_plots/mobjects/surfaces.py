@@ -27,7 +27,7 @@ from manim_plots.core.nodes import CompiledMap
 from manim_plots.core.params import Parameter
 from manim_plots.core.payload import Payload
 from manim_plots.core.scales import Scale
-from manim_plots.core.sources import ArraySource, Bounds
+from manim_plots.core.sources import ArraySource, Bounds, Source
 from manim_plots.mobjects.artists import (
     FunctionPlot,
     ParametricPlot,
@@ -36,6 +36,7 @@ from manim_plots.mobjects.artists import (
     _clip_has_margin,
     _CurvePlot,
     _parameterize,
+    _SampleWarnings,
     _validate_clip,
 )
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
@@ -821,6 +822,8 @@ class _ContourSource:
     ) -> None:
         self.surface, self.level, self.axis, self.offset = surface, level, axis, offset
         self.value_function: Callable[[FloatArray], FloatArray] | None = None
+        self._is_slice = False
+        self._empty_slice = False
 
     def at(self, t: ArrayLike) -> FloatArray:
         raise NotImplementedError("contours are sampled as connected paths")
@@ -909,7 +912,25 @@ class _ContourSource:
                 )
             points[:, self.axis] = float(offset)
             payload = Payload("path", points, payload.segments)
+        self._empty_slice = (
+            self._is_slice
+            and not len(payload.coords)
+            and bool(np.isfinite(s._grid).all())
+        )
         return payload
+
+
+class _ContourWarnings(_SampleWarnings):
+    def warn(
+        self,
+        system: mp.CartesianAxes,
+        source: Source,
+        message: str,
+        versions: tuple[int, ...] = (),
+    ) -> None:
+        if isinstance(source, _ContourSource) and source._empty_slice:
+            return
+        super().warn(system, source, message, versions)
 
 
 class _ContourLine(_CurvePlot):
@@ -922,6 +943,7 @@ class _ContourLine(_CurvePlot):
         self.parameters = self.surface._parameters
         self._pane_seen: Any = None
         self._slice_binding: _Binding | None = None
+        self._sample_warnings = _ContourWarnings()
         super().__init__(cast(Any, source), self.surface._system, **cast(Any, kwargs))
         self.surface._system.add(self)
 
@@ -953,6 +975,12 @@ class _ContourLine(_CurvePlot):
                 self._last_mapping = mapping
 
     def _rebuild(self) -> None:
+        if self._slice_binding is not None:
+            # refresh() can rebuild directly, without passing through _ensure().
+            _ensure_binding(self._slice_binding)
+            source = cast(_ContourSource, self.source)
+            source.level = self._slice_binding.number("coordinate")
+            source._is_slice = True
         if self._slice_binding is not None and not self._slice_binding.valid:
             self._geometry_payload = Payload.empty("path", 3)
             self._place(self._frame())
