@@ -104,6 +104,14 @@ EXPECTED = {
     "StackPlot",
     # task 33
     "Hist3DPlot",
+    # task 34
+    "GrowBars",
+    "ShrinkBars",
+    "SortBars",
+    "AppendData",
+    "BuildAxes",
+    "HighlightTick",
+    "HighlightBar",
     # task 37
     "HeatmapPlot",
     "HexbinPlot",
