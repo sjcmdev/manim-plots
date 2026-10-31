@@ -10,10 +10,12 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
-from manim import RED, ManimColor
+from manim import DEGREES, RED, ManimColor, ThreeDScene, tempconfig
 
 import manim_plots as mp
 from manim_plots.core import shape
+
+from .helpers import RUN
 
 LIGHT = np.array([-2, -2, 1]) / 3
 
@@ -101,6 +103,31 @@ def test_vx3_colours_by_value_and_shading():
     )
     np.testing.assert_allclose(shades, expected, atol=1.5 / 255)
     assert lit.at((0, 0, 0))[0].get_stroke_width() == 0
+
+
+def test_vx2_faces_drawn_far_to_near():
+    ax = axes()
+    i, j, k = np.indices((4, 4, 4))
+    block = ax.voxels((i + j + k) % 2 == 0)  # a checkerboard: many exposed faces
+    seen: list[np.ndarray] = []
+
+    class Shot(ThreeDScene):
+        def construct(self) -> None:
+            self.set_camera_orientation(phi=65 * DEGREES, theta=-50 * DEGREES)
+            self.add(ax, block)
+            self.wait(1 / 15)
+            camera: Any = self.renderer.camera
+            faces = {id(f) for f in block.family_members_with_points()}
+            shown = camera.get_mobjects_to_display(self.mobjects)
+            rot = camera.get_rotation_matrix()
+            seen.append(
+                np.array([(f.get_center() @ rot.T)[2] for f in shown if id(f) in faces])
+            )
+
+    with tempconfig(RUN):
+        Shot().render()
+    assert len(seen[0]) == len(block.family_members_with_points())
+    assert np.all(np.diff(seen[0]) >= -1e-9)  # H3-4 of task 33 holds for voxels
 
 
 # --- IS -------------------------------------------------------------------------------

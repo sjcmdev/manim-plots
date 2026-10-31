@@ -54,7 +54,7 @@ class VoxelPlot(VGroup):  # mp.VoxelPlot
 | ID | Row |
 |---|---|
 | VX-1 | `ax.voxels(filled)` with `filled` a 3D boolean array (truthy values) draws voxel `(i, j, k)` as the box `[i, i+1] × [j, j+1] × [k, k+1]` in data; `ax.voxels(x, y, z, filled)` takes corner arrays of shape `filled.shape + 1` per axis (matplotlib's), voxel `(i, j, k)` spanning the corners `[i:i+2, j:j+2, k:k+2]`. Only faces between a filled voxel and an empty one (or the array's outside) are drawn, so two touching voxels share no face *(matplotlib's)* |
-| VX-2 | `plot.at((i, j, k))` is a `VGroup` of that voxel's drawn faces (empty for an inner or an unfilled voxel), each face styleable on its own and kept through re-derivation; faces are bound to ranges, moves and the camera, cut to the box (BR-3) and take part in occlusion (task 30) |
+| VX-2 | `plot.at((i, j, k))` is a `VGroup` of that voxel's drawn faces (empty for an inner or an unfilled voxel), each face styleable on its own and kept through re-derivation; faces are bound to ranges, moves and the camera, cut to the box (BR-3), drawn far to near as task 33's H3-4 asks of bar faces, and take part in occlusion (task 30) *(review: the voxel faces were not sorted)* |
 | VX-3 | Colour: `facecolors` one colour or an array of `filled.shape` colours; or `c=` an array of values of `filled.shape` mapped through a `ColorMapping` (default `"viridis"`, `vmin`/`vmax` from the filled voxels' values), `plot.color_mapping` making `ax.colorbar(plot)` work; neither: the cycle's next colour. `shade=True` multiplies each face by BR-2's factor for its normal; `edgecolors` strokes the faces (no stroke by default) |
 
 ## IS — isosurfaces
