@@ -13,6 +13,11 @@ from manim_plots.core import ManimPlotsWarning
 from manim_plots.core.nodes import CompiledMap
 
 EXPECTED = {
+    "RebinHistogram",
+    "RefineRiemann",
+    "StackVoxels",
+    "SweepIsovalue",
+    "SweepSlice",
     # task 42
     "ExplodePie",
     "GrowBoxPlot",

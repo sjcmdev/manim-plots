@@ -411,6 +411,9 @@ ADDED_BY_TASK_40 = [
 ]
 
 
+ADDED_BY_TASK_44: list[str] = []  # VMobject.get_style came with task 42
+
+
 def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
     assert len(POC4_SYMBOLS) == 68
     assert sorted(names()) == sorted(
@@ -445,6 +448,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_39
         + ADDED_BY_TASK_34
         + ADDED_BY_TASK_40
+        + ADDED_BY_TASK_44
         + ADDED_BY_TASK_42
     )
 

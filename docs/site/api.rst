@@ -130,6 +130,10 @@ Animations
 
 .. autoclass:: Morph
 
+.. autoclass:: RebinHistogram
+
+.. autoclass:: RefineRiemann
+
 .. autoclass:: RevealCells
 
 .. autoclass:: RevealContours
@@ -142,7 +146,13 @@ Animations
 
 .. autoclass:: SortBars
 
+.. autoclass:: StackVoxels
+
+.. autoclass:: SweepIsovalue
+
 .. autoclass:: SweepPie
+
+.. autoclass:: SweepSlice
 
 .. autoclass:: TraceCurve
 
