@@ -75,7 +75,7 @@ class InsetAxes(Axes):  # mp.InsetAxes
 
 | ID | Row |
 |---|---|
-| EL-1 | `ax.end_label(graph)` is a `Text` placed `next_to(graph's last drawn point, direction, buff)`: the last point of its drawn geometry, so it follows `Create`, `TraceCurve`, `AppendData` (task 34), clipping and range changes. With `label=None` it shows `fmt.format(y)` of that point's data y, rebuilt when the string changes; a string or `Mobject` label is fixed. A graph with no points hides the label (no points) |
+| EL-1 | `ax.end_label(graph)` is a `Text` placed `next_to(graph's last drawn point, direction, buff)`: the last point of its drawn geometry, so it follows `Create`, `TraceCurve`, `AppendData` (task 34), clipping and range changes. With `label=None` it shows `fmt.format(y)` of that point's data y, rebuilt when the string changes; a string or `Mobject` label is fixed. A text label takes the graph's stroke colour unless `text_style` sets one *(default taken; review: the label drew black)*. A graph with no points hides the label (no points) |
 
 ## IN — inset axes
 

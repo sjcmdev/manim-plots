@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
-from manim import RIGHT, Create, Scene, ValueTracker, linear
+from manim import BLUE, RED, RIGHT, Create, ManimColor, Scene, ValueTracker, linear
 
 import manim_plots as mp
 
@@ -185,6 +185,14 @@ def test_el1_label_at_the_end_shows_the_value():
     assert label.get_center()[1] == pytest.approx(end[1], abs=1e-6)
     fixed = ax.end_label(g, "f(x)")
     assert text_of(fixed) == "f(x)"
+    red = ax.plot(lambda x: x / 2, x_range=(0, 4), color=RED)
+    for mob in (ax.end_label(red), ax.end_label(red, "half")):
+        for leaf in mob.family_members_with_points():
+            assert ManimColor(leaf.get_fill_color()) == ManimColor(RED)
+    blue = ax.end_label(red, color=BLUE)
+    assert ManimColor(
+        blue.family_members_with_points()[0].get_fill_color()
+    ) == ManimColor(BLUE)
 
 
 def test_el1_label_follows_create():
