@@ -2249,7 +2249,16 @@ def moving_context() -> frozenset[Mobject] | None:
                 values = frame.f_locals
                 result = values.get("__manim_plots_moving")
                 if result is None:
-                    result = frozenset(values["animation_mobjects"])
+                    involved = set(values["animation_mobjects"])
+                    pending = list(values["animations"])
+                    while pending:
+                        animation = pending.pop()
+                        system = getattr(animation, "_involved_system", None)
+                        if system is not None:
+                            involved.update(system.get_family())
+                        if isinstance(animation, AnimationGroup):
+                            pending.extend(animation.animations)
+                    result = frozenset(involved)
                     values["__manim_plots_moving"] = result
                 return cast(frozenset[Mobject], result)
             frame = frame.f_back
