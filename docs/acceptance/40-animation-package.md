@@ -214,7 +214,7 @@ progress, with no overshoot; `False` leaves size unchanged *(default taken)*.
 |---|---|
 | SP-1 | For x=[3,1,1], y=[2,3,1], c=[2,1,3], the order indices are data=[0,1,2], x=[1,2,0], y=[2,0,1], value=[1,0,2]. At alpha .5 with default lag, ranks have opacity [1,.5,0]. Callable `lambda row:-row[1]` introduces row 1 first. Stable ties retain data order; all final markers remain independently addressable. |
 | SP-2 | A custom Square marker at data (1,2), original fill opacity .4, with `pop=True`, at alpha .5 has half its canonical width, unchanged mapped centre and fill opacity .2. Finish restores its exact width and .4 fill. Pop is independently overridable, and does not replace the supplied marker shape. |
-| SP-3 | Input rows at x=10 outside [-1,4] and a NaN x remain without points throughout and after an x-ordered popping reveal. Source rows/markers are retained rather than deleted or made drawable by styling. |
+| SP-3 | Input rows at x=10 outside [-1,4] and a NaN x stay hidden — their points kept at zero fill and stroke opacity, the scatter convention — throughout and after an x-ordered popping reveal. Source rows/markers are retained rather than deleted or made drawable by styling. |
 | SP-4 | With n=3, lag .2 and alpha .5, factors are [.7,.5,.3]. Multiply each original fill, stroke and background-stroke opacity (.4,.6,.2) independently by its factor; do not replace any channel with the factor itself. |
 | SP-5 | Unknown order or `order="value"` without retained numeric c raises ValueError naming order/value before geometry/style mutation *(default taken)*. |
 

@@ -564,12 +564,15 @@ def test_sp3_invalid_and_clipped_rows_stay_hidden():
         scatter = ax.scatter([0, 10, np.nan, 2], [1, 1, 1, 2])
     a = pkg.ShowPoints(scatter, order="x", pop=True, rate_func=linear)
     drive(a, 0.5)
-    assert not scatter[1].has_points()
-    assert not scatter[2].has_points()
+    # A hidden marker keeps its points at zero opacity (the scatter convention).
+    for i in (1, 2):
+        assert scatter[i].get_fill_opacity() == 0
+        assert scatter[i].get_stroke_opacity() == 0
     assert scatter[3].get_fill_opacity() == pytest.approx(1)
     a.finish()
-    assert not scatter[1].has_points()
-    assert not scatter[2].has_points()
+    for i in (1, 2):
+        assert scatter[i].get_fill_opacity() == 0
+        assert scatter[i].get_stroke_opacity() == 0
 
 
 @pytest.mark.parametrize("zdir", ["x", "y", "z"])
