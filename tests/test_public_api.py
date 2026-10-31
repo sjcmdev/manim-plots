@@ -96,6 +96,9 @@ EXPECTED = {
     "GrowSurface",
     # task 28b
     "SliceView",
+    # task 31: BarChart is an attribute only, as ThreeDAxes
+    "BarPlot",
+    "GroupedBarPlot",
 }
 
 
