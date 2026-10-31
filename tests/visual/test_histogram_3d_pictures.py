@@ -9,8 +9,6 @@ from manim import DEGREES, Scene
 
 import manim_plots as mp
 
-RNG = np.random.default_rng(8)
-
 
 def camera(scene: Scene) -> None:
     turn = scene.set_camera_orientation  # type: ignore[attr-defined]
@@ -33,7 +31,8 @@ def test_hist3d_coloured_by_count(visual):
             z_length=3.5,
             frame="box",
         )
-        x, y = RNG.normal(0, 1, 2000), RNG.normal(0, 1, 2000)
+        rng = np.random.default_rng(8)
+        x, y = rng.normal(0, 1, 2000), rng.normal(0, 1, 2000)
         h = ax.hist3d(x, y, bins=8, range=((-3, 3), (-3, 3)))
         scene.add(ax, h, ax.colorbar(h, label="n"))
 
@@ -55,9 +54,10 @@ def test_histograms_in_planes(visual):
             z_length=3.5,
             frame="box",
         )
+        rng = np.random.default_rng(8)
         parts = []
         for k in range(4):
-            sample = RNG.normal(k - 1.5, 0.6 + 0.2 * k, 1000)
+            sample = rng.normal(k - 1.5, 0.6 + 0.2 * k, 1000)
             parts.append(
                 ax.hist(
                     sample,
