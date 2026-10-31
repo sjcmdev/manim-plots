@@ -21,6 +21,7 @@ from manim import (
     Arrow3D,
     ArrowVectorField,
     Axes,
+    BarChart,
     CoordinateSystem,
     DashedLine,
     DashedVMobject,
@@ -71,6 +72,14 @@ from manim.utils.hashing import (
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    BarChart.__init__,
+    BarChart._add_x_axis_labels,
+    BarChart._create_bar,
+    BarChart._add_bars,
+    BarChart._update_colors,
+    BarChart.get_bar_labels,
+    BarChart.change_bar_values,
+    Mobject.set_color_by_gradient,
     get_json,
     get_hash_from_play_call,
     _CustomEncoder.default,
@@ -302,6 +311,30 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "BarChart.__init__": (
+            "ffee8386f40624010f023dc4de4988b04c1c6a78ba3ed4c1ecdbe59829c39854"
+        ),
+        "BarChart._add_x_axis_labels": (
+            "40be30b418d1caef54e0d6a3f7a3ff5bf6a8e537700a23171c81535c59fec253"
+        ),
+        "BarChart._create_bar": (
+            "fb668ff3904ca6f9dbf86e46684a776adc15ffb2da53395879709fa704738c03"
+        ),
+        "BarChart._add_bars": (
+            "77b6fb996004169d8a2cee0cb8d57d6ebc539f440b18df29bed3a440b3405edb"
+        ),
+        "BarChart._update_colors": (
+            "54e3508d18e28935ab2b7e8a74bbe8fd3c2ee7161d685ec80e86ec45de533772"
+        ),
+        "BarChart.get_bar_labels": (
+            "c82aa20a17beba85b9a66b5c2d02268d5d8fa58e4e316fff1a93471d08d558b2"
+        ),
+        "BarChart.change_bar_values": (
+            "80e6f1f7f7802c7a0ff2dac15a1447d0b41c87ee352bb22f30b69aa1eaf95af4"
+        ),
+        "Mobject.set_color_by_gradient": (
+            "992a62b5f27e4e0dd1f461d45d5582b417b30302a2ec5d2dddfd52456051a623"
+        ),
         "ThreeDCamera.project_points": (
             "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
         ),
@@ -977,6 +1010,30 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "BarChart.__init__": (
+            "b65de39e4131cc183d2b714d8cdf17359a5f55dc73dd67a1c70dd31306f30fc0"
+        ),
+        "BarChart._add_x_axis_labels": (
+            "40be30b418d1caef54e0d6a3f7a3ff5bf6a8e537700a23171c81535c59fec253"
+        ),
+        "BarChart._create_bar": (
+            "fb668ff3904ca6f9dbf86e46684a776adc15ffb2da53395879709fa704738c03"
+        ),
+        "BarChart._add_bars": (
+            "77b6fb996004169d8a2cee0cb8d57d6ebc539f440b18df29bed3a440b3405edb"
+        ),
+        "BarChart._update_colors": (
+            "54e3508d18e28935ab2b7e8a74bbe8fd3c2ee7161d685ec80e86ec45de533772"
+        ),
+        "BarChart.get_bar_labels": (
+            "c82aa20a17beba85b9a66b5c2d02268d5d8fa58e4e316fff1a93471d08d558b2"
+        ),
+        "BarChart.change_bar_values": (
+            "80e6f1f7f7802c7a0ff2dac15a1447d0b41c87ee352bb22f30b69aa1eaf95af4"
+        ),
+        "Mobject.set_color_by_gradient": (
+            "992a62b5f27e4e0dd1f461d45d5582b417b30302a2ec5d2dddfd52456051a623"
+        ),
         "ThreeDCamera.project_points": (
             "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
         ),

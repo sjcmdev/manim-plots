@@ -61,6 +61,8 @@ from manim_plots.mobjects.artists import (
     ScatterPlot,
 )
 from manim_plots.mobjects.axis import TickDirection as TickDirection
+from manim_plots.mobjects.bars import BarChart as BarChart
+from manim_plots.mobjects.bars import BarPlot, GroupedBarPlot
 from manim_plots.mobjects.colorbar import Colorbar
 from manim_plots.mobjects.colormaps import Colormap, ColorMapping, colormaps
 from manim_plots.mobjects.context import check_pins
@@ -99,6 +101,7 @@ __all__ = [
     "AngleFormatter",
     "ArraySource",
     "AxLinePlot",
+    "BarPlot",
     "BarPlot3D",
     "Bounds",
     "CartesianAxes",
@@ -120,6 +123,7 @@ __all__ = [
     "FunctionPlot",
     "FunctionScale",
     "FunctionSource",
+    "GroupedBarPlot",
     "GrowSurface",
     "Labels",
     "Legend",

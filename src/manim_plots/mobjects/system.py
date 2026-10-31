@@ -77,6 +77,7 @@ from manim_plots.mobjects.axis import (
     _LogMinorLocator,
     _range,
     _TickPool,
+    resolve_categories,
 )
 from manim_plots.mobjects.context import (
     _PlaybackToken,
@@ -1510,6 +1511,14 @@ class CartesianAxes(VGroup):
             configured data range is collapsed. Conversions raise instead of
             returning NaN and never clamp a value into the domain.
         """
+        coords = (
+            tuple(
+                cast(ArrayLike, resolve_categories(axis, value))
+                for axis, value in zip(self._ranges, coords, strict=False)
+            )
+            if any(np.asarray(value).dtype.kind in ("U", "S", "O") for value in coords)
+            else coords
+        )
         values = np.asarray(coords, dtype=float)
         if not np.isfinite(values).all():
             index = tuple(int(i) for i in np.argwhere(~np.isfinite(values))[0])
@@ -2150,6 +2159,142 @@ class CartesianAxes(VGroup):
         self.add(artist)
         return artist
 
+    def bar(
+        self,
+        x: object,
+        height: object,
+        width: object = 0.8,
+        bottom: object = 0,
+        *,
+        align: str = "center",
+        color: object = None,
+        c: object = None,
+        colorscale: object = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        norm: object = None,
+        label: str | None = None,
+        **style: object,
+    ) -> mp.BarPlot:
+        """Create vertical bars.
+
+        Parameters
+        ----------
+        x, height, width, bottom, align
+            Positions, sizes, bases and alignment.
+        color, c, colorscale, vmin, vmax, norm, label, **style
+            Colours, value mapping, legend text and native styles.
+        """
+        return mp.BarPlot(
+            self,
+            x,
+            height,
+            width,
+            bottom,
+            align=align,
+            color=color,
+            c=c,
+            colorscale=colorscale,
+            vmin=vmin,
+            vmax=vmax,
+            norm=norm,
+            label=label,
+            **cast(Any, style),
+        )
+
+    def barh(
+        self,
+        y: object,
+        width: object,
+        height: object = 0.8,
+        left: object = 0,
+        *,
+        align: str = "center",
+        **style: object,
+    ) -> mp.BarPlot:
+        """Create horizontal bars.
+
+        Parameters
+        ----------
+        y, width, height, left, align, **style
+            Positions, lengths, thicknesses, bases, alignment and bar style.
+        """
+        return mp.BarPlot(
+            self,
+            y,
+            width,
+            height,
+            left,
+            align=align,
+            horizontal=True,
+            **cast(Any, style),
+        )
+
+    def grouped_bar(
+        self,
+        heights: object,
+        positions: object = None,
+        *,
+        tick_labels: Sequence[str] | None = None,
+        labels: Sequence[str] | None = None,
+        group_spacing: float = 1.5,
+        bar_spacing: float = 0,
+        orientation: str = "vertical",
+        colors: object = None,
+        **style: object,
+    ) -> mp.GroupedBarPlot:
+        """Create evenly spaced datasets within each group.
+
+        Parameters
+        ----------
+        heights, positions, tick_labels, labels
+            Datasets, group coordinates, category names and legend labels.
+        group_spacing, bar_spacing, orientation, colors, **style
+            Relative gaps, direction, dataset colours and native style.
+        """
+        from manim_plots.mobjects.bars import _grouped_bar
+
+        return _grouped_bar(
+            self,
+            heights,
+            positions,
+            tick_labels=tick_labels,
+            labels=labels,
+            group_spacing=group_spacing,
+            bar_spacing=bar_spacing,
+            orientation=orientation,
+            colors=colors,
+            **style,
+        )
+
+    def bar_label(
+        self,
+        container: mp.BarPlot,
+        labels: Sequence[str] | None = None,
+        *,
+        fmt: str = "{:g}",
+        label_type: str = "edge",
+        padding: float = 0.1,
+        **text_style: object,
+    ) -> VGroup:
+        """Create bound bar value labels.
+
+        Parameters
+        ----------
+        container, labels, fmt, label_type, padding, **text_style
+            Bars, optional text, format, placement, scene gap and Text styles.
+        """
+        from manim_plots.mobjects.bars import bar_label
+
+        return bar_label(
+            container,
+            labels,
+            fmt=fmt,
+            label_type=label_type,
+            padding=padding,
+            **text_style,
+        )
+
     def scatter(
         self,
         xs: ArrayLike,
@@ -2188,6 +2333,11 @@ class CartesianAxes(VGroup):
         **kwargs
             Native VMobject styles for the markers.
         """
+        if ys is not None:
+            xs, ys = (
+                cast(ArrayLike, resolve_categories(self.x, xs)),
+                cast(ArrayLike, resolve_categories(self.y, ys)),
+            )
         artist = ScatterPlot(
             xs,
             self,

@@ -34,6 +34,23 @@ def _leaves(native: Mobject) -> VMobject:
 
 
 def _handle(artist: _CurvePlot | ScatterPlot | ErrorBars) -> VMobject:
+    from manim_plots.mobjects.bars import _Bar
+
+    if isinstance(artist, _Bar):
+        bar_handle = Leaf()
+        bar_handle.set_points_as_corners(
+            np.array(
+                [
+                    [-0.15, -0.15, 0],
+                    [0.15, -0.15, 0],
+                    [0.15, 0.15, 0],
+                    [-0.15, 0.15, 0],
+                    [-0.15, -0.15, 0],
+                ]
+            )
+        )
+        bar_handle.match_style(artist, family=False)
+        return bar_handle
     if isinstance(artist, ErrorBars):
         parts: list[VMobject] = []
         if artist.line is not None:
