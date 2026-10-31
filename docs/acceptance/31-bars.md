@@ -71,6 +71,7 @@ def set_categories(self, names) -> Self: ...
 | CA-1 | Strings as `x` in `bar` (`y` in `barh`, either in `grouped_bar`'s `tick_labels`) make that axis categorical: category `k`, in order of first appearance, sits at position `k`; the axis's ticks are exactly the positions, its numbers the names (`Tex`, the axis's number size), no minor ticks |
 | CA-2 | The first categorical call sets the axis range to `(−0.5, n − 0.5)` with step 1; new names in a later call append and extend it. `ax.x.set_categories(names)` fixes the list (later unknown names raise `ValueError` naming `x`); `ax.x.categories` reads it |
 | CA-3 | On a categorical axis every artist's string coordinates map through the same table (`ax.scatter(["a", "c"], [1, 2])`), numbers pass through, and `c2p("b", 0)` works |
+| CA-4 | When an axis first becomes categorical, the other axis moves to its low border (`ax.y.set_position("left")` for a categorical x, `ax.x.set_position("bottom")` for a categorical y), so no axis line runs through the first category's bars; a position the user set earlier is kept *(default taken, found in review: the x axis crossed the middle of the first `barh` bar)* |
 
 ## Frame cost
 

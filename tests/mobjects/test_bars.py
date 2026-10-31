@@ -64,8 +64,8 @@ def test_bc1_names_sit_as_manims():
         mp.BarChart(VALUES, bar_names=NAMES),
         BarChart(VALUES, bar_names=NAMES),
     )
-    assert ours.x_labels is not None and theirs.x_labels is not None
-    for a, b in zip(ours.x_labels, theirs.x_labels, strict=True):
+    assert ours.x_labels is not None
+    for a, b in zip(ours.x_labels, theirs.x_axis.labels, strict=True):
         np.testing.assert_allclose(a.get_center(), b.get_center(), atol=1e-6)
 
 
@@ -98,11 +98,12 @@ def test_bc4_an_animated_change_shows_interpolated_values():
     def tops() -> tuple[float, float]:
         return (box(chart, chart.bars[0])[3], box(chart, chart.bars[1])[3])
 
-    seen = probe(lambda s: s.play(chart.animate.change_bar_values([3.0, 0.0])), tops)
+    builder: Any = chart.animate  # Manim types the builder's call as the method's None
+    seen = probe(lambda s: s.play(builder.change_bar_values([3.0, 0.0])), tops)
     for a, b in seen:
         alpha = (a - 1) / 2
         assert b == pytest.approx(2 - 2 * alpha, abs=1e-6)  # one alpha for both bars
-    assert seen[-1] == pytest.approx((3, 0), abs=1e-6)
+    assert tops() == pytest.approx((3, 0), abs=1e-6)  # after the play's finish
 
 
 # --- BA -------------------------------------------------------------------------------
@@ -170,7 +171,11 @@ def test_ba5_bars_follow_ranges_data_and_trackers():
     def gap() -> float:
         return float(abs(box(ax, live[0])[3] - top.get_value()))
 
-    assert max(probe(lambda s: s.play(top.animate.set_value(3)), gap)) < 1e-9
+    def construct(scene: Any) -> None:
+        scene.add(ax, live)
+        scene.play(top.animate.set_value(3))
+
+    assert max(probe(construct, gap)) < 1e-9
 
 
 def test_ba5_a_bar_is_cut_at_the_viewport():
@@ -233,8 +238,10 @@ def test_gb2_labels_colours_and_categories():
     a, b = group.bar_plots
     assert fill_rgb(a[0]) != pytest.approx(fill_rgb(b[0]))
     assert ax.x.categories == ("x", "y")
-    side = ax.grouped_bar([[1, 2]], orientation="horizontal")
-    x0, x1, _, _ = box(ax, side.bar_plots[0][1])
+    assert len(ax.legend().entries) == 2  # the dict's keys are the labels
+    flat = axes()  # ax's x axis is categorical now: (-0.5, 1.5)
+    side = flat.grouped_bar([[1, 2]], orientation="horizontal")
+    x0, x1, _, _ = box(flat, side.bar_plots[0][1])
     assert (x0, x1) == pytest.approx((0, 2), abs=1e-9)
 
 
@@ -254,7 +261,7 @@ def test_ca1_ca2_strings_make_the_axis_categorical():
         )
     assert text_of(ax.x.numbers.at(1.0)) == "pears"
     ax.bar(["figs"], [1])
-    assert ax.x.categories[-1] == "figs"
+    assert str(ax.x.categories[-1]) == "figs"  # str(): mypy keeps the narrowed tuple
     assert tuple(ax.x_range[:2]) == pytest.approx((-0.5, 3.5))
 
 
@@ -263,6 +270,22 @@ def test_ca2_fixed_categories_refuse_new_names():
     ax.x.set_categories(["a", "b"])
     with pytest.raises(ValueError, match="x"):
         ax.bar(["c"], [1])
+
+
+def test_ca4_the_other_axis_moves_to_the_low_border():
+    ax = mp.Axes(x_range=(0, 10, 2))
+    ax.barh(["tea", "coffee"], [2, 4])
+    line = np.array([ax.p2c(p) for p in ax.x.line.points])
+    np.testing.assert_allclose(line[:, 1], -0.5, atol=1e-9)
+    bars = mp.Axes(y_range=(0, 5, 1))
+    bars.y.set_position(0.5)
+    bars.bar(["a", "b"], [1, 2])
+    line = np.array([bars.p2c(p) for p in bars.y.line.points])
+    np.testing.assert_allclose(line[:, 0], 0.5, atol=1e-9)  # the user's position kept
+    plain = mp.Axes(y_range=(0, 5, 1))
+    plain.bar(["a", "b"], [1, 2])
+    line = np.array([plain.p2c(p) for p in plain.y.line.points])
+    np.testing.assert_allclose(line[:, 0], -0.5, atol=1e-9)
 
 
 def test_ca3_other_artists_and_c2p_use_the_table():

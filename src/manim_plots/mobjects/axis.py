@@ -21,6 +21,7 @@ import manim_plots as mp
 from manim_plots.core import FloatArray, ManimPlotsWarning
 from manim_plots.core.formatters import (
     DecimalFormatter,
+    FixedFormatter,
     Formatter,
     as_formatter,
     decimal_places,
@@ -114,6 +115,34 @@ def _scale_range(scale: Scale, value: ArrayLike) -> FloatArray:
     return np.array(
         scale.limit_range(float(limits[0]), float(limits[1]), MINPOS_UNKNOWN)
     )
+
+
+def resolve_categories(axis: Axis, values: object) -> object:
+    """Resolve string coordinates through the axis's category table."""
+    array = np.asarray(values)
+    if array.dtype.kind not in ("U", "S", "O"):
+        return values
+    entries = np.asarray(values, dtype=object)
+    strings = [v for v in entries.flat if isinstance(v, str)]
+    if not strings:
+        return values
+    names = list(axis.categories)
+    for name in strings:
+        if name not in names:
+            if axis._categories_fixed:
+                raise ValueError(
+                    f"unknown category {name!r} on {'xyz'[axis.index]} axis"
+                )
+            names.append(name)
+    if tuple(names) != axis.categories:
+        axis._set_categories(names)
+    return np.array(
+        [
+            axis._category_positions[names.index(v)] if isinstance(v, str) else v
+            for v in entries.flat
+        ],
+        dtype=float,
+    ).reshape(entries.shape)
 
 
 type _TickConfig = tuple[
@@ -344,6 +373,9 @@ class Axis(VGroup):
         axis_config: dict[str, Any] | None = None,
     ) -> None:
         self._system = system
+        self._categories: tuple[str, ...] = ()
+        self._category_positions: tuple[float, ...] = ()
+        self._categories_fixed = False
         self.index = index
         self._edge_coordinates: Sequence[float] | None = None
         self.pieces: VGroup
@@ -383,6 +415,7 @@ class Axis(VGroup):
         self._pool: _TickPool | None = None
         self._tick_styles: dict[Level, dict[str, Any]] = {"major": {}, "minor": {}}
         self._position: str | float = "origin"
+        self._position_custom = False
         self._position_fraction: float | None = None
         self._position_offset = 0.0
         self._position_outward = False
@@ -472,6 +505,69 @@ class Axis(VGroup):
             self._configure_ticks(native)
         if self.minor_locator is not None:
             self.add(self.minor_ticks)
+
+    @property
+    def categories(self) -> tuple[str, ...]:
+        """Return category names in coordinate order."""
+        return self._categories
+
+    def _set_categories(
+        self, names: Sequence[str], positions: Sequence[float] | None = None
+    ) -> None:
+        from manim import Tex
+
+        first = not self._categories
+        if positions is None:
+            table = dict(zip(self._categories, self._category_positions, strict=True))
+            coordinates = []
+            for name in names:
+                if name not in table:
+                    table[name] = max(table.values(), default=-1) + 1
+                coordinates.append(table[name])
+            positions = coordinates
+        self._categories = tuple(names)
+        self._category_positions = tuple(map(float, positions))
+        self.minor_locator = None
+        self._step = 1
+        self.exclude_origin_tick = False
+        self._default_exclusion = False
+        self.numbers_to_exclude = ()
+        self.locator = FixedLocator(self._category_positions)
+        self.formatter = FixedFormatter(
+            dict(zip(self._category_positions, names, strict=True))
+        )
+        self._formatter_custom = True
+        self._number_options["label_constructor"] = Tex
+        self.include_numbers = True
+        self.range = (
+            min(self._category_positions) - 0.5,
+            max(self._category_positions) + 0.5,
+            1,
+        )
+        other = self._system.get_axis(1 - self.index)
+        if first and not other._position_custom:
+            other.set_position("left" if self.index == 0 else "bottom")
+        self._regenerate()
+        if self.numbers not in self.submobjects:
+            self.add(self.numbers)
+
+    def set_categories(self, names: Sequence[str]) -> Self:
+        """Fix the names accepted on this axis.
+
+        Parameters
+        ----------
+        names
+            Unique category strings in coordinate order.
+        """
+        if (
+            not names
+            or any(not isinstance(name, str) for name in names)
+            or len(set(names)) != len(names)
+        ):
+            raise ValueError("categories must be nonempty unique strings")
+        self._set_categories(names, list(range(len(names))))
+        self._categories_fixed = True
+        return self
 
     @property
     def ticks(self) -> _Parts[TickLeaf]:
@@ -1318,6 +1414,7 @@ class Axis(VGroup):
             ):
                 raise ValueError("offset requires a border and a nonnegative distance")
         self._position, self._position_fraction = where, fraction
+        self._position_custom = True
         self._position_offset = distance
         self._position_outward = offset is not None
         if not self._label_direction_custom:

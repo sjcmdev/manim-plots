@@ -214,6 +214,12 @@ Surfaces and colour
 
 .. autoclass:: BarPlot3D
 
+.. autoclass:: BarPlot
+
+.. autoclass:: GroupedBarPlot
+
+.. autoclass:: BarChart
+
 .. autoclass:: WireframePlot
 
 .. autoclass:: ContourPlot

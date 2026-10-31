@@ -55,11 +55,11 @@ def test_grouped_and_stacked(visual):
 
     def construct(scene: Scene) -> None:
         ax = mp.Axes(y_range=(0, 6, 1), x_length=9, y_length=5)
-        ax.grouped_bar(
+        group = ax.grouped_bar(  # held: the axes keep their artists weakly
             {"2024": [3, 4, 2], "2025": [4, 5, 3], "2026": [5, 3, 4]},
             tick_labels=["north", "south", "east"],
         )
-        scene.add(ax, *ax.artists, ax.legend())
+        scene.add(ax, group, ax.legend())
 
     visual(construct)
 

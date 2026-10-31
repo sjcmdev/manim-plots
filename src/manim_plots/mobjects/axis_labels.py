@@ -141,7 +141,9 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
             else (item.level, item.key)
         )
         text = explicit.get(round_key(float(x)))
-        mode = False if formatted.text_mode is None else formatted.text_mode[i]
+        mode = bool(axis.categories) or (
+            False if formatted.text_mode is None else formatted.text_mode[i]
+        )
         if text is None:
             text = formatted.text[i]
         content = (text, mode)

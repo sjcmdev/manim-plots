@@ -312,6 +312,18 @@ SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
 
 
+ADDED_BY_TASK_31 = [
+    "BarChart.__init__",
+    "BarChart._add_x_axis_labels",
+    "BarChart._create_bar",
+    "BarChart._add_bars",
+    "BarChart._update_colors",
+    "BarChart.get_bar_labels",
+    "BarChart.change_bar_values",
+    "Mobject.set_color_by_gradient",
+]
+
+
 def names() -> list[str]:
     return [context.symbol_name(symbol) for symbol in context.SYMBOLS]
 
@@ -340,6 +352,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_28
         + ADDED_BY_TASK_29
         + ADDED_BY_TASK_30
+        + ADDED_BY_TASK_31
     )
 
 
