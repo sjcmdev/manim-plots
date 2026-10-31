@@ -128,6 +128,8 @@ EXPECTED = {
     "PieChart",
     "BoxPlot",
     "ViolinPlot",
+    # task 39
+    "VoxelPlot",
     # task 37
     "HeatmapPlot",
     "HexbinPlot",
