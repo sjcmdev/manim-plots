@@ -61,6 +61,9 @@ def test_cb1_a_wide_range_gets_few_nice_ticks():
     assert 3 <= len(bar.axis.ticks) <= 12
     assert bar.y.numbers.at(0.0) is not None
     assert bar.y.numbers.at(100.0) is not None
+    unit = ax.colorbar(colorscale="viridis", vmin=0, vmax=1)
+    labels = unit.axis.formatter.format_ticks(np.array([0.0, 0.25, 0.5])).text
+    assert list(labels) == ["0.00", "0.25", "0.50"]  # not rounded to whole numbers
 
 
 def test_cb2_the_strip():
