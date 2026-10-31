@@ -6,6 +6,8 @@ starting mobject) and must not try to copy the camera with it.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from manim import ThreeDScene, tempconfig
 
@@ -13,7 +15,7 @@ import manim_plots as mp
 
 
 def test_sc7_two_plays_on_a_surface_in_a_three_d_scene():
-    held = {}
+    held: dict[str, Any] = {}
 
     class Shot(ThreeDScene):
         def construct(self) -> None:
