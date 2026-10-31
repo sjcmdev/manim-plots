@@ -2197,6 +2197,30 @@ class CartesianAxes(VGroup):
         self.add(artist)
         return artist
 
+    def boxplot(
+        self, x: object, positions: object = None, **kwargs: object
+    ) -> mp.BoxPlot:
+        """Create bound boxes from samples.
+
+        Parameters
+        ----------
+        x, positions, **kwargs
+            Samples, positions and statistics or styling options.
+        """
+        return mp.BoxPlot(self, x, positions, **cast(Any, kwargs))
+
+    def violinplot(
+        self, dataset: object, positions: object = None, **kwargs: object
+    ) -> mp.ViolinPlot:
+        """Create bound Gaussian density violins.
+
+        Parameters
+        ----------
+        dataset, positions, **kwargs
+            Samples, positions and density or styling options.
+        """
+        return mp.ViolinPlot(self, dataset, positions, **cast(Any, kwargs))
+
     def hist(self, x: object, bins: object = 10, **kwargs: object) -> mp.HistPlot:
         """Create a histogram from samples.
 

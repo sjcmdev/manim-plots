@@ -309,6 +309,14 @@ ADDED_BY_TASK_27 = [
 
 ADDED_BY_TASK_37 = ["Text", "Text.__init__"]
 
+ADDED_BY_TASK_38 = [
+    "Sector",
+    "Sector.__init__",
+    "AnnularSector",
+    "AnnularSector.__init__",
+    "AnnularSector.generate_points",
+]
+
 SUPPORTED = {"0.21.0", "0.22.0"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 MEDIA = Path(__file__).parents[1] / "visual" / "_out" / "media"
@@ -379,6 +387,7 @@ def test_k1_the_inventory_is_poc4s_plus_adr_0003s_plus_the_tasks():
         + ADDED_BY_TASK_35
         + ADDED_BY_TASK_37
         + ADDED_BY_TASK_33
+        + ADDED_BY_TASK_38
         + ADDED_BY_TASK_32
         + ADDED_BY_TASK_39
     )

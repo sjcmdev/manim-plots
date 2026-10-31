@@ -30,6 +30,16 @@ from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
 from manim_plots.mobjects.surfaces import _FaceStyle
 
 
+def _label_color(
+    background: ManimColor,
+    colors: Sequence[str] = ("black", "white"),
+    threshold: float = 0.5,
+) -> str:
+    return colors[
+        int(np.dot(background.to_rgb(), [0.2126, 0.7152, 0.0722]) < threshold)
+    ]
+
+
 class _Cell(_FaceStyle, _CurvePlot):
     def __init__(
         self, owner: HeatmapPlot, polygon: FloatArray, index: int, **style: object
@@ -287,10 +297,7 @@ class HeatmapPlot(VGroup):
             elif label.text != text:
                 label.become(Text(text, **cast(dict[str, Any], style)))
                 label.text = text
-            rgb = cell.get_fill_color().to_rgb()
-            label.set_color(
-                colors[int(np.dot(rgb, [0.2126, 0.7152, 0.0722]) < threshold)]
-            )
+            label.set_color(_label_color(cell.get_fill_color(), colors, threshold))
             label.move_to(self._system.c2p(*cell._polygon.mean(axis=0)))
             visible.append(label)
         self._labels.submobjects = visible

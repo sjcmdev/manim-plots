@@ -256,3 +256,10 @@ Surfaces and colour
 
 .. autoclass:: ContourSetPlot
    :members:
+
+.. autoclass:: PieChart
+   :members:
+
+.. autoclass:: BoxPlot
+
+.. autoclass:: ViolinPlot

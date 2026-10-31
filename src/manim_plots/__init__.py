@@ -88,6 +88,7 @@ from manim_plots.mobjects.plots3d import (
 from manim_plots.mobjects.polar import PolarAxes
 from manim_plots.mobjects.polar import PolarPlane as PolarPlane
 from manim_plots.mobjects.slice_view import SliceView
+from manim_plots.mobjects.statistics import BoxPlot, PieChart, ViolinPlot
 from manim_plots.mobjects.surfaces import (
     ContourPlot,
     GrowSurface,
@@ -113,6 +114,7 @@ __all__ = [
     "BarPlot",
     "BarPlot3D",
     "Bounds",
+    "BoxPlot",
     "CartesianAxes",
     "ColorMapping",
     "Colorbar",
@@ -160,6 +162,7 @@ __all__ = [
     "ParametricPlot",
     "ParametricSource",
     "Payload",
+    "PieChart",
     "PlanePlot",
     "PolarAxes",
     "Scale",
@@ -177,6 +180,7 @@ __all__ = [
     "SymLogScale",
     "Theme",
     "TraceCurve",
+    "ViolinPlot",
     "VoxelPlot",
     "WaterfallPlot",
     "WireframePlot",

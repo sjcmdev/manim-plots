@@ -17,6 +17,7 @@ import numpy as np
 from manim import (
     Animation,
     AnimationGroup,
+    AnnularSector,
     Arrow,
     Arrow3D,
     ArrowVectorField,
@@ -39,6 +40,7 @@ from manim import (
     PhaseFlow,
     PolarPlane,
     Scene,
+    Sector,
     ShowIncreasingSubsets,
     ShowPassingFlash,
     StreamLines,
@@ -75,6 +77,11 @@ from manim.utils.hashing import (
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    Sector,
+    Sector.__init__,
+    AnnularSector,
+    AnnularSector.__init__,
+    AnnularSector.generate_points,
     BarChart.__init__,
     BarChart._add_x_axis_labels,
     BarChart._create_bar,
@@ -338,6 +345,19 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "ManimColor.to_rgb": (
             "62b4ec147b506020b8b25253ba67c7c3fa66da48e05f716d1c79faade7eb4326"
+        ),
+        "Sector": ("8b53634aad65114c8fec871d4279730fea5ecd12197978a9191845d3ac394e6c"),
+        "Sector.__init__": (
+            "c5c6c2823c1ba34865673ec6df2397667d08066dcc513c61d08349d712dc2767"
+        ),
+        "AnnularSector": (
+            "ab70480c08f8787a3953948658b950b7e1880f92d5b30a29027c6868b2dda0a1"
+        ),
+        "AnnularSector.__init__": (
+            "0651d7b2c8b018b6234d9932d2c0e8c55737a2fa7069867df49b673bc9393320"
+        ),
+        "AnnularSector.generate_points": (
+            "d767e421efd5eb1d2f9e08d8e73c9941c735b65718dd6b2161b1b941146a2b6f"
         ),
         "Dot.__init__": (
             "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
@@ -1092,6 +1112,19 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "ManimColor.to_rgb": (
             "62b4ec147b506020b8b25253ba67c7c3fa66da48e05f716d1c79faade7eb4326"
+        ),
+        "Sector": ("8b53634aad65114c8fec871d4279730fea5ecd12197978a9191845d3ac394e6c"),
+        "Sector.__init__": (
+            "c5c6c2823c1ba34865673ec6df2397667d08066dcc513c61d08349d712dc2767"
+        ),
+        "AnnularSector": (
+            "ab70480c08f8787a3953948658b950b7e1880f92d5b30a29027c6868b2dda0a1"
+        ),
+        "AnnularSector.__init__": (
+            "0651d7b2c8b018b6234d9932d2c0e8c55737a2fa7069867df49b673bc9393320"
+        ),
+        "AnnularSector.generate_points": (
+            "d767e421efd5eb1d2f9e08d8e73c9941c735b65718dd6b2161b1b941146a2b6f"
         ),
         "Dot.__init__": (
             "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
