@@ -108,6 +108,9 @@ class Colorbar(CartesianAxes):
         lo, hi = mapping.scale.forward(np.array([mapping.vmin, mapping.vmax]))
         edges = mapping.scale.inverse(np.linspace(lo, hi, 65))
         centres = mapping.scale.inverse(lo + (hi - lo) * (np.arange(64) + 0.5) / 64)
+        tops = mapping.scale.inverse(
+            lo + (hi - lo) * np.minimum(np.arange(64) + 1.5, 64) / 64
+        )
         colors = mapping(centres)
         for k, cell in enumerate(self.strip):
             corners = self.c2p(
@@ -115,8 +118,8 @@ class Colorbar(CartesianAxes):
                     [
                         [0, edges[k]],
                         [1, edges[k]],
-                        [1, edges[k + 1]],
-                        [0, edges[k + 1]],
+                        [1, tops[k]],
+                        [0, tops[k]],
                         [0, edges[k]],
                     ]
                 )

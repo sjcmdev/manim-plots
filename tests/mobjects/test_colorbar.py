@@ -75,6 +75,10 @@ def test_cb2_the_strip():
     assert all(cell.get_stroke_width() == 0 for cell in bar.strip)
     bottoms = [float(cell.get_bottom()[1]) for cell in bar.strip]
     assert all(b > a for a, b in pairwise(bottoms))
+    step = bottoms[1] - bottoms[0]
+    for low, high in pairwise(bar.strip):  # no seam: each cell runs under the next
+        assert low.get_top()[1] == pytest.approx(high.get_bottom()[1] + step / 2)
+    assert bar.strip[-1].get_top()[1] == pytest.approx(bar.strip.get_top()[1])
 
 
 def test_cb3_placed_right_of_the_axes_and_kept_there():
