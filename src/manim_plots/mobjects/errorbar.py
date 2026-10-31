@@ -28,6 +28,7 @@ from manim_plots.mobjects.artists import (
     _CurvePlot,
     _cycle_style,
     _MarkerLeaf,
+    _resolve_coordinates,
     _SampleWarnings,
     _unclipped_box,
     _validate_clip,
@@ -246,9 +247,9 @@ class ErrorBars(VGroup):
 
     def __init__(
         self,
-        x: ArrayLike,
+        x: object,
         system: mp.CartesianAxes,
-        y: ArrayLike | None = None,
+        y: object = None,
         yerr: ArrayLike | None = None,
         xerr: ArrayLike | None = None,
         *,
@@ -266,6 +267,7 @@ class ErrorBars(VGroup):
         **style: Unpack[_VMStyle],
     ) -> None:
         self._dim = len(system._ranges)
+        x, y = _resolve_coordinates(system, x, y)
         source = ArraySource(x, y, kind="points", dim=self._dim)
         errors: tuple[FloatArray | None, ...] = (
             _errors(xerr, len(source.data), "xerr"),
@@ -438,8 +440,8 @@ class ErrorBars(VGroup):
 
     def set_data(
         self,
-        x: ArrayLike,
-        y: ArrayLike | None = None,
+        x: object,
+        y: object = None,
         *coordinates: ArrayLike,
         yerr: ArrayLike | None = None,
         xerr: ArrayLike | None = None,
@@ -464,7 +466,9 @@ class ErrorBars(VGroup):
         if self._dim == 3 and y is not None:
             if not coordinates:
                 raise ValueError("z coordinates are required")
-            x = np.column_stack((x, y, coordinates[0]))
+            x = np.column_stack(
+                (cast(ArrayLike, x), cast(ArrayLike, y), coordinates[0])
+            )
             y = None
             coordinates = coordinates[1:]
             if coordinates:
@@ -476,7 +480,11 @@ class ErrorBars(VGroup):
             xerr = coordinates[1]
         if len(coordinates) > 2:
             raise TypeError("too many error arrays")
-        source = ArraySource(x, y, kind="points", dim=self._dim)
+        if self._system is not None:
+            x, y = _resolve_coordinates(self._system, x, y)
+        source = ArraySource(
+            cast(ArrayLike, x), cast(ArrayLike | None, y), kind="points", dim=self._dim
+        )
         errors: tuple[FloatArray | None, ...] = (
             _errors(xerr, len(source.data), "xerr"),
             _errors(yerr, len(source.data), "yerr"),

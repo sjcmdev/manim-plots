@@ -6,6 +6,7 @@ import warnings
 import weakref
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
+from datetime import date
 from functools import wraps
 from typing import Any, Literal, NoReturn, Self, Unpack, cast, overload
 
@@ -37,23 +38,25 @@ from manim_plots.core.coordinates import (
     cylindrical_to_cartesian,
     spherical_to_cartesian,
 )
+from manim_plots.core.dates import date2num
 from manim_plots.core.scales import (
     MINPOS_UNKNOWN,
     LinearScale,
+    LogitScale,
     LogScale,
     Scale,
     SymLogScale,
 )
 from manim_plots.core.shape import marching_cubes
 from manim_plots.core.sources import Box
-from manim_plots.core.ticks import LogLocator, SymLogLocator
+from manim_plots.core.ticks import LogitLocator, LogLocator, SymLogLocator
 from manim_plots.mobjects.artists import (
     FunctionPlot,
     LinePlot,
     ParametricPlot,
     ScatterPlot,
 )
-from manim_plots.mobjects.axis import Axis, TickDirection, _range
+from manim_plots.mobjects.axis import Axis, TickDirection, _range, resolve_categories
 from manim_plots.mobjects.bars import BarPlot
 from manim_plots.mobjects.context import _drawing_camera, _scene_camera
 from manim_plots.mobjects.errorbar import ErrorBars
@@ -139,9 +142,9 @@ class ThreeDAxes(CartesianAxes):
 
     def __init__(
         self,
-        x_range: Sequence[float] = (-6, 6, 1),
-        y_range: Sequence[float] = (-5, 5, 1),
-        z_range: Sequence[float] = (-4, 4, 1),
+        x_range: Sequence[object] = (-6, 6, 1),
+        y_range: Sequence[object] = (-5, 5, 1),
+        z_range: Sequence[object] = (-4, 4, 1),
         x_length: float | None = None,
         y_length: float | None = None,
         z_length: float | None = None,
@@ -163,6 +166,18 @@ class ThreeDAxes(CartesianAxes):
         cycle: str | Sequence[ParsableManimColor] | None = None,
         **kwargs: object,
     ) -> None:
+        original_ranges = (x_range, y_range, z_range)
+        date_ranges = {
+            i: limits[:2]
+            for i, limits in enumerate(original_ranges)
+            if any(isinstance(v, (date, np.datetime64)) for v in limits[:2])
+        }
+        numeric_ranges = [
+            list(cast(Sequence[float], limits)) for limits in original_ranges
+        ]
+        for i, dates in date_ranges.items():
+            numeric_ranges[i][:2] = np.asarray(date2num(dates), dtype=float).tolist()
+        x_range, y_range, z_range = numeric_ranges
         if not (type(occlusion) is bool or occlusion in ("numpy", "gpu")):
             raise ValueError("occlusion must be True, False, numpy or gpu")
         self._occlusion = occlusion
@@ -242,7 +257,9 @@ class ThreeDAxes(CartesianAxes):
                 -0.5 * (native.z_axis.get_start()[2] + native.z_axis.get_end()[2]) * OUT
             )
         locator = (
-            LogLocator(base=scale.base)
+            LogitLocator()
+            if isinstance(scale, LogitScale)
+            else LogLocator(base=scale.base)
             if isinstance(scale, LogScale)
             else SymLogLocator(base=scale.base, linthresh=scale.linthresh)
             if isinstance(scale, SymLogScale)
@@ -296,6 +313,8 @@ class ThreeDAxes(CartesianAxes):
             self._update_view(0, -PI / 2)
             for axis in self._ranges:
                 axis.add_numbers()
+        for i, dates in date_ranges.items():
+            resolve_categories(self._ranges[i], dates, data=False)
         if style == "box" or self.face_camera or self._occlusion:
             self.add_updater(_camera_update)
 
@@ -358,7 +377,7 @@ class ThreeDAxes(CartesianAxes):
         """Return z endpoints and the locator's original step."""
         return np.append(self.z.range.value, self.z._step)
 
-    def set_z_range(self, z_range: Sequence[float]) -> Self:
+    def set_z_range(self, z_range: Sequence[object]) -> Self:
         """Set z endpoints, retaining keyed decorations.
 
         Parameters
@@ -366,12 +385,20 @@ class ThreeDAxes(CartesianAxes):
         z_range
             New data endpoints and optional field spacing.
         """
-        limits = _range(z_range, "z_range")
+        limits = _range(
+            [
+                *np.asarray(
+                    resolve_categories(self.z, z_range[:2], data=False), dtype=float
+                ),
+                *z_range[2:],
+            ],
+            "z_range",
+        )
         if not np.isfinite(self.z._scale.forward(limits)).all():
             raise ValueError("z_range must be inside the scale domain")
         self.z.range = limits
         if len(z_range) == 3:
-            self._field_steps = (*self._field_steps[:2], float(z_range[2]))
+            self._field_steps = (*self._field_steps[:2], float(cast(Any, z_range[2])))
         return self
 
     def get_z_axis(self) -> Axis:
@@ -464,8 +491,8 @@ class ThreeDAxes(CartesianAxes):
     @overload
     def plot(
         self,
-        xs: ArrayLike,
-        ys: ArrayLike | None = None,
+        xs: object,
+        ys: object = None,
         **kwargs: object,
     ) -> LinePlot: ...
 
@@ -513,9 +540,9 @@ class ThreeDAxes(CartesianAxes):
 
     def line(
         self,
-        xs: ArrayLike,
-        ys: ArrayLike | None = None,
-        zs: ArrayLike | None = None,
+        xs: object,
+        ys: object = None,
+        zs: object = None,
         *,
         zdir: str = "z",
         **kwargs: object,
@@ -528,16 +555,26 @@ class ThreeDAxes(CartesianAxes):
             Coordinate arrays (or rows in xs) and artist options.
         """
         _juggle(0, 0, 0, zdir)
-        data = xs if ys is None else _juggle(xs, ys, 0 if zs is None else zs, zdir)
+        if ys is None:
+            data = xs
+        else:
+            indices = {"z": (0, 1, 2), "x": (1, 2, 0), "y": (0, 2, 1)}[zdir]
+            values = [
+                cast(ArrayLike, resolve_categories(self._ranges[i], value))
+                for i, value in zip(
+                    indices, (xs, ys, 0 if zs is None else zs), strict=True
+                )
+            ]
+            data = _juggle(values[0], values[1], values[2], zdir)
         artist = LinePlot(data, self, **cast(_ArtistOptions, kwargs))
         self.add(artist)
         return artist
 
     def scatter(
         self,
-        xs: ArrayLike,
-        ys: ArrayLike | None = None,
-        zs: ArrayLike | None = None,
+        xs: object,
+        ys: object = None,
+        zs: object = None,
         *,
         zdir: str = "z",
         **kwargs: object,
@@ -550,7 +587,17 @@ class ThreeDAxes(CartesianAxes):
             Coordinate arrays (or rows in xs) and artist options.
         """
         _juggle(0, 0, 0, zdir)
-        data = xs if ys is None else _juggle(xs, ys, 0 if zs is None else zs, zdir)
+        if ys is None:
+            data = xs
+        else:
+            indices = {"z": (0, 1, 2), "x": (1, 2, 0), "y": (0, 2, 1)}[zdir]
+            values = [
+                cast(ArrayLike, resolve_categories(self._ranges[i], value))
+                for i, value in zip(
+                    indices, (xs, ys, 0 if zs is None else zs), strict=True
+                )
+            ]
+            data = _juggle(values[0], values[1], values[2], zdir)
         artist = ScatterPlot(data, self, **cast(_VMStyle, kwargs))
         self.add(artist)
         return artist

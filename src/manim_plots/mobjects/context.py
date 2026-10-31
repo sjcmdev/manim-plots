@@ -82,6 +82,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     AnnularSector,
     AnnularSector.__init__,
     AnnularSector.generate_points,
+    Mobject.get_end,
     BarChart.__init__,
     BarChart._add_x_axis_labels,
     BarChart._create_bar,
@@ -391,6 +392,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.clear_points": (
             "8e0f9a9249b27f7cff5519257d8216434c658a56aa60e29c4b6e6ebbff4d83ac"
+        ),
+        "Mobject.get_end": (
+            "1bce30a148b51017eabf3b4e60aa82b0e69ec6ae70b8b4c7cd32879b9cebe036"
         ),
         "VMobject.get_color": (
             "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"
@@ -1158,6 +1162,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.clear_points": (
             "8e0f9a9249b27f7cff5519257d8216434c658a56aa60e29c4b6e6ebbff4d83ac"
+        ),
+        "Mobject.get_end": (
+            "1bce30a148b51017eabf3b4e60aa82b0e69ec6ae70b8b4c7cd32879b9cebe036"
         ),
         "VMobject.get_color": (
             "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"

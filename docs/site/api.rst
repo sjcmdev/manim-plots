@@ -263,3 +263,31 @@ Surfaces and colour
 .. autoclass:: BoxPlot
 
 .. autoclass:: ViolinPlot
+
+Axis kinds
+----------
+
+.. autofunction:: date2num
+
+.. autofunction:: num2date
+
+.. autoclass:: AutoDateLocator
+   :members:
+
+.. autoclass:: ConciseDateFormatter
+   :members:
+
+.. autoclass:: PercentFormatter
+   :members:
+
+.. autoclass:: LogitFormatter
+   :members:
+
+.. autoclass:: LogitScale
+   :members:
+
+.. autoclass:: LogitLocator
+   :members:
+
+.. autoclass:: BrokenScale
+   :members:

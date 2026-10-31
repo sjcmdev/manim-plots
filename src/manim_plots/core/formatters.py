@@ -508,3 +508,82 @@ def as_formatter(obj: object) -> Formatter:
     if callable(obj):
         return FuncFormatter(obj)
     raise TypeError("obj must be a formatter or callable")
+
+
+class PercentFormatter:
+    """Format ticks as percentages with shared decimal precision.
+
+    Parameters
+    ----------
+    xmax
+        Finite positive value representing one hundred percent.
+    decimals
+        Decimal places, or None to infer shared precision.
+    symbol
+        Suffix, escaped for math mode.
+    """
+
+    def __init__(
+        self, xmax: float = 100, decimals: int | None = None, symbol: str = "%"
+    ) -> None:
+        if not isfinite(xmax) or xmax <= 0:
+            raise ValueError("xmax must be finite and positive")
+        if not isinstance(symbol, str):
+            raise TypeError("symbol must be str")
+        self.xmax = xmax
+        self.symbol = symbol
+        self._decimal = DecimalFormatter(decimals, group_with_commas=False)
+
+    def format_ticks(self, values: FloatArray) -> Labels:
+        """Return percentage labels.
+
+        Parameters
+        ----------
+        values
+            Finite tick positions.
+
+        Returns
+        -------
+        Labels
+            Math-mode percentage strings.
+        """
+        suffix = "".join("\\" + c if c in "\\%_$&#{}^~" else c for c in self.symbol)
+        return Labels(
+            [
+                s + suffix
+                for s in self._decimal.format_ticks(
+                    _values(values) * 100 / self.xmax
+                ).text
+            ]
+        )
+
+
+class LogitFormatter:
+    """Format probability decades as base-ten powers and complements."""
+
+    def format_ticks(self, values: FloatArray) -> Labels:
+        """Return math-mode probability labels.
+
+        Parameters
+        ----------
+        values
+            Finite probabilities.
+
+        Returns
+        -------
+        Labels
+            Powers, complements, a half, or plain decimals.
+        """
+        labels = []
+        for value in _values(values):
+            if value == 0.5:
+                labels.append(r"\frac{1}{2}")
+                continue
+            small = min(value, 1 - value)
+            exponent = round(-log10(small)) if small > 0 else 0
+            candidate = 1 - 10.0**-exponent if value > 0.5 else 10.0**-exponent
+            if exponent >= 1 and abs(value - candidate) <= 2 * abs(np.spacing(value)):
+                labels.append(("1-" if value > 0.5 else "") + f"10^{{{-exponent}}}")
+            else:
+                labels.append(f"{value:g}")
+        return Labels(labels)

@@ -8,7 +8,17 @@ from collections.abc import Callable, Iterable, Sequence
 from typing import Any, NoReturn, Self, TypedDict, Unpack, cast
 
 import numpy as np
-from manim import Animation, MathTex, Mobject, Scene, Tex, VGroup, VMobject, config
+from manim import (
+    Animation,
+    MathTex,
+    Mobject,
+    Scene,
+    Tex,
+    Text,
+    VGroup,
+    VMobject,
+    config,
+)
 from manim.constants import CapStyleType, LineJointType, RendererType
 from manim.typing import PathFuncType, Vector3DLike
 from manim.utils.color import ParsableManimColor
@@ -755,7 +765,12 @@ class NumberLabel(VGroup):
 
     def _set_text(self, text: str, *, text_mode: bool = False) -> None:
         style = self.get_style()
-        glyphs = _formatted_glyphs(text, self._font_size, text_mode=text_mode)
+        if text_mode or re.fullmatch(r"[+-]?[0-9.,]+", text) is None:
+            # Native layout preserves descenders and the math axis between terms.
+            constructor = Text if text_mode else MathTex
+            glyphs = _label(constructor(text, font_size=self._font_size))
+        else:
+            glyphs = _formatted_glyphs(text, self._font_size)
         self.submobjects = glyphs.submobjects
         self.text = text
         self.initial_height = self.height or 1.0

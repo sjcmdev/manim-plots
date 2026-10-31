@@ -547,3 +547,188 @@ class FunctionScale(_ScaleBase):
         return _evaluate(
             u, self._inverse_function, self.domain, self.closed, inverse=True
         )
+
+
+class LogitScale(_ScaleBase):
+    """Map probabilities in the open unit interval to base-ten log odds."""
+
+    @property
+    def domain(self) -> tuple[float, float]:
+        """Return the open unit interval."""
+        return (0.0, 1.0)
+
+    def forward(self, x: ArrayLike) -> FloatArray:
+        """Transform probabilities, returning NaN outside the domain.
+
+        Parameters
+        ----------
+        x
+            Scalar or array of probabilities.
+
+        Returns
+        -------
+        FloatArray
+            Base-ten log odds.
+        """
+        return _evaluate(x, lambda v: np.log10(v / (1 - v)), self.domain, self.closed)
+
+    def inverse(self, u: ArrayLike) -> FloatArray:
+        """Recover probabilities from log odds.
+
+        Parameters
+        ----------
+        u
+            Scalar or array of log odds.
+
+        Returns
+        -------
+        FloatArray
+            Probabilities, or NaN for unrepresentable results.
+        """
+        return _evaluate(
+            u,
+            lambda v: np.exp(-np.logaddexp(0, -v * np.log(10))),
+            self.domain,
+            self.closed,
+            inverse=True,
+        )
+
+
+class BrokenScale(_ScaleBase):
+    """Compress excluded intervals into fixed fractions of a linear range.
+
+    Parameters
+    ----------
+    breaks
+        Ordered, disjoint pairs of finite data endpoints.
+    gap
+        Fraction of the scaled range allocated to each break.
+    base
+        Linear base scale, or None for identity.
+    """
+
+    def __init__(
+        self, breaks: ArrayLike, gap: float = 0.05, base: Scale | None = None
+    ) -> None:
+        if base is not None and type(base) is not LinearScale:
+            raise ValueError("broken scale requires a linear base scale")
+        try:
+            intervals = np.asarray(breaks, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("breaks must contain numeric endpoint pairs") from exc
+        if intervals.shape == (0,):
+            intervals = np.empty((0, 2))
+        if (
+            intervals.ndim != 2
+            or intervals.shape[1] != 2
+            or not np.isfinite(intervals).all()
+            or np.any(intervals[:, 0] >= intervals[:, 1])
+            or np.any(intervals[1:, 0] <= intervals[:-1, 1])
+        ):
+            raise ValueError("breaks must be finite, ordered, disjoint intervals")
+        if not np.isfinite(gap) or gap <= 0 or len(intervals) * gap >= 1:
+            raise ValueError("breaks gap must be positive with n * gap < 1")
+        self.breaks = tuple((float(a), float(b)) for a, b in intervals)
+        self.gap = float(gap)
+        self.base = base or LinearScale()
+        self._knots = np.empty(0)
+        self._scaled = np.empty(0)
+        self._slope = 1.0
+
+    def _set_range(self, lo: float, hi: float) -> None:
+        lower, upper = sorted((lo, hi))
+        if lower == upper:
+            raise ValueError("breaks require distinct range endpoints")
+        if any(a <= lower or b >= upper for a, b in self.breaks):
+            raise ValueError("breaks must lie strictly inside the range")
+        removed = sum(b - a for a, b in self.breaks)
+        kept = upper - lower - removed
+        self._slope = (upper - lower) * (1 - len(self.breaks) * self.gap) / kept
+        knots = [lower]
+        scaled = [lower]
+        for a, b in self.breaks:
+            scaled.extend(
+                [
+                    scaled[-1] + (a - knots[-1]) * self._slope,
+                    scaled[-1]
+                    + (a - knots[-1]) * self._slope
+                    + self.gap * (upper - lower),
+                ]
+            )
+            knots.extend([a, b])
+        knots.append(upper)
+        scaled.append(upper)
+        self._knots = np.array(knots)
+        self._scaled = np.array(scaled)
+
+    def limit_range(self, lo: float, hi: float, minpos: float) -> tuple[float, float]:
+        """Validate the range and calibrate the fixed gap fractions.
+
+        Parameters
+        ----------
+        lo, hi
+            Linear range endpoints.
+        minpos
+            Positive domain margin, passed to the base validation.
+
+        Returns
+        -------
+        tuple of float
+            Validated endpoints in the original order.
+        """
+        limits = super().limit_range(lo, hi, minpos)
+        self._set_range(*limits)
+        return limits
+
+    def _transform(self, values: FloatArray, inverse: bool = False) -> FloatArray:
+        if not len(self._knots):
+            raise ValueError("broken scale requires limit_range before use")
+        source, target = (
+            (self._scaled, self._knots) if inverse else (self._knots, self._scaled)
+        )
+        slope = 1 / self._slope if inverse else self._slope
+        return np.where(
+            values < source[0],
+            target[0] + (values - source[0]) * slope,
+            np.where(
+                values > source[-1],
+                target[-1] + (values - source[-1]) * slope,
+                np.interp(values, source, target),
+            ),
+        )
+
+    def forward(self, x: ArrayLike) -> FloatArray:
+        """Map linear coordinates across compressed gaps.
+
+        Parameters
+        ----------
+        x
+            Scalar or array of data coordinates.
+
+        Returns
+        -------
+        FloatArray
+            Continuous, invertible scaled coordinates.
+        """
+        return _evaluate(x, self._transform, self.domain, self.closed)
+
+    def inverse(self, u: ArrayLike) -> FloatArray:
+        """Recover data coordinates, including positions inside gaps.
+
+        Parameters
+        ----------
+        u
+            Scalar or array of scaled coordinates.
+
+        Returns
+        -------
+        FloatArray
+            Original data coordinates.
+        """
+        return _evaluate(
+            u,
+            lambda v: self._transform(v, True),
+            self.domain,
+            self.closed,
+            inverse=True,
+        )

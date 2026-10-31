@@ -1323,6 +1323,9 @@ def _reference(
     maximum: object,
     **style: Unpack[_HelperOptions],
 ) -> HelperLine:
+    from manim_plots.mobjects.axis import resolve_categories
+
+    value = resolve_categories(system.get_axis(index), value, data=False)
     name = "x" if index == 0 else "y"
 
     def derive(binding: _Binding) -> None:

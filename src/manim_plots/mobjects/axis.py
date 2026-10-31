@@ -5,29 +5,38 @@ from __future__ import annotations
 import copy
 import warnings
 from collections.abc import Callable, Iterable, Sequence
+from datetime import date
 from enum import Enum
 from functools import partial
 from math import floor
 from numbers import Real
-from typing import Any, Literal, NoReturn, Self, Unpack
+from typing import Any, Literal, NoReturn, Self, Unpack, cast
 
 import numpy as np
-from manim import Line, LinearBase, LogBase, NumberLine, VGroup
+from manim import Line, LinearBase, LogBase, NumberLine, Text, VGroup
 from manim.utils.color import ManimColor, ParsableManimColor
 from manim.utils.config_ops import merge_dicts_recursively
 from numpy.typing import ArrayLike
 
 import manim_plots as mp
 from manim_plots.core import FloatArray, ManimPlotsWarning
+from manim_plots.core.dates import AutoDateLocator, ConciseDateFormatter, date2num
 from manim_plots.core.formatters import (
     DecimalFormatter,
     FixedFormatter,
     Formatter,
+    LogitFormatter,
     as_formatter,
     decimal_places,
 )
 from manim_plots.core.params import Param, Parameter
-from manim_plots.core.scales import MINPOS_UNKNOWN, LinearScale, Scale
+from manim_plots.core.scales import (
+    MINPOS_UNKNOWN,
+    BrokenScale,
+    LinearScale,
+    LogitScale,
+    Scale,
+)
 from manim_plots.core.ticks import (
     FixedLocator,
     Level,
@@ -117,9 +126,51 @@ def _scale_range(scale: Scale, value: ArrayLike) -> FloatArray:
     )
 
 
-def resolve_categories(axis: Axis, values: object) -> object:
-    """Resolve string coordinates through the axis's category table."""
-    array = np.asarray(values)
+def _coordinate_array(values: object) -> np.ndarray[Any, Any]:
+    try:
+        return np.asarray(values)
+    except (TypeError, ValueError):
+        return np.asarray(values, dtype=object)
+
+
+def resolve_categories(axis: Axis, values: object, *, data: bool = True) -> object:
+    """Resolve categories and dates before entering the float pipeline.
+
+    Parameters
+    ----------
+    axis
+        Axis which owns category and date metadata.
+    values
+        Scalar or array of numeric, category or date coordinates.
+    data
+        Whether a first date also initializes the range from these values.
+
+    Returns
+    -------
+    object
+        Numeric coordinates, with the input shape retained.
+    """
+    array = _coordinate_array(values)
+    if array.dtype.kind == "M" or (
+        array.dtype.kind == "O"
+        and any(isinstance(v, (date, np.datetime64)) for v in array.flat)
+    ):
+        converted = date2num(values)
+        if not axis._date_axis:
+            axis._date_axis = True
+            axis.locator = AutoDateLocator()
+            axis.minor_locator = None
+            axis.formatter = ConciseDateFormatter()
+            axis._formatter_custom = True
+            axis.include_numbers = True
+            numbers = np.asarray(converted, dtype=float)
+            if data and numbers.size:
+                first, last = float(numbers.flat[0]), float(numbers.flat[-1])
+                axis.range = (
+                    (first, last) if first != last else (first - 0.5, last + 0.5)
+                )
+            axis._regenerate()
+        return converted
     if array.dtype.kind not in ("U", "S", "O"):
         return values
     entries = np.asarray(values, dtype=object)
@@ -373,6 +424,9 @@ class Axis(VGroup):
         axis_config: dict[str, Any] | None = None,
     ) -> None:
         self._system = system
+        self.break_marks = VGroup()
+        self._date_axis = False
+        self._offset_label: Text | None = None
         self._categories: tuple[str, ...] = ()
         self._category_positions: tuple[float, ...] = ()
         self._categories_fixed = False
@@ -384,7 +438,11 @@ class Axis(VGroup):
         self._step = limits[2] if len(limits) == 3 else 1
         self.locator = locator or MultipleLocator(self._step)
         self.minor_locator = minor_locator
-        self._scale = scale or LinearScale()
+        self._scale = (
+            copy.copy(scale)
+            if isinstance(scale, BrokenScale)
+            else (scale or LinearScale())
+        )
         self._range_parameter._validate = partial(_scale_range, self._scale)
         self._config = axis_config or {}
         self.scaling = native.scaling
@@ -408,7 +466,9 @@ class Axis(VGroup):
         self.formatter: Formatter = DecimalFormatter(
             self.decimal_number_config.get("num_decimal_places", 0)
         )
-        self._formatter_custom = False
+        if isinstance(self._scale, LogitScale):
+            self.formatter = LogitFormatter()
+        self._formatter_custom = isinstance(self._scale, LogitScale)
         self._explicit: FixedLocator | None = None
         self._tick_mode: Literal["add", "replace"] = "add"
         self._items: tuple[Tick, ...] = ()
@@ -637,7 +697,7 @@ class Axis(VGroup):
                 result.__dict__[key] = memo[id(value)]
             else:
                 result.__dict__[key] = copy.deepcopy(value, memo)
-        if self._secondaries:
+        if self._secondaries or isinstance(self._scale, BrokenScale):
             result._range_parameter._validate = result._validate_range
         return result
 
@@ -693,7 +753,7 @@ class Axis(VGroup):
     def _locate(self, config: _TickConfig, limits: FloatArray) -> tuple[Tick, ...]:
         lo, hi = limits if self._secondary_of is None else self._tick_limits(limits)
         major, minor, explicit, mode = config
-        return axis_ticks(
+        items = axis_ticks(
             major,
             minor,
             float(lo),
@@ -702,6 +762,11 @@ class Axis(VGroup):
             self.max_ticks,
             explicit=explicit,
             mode=mode,
+        )
+        if not self.breaks:
+            return items
+        return tuple(
+            t for t in items if not any(a < t.value < b for a, b in self.breaks)
         )
 
     def _part_value(self, value: float) -> float:
@@ -922,7 +987,12 @@ class Axis(VGroup):
         mapping = system.frame.mapping
         locator = self.locator
         tick_config: tuple[object, ...] | None = None
-        if self.minor_locator is None and self._explicit is None:
+        if (
+            not self.breaks
+            and self._offset_label is None
+            and self.minor_locator is None
+            and self._explicit is None
+        ):
             if type(locator) is MaxNLocator:
                 tick_config = (
                     MaxNLocator,
@@ -994,6 +1064,8 @@ class Axis(VGroup):
                 return
         self.line._axis_local = self._line_reference + offset
         self.line._cache = mapping.forward(self.line._axis_local)
+        if self.breaks or self.break_marks.submobjects:
+            self._configure_breaks()
         if self.tip is not None and self._tip_reference is not None:
             self.tip._axis_local = self._tip_reference + offset
             self.tip._cache = mapping.forward(self.tip._axis_local)
@@ -1023,6 +1095,11 @@ class Axis(VGroup):
             or any(item.label is not None for item in self._items)
         ):
             self._configure_numbers()
+        elif self._formatter_custom:
+            offset_values = np.array(
+                [t.value for t in self._items if t.level == "major"]
+            )
+            self._configure_offset(self.formatter.format_ticks(offset_values).offset)
         if self._label_values:
             self._configure_labels()
         if self._mirrors or self._secondaries:
@@ -1241,6 +1318,88 @@ class Axis(VGroup):
         finally:
             system._syncing = False
 
+    @property
+    def offset_label(self) -> Text | None:
+        """Return the current shared formatter annotation, rebuilding lazily."""
+        self._system._sync_data()
+        return self._offset_label
+
+    @property
+    def breaks(self) -> tuple[tuple[float, float], ...]:
+        """Return the excluded open data intervals."""
+        return self._scale.breaks if isinstance(self._scale, BrokenScale) else ()
+
+    def set_breaks(self, breaks: ArrayLike, gap: float = 0.05) -> Self:
+        """Replace the breaks on a linear axis and rebuild bound geometry.
+
+        Parameters
+        ----------
+        breaks
+            Ordered, disjoint pairs strictly inside the axis range; empty clears.
+        gap
+            Fraction of axis length for each gap.
+
+        Returns
+        -------
+        Self
+            This axis with its new scale.
+        """
+        if type(self._scale) is not LinearScale and not isinstance(
+            self._scale, BrokenScale
+        ):
+            raise ValueError("breaks require a linear scale")
+        scale = BrokenScale(breaks, gap)
+        scale.limit_range(
+            float(self.range.value[0]), float(self.range.value[1]), MINPOS_UNKNOWN
+        )
+        self._scale = scale if scale.breaks else LinearScale()
+        self._range_parameter._validate = partial(_scale_range, self._scale)
+        self._crossing_frame = -1
+        self._system._compile()
+        self._regenerate()
+        return self
+
+    def _configure_breaks(self) -> None:
+        previous = list(self.break_marks.submobjects)
+        self.break_marks.submobjects = []
+        if self.break_marks not in self.submobjects:
+            self.add(self.break_marks)
+        if not self.breaks:
+            return
+        lo, hi = sorted(map(float, self.range.value))
+        endpoints = [lo, *(v for pair in self.breaks for v in pair), hi]
+        pieces = []
+        for a, b in zip(endpoints[::2], endpoints[1::2], strict=True):
+            ends = self._system._data.forward(self._anchor_data([a, b]))
+            ends = (
+                np.pad(ends, ((0, 0), (0, 3 - ends.shape[1]))) + self._outward_offset()
+            )
+            pieces.append(ends[0] + np.linspace(0, 1, 4)[:, None] * (ends[1] - ends[0]))
+        if self.range.value[0] > self.range.value[1]:
+            pieces = [piece[::-1] for piece in reversed(pieces)]
+        self.line._axis_local = np.concatenate(pieces)
+        self.line._cache = self._system.frame.mapping.forward(self.line._axis_local)
+        tangent = np.eye(3)[self.index]
+        across = np.eye(3)[1 - self.index]
+        diagonal = 0.075 * (0.5 * tangent + np.sqrt(3) / 2 * across)
+        for pair in self.breaks:
+            for value in pair:
+                anchor = self._anchors([value])[0]
+                for shift in (-0.03, 0.03):
+                    center = anchor + shift * tangent
+                    native = Line(center - diagonal, center + diagonal)
+                    index = len(self.break_marks.submobjects)
+                    if index < len(previous):
+                        stroke = cast(TickLeaf, previous[index])
+                    else:
+                        stroke = TickLeaf(native.points, self._system)
+                        stroke.match_style(self.line)
+                    stroke._axis_local = native.points.copy()
+                    stroke._cache = self._system.frame.mapping.forward(
+                        stroke._axis_local
+                    )
+                    self.break_marks.add(stroke)
+
     def set_locator(self, locator: object, minor: object = None) -> Self:
         """Replace the tick generators and regenerate keyed decorations.
 
@@ -1273,7 +1432,7 @@ class Axis(VGroup):
 
     def set_ticks(
         self,
-        entries: Iterable[float | tuple[object, ...]],
+        entries: Iterable[object],
         mode: Literal["replace", "add"] = "replace",
     ) -> Self:
         """Replace or supplement generated ticks with fixed entries.
@@ -1287,7 +1446,15 @@ class Axis(VGroup):
         """
         if mode not in ("replace", "add"):
             raise ValueError("mode must be replace or add")
-        fixed = FixedLocator(entries)
+        converted: list[object] = []
+        for entry in entries:
+            if isinstance(entry, tuple) and entry:
+                converted.append(
+                    (resolve_categories(self, entry[0], data=False), *entry[1:])
+                )
+            else:
+                converted.append(resolve_categories(self, entry, data=False))
+        fixed = FixedLocator(cast(Any, converted))
         self._mirror_overrides.add("locator")
         if mode == "replace":
             self.locator = fixed
@@ -1371,7 +1538,7 @@ class Axis(VGroup):
 
     def set_position(
         self,
-        where: str | float = "origin",
+        where: object = "origin",
         *,
         fraction: float | None = None,
         offset: float | None = None,
@@ -1396,7 +1563,12 @@ class Axis(VGroup):
             sides = ("bottom", "top") if self.index == 0 else ("left", "right")
             _choice(where, "where", ("origin", *sides))
         else:
-            where = _finite(where, "where")
+            where = _finite(
+                resolve_categories(
+                    self._system.get_axis(1 - self.index), where, data=False
+                ),
+                "where",
+            )
             other = self._system.get_axis(1 - self.index)
             if not np.isfinite(other._scale.forward(where)).all():
                 raise ValueError("where must be inside the other scale's domain")
@@ -1814,7 +1986,7 @@ class Axis(VGroup):
         vector = self.get_end() - self.get_start()
         return float(np.arctan2(vector[1], vector[0]))
 
-    def number_to_point(self, number: ArrayLike) -> FloatArray:
+    def number_to_point(self, number: object) -> FloatArray:
         """Map values to scene points.
 
         Parameters
@@ -1823,7 +1995,7 @@ class Axis(VGroup):
             Scalar or array of values in the scale domain.
         """
         self._system._sync_data()
-        values = np.asarray(number, dtype=float)
+        values = np.asarray(resolve_categories(self, number, data=False), dtype=float)
         scaled = self._scale.forward(
             values if self._functions is None else self._data_values(values)
         )
@@ -2006,7 +2178,7 @@ class Axis(VGroup):
 
     def add_numbers(
         self,
-        x_values: Iterable[float] | None = None,
+        x_values: Iterable[object] | None = None,
         excluding: Iterable[float] | None = None,
         font_size: float | None = None,
         label_constructor: object = None,
@@ -2019,7 +2191,19 @@ class Axis(VGroup):
         x_values, excluding, font_size, label_constructor, **kwargs
             Native NumberLine positions, exclusions and formatting options.
         """
-        self._number_values = None if x_values is None else tuple(map(float, x_values))
+        self._number_values = (
+            None
+            if x_values is None
+            else tuple(
+                map(
+                    float,
+                    np.asarray(
+                        resolve_categories(self, list(x_values), data=False),
+                        dtype=float,
+                    ),
+                )
+            )
+        )
         self.include_numbers = True
         if excluding is not None:
             self.numbers_to_exclude = tuple(excluding)
@@ -2035,6 +2219,26 @@ class Axis(VGroup):
     def _configure_numbers(self) -> None:
         if not self._mirror_suppressed:
             _configure_numbers(self)
+
+    def _configure_offset(self, offset: str | None) -> None:
+        if not offset:
+            if self._offset_label is not None:
+                self.remove(self._offset_label)
+                self._offset_label = None
+            return
+        if self._offset_label is None or self._offset_label.text != offset:
+            if self._offset_label is not None:
+                self.remove(self._offset_label)
+            self._offset_label = Text(
+                offset,
+                font_size=self._number_options.get("font_size", self.font_size),
+                color=self.line.get_color(),
+            )
+            self.add(self._offset_label)
+        self._offset_label.next_to(
+            self.line.get_end(),
+            np.array([0, -1, 0]) if self.index == 0 else np.array([1, 0, 0]),
+        )
 
     def add_labels(
         self,
