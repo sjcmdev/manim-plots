@@ -290,8 +290,7 @@ ADDED_BY_TASK_25 = [
 ADDED_BY_TASK_26: list[str] = []
 ADDED_BY_TASK_28: list[str] = []
 ADDED_BY_TASK_29: list[str] = []
-ADDED_BY_TASK_30 = [
-    "ThreeDCamera.project_points",
+ADDED_BY_TASK_30 = [  # project_points came with task 24c
     "ThreeDCamera.get_focal_distance",
     "ThreeDCamera.get_zoom",
     "Camera.points_to_pixel_coords",
