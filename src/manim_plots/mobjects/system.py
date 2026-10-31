@@ -4092,7 +4092,7 @@ class CartesianAxes(VGroup):
         result._artists = _ArtistRegistry()
         result._artists._clock = copy.deepcopy(self._artists._clock, memo)
         for key, value in self.__dict__.items():
-            if key in {"bounds", "_data"}:
+            if key in {"bounds", "_data", "_camera", "_depth_engine"}:
                 result.__dict__[key] = value
             elif key == "_moving_query":
                 result.__dict__[key] = None
