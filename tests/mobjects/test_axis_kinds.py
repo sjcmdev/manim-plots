@@ -115,6 +115,7 @@ def test_dt4_lg3_labels_sit_on_a_baseline():
     ).family_members_with_points()
     assert p.get_bottom()[1] < s.get_bottom()[1] - 0.02  # the descender of "p"
     logit = mp.Axes(y_scale="logit", y_range=(0.001, 0.999))
+    logit.y.add_numbers()
     one, minus = logit.y.numbers.at(0.9).family_members_with_points()[:2]
     middle = (one.get_bottom()[1] + one.get_top()[1]) / 2
     assert abs(minus.get_center()[1] - middle) < 0.25 * one.height  # not an underscore
