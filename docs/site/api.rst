@@ -224,8 +224,6 @@ Surfaces and colour
 
 .. autoclass:: SurfacePlot
 
-.. autoclass:: GrowSurface
-
 .. autoclass:: StemPlot
 
 .. autoclass:: WaterfallPlot
