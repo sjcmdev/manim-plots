@@ -2,22 +2,26 @@
 
 from __future__ import annotations
 
+import copy
 from builtins import range as builtins_range
 from collections.abc import Callable, Sequence
 from functools import partial
 from typing import Any, Self, cast
 
 import numpy as np
-from manim import VGroup
+from manim import Mobject, VGroup
+from manim.animation.transform import _MethodAnimation
+from manim.typing import PathFuncType
 from numpy.typing import NDArray
 
 import manim_plots as mp
 from manim_plots.core import FloatArray
 from manim_plots.core.sources import ArraySource
-from manim_plots.mobjects.artists import LinePlot, _cycle_style
-from manim_plots.mobjects.bars import BarPlot
+from manim_plots.mobjects.artists import LinePlot, _CurvePlot, _cycle_style
+from manim_plots.mobjects.bars import BarPlot, _Bar
+from manim_plots.mobjects.context import animation_context
 from manim_plots.mobjects.helpers import FilledRegion
-from manim_plots.mobjects.leaves import _VMStyle
+from manim_plots.mobjects.leaves import _STRAIGHT, _VMStyle
 
 
 def _datasets(x: object) -> list[NDArray[np.float64]]:
@@ -89,6 +93,15 @@ class HistPlot(VGroup):
     color, color_by, colorscale, vmin, vmax, norm, label, **style
         Dataset colours, value mapping, legend labels and native artist styles.
     """
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        result = type(self).__new__(type(self))
+        memo[id(self)] = result
+        for name, value in self.__dict__.items():
+            result.__dict__[name] = (
+                value if name == "_system" else copy.deepcopy(value, memo)
+            )
+        return result
 
     def __init__(
         self,
@@ -275,6 +288,8 @@ class HistPlot(VGroup):
                             **cast(Any, {**own, "label": None}),
                         )
                         bars.add(*extra.submobjects)
+                    # Replacing edges retains existing bins by index.
+                    bars._keys = list(position)
                     bars.set_data(
                         x=position,
                         height=count,
@@ -306,6 +321,9 @@ class HistPlot(VGroup):
                     )
                     self.add(bars)
                 plots.append(bars)
+                if self._color_by == "count":
+                    for bar in bars:
+                        cast(_Bar, bar)._height_mapping = bars.color_mapping
             if self._stacked:
                 base = base + count
         if self._histtype in ("step", "stepfilled"):
@@ -336,6 +354,74 @@ class HistPlot(VGroup):
         self._count(x, self.edges if bins is None else bins, weights)
         self._draw()
         return self
+
+    def align_data(self, mobject: Mobject, skip_point_alignment: bool = False) -> Self:
+        """Select the data channel for native method animations.
+
+        Parameters
+        ----------
+        mobject, skip_point_alignment
+            Native target and alignment option.
+        """
+        active = isinstance(mobject, HistPlot) and isinstance(
+            animation_context(transform_only=True), _MethodAnimation
+        )
+        self._value_animation = active
+        if isinstance(mobject, HistPlot):
+            mobject._value_animation = active
+        super().align_data(mobject, skip_point_alignment)
+        return self
+
+    def family_members_with_points(self) -> list[Mobject]:
+        """Rebuild bin geometry after native child interpolation."""
+        if self.__dict__.get("_value_animation", False):
+            return [
+                m
+                for m in self.get_family()
+                if isinstance(m, _CurvePlot) or m.has_points()
+            ] + [self]
+        return super().family_members_with_points()
+
+    def resume_updating(self, recursive: bool = True) -> Self:
+        """Return derived bins to ordinary binding after interpolation.
+
+        Parameters
+        ----------
+        recursive
+            Whether to resume descendants.
+        """
+        super().resume_updating(recursive)
+        self._value_animation = False
+        self._draw()
+        for leaf in self.get_family():
+            if isinstance(leaf, _CurvePlot):
+                leaf.refresh()
+        return self
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Rebuild bins from interpolated counts during a method animation.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native endpoints, progress and path.
+        """
+        if self.__dict__.get("_value_animation", False):
+            assert isinstance(mobject1, HistPlot) and isinstance(mobject2, HistPlot)
+            self._counts = (1 - alpha) * mobject1._counts + alpha * mobject2._counts
+            self.counts = self._counts[0] if len(self._counts) == 1 else self._counts
+            self._draw()
+            for leaf in self.get_family():
+                if isinstance(leaf, _CurvePlot):
+                    leaf._rebuild()
+            return self
+        return super().interpolate(mobject1, mobject2, alpha, path_func)
 
 
 class StackPlot(VGroup):

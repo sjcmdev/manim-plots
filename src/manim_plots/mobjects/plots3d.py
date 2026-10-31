@@ -6,6 +6,8 @@ from typing import Any, Self, cast
 
 import numpy as np
 from manim import Arrow, ManimColor, Mobject, Text, ThreeDCamera, VGroup, VMobject
+from manim.animation.transform import _MethodAnimation
+from manim.typing import PathFuncType
 from numpy.typing import ArrayLike
 
 import manim_plots as mp
@@ -13,11 +15,11 @@ from manim_plots.core import FloatArray
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import LinePlot, _CurvePlot, _cycle_style
 from manim_plots.mobjects.colormaps import resolve_colorscale
-from manim_plots.mobjects.context import _drawing_camera
+from manim_plots.mobjects.context import _drawing_camera, animation_context
 from manim_plots.mobjects.fields import _facing_basis, _VectorGroup
 from manim_plots.mobjects.geometry import _data_point, _ensure_binding, _inputs, _read
 from manim_plots.mobjects.helpers import HelperGroup, _Binding, _HelperShape
-from manim_plots.mobjects.leaves import _ArtistOptions, _VMStyle
+from manim_plots.mobjects.leaves import _STRAIGHT, _ArtistOptions, _VMStyle
 from manim_plots.mobjects.projections import _juggle
 from manim_plots.mobjects.surfaces import SurfacePlot, _Face
 
@@ -127,7 +129,12 @@ class WaterfallPlot(VGroup):
         super().__init__(*(f for f in self.fills if f is not None), *self.lines)
 
 
+class _BarFace(_Face):
+    pass
+
+
 class _BarSurface(SurfacePlot):
+    _growth: FloatArray | None = None
     _histogram: Hist3DPlot | None = None
     _depth_version = 0
 
@@ -140,7 +147,14 @@ class _BarSurface(SurfacePlot):
         try:
             if self._histogram is not None:
                 self._bar_corners = self._histogram._corners()
-            self._corner_data = self._bar_corners
+            self._corner_data = self._bar_corners.copy()
+            growth = self.__dict__.get("_growth")
+            if growth is not None:
+                boxes = self._corner_data.reshape(-1, 6, 4, 3)
+                base = boxes[:, 0, 0, 2].copy()
+                boxes[..., 2] = base[:, None, None] + growth[:, None, None] * (
+                    boxes[..., 2] - base[:, None, None]
+                )
             self._centres = self._corner_data.mean(axis=1)
             mapped = self._system._data.forward(self._corner_data.reshape(-1, 3))
             self._local_faces = [
@@ -247,6 +261,13 @@ class BarPlot3D(VGroup):
             resolution=(len(xyz), 6),
             **cast(dict[str, Any], options),
         )
+        for key, original in list(surface.faces._faces.items()):
+            replacement = _BarFace(surface)
+            replacement.match_style(original)
+            replacement.points = original.points.copy()
+            replacement._styled = False
+            surface.faces._faces[key] = replacement
+        surface.faces.submobjects = list(surface.faces._faces.values())
         normals = np.array(
             [[0, 0, -1], [0, 0, 1], [0, -1, 0], [0, 1, 0], [-1, 0, 0], [1, 0, 0]]
         )
@@ -461,6 +482,10 @@ class Hist3DPlot(BarPlot3D):
             density=self._density,
             weights=None if weights is None else np.asarray(weights, float),
         )[0]
+        self._update_counts()
+        return self
+
+    def _update_counts(self) -> None:
         values = self._values()
         if values is not None:
             self._color_mapping = resolve_colorscale(
@@ -479,7 +504,67 @@ class Hist3DPlot(BarPlot3D):
                             ManimColor(colors[i] * (factors[j] if self._shade else 1))
                         )
         self._surface._derive()
+
+    def align_data(self, mobject: Mobject, skip_point_alignment: bool = False) -> Self:
+        """Select the data channel for native method animations.
+
+        Parameters
+        ----------
+        mobject, skip_point_alignment
+            Native target and alignment option.
+        """
+        active = isinstance(mobject, Hist3DPlot) and isinstance(
+            animation_context(transform_only=True), _MethodAnimation
+        )
+        self._value_animation = active
+        if isinstance(mobject, Hist3DPlot):
+            mobject._value_animation = active
+        super().align_data(mobject, skip_point_alignment)
         return self
+
+    def family_members_with_points(self) -> list[Mobject]:
+        """Rebuild bin geometry after native child interpolation."""
+        if self.__dict__.get("_value_animation", False):
+            return [
+                m
+                for m in self.get_family()
+                if isinstance(m, _BarFace) or m.has_points()
+            ] + [self]
+        return super().family_members_with_points()
+
+    def resume_updating(self, recursive: bool = True) -> Self:
+        """Return derived bins to ordinary binding after interpolation.
+
+        Parameters
+        ----------
+        recursive
+            Whether to resume descendants.
+        """
+        super().resume_updating(recursive)
+        self._value_animation = False
+        self._update_counts()
+        return self
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Rebuild columns and their colours from interpolated bin counts.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native endpoints, progress and path.
+        """
+        if self.__dict__.get("_value_animation", False):
+            assert isinstance(mobject1, Hist3DPlot) and isinstance(mobject2, Hist3DPlot)
+            self.counts = (1 - alpha) * mobject1.counts + alpha * mobject2.counts
+            self._update_counts()
+            return self
+        return super().interpolate(mobject1, mobject2, alpha, path_func)
 
 
 class _TextDriver(_CurvePlot):

@@ -23,11 +23,14 @@ from manim import (
     Axes,
     BarChart,
     CoordinateSystem,
+    Create,
     DashedLine,
     DashedVMobject,
     DecimalNumber,
     Dot,
+    FadeIn,
     FadeOut,
+    Indicate,
     Line,
     Line3D,
     LogBase,
@@ -74,6 +77,17 @@ from manim.utils.hashing import (
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    AnimationGroup.build_animations_with_timings,
+    Indicate,
+    Indicate.__init__,
+    Indicate.create_target,
+    Create,
+    Create.__init__,
+    Create._get_bounds,
+    FadeIn,
+    FadeIn.__init__,
+    FadeIn.create_target,
+    FadeIn.create_starting_mobject,
     BarChart.__init__,
     BarChart._add_x_axis_labels,
     BarChart._create_bar,
@@ -330,6 +344,35 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "AnimationGroup.build_animations_with_timings": (
+            "7b937329a0645d66bc122695844411ce624266b914b2ed9de736b4563c69bc0b"
+        ),
+        "Indicate": (
+            "b4444303d5907c065cda697cd7c6566b523f74643707dc19b06c0b0ea7cc9987"
+        ),
+        "Indicate.__init__": (
+            "047a2612696476e2b125661a184a8f87a55506804128c14bdae4a4fc68cc7eff"
+        ),
+        "Indicate.create_target": (
+            "6323f7b466a28aa5b0924876cec203373a6f518b0a6efeb34d86e11852903fbd"
+        ),
+        "Create": ("498d7330b7868e7b9690dabeca5461fb7524a538cfb3b9a51e85461dc8cb576e"),
+        "Create.__init__": (
+            "fa32c53d2d4c971260aeb83d39d5e44f17d81204c95d4fa1b168d2ebadca73ef"
+        ),
+        "Create._get_bounds": (
+            "a22a9696c365a4638fcbcbafffbde5d05cfa64dbe743f623ec90e96cc0c03df4"
+        ),
+        "FadeIn": ("88761e7314623b3021b557582edd884423431ea03b1c41b00dacbb89559143c2"),
+        "FadeIn.__init__": (
+            "06fafd7d841a47cf7323c3385fbd6e8c2b4880d974afcdd25685e960e6755577"
+        ),
+        "FadeIn.create_target": (
+            "da19446dbf1059e6f0bdea4de7eb88c55d8898c696cf33d7d6beebf5df279e9f"
+        ),
+        "FadeIn.create_starting_mobject": (
+            "e66a79b93a2d127a911be3beb4ffb182514827e512f41d76303db4d3169abef3"
+        ),
         "Dot.__init__": (
             "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
         ),
@@ -396,7 +439,7 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "Mobject.set_color_by_gradient": (
             "992a62b5f27e4e0dd1f461d45d5582b417b30302a2ec5d2dddfd52456051a623"
         ),
-        "Text": "7309c3da35c7a3f3637ce23ef5f6e22545f090d18dd78b1d4e47ec610839b444",
+        "Text": ("7309c3da35c7a3f3637ce23ef5f6e22545f090d18dd78b1d4e47ec610839b444"),
         "Text.__init__": (
             "29f31b1e7da83530ca933772008400a653e611709beb867e811852f154f6e407"
         ),
@@ -1078,6 +1121,35 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "AnimationGroup.build_animations_with_timings": (
+            "7b937329a0645d66bc122695844411ce624266b914b2ed9de736b4563c69bc0b"
+        ),
+        "Indicate": (
+            "b4444303d5907c065cda697cd7c6566b523f74643707dc19b06c0b0ea7cc9987"
+        ),
+        "Indicate.__init__": (
+            "047a2612696476e2b125661a184a8f87a55506804128c14bdae4a4fc68cc7eff"
+        ),
+        "Indicate.create_target": (
+            "6323f7b466a28aa5b0924876cec203373a6f518b0a6efeb34d86e11852903fbd"
+        ),
+        "Create": ("498d7330b7868e7b9690dabeca5461fb7524a538cfb3b9a51e85461dc8cb576e"),
+        "Create.__init__": (
+            "fa32c53d2d4c971260aeb83d39d5e44f17d81204c95d4fa1b168d2ebadca73ef"
+        ),
+        "Create._get_bounds": (
+            "a22a9696c365a4638fcbcbafffbde5d05cfa64dbe743f623ec90e96cc0c03df4"
+        ),
+        "FadeIn": ("88761e7314623b3021b557582edd884423431ea03b1c41b00dacbb89559143c2"),
+        "FadeIn.__init__": (
+            "06fafd7d841a47cf7323c3385fbd6e8c2b4880d974afcdd25685e960e6755577"
+        ),
+        "FadeIn.create_target": (
+            "da19446dbf1059e6f0bdea4de7eb88c55d8898c696cf33d7d6beebf5df279e9f"
+        ),
+        "FadeIn.create_starting_mobject": (
+            "e66a79b93a2d127a911be3beb4ffb182514827e512f41d76303db4d3169abef3"
+        ),
         "Dot.__init__": (
             "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
         ),
@@ -1144,7 +1216,7 @@ PINS: Mapping[str, Mapping[str, str]] = {
         "Mobject.set_color_by_gradient": (
             "992a62b5f27e4e0dd1f461d45d5582b417b30302a2ec5d2dddfd52456051a623"
         ),
-        "Text": "dcfdf52dad55d9508709687203f4f9d9523dc7b27af966236bf66a9a12233743",
+        "Text": ("dcfdf52dad55d9508709687203f4f9d9523dc7b27af966236bf66a9a12233743"),
         "Text.__init__": (
             "70a2bf58dc91d8fc106bf56d596ac5edd8894d34c871264ac59d0a08315092e0"
         ),
@@ -1926,7 +1998,13 @@ _BEGIN = frozenset(
     for m in (Animation.begin, AnimationGroup.begin, Succession.begin, Transform.begin)
 )
 _FINISH = frozenset(
-    m.__code__ for m in (Animation.finish, AnimationGroup.finish, Succession.finish)
+    m.__code__
+    for m in (
+        Animation.finish,
+        AnimationGroup.finish,
+        Succession.finish,
+        _MethodAnimation.finish,
+    )
 )
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from functools import partial
 from numbers import Real
@@ -21,6 +22,9 @@ from manim import (
     VMobject,
     config,
 )
+from manim.animation.transform import _MethodAnimation
+from manim.mobject.mobject import _AnimationBuilder
+from manim.typing import PathFuncType
 
 import manim_plots as mp
 from manim_plots.core import FloatArray
@@ -30,8 +34,15 @@ from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import _CurvePlot, _cycle_style
 from manim_plots.mobjects.axis import resolve_categories
 from manim_plots.mobjects.colormaps import resolve_colorscale
+from manim_plots.mobjects.context import animation_context
 from manim_plots.mobjects.helpers import _parameter
-from manim_plots.mobjects.leaves import Leaf, _ArtistOptions, _label, _VMStyle
+from manim_plots.mobjects.leaves import (
+    _STRAIGHT,
+    Leaf,
+    _ArtistOptions,
+    _label,
+    _VMStyle,
+)
 from manim_plots.mobjects.system import CartesianAxes
 
 
@@ -53,6 +64,9 @@ def _lift_bar(
 
 
 class _Bar(_CurvePlot):
+    _height_scale = 1.0
+    _height_mapping: mp.ColorMapping | None = None
+
     def __init__(
         self,
         system: CartesianAxes,
@@ -74,6 +88,33 @@ class _Bar(_CurvePlot):
             ArraySource(np.empty((0, 2))), system, use_smoothing=False, **style
         )
 
+    def _data_limits(self) -> FloatArray:
+        x, h, w, b = (
+            float(self.parameters[n].value) for n in ("x", "height", "width", "bottom")
+        )
+        result = np.array([[x - w / 2, b], [x + w / 2, b + h]])
+        return result[:, ::-1] if self.horizontal else result
+
+    def interpolate(
+        self,
+        mobject1: Mobject,
+        mobject2: Mobject,
+        alpha: float,
+        path_func: PathFuncType = _STRAIGHT,
+    ) -> Self:
+        """Interpolate parameters and map histogram heights to colours.
+
+        Parameters
+        ----------
+        mobject1, mobject2, alpha, path_func
+            Native endpoints, progress and path.
+        """
+        super().interpolate(mobject1, mobject2, alpha, path_func)
+        mapping = self.__dict__.get("_height_mapping")
+        if self._parameter_animation and mapping is not None:
+            self.set_color(ManimColor(mapping(self.parameters["height"].value)))
+        return self
+
     def _rebuild(self) -> None:
         system = self._system
         assert system is not None
@@ -82,6 +123,7 @@ class _Bar(_CurvePlot):
             float(self.parameters[name].value)
             for name in ("x", "height", "width", "bottom")
         )
+        height *= self.__dict__.get("_height_scale", 1.0)
         if not np.isfinite([x, height, width, bottom]).all():
             raise ValueError("bar coordinates must be finite")
         a, b = (
@@ -194,6 +236,24 @@ class BarPlot(VGroup):
     color, c, colorscale, vmin, vmax, norm, label, **style
         Native style, value colour mapping and legend label.
     """
+
+    _is_copy = False
+    _data_animation = False
+
+    @property
+    def animate(self) -> _AnimationBuilder:
+        """Return Manim's native method animation builder."""
+        return cast(_AnimationBuilder, super().animate)
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        result = type(self).__new__(type(self))
+        memo[id(self)] = result
+        for name, value in self.__dict__.items():
+            result.__dict__[name] = (
+                value if name == "_system" else copy.deepcopy(value, memo)
+            )
+        result._is_copy = True
+        return result
 
     def __init__(
         self,
@@ -325,6 +385,65 @@ class BarPlot(VGroup):
         c, colorscale, vmin, vmax, norm
             Optional replacement colour values and mapping.
         """
+        animation = animation_context(finishing=True)
+        if (
+            isinstance(animation, _MethodAnimation)
+            and cast(Mobject, animation.mobject) is self
+            and not self.__dict__.get("_applying_data", False)
+        ):
+            # Native finish still needs the aligned family for its last interpolation.
+            self._pending_data = dict(
+                x=x,
+                height=height,
+                width=width,
+                bottom=bottom,
+                c=c,
+                colorscale=colorscale,
+                vmin=vmin,
+                vmax=vmax,
+                norm=norm,
+            )
+            return self
+        if x is not None:
+            keys = list(np.atleast_1d(np.asarray(x)))
+            positions = np.asarray(
+                resolve_categories(
+                    self._system.y if self.horizontal else self._system.x, x
+                )
+            )
+            # Resolve all replacement arrays before changing membership.
+            for value in (height, width, bottom, c):
+                if value is not None:
+                    np.broadcast_to(_entries(value), (len(keys),))
+            old = dict(zip(self._keys, self.submobjects, strict=True))
+            ordered: list[VMobject] = []
+            for i, key in enumerate(keys):
+                if key in old:
+                    bar = cast(_Bar, old[key])
+                else:
+                    if self.submobjects:
+                        bar = cast(_Bar, self.submobjects[0]).copy()
+                        bar._label_bindings = []
+                        bar.parameters["height"] = _parameter(0, "height")
+                    else:
+                        bar = _Bar(
+                            self._system,
+                            [positions[i], 0, 0.8, 0],
+                            self.horizontal,
+                            fill_opacity=1,
+                            stroke_width=0,
+                        )
+                if not self._is_copy and bar not in self._system._artists:
+                    self._system.add(bar)
+                ordered.append(bar)
+            for key, mob in old.items():
+                if (
+                    not self._is_copy
+                    and key not in keys
+                    and mob in self._system._artists
+                ):
+                    self._system.remove(mob)
+            self._keys, self.submobjects = keys, ordered
         if c is not None:
             values = np.asarray(c, dtype=float)
             if values.shape != (len(self),) or not np.isfinite(values).all():
@@ -376,6 +495,60 @@ class BarPlot(VGroup):
             for binding in bar._label_bindings:
                 binding._ensure()
         return self
+
+    def resume_updating(self, recursive: bool = True) -> Self:
+        """Apply keyed membership after native final interpolation.
+
+        Parameters
+        ----------
+        recursive
+            Whether to resume descendants as well.
+        """
+        super().resume_updating(recursive)
+        pending = self.__dict__.pop("_pending_data", None)
+        if pending is not None:
+            self._applying_data = True
+            try:
+                self.set_data(**pending)
+            finally:
+                self._applying_data = False
+        return self
+
+    def align_submobjects(self, mobject: Mobject) -> Self:
+        """Align bar identities, adding zero-height bars for absent keys.
+
+        Parameters
+        ----------
+        mobject
+            Native animation target.
+        """
+        if not isinstance(mobject, BarPlot):
+            return super().align_submobjects(mobject)
+        active = isinstance(animation_context(transform_only=True), _MethodAnimation)
+        self._data_animation = mobject._data_animation = active
+        keys = self._keys + [key for key in mobject._keys if key not in self._keys]
+        for plot, other in ((self, mobject), (mobject, self)):
+            bars: list[VMobject] = []
+            for key in keys:
+                if key in plot._keys:
+                    bar = plot.at(key)
+                else:
+                    bar = other.at(key).copy()
+                    bar._label_bindings = []
+                    bar.parameters["height"] = _parameter(0, "height")
+                    bar._dirty = True
+                    bar._ensure()
+                bars.append(bar)
+            plot._keys, plot.submobjects = list(keys), bars
+        return self
+
+    def family_members_with_points(self) -> list[Mobject]:
+        """Retain empty keyed bars in the native interpolation family."""
+        if self.__dict__.get("_data_animation", False):
+            return [
+                m for m in self.get_family() if isinstance(m, _Bar) or m.has_points()
+            ]
+        return super().family_members_with_points()
 
 
 class GroupedBarPlot(VGroup):

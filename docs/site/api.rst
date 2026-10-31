@@ -116,6 +116,20 @@ Animations
 
 .. autoclass:: Morph
 
+.. autoclass:: GrowBars
+
+.. autoclass:: ShrinkBars
+
+.. autoclass:: SortBars
+
+.. autoclass:: AppendData
+
+.. autoclass:: BuildAxes
+
+.. autoclass:: HighlightTick
+
+.. autoclass:: HighlightBar
+
 Scales
 ------
 

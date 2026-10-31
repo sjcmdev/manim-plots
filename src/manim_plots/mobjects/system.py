@@ -270,6 +270,8 @@ class CartesianAxes(VGroup):
 
     _color_index: int = 0
 
+    _autoscale_artists: tuple[_CurvePlot | ScatterPlot | ErrorBars, ...] = ()
+
     def __init__(
         self,
         x_range: Sequence[float] | None = None,
@@ -1746,6 +1748,79 @@ class CartesianAxes(VGroup):
         self.x_axis.range = _range(x_range, "x_range")
         if len(x_range) == 3:
             self._field_steps = (float(x_range[2]), *self._field_steps[1:])
+        return self
+
+    def margins(
+        self, x: float | None = None, y: float | None = None
+    ) -> Self | tuple[float, float]:
+        """Read or set the fractions added to autoscaled data limits.
+
+        Parameters
+        ----------
+        x, y
+            Nonnegative finite margins; one value sets both axes.
+        """
+        if x is None and y is None:
+            return cast(
+                tuple[float, float], self.__dict__.get("_margins", (0.05, 0.05))
+            )
+        old = cast(tuple[float, float], self.margins())
+        values = (
+            old[0] if x is None else x,
+            (old[1] if x is None else x) if y is None else y,
+        )
+        if not np.isfinite(values).all() or min(values) < 0:
+            raise ValueError("margins must be finite and nonnegative")
+        self._margins = values
+        return self
+
+    def autoscale(self, axis: str = "both", *, tight: bool = False) -> Self:
+        """Fit registered artists in data space, preserving locator rules.
+
+        Parameters
+        ----------
+        axis, tight
+            Axes to fit (both, x or y), and whether to omit margins.
+        """
+        if axis not in ("both", "x", "y"):
+            raise ValueError("axis must be both, x or y")
+        rows = []
+        for artist in self.artists or self.__dict__.get("_autoscale_artists", ()):
+            source = getattr(artist, "source", None)
+            if hasattr(artist, "_data_limits"):
+                rows.append(artist._data_limits())
+            elif source is not None and hasattr(source, "data"):
+                rows.append(source.data[:, :2])
+                if isinstance(artist, ErrorBars):
+                    for i, errors in enumerate(artist._errors[:2]):
+                        if errors is not None:
+                            limits = source.data[:, :2].copy()
+                            limits[:, i] -= errors[0]
+                            rows.append(limits)
+                            limits = source.data[:, :2].copy()
+                            limits[:, i] += errors[1]
+                            rows.append(limits)
+            elif source is not None:
+                sampled = source.sample(self._data, self.bounds)
+                rows.append(self._data.inverse(sampled.coords)[:, :2])
+        if not rows:
+            return self
+        data = np.concatenate(rows)
+        margins = cast(tuple[float, float], self.margins())
+        for i, coordinate in enumerate((self.x, self.y)):
+            if axis not in ("both", "xy"[i]):
+                continue
+            values = coordinate._scale.forward(data[:, i])
+            values = values[np.isfinite(values)]
+            if not len(values):
+                continue
+            lo, hi = float(values.min()), float(values.max())
+            if lo == hi:
+                lo, hi = lo - 0.5, hi + 0.5
+            margin = 0 if tight else margins[i] * (hi - lo)
+            limits = coordinate._scale.inverse([lo - margin, hi + margin])
+            setter = self.set_x_range if i == 0 else self.set_y_range
+            setter((*limits, self._field_steps[i]))
         return self
 
     def set_y_range(self, y_range: Sequence[float]) -> Self:
@@ -3927,6 +4002,9 @@ class CartesianAxes(VGroup):
                 result.__dict__[key] = None
             elif key != "_artists":
                 result.__dict__[key] = copy.deepcopy(value, memo)
+        result._autoscale_artists = self.artists or self.__dict__.get(
+            "_autoscale_artists", ()
+        )
         return result
 
 
