@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
-from manim import RIGHT, Create, Scene, ValueTracker, linear
+from manim import BLUE, RED, RIGHT, Create, ManimColor, Scene, ValueTracker, linear
 
 import manim_plots as mp
 
@@ -185,6 +185,14 @@ def test_el1_label_at_the_end_shows_the_value():
     assert label.get_center()[1] == pytest.approx(end[1], abs=1e-6)
     fixed = ax.end_label(g, "f(x)")
     assert text_of(fixed) == "f(x)"
+    red = ax.plot(lambda x: x / 2, x_range=(0, 4), color=RED)
+    for mob in (ax.end_label(red), ax.end_label(red, "half")):
+        for leaf in mob.family_members_with_points():
+            assert ManimColor(leaf.get_fill_color()) == ManimColor(RED)
+    blue = ax.end_label(red, color=BLUE)
+    assert ManimColor(
+        blue.family_members_with_points()[0].get_fill_color()
+    ) == ManimColor(BLUE)
 
 
 def test_el1_label_follows_create():
@@ -221,9 +229,14 @@ def test_in1_inset_box_in_parent_fractions_and_follows_moves():
     lo, hi = ax.c2p(0, 0), ax.c2p(10, 10)
     np.testing.assert_allclose(ins.c2p(2, 2), lo + 0.6 * (hi - lo), atol=1e-6)
     np.testing.assert_allclose(ins.c2p(3, 3), lo + 0.9 * (hi - lo), atol=1e-6)
+    xline = data(ins, ins.x.line.points)
+    np.testing.assert_allclose(xline[:, 1], 2, atol=1e-6)  # at the bottom border
+    yline = data(ins, ins.y.line.points)
+    np.testing.assert_allclose(yline[:, 0], 2, atol=1e-6)  # at the left border
     before = ins.c2p(2, 2)
     ax.shift(RIGHT)
     np.testing.assert_allclose(ins.c2p(2, 2), before + RIGHT, atol=1e-6)
+    np.testing.assert_allclose(ins.x.line.get_start(), before + RIGHT, atol=1e-6)
 
 
 def test_in2_zoom_box_follows_both_ranges():

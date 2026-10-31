@@ -1144,7 +1144,7 @@ class ThreeDAxes(CartesianAxes):
         """
         return _text(self, (x, y, z), s, zdir, **cast(dict[str, Any], kwargs))
 
-    def annotate(
+    def annotate(  # type: ignore[override]  # 3D retains its xyz keyword arguments.
         self,
         s: str | Mobject,
         xyz: object,
@@ -1652,6 +1652,66 @@ class ThreeDAxes(CartesianAxes):
         raise NotImplementedError(
             "get_vertical_lines_to_graph is not available on ThreeDAxes"
         )
+
+    def axvspan(self, *args: object, **kwargs: object) -> NoReturn:
+        """Refuse the two-dimensional axvspan helper.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments reserved for the two-dimensional system.
+        """
+        raise NotImplementedError("axvspan is not available on ThreeDAxes")
+
+    def axhspan(self, *args: object, **kwargs: object) -> NoReturn:
+        """Refuse the two-dimensional axhspan helper.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments reserved for the two-dimensional system.
+        """
+        raise NotImplementedError("axhspan is not available on ThreeDAxes")
+
+    def fill_betweenx(self, *args: object, **kwargs: object) -> NoReturn:
+        """Refuse the two-dimensional fill_betweenx helper.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments reserved for the two-dimensional system.
+        """
+        raise NotImplementedError("fill_betweenx is not available on ThreeDAxes")
+
+    def crosshair(self, *args: object, **kwargs: object) -> NoReturn:
+        """Refuse the two-dimensional crosshair helper.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments reserved for the two-dimensional system.
+        """
+        raise NotImplementedError("crosshair is not available on ThreeDAxes")
+
+    def end_label(self, *args: object, **kwargs: object) -> NoReturn:
+        """Refuse the two-dimensional end_label helper.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments reserved for the two-dimensional system.
+        """
+        raise NotImplementedError("end_label is not available on ThreeDAxes")
+
+    def inset(self, *args: object, **kwargs: object) -> NoReturn:
+        """Refuse the two-dimensional inset helper.
+
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments reserved for the two-dimensional system.
+        """
+        raise NotImplementedError("inset is not available on ThreeDAxes")
 
     def axvline(self, *args: object, **kwargs: object) -> NoReturn:
         """Refuse the two-dimensional axvline helper.

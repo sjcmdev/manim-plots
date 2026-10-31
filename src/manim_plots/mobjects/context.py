@@ -26,6 +26,7 @@ from manim import (
     DashedLine,
     DashedVMobject,
     DecimalNumber,
+    Dot,
     FadeOut,
     Line,
     Line3D,
@@ -310,10 +311,66 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     Camera.points_to_subpixel_coords,
     Text,
     Text.__init__,
+    Dot.__init__,
+    Mobject.next_to,
+    Mobject.move_to,
+    Mobject.get_center,
+    Mobject.get_left,
+    Mobject.get_right,
+    Mobject.get_top,
+    Mobject.get_bottom,
+    Mobject.add_updater,
+    VMobject.match_style,
+    VMobject.clear_points,
+    VMobject.get_color,
+    Line.put_start_and_end_on,
+    Arrow.get_end,
 )
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Dot.__init__": (
+            "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
+        ),
+        "Mobject.next_to": (
+            "7549416a44449a31d4b029e048d9274328065587053fa6616a27c31eab022ce7"
+        ),
+        "Mobject.move_to": (
+            "7d4cb5c577c9365f9f6167a754bfd445c86e4530053435cf92f3de15caf9b9c0"
+        ),
+        "Mobject.get_center": (
+            "c68f83d88e581586de506b6a8ae9825908d1cb37e43901cc559147f51979f62f"
+        ),
+        "Mobject.get_left": (
+            "c3d886e5716c51f611ad4c1d712337a13147652a1ce55f00bb1a1f2c88d2c0d9"
+        ),
+        "Mobject.get_right": (
+            "511755817190042384a4571e5cda76c4e2d6aedeb5688ad9b27c2187da82df4d"
+        ),
+        "Mobject.get_top": (
+            "93a1686b338e17daec4afb1dcdbfb6d516e6eb841a9c4468b37fde13ab753151"
+        ),
+        "Mobject.get_bottom": (
+            "ed99826984aac88e3ccd804b01f7d0c17e81de4c6776d62968c7c562a07c2924"
+        ),
+        "Mobject.add_updater": (
+            "133e36f1549b430dd1db6fd8bc0a46290a42e2b65b7273b595b4a56f293b9c0d"
+        ),
+        "VMobject.match_style": (
+            "0942f747a12ae3efa14b9862fdbd387394a7171d6c3781236af6387c37f874b2"
+        ),
+        "VMobject.clear_points": (
+            "8e0f9a9249b27f7cff5519257d8216434c658a56aa60e29c4b6e6ebbff4d83ac"
+        ),
+        "VMobject.get_color": (
+            "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"
+        ),
+        "Line.put_start_and_end_on": (
+            "85af73568273ccc96fc790b248868d64f12707c5bca72313b72d6d1c6511d69d"
+        ),
+        "TipableVMobject.get_end": (
+            "c28bb1b7f189da418dc1a6ddba669e3bd9038f095e9a505177623d52966d4bcc"
+        ),
         "BarChart.__init__": (
             "ffee8386f40624010f023dc4de4988b04c1c6a78ba3ed4c1ecdbe59829c39854"
         ),
@@ -1017,6 +1074,48 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Dot.__init__": (
+            "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
+        ),
+        "Mobject.next_to": (
+            "7549416a44449a31d4b029e048d9274328065587053fa6616a27c31eab022ce7"
+        ),
+        "Mobject.move_to": (
+            "7d4cb5c577c9365f9f6167a754bfd445c86e4530053435cf92f3de15caf9b9c0"
+        ),
+        "Mobject.get_center": (
+            "c68f83d88e581586de506b6a8ae9825908d1cb37e43901cc559147f51979f62f"
+        ),
+        "Mobject.get_left": (
+            "c3d886e5716c51f611ad4c1d712337a13147652a1ce55f00bb1a1f2c88d2c0d9"
+        ),
+        "Mobject.get_right": (
+            "511755817190042384a4571e5cda76c4e2d6aedeb5688ad9b27c2187da82df4d"
+        ),
+        "Mobject.get_top": (
+            "93a1686b338e17daec4afb1dcdbfb6d516e6eb841a9c4468b37fde13ab753151"
+        ),
+        "Mobject.get_bottom": (
+            "ed99826984aac88e3ccd804b01f7d0c17e81de4c6776d62968c7c562a07c2924"
+        ),
+        "Mobject.add_updater": (
+            "133e36f1549b430dd1db6fd8bc0a46290a42e2b65b7273b595b4a56f293b9c0d"
+        ),
+        "VMobject.match_style": (
+            "0942f747a12ae3efa14b9862fdbd387394a7171d6c3781236af6387c37f874b2"
+        ),
+        "VMobject.clear_points": (
+            "8e0f9a9249b27f7cff5519257d8216434c658a56aa60e29c4b6e6ebbff4d83ac"
+        ),
+        "VMobject.get_color": (
+            "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"
+        ),
+        "Line.put_start_and_end_on": (
+            "85af73568273ccc96fc790b248868d64f12707c5bca72313b72d6d1c6511d69d"
+        ),
+        "TipableVMobject.get_end": (
+            "c28bb1b7f189da418dc1a6ddba669e3bd9038f095e9a505177623d52966d4bcc"
+        ),
         "BarChart.__init__": (
             "b65de39e4131cc183d2b714d8cdf17359a5f55dc73dd67a1c70dd31306f30fc0"
         ),

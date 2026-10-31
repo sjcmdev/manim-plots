@@ -97,10 +97,13 @@ from manim_plots.mobjects.helpers import (
     FilledRegion,
     HelperGroup,
     HelperLine,
+    _annotate_2d,
     _area,
+    _crosshair,
     _DerivedPlot,
     _drop,
     _DropOptions,
+    _end_label,
     _fill_between,
     _graph,
     _HelperOptions,
@@ -110,6 +113,7 @@ from manim_plots.mobjects.helpers import (
     _riemann,
     _secant,
     _SlopeOptions,
+    _span,
     _t_label,
     _tangent_helper,
     _TangentOptions,
@@ -633,7 +637,11 @@ class CartesianAxes(VGroup):
         >>> corner = ax.twin(x=top, y=right)  # top x, right y
         >>> curve = corner.plot(lambda x: x / 50)
         """
-        root = self.parent if self.parent is not None else self
+        root = (
+            self.parent
+            if self._twin_axis is not None and self.parent is not None
+            else self
+        )
         axes = []
         for index, value in enumerate((x, y)):
             name = "x" if index == 0 else "y"
@@ -753,7 +761,11 @@ class CartesianAxes(VGroup):
         options: dict[str, Any] | None,
         offset: float | None,
     ) -> CartesianAxes:
-        root = self.parent if self.parent is not None else self
+        root = (
+            self.parent
+            if self._twin_axis is not None and self.parent is not None
+            else self
+        )
         root._sync_data()
         distance = 0.9 if offset is None else float(offset)
         if not np.isfinite(distance) or distance < 0:
@@ -824,7 +836,11 @@ class CartesianAxes(VGroup):
         )
 
     def _channel_axes(self) -> tuple[Axis, ...]:
-        root = self.parent if self.parent is not None else self
+        root = (
+            self.parent
+            if self._twin_axis is not None and self.parent is not None
+            else self
+        )
         if not root._has_secondary_axes:
             if self._twin_axis == -1:
                 return self.x, self.y
@@ -845,7 +861,11 @@ class CartesianAxes(VGroup):
         )
 
     def _refresh_mirrors(self) -> None:
-        root = self.parent if self.parent is not None else self
+        root = (
+            self.parent
+            if self._twin_axis is not None and self.parent is not None
+            else self
+        )
         if not root._has_mirrors:
             return
         axes = [a for s in root._systems() for a in s._owned_axes()]
@@ -857,7 +877,11 @@ class CartesianAxes(VGroup):
                     mirror._regenerate()
 
     def _mirror_occupied(self, mirror: Axis) -> bool:
-        root = self.parent if self.parent is not None else self
+        root = (
+            self.parent
+            if self._twin_axis is not None and self.parent is not None
+            else self
+        )
         if not root._twins and not root._has_secondary_axes:
             return False
         occupants = [a for s in root.twins for a in s._owned_axes()]
@@ -881,7 +905,7 @@ class CartesianAxes(VGroup):
 
     def family_members_with_points(self) -> list[Mobject]:
         """Return members with points, using the flat animation channel directly."""
-        if self.parent is not None:
+        if self.parent is not None and self._twin_axis is not None:
             writer = writer_context()
             if writer is not None and self.frame not in writer.family:
                 raise ValueError("move the twin's parent to change its geometry")
@@ -957,7 +981,11 @@ class CartesianAxes(VGroup):
             raise ValueError("become requires corresponding twins")
         parent = self.parent
         shared = {}
-        if parent is not None and target.parent is not None:
+        if (
+            self._twin_axis is not None
+            and parent is not None
+            and target.parent is not None
+        ):
             source_axes = target.parent._channel_axes()
             for index, axis in enumerate((target.x, target.y)):
                 if axis not in target._owned_axes():
@@ -984,7 +1012,7 @@ class CartesianAxes(VGroup):
                 and member._system is not None
             ):
                 member._system = pairs.get(member._system, member._system)
-        if parent is not None:
+        if parent is not None and self._twin_axis is not None:
             self.parent, self.frame = parent, parent.frame
             self._channel_frame = self.frame
             if 0 in shared:
@@ -1053,7 +1081,7 @@ class CartesianAxes(VGroup):
             system._data_animation = True
             system._channel_frame_moves = frame_moves
             system._channel_frame = system.frame
-            if system.parent is not None:
+            if system.parent is not None and system._twin_axis is not None:
                 system._channel_frame = FrameLeaf(
                     system.bounds.lower, system.bounds.upper, system
                 )
@@ -1094,7 +1122,11 @@ class CartesianAxes(VGroup):
         self.submobjects = [*families[0], self._channel_frame]
         mobject.submobjects = [*families[1], mobject._channel_frame]
         for system in (self, mobject):
-            root = system.parent if system.parent is not None else system
+            root = (
+                system.parent
+                if system._twin_axis is not None and system.parent is not None
+                else system
+            )
             if not root._has_mirrors and not root._has_secondary_axes:
                 continue
             system._channel_decorations = tuple(
@@ -1330,7 +1362,7 @@ class CartesianAxes(VGroup):
         return self.y_axis.range.value
 
     def _compile(self) -> None:
-        if self.parent is not None:
+        if self.parent is not None and self._twin_axis is not None:
             self.parent._sync_data()
             self.bounds = self.parent.bounds
             self.x_length, self.y_length = self.parent.x_length, self.parent.y_length
@@ -1408,7 +1440,11 @@ class CartesianAxes(VGroup):
     def _data_dirty(self) -> bool:
         if self._syncing:
             return False
-        if self.parent is not None and self.bounds is not self.parent.bounds:
+        if (
+            self.parent is not None
+            and self._twin_axis is not None
+            and self.bounds is not self.parent.bounds
+        ):
             return True
         for index, axis in enumerate(self._ranges):
             if self._range_versions[index] != axis._range_parameter.version or (
@@ -1422,7 +1458,9 @@ class CartesianAxes(VGroup):
             return
         axes = self._owned_axes()
         range_changed = (
-            self.parent is not None and self.bounds is not self.parent.bounds
+            self.parent is not None
+            and self._twin_axis is not None
+            and self.bounds is not self.parent.bounds
         ) or self._range_versions != tuple(
             axis._range_parameter.version for axis in self._ranges
         )
@@ -3026,6 +3064,194 @@ class CartesianAxes(VGroup):
         """
         return _verticals(self, graph, x_range, num_lines, **kwargs)
 
+    def inset(
+        self,
+        bounds: Sequence[float],
+        x_range: Sequence[float],
+        y_range: Sequence[float],
+        *,
+        connectors: bool = True,
+        mirror: Iterable[Mobject] = (),
+        **axes_kwargs: object,
+    ) -> mp.InsetAxes:
+        """Create an inset in fractions of this axes' box.
+
+        Parameters
+        ----------
+        bounds, x_range, y_range, connectors, mirror, **axes_kwargs
+            Box fractions, inset ranges, connectors, artists and axes options.
+
+        Returns
+        -------
+        InsetAxes
+            Independent axes following this system's placement.
+        """
+        from manim_plots.mobjects.inset import InsetAxes
+
+        return InsetAxes(
+            self,
+            bounds,
+            x_range,
+            y_range,
+            connectors=connectors,
+            mirror=mirror,
+            **axes_kwargs,
+        )
+
+    def annotate(
+        self,
+        s: str | Mobject,
+        xy: Sequence[object],
+        xytext: Sequence[object] | None = None,
+        *,
+        arrow: bool = True,
+        buff: float = 0.1,
+        arrow_config: dict[str, Any] | None = None,
+        **text_style: object,
+    ) -> HelperGroup:
+        """Attach text and an optional arrow to a data point.
+
+        Parameters
+        ----------
+        s, xy, xytext, arrow, buff, arrow_config, **text_style
+            Text, bound coordinates, arrow visibility, gap and native styles.
+
+        Returns
+        -------
+        HelperGroup
+            Independently addressable text and arrow.
+        """
+        return _annotate_2d(
+            self,
+            s,
+            xy,
+            xytext,
+            arrow=arrow,
+            buff=buff,
+            arrow_config=arrow_config,
+            **text_style,
+        )
+
+    def crosshair(
+        self,
+        x: object,
+        y: object = None,
+        *,
+        graph: FunctionPlot | None = None,
+        readout: bool = True,
+        fmt: str = "({:.2f}, {:.2f})",
+        **style: object,
+    ) -> HelperGroup:
+        """Follow coordinates with two lines, a dot and an optional readout.
+
+        Parameters
+        ----------
+        x, y, graph, readout, fmt, **style
+            Bound coordinates or graph, readout visibility and format, line style.
+
+        Returns
+        -------
+        HelperGroup
+            Addressable vline, hline, dot and readout.
+        """
+        return _crosshair(self, x, y, graph=graph, readout=readout, fmt=fmt, **style)
+
+    def end_label(
+        self,
+        graph: _CurvePlot,
+        label: str | Mobject | None = None,
+        *,
+        fmt: str = "{:.2f}",
+        direction: ArrayLike = (1, 0, 0),
+        buff: float = 0.15,
+        **text_style: object,
+    ) -> Mobject:
+        """Label the last currently drawn point of a curve.
+
+        Parameters
+        ----------
+        graph, label, fmt, direction, buff, **text_style
+            Curve, optional fixed label, value format, placement and Text style.
+
+        Returns
+        -------
+        Mobject
+            Label following the drawn geometry, including partial creation.
+        """
+        return _end_label(
+            self, graph, label, fmt=fmt, direction=direction, buff=buff, **text_style
+        )
+
+    def axvspan(
+        self,
+        xmin: object,
+        xmax: object,
+        ymin: object = 0,
+        ymax: object = 1,
+        **style: object,
+    ) -> FilledRegion:
+        """Fill a data interval across viewport height fractions.
+
+        Parameters
+        ----------
+        xmin, xmax, ymin, ymax, **style
+            Bound data limits, viewport fractions and region style.
+
+        Returns
+        -------
+        FilledRegion
+            Clipped, bound span.
+        """
+        return _span(self, 0, xmin, xmax, ymin, ymax, **style)
+
+    def axhspan(
+        self,
+        ymin: object,
+        ymax: object,
+        xmin: object = 0,
+        xmax: object = 1,
+        **style: object,
+    ) -> FilledRegion:
+        """Fill a data interval across viewport width fractions.
+
+        Parameters
+        ----------
+        ymin, ymax, xmin, xmax, **style
+            Bound data limits, viewport fractions and region style.
+
+        Returns
+        -------
+        FilledRegion
+            Clipped, bound span.
+        """
+        return _span(self, 1, ymin, ymax, xmin, xmax, **style)
+
+    def fill_betweenx(
+        self,
+        y: ArrayLike,
+        x1: object,
+        x2: object = 0,
+        *,
+        where: ArrayLike | None = None,
+        interpolate: bool = False,
+        **style: object,
+    ) -> FilledRegion:
+        """Fill between polylines sampled along y.
+
+        Parameters
+        ----------
+        y, x1, x2, where, interpolate, **style
+            Samples, boundaries, mask, crossing interpolation and region style.
+
+        Returns
+        -------
+        FilledRegion
+            Bound region with fill_between semantics and exchanged axes.
+        """
+        return _fill_between(
+            self, y, x1, x2, where, interpolate, transpose=True, **style
+        )
+
     def axvline(
         self,
         x: object,
@@ -3361,7 +3587,9 @@ class CartesianAxes(VGroup):
         FilledRegion
             Bound, clipped closed pieces. Manim has no fill_between verb.
         """
-        return _fill_between(self, x, y1, y2, where, interpolate, **style)
+        return _fill_between(
+            self, x, y1, y2, where, interpolate, transpose=False, **style
+        )
 
     def get_riemann_rectangles(
         self,
