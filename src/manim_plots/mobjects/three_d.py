@@ -1249,7 +1249,7 @@ class ThreeDAxes(CartesianAxes):
         vertices, triangles = marching_cubes(
             samples, level, spacing, [r[0] for r in ranges]
         )
-        return self.plot_trisurf(
+        surface = self.plot_trisurf(
             vertices[:, 0],
             vertices[:, 1],
             vertices[:, 2],
@@ -1261,6 +1261,13 @@ class ThreeDAxes(CartesianAxes):
             norm=norm,
             **cast(dict[str, Any], style),
         )
+        surface.__dict__["_isovalue"] = float(level)
+        surface.__dict__["_iso_samples"] = (
+            samples.copy(),
+            spacing,
+            [r[0] for r in ranges],
+        )
+        return surface
 
     def plot_trisurf(
         self,

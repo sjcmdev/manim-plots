@@ -190,6 +190,8 @@ class HistPlot(VGroup):
                 c = np.cumsum(c[::-1])[::-1] if self._cumulative == -1 else np.cumsum(c)
             counts.append(c)
         self.edges = edges
+        self._samples = [data.copy() for data in datasets]
+        self._weights = [None if weight is None else weight.copy() for weight in ws]
         self._counts = np.asarray(counts)
         self.counts = self._counts[0] if len(counts) == 1 else self._counts
 
@@ -266,6 +268,8 @@ class HistPlot(VGroup):
                 if k < len(previous):
                     bars = previous[k]
                     if len(bars) > len(count):
+                        for retired in bars.submobjects[len(count) :]:
+                            retired.clear_points()
                         self._system.remove(*bars.submobjects[len(count) :])
                         bars.submobjects = bars.submobjects[: len(count)]
                     if len(bars) < len(count):

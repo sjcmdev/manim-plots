@@ -5,7 +5,14 @@ import os
 from collections.abc import Mapping
 from importlib.metadata import version
 
-from manim_plots.animations import ShrinkSurface
+from manim_plots.animations import (
+    RebinHistogram,
+    RefineRiemann,
+    ShrinkSurface,
+    StackVoxels,
+    SweepIsovalue,
+    SweepSlice,
+)
 from manim_plots.core import ManimPlotsWarning
 from manim_plots.core.dates import (
     AutoDateLocator,
@@ -201,6 +208,8 @@ __all__ = [
     "PieChart",
     "PlanePlot",
     "PolarAxes",
+    "RebinHistogram",
+    "RefineRiemann",
     "Scale",
     "ScaleNode",
     "ScatterPlot",
@@ -213,8 +222,11 @@ __all__ = [
     "SortBars",
     "Source",
     "StackPlot",
+    "StackVoxels",
     "StemPlot",
     "SurfacePlot",
+    "SweepIsovalue",
+    "SweepSlice",
     "SymLogLocator",
     "SymLogScale",
     "Theme",

@@ -108,31 +108,41 @@ Themes
 Animations
 ----------
 
+.. autoclass:: AppendData
+
+.. autoclass:: BuildAxes
+
 .. autoclass:: DrawAxes
-
-.. autoclass:: TraceCurve
-
-.. autoclass:: ShowPoints
-
-.. autoclass:: Morph
 
 .. autoclass:: GrowBars
 
 .. autoclass:: GrowSurface
 
-.. autoclass:: ShrinkSurface
-
-.. autoclass:: ShrinkBars
-
-.. autoclass:: SortBars
-
-.. autoclass:: AppendData
-
-.. autoclass:: BuildAxes
+.. autoclass:: HighlightBar
 
 .. autoclass:: HighlightTick
 
-.. autoclass:: HighlightBar
+.. autoclass:: Morph
+
+.. autoclass:: RebinHistogram
+
+.. autoclass:: RefineRiemann
+
+.. autoclass:: ShowPoints
+
+.. autoclass:: ShrinkBars
+
+.. autoclass:: ShrinkSurface
+
+.. autoclass:: SortBars
+
+.. autoclass:: StackVoxels
+
+.. autoclass:: SweepIsovalue
+
+.. autoclass:: SweepSlice
+
+.. autoclass:: TraceCurve
 
 Scales
 ------

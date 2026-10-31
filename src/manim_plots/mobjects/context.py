@@ -353,6 +353,7 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
     ThreeDVMobject,
     VMobject.set_points_as_corners,
     VMobject.set_style,
+    VMobject.get_style,
     VMobject.get_fill_color,
     VMobject.get_stroke_color,
     Arrow3D,
@@ -648,6 +649,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.set_style": (
             "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"
+        ),
+        "VMobject.get_style": (
+            "077727354e4d7adf03b29f8bb732b40849cc21ac96415f350456e5d30889fa9c"
         ),
         "VMobject.get_fill_color": (
             "610941a212afa2f4f00a4ea471573515368d194efb6127fb4f017e4c9422cf8c"
@@ -1524,6 +1528,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
         "VMobject.set_style": (
             "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"
+        ),
+        "VMobject.get_style": (
+            "077727354e4d7adf03b29f8bb732b40849cc21ac96415f350456e5d30889fa9c"
         ),
         "VMobject.get_fill_color": (
             "610941a212afa2f4f00a4ea471573515368d194efb6127fb4f017e4c9422cf8c"

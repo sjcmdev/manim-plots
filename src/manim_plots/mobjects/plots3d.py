@@ -701,6 +701,11 @@ class VoxelPlot(_DepthOrderedPlot):
                     width=cast(float, options["stroke_width"]),
                 )
         self._surface = surface
+        self._filled = filled.copy()
+        self._coordinates = coordinates.copy()
+        self._face_keys = keys.copy()
+        self._voxel_colors = colors.copy()
+        self._shade = shade
         super().__init__(surface)
 
     def at(self, key: tuple[int, int, int]) -> VGroup:

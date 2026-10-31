@@ -948,6 +948,15 @@ class _ContourLine(_CurvePlot):
                     )
                 self._last_mapping = mapping
 
+    def _rebuild(self) -> None:
+        if self._slice_binding is not None and not self._slice_binding.valid:
+            self._geometry_payload = Payload.empty("path", 3)
+            self._place(self._frame())
+            self._dirty = False
+            self._data_seen = self.surface._system._data_version
+            return
+        super()._rebuild()
+
     def _needs_sync(self, moving: frozenset[Any]) -> bool:
         return (
             (self._slice_binding is not None and self._slice_binding.needs_sync(moving))
