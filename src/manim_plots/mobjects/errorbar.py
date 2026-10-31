@@ -138,7 +138,7 @@ class _ErrorPart(_CurvePlot):
             return super().get_subpaths()
         return [points[start:stop] for start, stop in self._render_segments]
 
-    def _rebuild(self) -> None:
+    def _rebuild(self, *, cap_progress: FloatArray | None = None) -> None:
         system = self._system
         if system is None:
             return
@@ -178,6 +178,9 @@ class _ErrorPart(_CurvePlot):
                 half = (
                     direction[usable] / norm[usable, None] * (self._owner.capsize / 2)
                 )
+                if cap_progress is not None:
+                    widths = np.repeat(cap_progress[self._owner._indices()], 2)
+                    half *= widths[cap_mask.ravel()][usable, None]
                 centers3 = placed[usable, 0]
                 scene_ends = np.stack((centers3 - half, centers3 + half), axis=1)
                 ends = frame.inverse(scene_ends.reshape(-1, 3)).reshape(-1, 2, 3)
@@ -355,12 +358,9 @@ class ErrorBars(VGroup):
                 "errorbar contains invalid samples; bars are hidden",
             )
 
-    def _endpoints(self, axis: int) -> tuple[FloatArray, BoolArray]:
+    def _indices(self) -> np.ndarray[Any, np.dtype[np.intp]]:
         system = self._system
         assert system is not None
-        error = self._errors[axis]
-        if error is None:
-            return np.empty((0, 2, self._dim)), np.empty((0, 2), dtype=bool)
         data = self.source.data
         start, step = self._every
         indices = np.arange(start, len(data), step)
@@ -368,7 +368,16 @@ class ErrorBars(VGroup):
         for errors in self._errors:
             if errors is not None:
                 valid &= np.isfinite(errors[:, indices]).all(axis=0)
-        indices = indices[valid]
+        return indices[valid]
+
+    def _endpoints(self, axis: int) -> tuple[FloatArray, BoolArray]:
+        system = self._system
+        assert system is not None
+        error = self._errors[axis]
+        if error is None:
+            return np.empty((0, 2, self._dim)), np.empty((0, 2), dtype=bool)
+        data = self.source.data
+        indices = self._indices()
         ends = np.repeat(data[indices, None, :], 2, axis=1)
         with np.errstate(over="ignore", invalid="ignore"):
             ends[:, 0, axis] -= error[0, indices]

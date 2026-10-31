@@ -5,7 +5,19 @@ import os
 from collections.abc import Mapping
 from importlib.metadata import version
 
-from manim_plots.animations import ShrinkSurface
+from manim_plots.animations import (
+    ExtendReference,
+    FillColorbar,
+    GrowErrorBars,
+    GrowRegion,
+    GrowRiemann,
+    RevealAnnotation,
+    RevealCrosshair,
+    RevealLegend,
+    ShrinkSurface,
+    SweepRegion,
+    SweepSpan,
+)
 from manim_plots.core import ManimPlotsWarning
 from manim_plots.core.dates import (
     AutoDateLocator,
@@ -155,6 +167,8 @@ __all__ = [
     "DrawAxes",
     "EngFormatter",
     "ErrorBars",
+    "ExtendReference",
+    "FillColorbar",
     "FixedFormatter",
     "FixedLocator",
     "Flow",
@@ -166,6 +180,9 @@ __all__ = [
     "FunctionSource",
     "GroupedBarPlot",
     "GrowBars",
+    "GrowErrorBars",
+    "GrowRegion",
+    "GrowRiemann",
     "GrowSurface",
     "HeatmapPlot",
     "HexbinPlot",
@@ -201,6 +218,9 @@ __all__ = [
     "PieChart",
     "PlanePlot",
     "PolarAxes",
+    "RevealAnnotation",
+    "RevealCrosshair",
+    "RevealLegend",
     "Scale",
     "ScaleNode",
     "ScatterPlot",
@@ -215,6 +235,8 @@ __all__ = [
     "StackPlot",
     "StemPlot",
     "SurfacePlot",
+    "SweepRegion",
+    "SweepSpan",
     "SymLogLocator",
     "SymLogScale",
     "Theme",

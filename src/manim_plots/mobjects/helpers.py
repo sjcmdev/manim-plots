@@ -611,7 +611,12 @@ class FilledRegion(_CurvePlot):
             self._fill_color_set = other._fill_color_set
             self._stroke_color_set = other._stroke_color_set
 
-    def _rebuild(self) -> None:
+    def _rebuild(
+        self,
+        *,
+        growth: tuple[int, float] | None = None,
+        sweep: tuple[int, float, int] | None = None,
+    ) -> None:
         binding = self._binding
         binding.ensure()
         system = self._system
@@ -619,9 +624,34 @@ class FilledRegion(_CurvePlot):
             return
         bounds = _clip_box(system, self._clip)
         axes = _clip_axes(self._clip)
+        boundaries = binding.boundaries.get(self._part, [])
+        if sweep is not None and boundaries:
+            index, progress, direction = sweep
+            coords = np.vstack([p for pair in boundaries for p in pair])
+            values = system._data.inverse(coords)[:, index]
+            lo, hi = float(values.min()), float(values.max())
+            point = system._data.inverse(coords[:1]).copy()
+            point[0, index] = lo + (hi - lo) * (
+                progress if direction == 1 else 1 - progress
+            )
+            frontier = system._data.forward(point)[0, index]
+            lower, upper = bounds.lower.copy(), bounds.upper.copy()
+            if direction == 1:
+                upper[index] = min(upper[index], frontier)
+            else:
+                lower[index] = max(lower[index], frontier)
+            bounds = Box(lower, upper)
         parts: list[FloatArray] = []
         if binding.valid:
-            for upper, lower in binding.boundaries.get(self._part, []):
+            for upper, lower in boundaries:
+                if growth is not None:
+                    index, progress = growth
+                    first = system._data.inverse(upper)
+                    second = system._data.inverse(lower)
+                    first[:, index] = second[:, index] + progress * (
+                        first[:, index] - second[:, index]
+                    )
+                    upper = system._data.forward(first)
                 order = [1, 0] if binding.transpose else [0, 1]
                 region_bounds = Box(bounds.lower[order], bounds.upper[order])
                 payload = clip_region(

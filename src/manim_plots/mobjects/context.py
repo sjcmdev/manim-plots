@@ -84,6 +84,7 @@ from manim.utils.hashing import (
 from manim_plots.core import FloatArray, ManimPlotsWarning
 
 SYMBOLS: tuple[Callable[..., object], ...] = (
+    Transform.get_all_mobjects,
     Animation,
     Animation.__new__,
     Animation.__init__,
@@ -388,6 +389,9 @@ SYMBOLS: tuple[Callable[..., object], ...] = (
 
 PINS: Mapping[str, Mapping[str, str]] = {
     "0.21.0": {
+        "Transform.get_all_mobjects": (
+            "780e2bd227d7b0e890a48dd295d8929890b5a0f86423d951a12b224505c38da6"
+        ),
         "Animation": "e78e125520ac3228288913c25c53abfb3ef4108b424fa2dcefe1f44e3012fb34",
         "Animation.__new__": (
             "3368aa91d93fcde302de391ceb71e1bcb3d99cb25958a167506416a45da5b819"
@@ -1264,6 +1268,9 @@ PINS: Mapping[str, Mapping[str, str]] = {
         ),
     },
     "0.22.0": {
+        "Transform.get_all_mobjects": (
+            "780e2bd227d7b0e890a48dd295d8929890b5a0f86423d951a12b224505c38da6"
+        ),
         "Animation": "e78e125520ac3228288913c25c53abfb3ef4108b424fa2dcefe1f44e3012fb34",
         "Animation.__new__": (
             "3368aa91d93fcde302de391ceb71e1bcb3d99cb25958a167506416a45da5b819"
