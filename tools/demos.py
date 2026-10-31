@@ -856,8 +856,13 @@ def live_append(scene: Scene) -> None:
     of the line reads the latest value.
     """
     shown: list[Text] = []
-    ax = mp.Axes(x_range=(0, 2, 1), y_range=(0, 2, 1), x_length=9, y_length=5)
-    ax.shift(0.3 * DOWN)
+    ax = mp.Axes(
+        x_range=(0, 2, 1),
+        y_range=(0, 2, 1),
+        x_length=9,
+        y_length=5,
+        axis_config={"include_numbers": True},
+    ).shift(0.3 * DOWN)
     xs = np.arange(0, 41) / 4
     ys = 1 + xs / 3 + np.sin(xs)
     line = ax.line(xs[:3], ys[:3], color=YELLOW)
