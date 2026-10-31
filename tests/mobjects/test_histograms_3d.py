@@ -170,3 +170,32 @@ def test_b3_3_histograms_in_planes():
     np.testing.assert_allclose(pts[:, 1], -1, atol=1e-9)
     assert pts[:, 2].max() == pytest.approx(h.counts[2])
     assert h.color_mapping is not None
+
+
+def test_b3_4_planes_drawn_far_to_near():
+    ax = axes()
+    front = ax.hist(X, bins=6, range=(-3, 3), zs=-2, zdir="y")
+    back = ax.hist(Y, bins=6, range=(-3, 3), zs=2, zdir="y")
+    seen: list[np.ndarray] = []
+
+    class Shot(ThreeDScene):
+        def construct(self) -> None:
+            self.set_camera_orientation(phi=65 * DEGREES, theta=-50 * DEGREES)
+            self.add(ax, front, back)
+            self.wait(1 / 15)
+            camera: Any = self.renderer.camera
+            bars = {
+                id(f)
+                for plot in (front, back)
+                for f in plot.family_members_with_points()
+            }
+            shown = camera.get_mobjects_to_display(self.mobjects)
+            rot = camera.get_rotation_matrix()
+            seen.append(
+                np.array([(f.get_center() @ rot.T)[2] for f in shown if id(f) in bars])
+            )
+
+    with tempconfig(RUN):
+        Shot().render()
+    assert len(seen[0]) > 0
+    assert np.all(np.diff(seen[0]) >= -1e-9)

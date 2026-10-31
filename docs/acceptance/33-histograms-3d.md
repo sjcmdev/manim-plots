@@ -79,6 +79,7 @@ class Hist3DPlot(BarPlot3D):  # mp.Hist3DPlot
 | B3-1 | `bar3d(..., c=values)` or `c="height"` (the `dz`) colours bar `i` through a `ColorMapping` (as H3-2, default `"viridis"`), shaded per face by BR-2; `plot.color_mapping` |
 | B3-2 | `ax.bar(left, height, zs=0, zdir="z", width=0.8)` on a `ThreeDAxes` is matplotlib's `Axes3D.bar`: the 2D bars of task 31 laid in the plane `zdir = zs` by ZD-1's juggling (2D `(u, v)` to `(u, zs, v)` for `zdir="y"`), each a flat filled rectangle; `zs` a scalar or one per bar; colour by value as BA-4 |
 | B3-3 | `ax.hist(x, bins, zs=0, zdir="y")` on a `ThreeDAxes` is task 32's histogram laid the same way; several calls with different `zs` give matplotlib's "histograms in planes" picture. HI rows hold (colour by count or by x, `set_data`) |
+| B3-4 | Draw order of bars in planes: the bars of `ax.bar(..., zs=, zdir=)` and `ax.hist(..., zs=, zdir=)` on a `ThreeDAxes` are drawn far to near by the camera-space depth of their centres, as H3-4, also across plots, so a plane nearer the camera covers the planes behind it whatever order they were made in *(review: matplotlib's "histograms in planes" picture drew the rear planes over the front ones)*. Test: two histograms at `zs=0` and `zs=3`, the later one behind; in a `ThreeDScene` the bars of both in the camera's display order have non-decreasing depth |
 
 ## Frame cost
 
