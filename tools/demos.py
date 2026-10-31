@@ -1021,7 +1021,7 @@ def spatial_enter(scene: Scene) -> None:
 
     `SweepSurface` reveals the surface along u; `RevealWireframe` traces its lines;
     `StackVoxels` lays a block layer by layer, with shared faces gone as layers meet;
-    `SweepIsovalue` moves an isosurface's level and the shape changes its topology.
+    `SweepIsovalue` raises an isosurface's level until its two balls join, then back.
     """
     ax = mp.ThreeDAxes(
         x_range=(-3, 3, 1), y_range=(-3, 3, 1), z_range=(-2, 3, 1),
