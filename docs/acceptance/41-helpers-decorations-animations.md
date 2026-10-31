@@ -13,27 +13,92 @@ This specification changes only this table, its test file and the empty test pac
 
 ```python
 class ExtendReference(Animation):
-    def __init__(self, line, *, origin="start", reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, line, *, origin="start", reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class GrowRegion(Animation):
     def __init__(self, region, *, axis=None, reverse=False, remover=None, **kwargs): ...
+
+
 class SweepRegion(Animation):
-    def __init__(self, region, *, axis="x", direction=1, reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, region, *, axis="x", direction=1, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class SweepSpan(Animation):
     def __init__(self, span, *, direction=1, reverse=False, remover=None, **kwargs): ...
+
+
 class GrowRiemann(Animation):
-    def __init__(self, rectangles, *, lag_ratio=0.05, reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, rectangles, *, lag_ratio=0.05, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class GrowErrorBars(Animation):
-    def __init__(self, errors, *, lag_ratio=0.05, cap_lag=0.15, reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        errors,
+        *,
+        lag_ratio=0.05,
+        cap_lag=0.15,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class RevealAnnotation(AnimationGroup):
-    def __init__(self, annotation, *, text_first=False, lag_ratio=0.3, reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        annotation,
+        *,
+        text_first=False,
+        lag_ratio=0.3,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class RevealCrosshair(AnimationGroup):
-    def __init__(self, crosshair, *, lag_ratio=0.15, reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self, crosshair, *, lag_ratio=0.15, reverse=False, remover=None, **kwargs
+    ): ...
+
+
 class RevealLegend(LaggedStart):
-    def __init__(self, legend, *, lag_ratio=0.15, artist_animations=None, reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        legend,
+        *,
+        lag_ratio=0.15,
+        artist_animations=None,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
+
+
 class FillColorbar(AnimationGroup):
     def __init__(self, bar, *, lag_ratio=0, reverse=False, remover=None, **kwargs): ...
+
+
 class BuildAxes(AnimationGroup):
-    def __init__(self, ax, lag_ratio=0.5, *, stages=None, stage_animations=None, reverse=False, remover=None, **kwargs): ...
+    def __init__(
+        self,
+        ax,
+        lag_ratio=0.5,
+        *,
+        stages=None,
+        stage_animations=None,
+        reverse=False,
+        remover=None,
+        **kwargs,
+    ): ...
 ```
 
 These are public constructor signatures, not an implementation prescription beyond
