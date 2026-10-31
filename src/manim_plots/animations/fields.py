@@ -15,7 +15,6 @@ from manim import (
     linear,
 )
 
-import manim_plots as mp
 from manim_plots.core import FloatArray
 
 from ._spatial import _Spatial
@@ -39,7 +38,7 @@ class Flow(Animation):
 
     def __init__(
         self,
-        field: mp.ArrowVectorField | mp.StreamLines,
+        field: ArrowVectorField | StreamLines,
         *mobjects: Mobject,
         speed: float = 1,
         pointwise: bool = False,
@@ -97,7 +96,7 @@ class GrowField(_Spatial):
 
     def __init__(
         self,
-        field: mp.ArrowVectorField,
+        field: ArrowVectorField,
         *,
         order: str | Callable[[FloatArray, FloatArray], object] = "data",
         lag_ratio: float = 0.02,
@@ -184,3 +183,7 @@ class GrowField(_Spatial):
             part.refresh()
         for part in self.field._tips:
             part.refresh()
+
+
+# Import after the classes: the artist module re-exports Flow.
+from manim_plots.mobjects.fields import ArrowVectorField, StreamLines  # noqa: E402

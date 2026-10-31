@@ -24,9 +24,9 @@ from manim import (
 )
 from manim.utils.color import ParsableManimColor
 
-import manim_plots as mp
 from manim_plots.mobjects.axis import Axis
 from manim_plots.mobjects.leaves import FrameLeaf
+from manim_plots.mobjects.polar import PolarAxes, PolarPlane
 from manim_plots.mobjects.system import CartesianAxes
 
 from ._base import flags
@@ -44,7 +44,7 @@ class SweepPolar(_Spatial):
 
     def __init__(
         self,
-        ax: mp.PolarPlane | mp.PolarAxes,
+        ax: PolarPlane | PolarAxes,
         *,
         start_angle: float = 0,
         angle: float = 2 * np.pi,
@@ -53,8 +53,6 @@ class SweepPolar(_Spatial):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
-        from manim_plots.mobjects.polar import PolarAxes, PolarPlane
-
         if not isinstance(ax, (PolarAxes, PolarPlane)):
             raise TypeError("ax must be PolarPlane or PolarAxes")
         if not np.isfinite([start_angle, angle]).all():

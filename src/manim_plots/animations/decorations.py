@@ -6,7 +6,7 @@ from typing import Any, cast
 
 from manim import AnimationGroup, Group, Scene, VMobject, linear, smooth
 
-import manim_plots as mp
+from manim_plots.mobjects.inset import InsetAxes
 from manim_plots.mobjects.leaves import Leaf
 
 from ._base import flags
@@ -14,7 +14,7 @@ from ._spatial import _Spatial
 
 
 class _InsetOpening(_Spatial):
-    def __init__(self, inset: mp.InsetAxes, **kwargs: object) -> None:
+    def __init__(self, inset: InsetAxes, **kwargs: object) -> None:
         self.inset = inset
         self._involved_system = inset
         parts = [part for part in inset.submobjects if part is not inset.frame]
@@ -65,7 +65,7 @@ class OpenInset(AnimationGroup):
 
     def __init__(
         self,
-        inset: mp.InsetAxes,
+        inset: InsetAxes,
         *,
         lag_ratio: float = 0.25,
         reverse: bool = False,
@@ -119,7 +119,7 @@ class CloseInset(OpenInset):
 
     def __init__(
         self,
-        inset: mp.InsetAxes,
+        inset: InsetAxes,
         *,
         lag_ratio: float = 0.25,
         reverse: bool = True,

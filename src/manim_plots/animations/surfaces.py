@@ -7,7 +7,7 @@ from typing import Any, cast
 import numpy as np
 from manim import VMobject
 
-import manim_plots as mp
+import manim_plots.mobjects as mobjects
 from manim_plots.core import FloatArray
 from manim_plots.core.shape import _restrict
 from manim_plots.core.sources import ArraySource, ParametricSource
@@ -30,7 +30,7 @@ class GrowSurface(MappedPresentation):
 
     def __init__(
         self,
-        surface: mp.SurfacePlot,
+        surface: SurfacePlot,
         zdir: str = "z",
         offset: float | None = None,
         *,
@@ -100,7 +100,7 @@ class ShrinkSurface(GrowSurface):
 
     def __init__(
         self,
-        surface: mp.SurfacePlot,
+        surface: SurfacePlot,
         zdir: str = "z",
         offset: float | None = None,
         *,
@@ -121,7 +121,7 @@ class GrowStems(_Spatial):
 
     def __init__(
         self,
-        stems: mp.StemPlot,
+        stems: mobjects.plots3d.StemPlot,
         *,
         lag_ratio: float = 0.05,
         reverse: bool = False,
@@ -182,7 +182,7 @@ class RevealWireframe(_Spatial):
 
     def __init__(
         self,
-        wireframe: mp.WireframePlot,
+        wireframe: WireframePlot,
         *,
         families: tuple[str, ...] = ("u", "v"),
         lag_ratio: float = 0.05,
@@ -253,7 +253,7 @@ class RevealWaterfall(_Spatial):
 
     def __init__(
         self,
-        waterfall: mp.WaterfallPlot,
+        waterfall: mobjects.plots3d.WaterfallPlot,
         *,
         lag_ratio: float = 0.15,
         reverse: bool = False,
@@ -316,7 +316,7 @@ class SweepSurface(_Spatial):
 
     def __init__(
         self,
-        surface: mp.SurfacePlot,
+        surface: SurfacePlot,
         *,
         axis: str = "u",
         direction: int = 1,
@@ -394,3 +394,7 @@ class SweepSurface(_Spatial):
         self.surface._building = False
         self.surface._driver._dirty = True
         self.surface._driver._ensure()
+
+
+# Import after the classes: the surface module re-exports GrowSurface.
+from manim_plots.mobjects.surfaces import SurfacePlot, WireframePlot  # noqa: E402
