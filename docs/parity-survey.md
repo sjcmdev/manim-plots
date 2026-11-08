@@ -25,10 +25,13 @@ listed 18 from memory; all 18 exist, and the real surface is nearly double the e
 
 | Verdict | Count |
 |---|---|
-| **0.1** | 43 |
-| **0.2** | 21 |
-| **later** | 4 |
+| **0.1** | 68 |
 | **non-goal** | 5 |
+
+At the release (task 23) every name the survey first gave 0.2 (21) or *later* (4) had
+shipped, because ADR 0004 joined 0.1 and 0.2 into one release and ADR 0006 brought 3D
+into it; their rows keep the old verdict in their notes. Every public name of Manim's
+graphing classes is in 0.1.0 except the five non-goals.
 
 A verdict of 0.1 promises the capability **and Manim's spelling** wherever the
 semantics match (D17, F-1009). This replaces the survey's first reading, under which a
@@ -107,51 +110,51 @@ Classes surveyed: `CoordinateSystem`, `Axes`, `ThreeDAxes`, `NumberPlane`, `Pola
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `angle_of_tangent` | `CoordinateSystem` | **0.2** | needs `i2gp`, which is why that ships in 0.1 |
-| `get_T_label` | `CoordinateSystem` | **0.2** |  |
-| `get_area` | `CoordinateSystem` | **0.2** |  |
-| `get_riemann_rectangles` | `CoordinateSystem` | **0.2** |  |
-| `get_secant_slope_group` | `CoordinateSystem` | **0.2** |  |
-| `plot_antiderivative_graph` | `CoordinateSystem` | **0.2** | same |
-| `plot_derivative_graph` | `CoordinateSystem` | **0.2** | same |
-| `slope_of_tangent` | `CoordinateSystem` | **0.2** | same |
+| `angle_of_tangent` | `CoordinateSystem` | **0.1** | needs `i2gp`, which is why that ships in 0.1; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `get_T_label` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `get_area` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 17, moved from 0.2 at the release |
+| `get_riemann_rectangles` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 17, moved from 0.2 at the release |
+| `get_secant_slope_group` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `plot_antiderivative_graph` | `CoordinateSystem` | **0.1** | same; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `plot_derivative_graph` | `CoordinateSystem` | **0.1** | same; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `slope_of_tangent` | `CoordinateSystem` | **0.1** | same; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
 
 ### Drop lines (5)
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `get_horizontal_line` | `CoordinateSystem` | **0.2** | decoration artist bound to a coordinate; trivial once the artist protocol exists |
-| `get_line_from_axis_to_point` | `CoordinateSystem` | **0.2** | same |
-| `get_lines_to_point` | `CoordinateSystem` | **0.2** | same |
-| `get_vertical_line` | `CoordinateSystem` | **0.2** | same |
-| `get_vertical_lines_to_graph` | `CoordinateSystem` | **0.2** | same, bound to a curve rather than a point |
+| `get_horizontal_line` | `CoordinateSystem` | **0.1** | decoration artist bound to a coordinate; trivial once the artist protocol exists; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `get_line_from_axis_to_point` | `CoordinateSystem` | **0.1** | same; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `get_lines_to_point` | `CoordinateSystem` | **0.1** | same; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `get_vertical_line` | `CoordinateSystem` | **0.1** | same; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
+| `get_vertical_lines_to_graph` | `CoordinateSystem` | **0.1** | same, bound to a curve rather than a point; shipped in 0.1.0 by task 16, moved from 0.2 at the release |
 
 ### Polar (7)
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `get_coordinate_labels` | `PolarPlane`, `ComplexPlane` | **0.2** | `PolarPlane` and `ComplexPlane` variants |
-| `get_radian_label` | `PolarPlane` | **0.2** |  |
-| `plot_polar_graph` | `CoordinateSystem` | **0.2** |  |
-| `point_to_polar` | `CoordinateSystem` | **0.2** |  |
-| `polar_to_point` | `CoordinateSystem` | **0.2** |  |
-| `pr2pt` | `CoordinateSystem` | **0.2** |  |
-| `pt2pr` | `CoordinateSystem` | **0.2** |  |
+| `get_coordinate_labels` | `PolarPlane`, `ComplexPlane` | **0.1** | `PolarPlane` and `ComplexPlane` variants; shipped in 0.1.0 by task 22, moved from 0.2 at the release |
+| `get_radian_label` | `PolarPlane` | **0.1** | shipped in 0.1.0 by task 22, moved from 0.2 at the release |
+| `plot_polar_graph` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 22, moved from 0.2 at the release |
+| `point_to_polar` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 22, moved from 0.2 at the release |
+| `polar_to_point` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 22, moved from 0.2 at the release |
+| `pr2pt` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 22, moved from 0.2 at the release |
+| `pt2pr` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 22, moved from 0.2 at the release |
 
 ### Fields (2)
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `get_vector` | `NumberPlane`, `PolarPlane` | **0.2** | arrives with vector fields, which bind to a system rather than to scene space |
-| `plot_implicit_curve` | `CoordinateSystem` | **later** | a `FieldSource` artist |
+| `get_vector` | `NumberPlane`, `PolarPlane` | **0.1** | arrives with vector fields, which bind to a system rather than to scene space; shipped in 0.1.0 by task 21, moved from 0.2 at the release |
+| `plot_implicit_curve` | `CoordinateSystem` | **0.1** | a `FieldSource` artist; shipped in 0.1.0 by task 21, moved from later at the release |
 
 ### 3D (3)
 
 | Manim method | Defined on | Verdict | Note |
 |---|---|---|---|
-| `get_z_axis` | `CoordinateSystem` | **later** |  |
-| `get_z_axis_label` | `ThreeDAxes` | **later** |  |
-| `plot_surface` | `CoordinateSystem` | **later** | a `FieldSource` artist |
+| `get_z_axis` | `CoordinateSystem` | **0.1** | shipped in 0.1.0 by task 24, moved from later at the release |
+| `get_z_axis_label` | `ThreeDAxes` | **0.1** | shipped in 0.1.0 by task 24, moved from later at the release |
+| `plot_surface` | `CoordinateSystem` | **0.1** | a `FieldSource` artist; shipped in 0.1.0 by task 25, moved from later at the release |
 
 ### Non-goal (5)
 

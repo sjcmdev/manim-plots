@@ -5,8 +5,11 @@ All notable changes to manim-plots are recorded here, following
 
 ## [Unreleased]
 
-This section prepares the first release, 0.1.0. The package version remains
-`0.1.0.dev0`; the maintainer decides the version bump, release merge and tag.
+## [0.1.0] - 2026-11-08
+
+The first release. It is installed from GitHub, not from PyPI:
+`pip install "git+https://github.com/sjcmdev/manim-plots@v0.1.0"`. The README has a
+tutorial and a gallery of eighteen example scenes, each in `examples/` with its video.
 
 ### Added
 
@@ -38,9 +41,62 @@ This section prepares the first release, 0.1.0. The package version remains
   parameters, permanent frame changes followed by bound curves, keyed system
   transforms, artist lifecycle and registration, and `DrawAxes`, `TraceCurve`,
   `ShowPoints` and `Morph`.
-- **Documentation and packaging:** Sphinx and numpydoc API documentation, a migration
-  guide, documented differences from Manim, reviewed examples with runnable scenes,
-  and the `py.typed` marker for the annotated public API.
+- **Clipping per axis:** `clip=(x, y)`, each a bool or a margin past the axes.
+- **Manim's graphing helpers, bound to their axes:** `get_vertical_line`,
+  `get_horizontal_line`, `get_lines_to_point`, `get_line_from_axis_to_point`,
+  `get_vertical_lines_to_graph`, `get_T_label`, `slope_of_tangent`,
+  `angle_of_tangent`, `get_tangent_line`, `get_tangent_vector`,
+  `get_secant_slope_group`, `plot_derivative_graph`, `plot_antiderivative_graph`,
+  `get_area` and `get_riemann_rectangles`. Each follows its axes, accepts a
+  `ValueTracker` wherever a value can change, and names every part it draws.
+- **2D helpers:** `axhline`, `axvline`, `axhspan`, `axvspan`, `fill_between`,
+  `fill_betweenx`, `annotate`, `crosshair`, `end_label`, `margins` and `autoscale`.
+- **Error bars:** `ax.errorbar` with symmetric or asymmetric x and y errors, correct on
+  log scales.
+- **More axes:** `twinx`, `twiny`, `twin(x=, y=)`, `secondary_xaxis` and
+  `secondary_yaxis` with `functions=(forward, inverse)`, an independent top axis, and
+  `ax.inset` with connectors.
+- **Themes and colour cycles:** `theme=` on one system or `mp.set_theme` for all; the
+  themes `manim`, `origin`, `base`, `paper` and `lab`; the cycles `manim`, `origin`,
+  `fire`, `colorblind` and `gray`. Ticks at a border point inward unless a direction is
+  set.
+- **Fields and flow:** `get_vector_field`, `get_stream_lines`, `get_vector`,
+  `plot_implicit_curve` and the `Flow` animation, in 2D and 3D.
+- **Polar:** `mp.PolarAxes` with data in `(r, θ)` and any radial scale,
+  `mp.PolarPlane`, `plot_polar_graph` and Manim's polar conversions.
+- **Axis kinds:** dates (`date2num`, `num2date`, `AutoDateLocator`,
+  `ConciseDateFormatter`), `PercentFormatter`, `AngleFormatter`, `LogitScale` and
+  broken axes (`BrokenScale`).
+- **Bars and categories:** `bar`, `barh`, `grouped_bar`, `bar_label` and categorical
+  axes whose ticks are the category names.
+- **Histograms:** `hist`, `hist2d`, `step`, `stairs` and `stackplot`, with NumPy's
+  binning rules.
+- **Heatmaps and colour:** `imshow`, `pcolormesh`, `hexbin`, `contour`, `contourf`,
+  `colorbar`, `Colormap` and the named `colormaps`.
+- **Statistics:** `boxplot`, `violinplot` and `mp.PieChart`.
+- **Three dimensions:** `mp.ThreeDAxes` with Manim's frame or matplotlib's box
+  (`frame="box"`) and `ax.view(elev, azim)`; `plot_surface`,
+  `plot_parametric_surface`, `plot_trisurf`, `plot_wireframe`,
+  `plot_surface_of_revolution` and `waterfall`; points, segments, planes and
+  cylindrical and spherical conversions; slices and `slice_view`; `hist3d`, `bar3d`,
+  `stem`, `voxels` and `plot_isosurface`; faces drawn far to near as the camera turns.
+- **Data animation:** `.animate.set_data(...)` on every data artist, `AppendData` with
+  autoscaling, `SortBars`, `HighlightBar` and `HighlightTick`.
+- **The animations package** `manim_plots.animations`: every entrance is also its exit
+  with `reverse=True`; `BuildAxes(stages=…)`, `TraceCurve` paced by arc length or by
+  parameter, `ShowPoints` in an order and with a pop; `ExtendReference`, `GrowRegion`,
+  `SweepRegion`, `SweepSpan`, `GrowRiemann`, `GrowErrorBars`, `RevealAnnotation`,
+  `RevealCrosshair`, `RevealLegend`, `FillColorbar`; `GrowBars(order=…)`,
+  `ShrinkBars`, `GrowStack`, `RevealCells`, `RevealContours`, `SweepPie`, `ExplodePie`,
+  `GrowBoxPlot`, `UnfoldViolin`; `GrowField`, `GrowStems`, `GrowSurface`,
+  `ShrinkSurface`, `SweepSurface`, `RevealWireframe`, `RevealWaterfall`, `SweepPolar`,
+  `OpenInset`, `CloseInset`; `RefineRiemann`, `RebinHistogram`, `StackVoxels`,
+  `SweepIsovalue` and `SweepSlice`.
+- **Documentation and packaging:** a README with installation, a tutorial and a gallery
+  of eighteen example scenes with their videos (`examples/`, rendered by
+  `tools/examples.py`); Sphinx and numpydoc API documentation, a migration guide,
+  documented differences from Manim, reviewed pictures with runnable scenes, and the
+  `py.typed` marker for the annotated public API.
 
 ### Supported environment
 
@@ -55,4 +111,5 @@ Constructing a library mobject under OpenGL raises an error naming Cairo. Other
 Manim versions require review of the pinned integration and issue a warning when
 imported. See the user documentation for the differences from plain Manim.
 
-[Unreleased]: https://github.com/sjcmdev/manim-plots/compare/main...dev
+[Unreleased]: https://github.com/sjcmdev/manim-plots/compare/v0.1.0...dev
+[0.1.0]: https://github.com/sjcmdev/manim-plots/releases/tag/v0.1.0
