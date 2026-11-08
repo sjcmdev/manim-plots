@@ -356,6 +356,12 @@ Runs last, over stages 3-6. The README gets a tutorial and a gallery of eighteen
 example scenes (`examples/`, rendered by `tools/examples.py`); rendering them found
 RF-1 and RF-2 (`tests/test_release_findings.py`).
 
-- [ ] F-1001 read again; invalid input and types on the new surfaces
-- [ ] Documentation, gallery and parity survey for every new name; changelog
+- [x] F-1001 read again, 2026-11-08: update p95 3.2-4.7 ms on dev and on this branch
+      alike, against 2.5-2.9 ms at task 13 — over the 4 ms budget on some runs on a
+      loaded machine; no regression from this task. Types: `test_public_types.py` covers
+      every public name
+- [ ] Invalid input on the new surfaces — `docs/acceptance/23-invalid-input.md`, 87 rows,
+      `tests/test_invalid_input_new.py`
+- [x] Documentation, gallery and parity survey for every new name; changelog — the site
+      shows 60 pictures; every Manim name in the survey is 0.1 except the non-goals
 - [ ] `dev` into `main`, tagged `v0.1.0` — the maintainer's call
