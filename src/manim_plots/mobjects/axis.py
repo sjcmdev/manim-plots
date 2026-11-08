@@ -464,7 +464,7 @@ class Axis(VGroup):
             "decimal_number_config", {"num_decimal_places": decimal_places(self._step)}
         )
         self.formatter: Formatter = DecimalFormatter(
-            self.decimal_number_config.get("num_decimal_places", 0)
+            self._config.get("decimal_number_config", {}).get("num_decimal_places")
         )
         if isinstance(self._scale, LogitScale):
             self.formatter = LogitFormatter()
