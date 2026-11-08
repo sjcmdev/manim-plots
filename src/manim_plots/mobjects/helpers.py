@@ -1921,18 +1921,25 @@ def _end_label(
     current: str | None = None
     template = text.copy()
     hidden = False
+    visible_style: dict[str, Any] = {}
 
     def place() -> None:
-        nonlocal current, hidden
+        nonlocal current, hidden, visible_style
+        # Transform copies require the same glyph family throughout interpolation.
+        if text.updating_suspended:
+            return
         points = graph.points
         if not len(points):
-            for leaf in text.family_members_with_points():
-                leaf.clear_points()
+            if not hidden:
+                visible_style = text.get_style()
+            text.set_opacity(0)
             hidden = True
             return
         end = points[-1]
         formatted = fmt.format(system.p2c(end)[1]) if label is None else label
         if formatted != current or hidden:
+            if hidden:
+                text.set_style(**visible_style)
             fresh = (
                 Text(formatted, **cast(Any, {"font_size": 24, **text_style}))
                 if isinstance(formatted, str)

@@ -8,8 +8,8 @@ import numpy as np
 from manim import LogBase, MathTex, Tex, VGroup, VMobject
 
 from manim_plots.core import FloatArray
-from manim_plots.core.formatters import DecimalFormatter
-from manim_plots.core.scales import LinearScale
+from manim_plots.core.formatters import DecimalFormatter, LogitFormatter
+from manim_plots.core.scales import LinearScale, LogitScale, LogScale
 from manim_plots.core.ticks import Level, round_key
 from manim_plots.mobjects import axis as axis_module
 from manim_plots.mobjects.leaves import Leaf, NumberLabel, _label, _replace_glyphs
@@ -120,6 +120,17 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
         ]
     )
     formatted = axis.formatter.format_ticks(values)
+    inferred = (
+        isinstance(axis.formatter, DecimalFormatter)
+        and axis.formatter.num_decimal_places is None
+    )
+    inferred_logit = isinstance(axis.formatter, LogitFormatter) and (
+        "num_decimal_places" not in axis._config.get("decimal_number_config", {})
+    )
+    if inferred and isinstance(axis._scale, (LogScale, LogitScale)):
+        formatted = type(formatted)(
+            [axis.formatter.format_ticks(np.array([x])).text[0] for x in values]
+        )
     axis._configure_offset(formatted.offset)
     if len(formatted.text) != len(values):
         raise ValueError("formatter must return one label per value")
@@ -150,6 +161,16 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
         if text is None:
             text = formatted.text[i]
         content = (text, mode)
+        number_config = dict(axis.decimal_number_config)
+        if isinstance(axis.formatter, DecimalFormatter):
+            number_config["num_decimal_places"] = (
+                axis.formatter.num_decimal_places
+                if axis.formatter.num_decimal_places is not None
+                else len(formatted.text[i].partition(".")[2])
+            )
+        elif inferred_logit:
+            numeric = DecimalFormatter().format_ticks(np.array([x])).text[0]
+            number_config["num_decimal_places"] = len(numeric.partition(".")[2])
         label = axis._number_leaves.get(key)
         changed = axis._number_content.get(key) != content
         if label is None or changed or style_changed:
@@ -159,18 +180,11 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                     if isinstance(axis.scaling, LogBase) and axis.scaling.custom_labels
                     else float(x),
                     font_size=axis.font_size,
-                    **axis.decimal_number_config,
+                    **number_config,
                 )
                 if axis._decoration_color is not None:
                     label.set_color(axis._decoration_color)
-            if (
-                axis._formatter_custom
-                or round_key(float(x)) in explicit
-                or (
-                    isinstance(axis.formatter, DecimalFormatter)
-                    and axis.formatter.num_decimal_places is None
-                )
-            ):
+            if axis._formatter_custom or round_key(float(x)) in explicit:
                 label._set_text(text, text_mode=mode)
             elif isinstance(axis.scaling, LogBase) and axis.scaling.custom_labels:
                 exponent = float(axis._scale.forward(x))
@@ -190,7 +204,7 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                     float(x),
                     font_size=axis._number_options.get("font_size", axis.font_size),
                     **{
-                        **axis.decimal_number_config,
+                        **number_config,
                         **{
                             k: v
                             for k, v in axis._number_options.items()
@@ -200,6 +214,8 @@ def _configure_numbers(axis: axis_module.Axis) -> None:
                 )
                 fresh.match_style(label)
                 _replace_glyphs(label, fresh.submobjects)
+            if isinstance(axis.formatter, DecimalFormatter) or inferred_logit:
+                label.num_decimal_places = number_config["num_decimal_places"]
             direction = axis._number_options.get(
                 "direction", axis._number_direction(float(x))
             )
