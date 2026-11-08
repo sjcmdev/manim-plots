@@ -419,3 +419,325 @@ Manim ignores or passes on an ``axis_config`` key it does not know; manim-plots 
        mp.Axes(axis_config={"include_number": True})
    except ValueError as error:
        print(error)
+
+
+Clipping each coordinate separately
+-----------------------------------
+
+Manim does not clip plots to their coordinate system. Here ``clip`` also accepts
+``(x, y)`` or, in 3D, ``(x, y, z)``: each entry is a bool or a margin in scene units.
+Each artist clips to its own pair of axes. ``clip=False`` restores Manim's unbounded
+picture, but poles still split. This keeps independent scales and box plots honest.
+
+
+Helpers stay bound to their inputs
+----------------------------------
+
+Manim constructs drop lines, secants, labels and filled regions once. Here they follow
+the system's permanent moves, ranges and graph parameters, and accept trackers for
+numeric inputs. Their geometry is derived in data space and mapped through the
+system; secant legs follow rotated axes instead of staying horizontal and vertical
+in the scene. Line helpers and regions clip like plots. This gives the same binding
+rule to every helper, including on log scales and warped 2D frames.
+
+
+Helper lines are artists
+------------------------
+
+Manim returns Line or DashedLine objects for line helpers. Here the line-like parts
+are HelperLine artists, with the group's familiar named parts. ``line_func`` accepts
+Manim's Line and DashedLine only; another constructor raises TypeError. Unknown
+``line_config`` keys also raise. This preserves clipping and bindings while keeping
+solid and dashed styling, including ``buff``, ``dash_length`` and ``dashed_ratio``.
+
+
+The T label touches an offset axis
+----------------------------------
+
+Manim places the T label's triangle at data y = 0 even when the x axis is drawn
+elsewhere. Here the triangle touches the drawn x axis. On ranges ``(1, 5)`` and
+``(2, 10)``, Manim leaves it below the axis; the corrected placement follows the
+axis crossing, border or chosen position.
+
+
+A zero secant step gives the tangent
+------------------------------------
+
+Manim silently replaces ``dx=0`` with its default step. Here the secant legs collapse
+and the secant becomes the tangent. A tracker animated down to zero therefore
+reaches the mathematical limit rather than jumping back to a finite secant.
+
+
+An antiderivative can start at the range boundary
+-------------------------------------------------
+
+Manim integrates from zero and uses ``samples`` to choose its quadrature. Here the
+integral starts at zero when zero is inside the parent's range and domain; otherwise
+it starts at the range's start. The ``y_intercept`` is the value there. Integration
+is shared across the range on each re-derivation; ``samples`` remains accepted but
+has no effect. This permits an antiderivative such as log(x) for 1/x on [1, 5]
+without integrating through its pole.
+
+
+Area follows the drawn boundary
+-------------------------------
+
+Manim builds get_area from the graph's Bezier control points and leaves the polygon
+unclipped. Here the boundary follows the drawn curve and is clipped to the viewport.
+This fixes fills that include control handles or extend past their axes.
+
+
+Riemann sums count intervals exactly
+------------------------------------
+
+Manim's floating-point arange can add an extra rectangle: [1, 1.3] with dx = 0.1
+produces four. Here the count uses an integer partition with a step-relative
+tolerance, producing three. The last interval still has the full requested width;
+it need not end at the range boundary.
+
+
+Riemann baselines use the chosen sample
+---------------------------------------
+
+Manim evaluates bounded_graph at the left endpoint even for right or centre samples.
+Here both boundaries use the chosen sample. Rectangles are built in data coordinates,
+so rotated sides follow the axes and warped sides follow the frame. This corrects
+the inconsistent baseline and scene-aligned construction.
+
+
+Border ticks point inward
+-------------------------
+
+Manim's default ticks straddle their axis. Here an axis explicitly placed on a named
+border, a mirror, a twin's own axis or a secondary axis points its ticks inward,
+with numbers outside. Axes positioned through data retain Manim's straddling ticks,
+even if an excluded zero puts them at an edge. An explicit direction always wins.
+This makes a framed plot readable without a separate direction call for each side.
+
+
+Mirrors and twins omit tips
+---------------------------
+
+Manim's ordinary axes have end tips by default. Here mirrored axes and a twin's own
+axis have none unless set_tips enables them. A twin or secondary axis replaces the
+mirror on its side, avoiding two lines drawn on top of each other. Mirrors can be
+styled independently while sharing the range. A twin of a twin shares the calling
+system's other axis, so a top/right pair really plots against top and right.
+
+
+Field vectors and motion use data coordinates
+---------------------------------------------
+
+Manim's vector fields and nudges operate in scene coordinates. Here the field receives
+a data point and returns a data vector, mapped through the axes for drawing and
+motion. Arrows start at their grid points; Manim centres them there.
+``vector_config={"center": True}`` restores that placement. get_vector returns a
+bound group with line and tip rather than an unbound native arrow. These rules keep
+direction and motion correct on unequal units, log scales and moving axes.
+
+
+Stream lines share a reproducible integrator
+--------------------------------------------
+
+Manim integrates StreamLines with Euler steps, omits the grid's upper endpoints and
+uses unseeded noise. Here stream lines, nudges and Flow share RK4 integration; both
+field grids include both endpoints, noise defaults to seed 0, and padding is in
+data steps on every side. The 2D default grid step is half each axis's range step,
+rather than a fixed scene-unit density. After ``play(lines.create())`` the scene
+holds the bound field, so start_animation remains visible. This makes repeated
+renders agree and keeps the displayed paths consistent with the motion.
+
+
+Implicit curves use the shared field source
+-------------------------------------------
+
+Manim's plot_implicit_curve uses its implicit-curve sampler. Here the same signature
+builds a marching-squares zero set on the field source, with about max_quads cells
+and min_depth refinements at sign changes. It follows function parameters and the
+system like a plot. Sharing the source makes clipping and bindings consistent;
+the sampling algorithm need not reproduce Manim's vertices.
+
+
+Polar conversions follow the labelled spokes
+--------------------------------------------
+
+Manim's PolarPlane conversions ignore azimuth_offset and azimuth_direction. Here
+pr2pt and pt2pr include both, so an angle lands on its labelled spoke. This fixes
+inconsistent conversions; default angles retain Manim's convention.
+
+
+Polar labels follow the plane
+-----------------------------
+
+Manim places PolarPlane labels relative to the scene origin and returns the entire
+x axis as the radius-label group, adding it twice. Here labels follow the plane
+and the first group contains just radius numbers. This fixes misplaced labels
+on shifted and resized planes without duplicating the axis.
+
+
+There is no zero-radius grid circle
+-----------------------------------
+
+Manim includes a circle of radius zero in PolarPlane's background lines. Here that
+degenerate circle is omitted: the default major grid has twenty spokes and four
+circles. This removes an empty grid element rather than giving it a styling slot.
+
+
+The 3D frame accepts affine moves
+---------------------------------
+
+Manim permits apply_function on ThreeDAxes. Here apply_function raises
+NotImplementedError; the 3D frame supports shifts, scales and rotations. Unlike the
+approximate warped 2D frame, the 3D frame has an affine contract. Curves and surfaces
+follow its affine moves and ranges, and clip to the three-coordinate box by default;
+Manim leaves them behind and draws outside the box.
+
+
+A box frame follows the camera
+------------------------------
+
+Manim's ThreeDAxes draws axes through the origin and leaves labels in their planes.
+That is also the default here. With frame="box", far panes and near edge axes follow
+the camera; labels and numbers face it by default. Numbers are offset perpendicular
+to the projected edge and later overlapping numbers hide, then return when clear.
+Titles sit beyond the numbers. This prevents corner collisions. A box in a plain
+Scene warns because it lacks a 3D camera. Legends and colorbars in a ThreeDScene
+are fixed in the frame. The view method returns camera keywords rather than moving
+the camera itself.
+
+
+Surface ranges may be omitted
+-----------------------------
+
+Manim raises TypeError when plot_surface is missing u_range or v_range. Here each
+omitted range follows its corresponding axis range; an explicit range stays fixed.
+This gives a surface the same live viewport default as a function plot.
+
+
+Surface colours are sampled at face centres
+-------------------------------------------
+
+Manim colours a face from the midpoint of its outline, which is the cell's far
+corner: a half-cell shift. Here a function surface uses its uv centre; triangle
+and supplied-grid surfaces use the mean of their corners in data. Colour
+normalisation follows the chosen axis's scale by default, rather than always
+interpolating raw values. Callable values default to linear normalisation.
+This puts the colour at the represented sample, including on logarithmic axes.
+
+
+Three-dimensional drop lines go to the floor and walls
+------------------------------------------------------
+
+Manim's get_lines_to_point on ThreeDAxes returns two oblique lines from x and y.
+Here it returns x_line, y_line and z_line: a vertical drop to the floor, then the
+floor point's lines to the two walls. In a box the floor and walls are the far panes
+and follow the camera. This makes all three coordinates visible.
+
+
+Spherical coordinates put the polar angle first
+-----------------------------------------------
+
+Manim's spherical_to_cartesian utility orders the angles differently. Here
+spherical_to_point and sp2pt take (r, theta, phi): theta from +z, phi the azimuth
+from +x, following ISO 80000-2. The same order applies to coords="spherical" on
+curves, surfaces and fields. Cylindrical input is (rho, phi, z). Physics and
+mathematics conventions take precedence over Manim's utility.
+
+
+A 3D field samples a volume by default
+--------------------------------------
+
+Manim defaults three_dimensions to False, a single layer at z = 0. On ThreeDAxes
+it defaults to True here; False requests Manim's single layer. The default step is
+twice each axis's range step, rather than the 2D half-step, to avoid thousands of
+arrows in a default box. Explicit x_range, y_range and z_range set the grid.
+
+
+Short solid arrows keep their direction
+---------------------------------------
+
+Manim's Arrow3D can turn a too-short arrow's cone backwards. Here arrow="3d" scales
+the cone's height and radius together to at most half the arrow length. Zero and
+nonfinite vectors stay hidden or degenerate at their mapped tails, without a Cone
+constructor division by zero. This keeps short and invalid field samples finite.
+
+
+Solid stream lines have no passing flash
+----------------------------------------
+
+Manim's StreamLines can start a passing-flash animation on its flat paths. Here
+line="3d" builds Line3D cylinders: create works, but start_animation raises
+NotImplementedError. A passing flash on solid segments has no defined meaning;
+use the default flat lines for it.
+
+
+Opaque surfaces hide pieces of curves
+-------------------------------------
+
+Manim's Cairo camera sorts whole mobjects by depth, so a curve through a surface
+can draw over it. Here occlusion is on by default in a ThreeDScene: opaque faces
+hide curve segments and lines, and hidden scatter markers or arrows hide whole
+by their centre or start point. Faces still use the camera sort among themselves;
+labels and decorations are not occluded. The GPU engine is used when available,
+with NumPy as fallback. occlusion=False restores Manim's picture. This corrects
+curve/surface visibility without changing the artist's data.
+
+
+Surface transforms adopt the target source
+------------------------------------------
+
+Manim aligns Surface families geometrically for Transform and ReplacementTransform.
+Here the intermediate faces keep that meaning, but the source surface also adopts
+the target function and colour rule when finished. A later range change therefore
+derives the target surface instead of bringing the old function back. Native
+Create, FadeIn and FadeOut retain their surface meanings.
+
+
+A zero bar can grow again
+-------------------------
+
+Manim's change_bar_values scales by new / old, leaving an originally zero bar at
+zero forever. Here the same bar mobject is rebuilt from its data value, and
+chart.animate.change_bar_values interpolates those values. Labels follow values
+and ranges. This fixes zero bars while retaining identities and user styling.
+
+
+Bar faces sort across the collection
+------------------------------------
+
+Manim's Cairo sorting can draw a rear bar over a front one when bars are separate
+families. Here bar3d and hist3d faces sort far to near by their camera-space face
+centres whenever the camera or bars change. Camera shading is off; shade uses the
+library's data-normal lighting. This fixes the reviewed 3D histogram draw order.
+
+
+Rebuilt text leaves no ghosts
+-----------------------------
+
+Manim freezes a flat list of moving mobjects at the start of a play. Replacing a
+label in its family can leave an old glyph in that list, still drawable. Here
+replaced glyphs lose their drawable points, and bound parts changed by library
+animations are declared moving before background compilation. End labels,
+crosshair readouts, bar labels, axis numbers and colorbar numbers therefore update
+without ghosts; unchanged functions are not sampled again merely for an animation.
+
+
+A surface animation shares its scene camera
+-------------------------------------------
+
+Manim copies a starting mobject for an animation. Deep-copying a surface's linked
+camera can try to pickle its graphics context and fail on a second play. Here the
+copy shares the scene camera. This fixes repeated surface animations without
+copying the renderer's context.
+
+
+Some inherited helpers are refused outside 2D
+---------------------------------------------
+
+Manim exposes its inherited 2D helpers on ThreeDAxes. Here unsupported helpers
+raise NotImplementedError rather than draw an ambiguous 2D construction in 3D.
+get_vertical_line, get_horizontal_line and get_vertical_lines_to_graph are refused;
+use get_line_from_axis_to_point or the three-part get_lines_to_point instead.
+Calculus helpers, get_area, get_riemann_rectangles and plot_implicit_curve also
+remain 2D. The true PolarAxes system refuses drop lines, calculus, regions and
+errorbar; PolarPlane remains a Cartesian system with polar decorations.

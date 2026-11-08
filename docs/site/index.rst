@@ -25,7 +25,9 @@ It is not on PyPI yet; install it from the repository:
 
 .. code-block:: text
 
-   pip install "git+https://github.com/sjcmdev/manim-plots@dev"
+   pip install "git+https://github.com/sjcmdev/manim-plots@v0.1.0"
+
+The repository's ``examples/`` directory holds eighteen example scenes with their videos.
 
 A first plot
 ------------
