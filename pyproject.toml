@@ -86,6 +86,8 @@ convention = "numpy"
 "src/manim_plots/animations/*" = ["TID251"]
 "tests/*" = ["D", "ANN", "TID251"]
 "tools/*" = ["TID251"]
+# Examples are written as Manim users write scenes: `from manim import *`, no annotations.
+"examples/*" = ["D", "ANN", "F403", "F405", "TID251"]
 
 [tool.mypy]
 python_version = "3.12"
