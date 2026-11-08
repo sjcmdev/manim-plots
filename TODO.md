@@ -335,17 +335,26 @@ An independent top axis (ADR 0005 §2), after task 20.
 The field source and the `region` payload; `ArrowVectorField`, `StreamLines`,
 `get_vector`, one integrator and a `Flow` animation; `plot_implicit_curve` if it fits.
 
-- [ ] Acceptance table
-- [ ] Implementation, tests, visual pairs, gate
+- [x] Acceptance table — `docs/acceptance/21-fields-flow.md`
+- [x] Implementation, tests, visual pairs, gate
 
 ### task/22-polar
 
 `mp.PolarPlane`, `plot_polar_graph` and Manim's polar conversions; `Node` public.
 
-- [ ] Acceptance table
-- [ ] Implementation, tests, visual pairs, gate
+- [x] Acceptance table — `docs/acceptance/22-polar.md`
+- [x] Implementation, tests, visual pairs, gate
+
+### Stages 4-6 — 3D, plot types and data animation, the animations package
+
+Tasks 24-44, planned in ADRs 0006, 0007 and 0008 and `docs/implementation-plan.md`, each
+with its table in `docs/acceptance/`; all merged into `dev` before task 23.
 
 ### task/23-release
+
+Runs last, over stages 3-6. The README gets a tutorial and a gallery of eighteen
+example scenes (`examples/`, rendered by `tools/examples.py`); rendering them found
+RF-1 and RF-2 (`tests/test_release_findings.py`).
 
 - [ ] F-1001 read again; invalid input and types on the new surfaces
 - [ ] Documentation, gallery and parity survey for every new name; changelog
