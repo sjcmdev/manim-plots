@@ -35,7 +35,7 @@ def date2num(d: object) -> float | FloatArray:
     """
     if isinstance(d, np.datetime64):
         if np.isnat(d):
-            raise ValueError("date must not be NaT")
+            raise ValueError("d must not be NaT")
         return float(d.astype("datetime64[us]").astype(np.int64)) / 86400000000
     if isinstance(d, date):
         dt = d if isinstance(d, datetime) else datetime.combine(d, datetime.min.time())
@@ -44,15 +44,21 @@ def date2num(d: object) -> float | FloatArray:
     entries = np.asarray(d)
     if entries.dtype.kind == "M":
         if np.isnat(entries).any():
-            raise ValueError("date must not contain NaT")
+            raise ValueError(
+                f"d[{np.flatnonzero(np.isnat(entries))[0]}] must not be NaT"
+            )
         return np.asarray(
             entries.astype("datetime64[us]").astype(np.float64) / 86400000000
         )
     if entries.ndim == 0:
-        raise TypeError("date must be a date, datetime or datetime64")
-    return np.array([date2num(v) for v in entries.flat], dtype=float).reshape(
-        entries.shape
-    )
+        raise TypeError("d must be a date, datetime or datetime64")
+    result = []
+    for i, value in enumerate(entries.flat):
+        try:
+            result.append(date2num(value))
+        except (ValueError, TypeError) as exc:
+            raise type(exc)(f"d[{i}]: {exc}") from exc
+    return np.array(result, dtype=float).reshape(entries.shape)
 
 
 @overload

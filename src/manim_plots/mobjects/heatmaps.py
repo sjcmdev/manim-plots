@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from collections.abc import Callable, Sequence
 from typing import Any, Self, cast
 
@@ -13,7 +14,7 @@ from manim.typing import PathFuncType
 from numpy.typing import ArrayLike
 
 import manim_plots as mp
-from manim_plots.core import FloatArray
+from manim_plots.core import FloatArray, ManimPlotsWarning
 from manim_plots.core.nodes import FrameMap
 from manim_plots.core.payload import Payload
 from manim_plots.core.scales import Scale
@@ -27,7 +28,7 @@ from manim_plots.core.shape import (
 )
 from manim_plots.core.shape import clip as clip_path
 from manim_plots.core.sources import ArraySource
-from manim_plots.mobjects.artists import _CurvePlot
+from manim_plots.mobjects.artists import _CurvePlot, _SampleWarnings
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
 from manim_plots.mobjects.context import animation_context
 from manim_plots.mobjects.leaves import _STRAIGHT
@@ -88,6 +89,19 @@ class _Cell(_FaceStyle, _CurvePlot):
     def _rebuild(self) -> None:
         system = self._owner._system
         polygon = self._polygon.copy()
+        domain_invalid = not system._data.valid(polygon).all()
+        if domain_invalid or (
+            not np.isfinite(self._owner._values[self._index])
+            and not self._owner._explicit_mask[self._index]
+        ):
+            self._owner._sample_warnings.warn(
+                system,
+                self.source,
+                "heatmap contains invalid samples; cells are hidden",
+                (self._owner._version,),
+            )
+        if domain_invalid:
+            polygon = np.empty((0, 2))
         if not np.isfinite(self._owner._values[self._index]):
             polygon = np.empty((0, 2))
         for axis, coordinate in enumerate(system._ranges):
@@ -129,10 +143,10 @@ class _CellGroup(VGroup):
         return self._cells[key]
 
 
-def _matrix(value: ArrayLike) -> FloatArray:
-    result = np.asarray(value, float)
-    if result.ndim != 2 or not result.size:
-        raise ValueError("values must be a nonempty two-dimensional array")
+def _matrix(value: ArrayLike, name: str = "C") -> FloatArray:
+    result = np.asanyarray(value, dtype=float)
+    if result.ndim != 2:
+        raise ValueError(f"{name} must be a two-dimensional array")
     return result
 
 
@@ -187,7 +201,7 @@ class HeatmapPlot(VGroup):
         self._initialize(system, _matrix(C), colorscale, vmin, vmax, norm, style)
         xs, ys = np.asarray(X, float), np.asarray(Y, float)
         if xs.shape != ys.shape or xs.shape != tuple(n + 1 for n in self._data.shape):
-            raise ValueError("corner grids must have shape (rows + 1, columns + 1)")
+            raise ValueError("C requires corner grids of shape (rows + 1, columns + 1)")
         if not np.isfinite(xs).all() or not np.isfinite(ys).all():
             raise ValueError("corners must be finite")
         grid = np.stack((xs, ys), axis=-1)
@@ -216,7 +230,10 @@ class HeatmapPlot(VGroup):
         style: dict[str, Any],
     ) -> None:
         self._system = system
-        self._data = np.asarray(C, float).copy()
+        self._sample_warnings = _SampleWarnings(ArraySource(np.empty((0, 2))))
+        self._version = 0
+        self._explicit_mask = np.ma.getmaskarray(np.asanyarray(C)).ravel()
+        self._data = np.asarray(np.ma.filled(C, np.nan), float).copy()
         self._values = self._data.ravel()
         self._colorscale, self._vmin, self._vmax, self._norm = (
             colorscale,
@@ -244,6 +261,13 @@ class HeatmapPlot(VGroup):
         return self._color_mapping
 
     def _paint_cells(self) -> None:
+        if not self._values.size:
+            self._sample_warnings.warn(
+                self._system,
+                ArraySource(np.empty((0, 2))),
+                "heatmap contains empty samples",
+                (self._version,),
+            )
         for cell in self.cells._cells.values():
             value = self._values[cell._index]
             if not cell._styled and np.isfinite(value):
@@ -261,7 +285,9 @@ class HeatmapPlot(VGroup):
         if values.shape != self._data.shape:
             raise ValueError("set_data requires the original shape")
         mapping = _mapping(values, self._colorscale, self._vmin, self._vmax, self._norm)
-        self._data = values.copy()
+        self._explicit_mask = np.ma.getmaskarray(values).ravel()
+        self._data = np.asarray(np.ma.filled(values, np.nan), float).copy()
+        self._version += 1
         self._values = self._data.ravel()
         self._color_mapping = mapping
         for cell in self.cells._cells.values():
@@ -399,7 +425,7 @@ def _imshow(
     origin: str = "upper",
     **style: object,
 ) -> HeatmapPlot:
-    values = _matrix(Z)
+    values = _matrix(Z, "Z")
     m, n = values.shape
     if origin not in {"upper", "lower"}:
         raise ValueError("origin must be upper or lower")
@@ -487,7 +513,10 @@ class HexbinPlot(HeatmapPlot):
     ) -> None:
         xs, ys = np.asarray(x, float), np.asarray(y, float)
         if xs.ndim != 1 or xs.shape != ys.shape:
-            raise ValueError("x and y must be matching one-dimensional arrays")
+            raise ValueError(
+                f"y length {ys.size} must match x length {xs.size}; "
+                "both must be one-dimensional"
+            )
         cs = None if C is None else np.asarray(C, float)
         if cs is not None and cs.shape != xs.shape:
             raise ValueError("C must match x and y")
@@ -589,11 +618,12 @@ def _hist2d(
         density=density,
         weights=None if weights is None else np.asarray(weights, float),
     )
-    values = counts.T.copy()
+    # cmin/cmax hide cells by mask, not NaN: a deliberate hole warns nothing (HM-7).
+    values = np.ma.masked_array(counts.T.copy())
     if cmin is not None:
-        values[values < cmin] = np.nan
+        values[values < cmin] = np.ma.masked
     if cmax is not None:
-        values[values > cmax] = np.nan
+        values[values > cmax] = np.ma.masked
     result = _pcolormesh(system, xe, ye, values, **cast(dict[str, Any], style))
     result.counts, result.xedges, result.yedges = counts, xe, ye
     return result
@@ -698,6 +728,12 @@ class ContourSetPlot(VGroup):
             or np.any(np.diff(edges) <= 0)
         ):
             raise ValueError("levels must be finite and strictly increasing")
+        if not np.isfinite(zs).all():
+            warnings.warn(
+                "contour contains invalid samples; cells are hidden",
+                ManimPlotsWarning,
+                stacklevel=3,
+            )
         self.levels = edges
         self.color_mapping = _mapping(
             zs,

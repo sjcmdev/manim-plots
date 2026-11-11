@@ -49,6 +49,9 @@ class InsetAxes(Axes):
         **axes_kwargs: object,
     ) -> None:
         fractions = np.asarray(bounds, dtype=float)
+        bad = np.flatnonzero(~np.isfinite(fractions))
+        if len(bad):
+            raise ValueError(f"bounds[{bad[0]}] must be finite")
         if (
             fractions.shape != (4,)
             or not np.isfinite(fractions).all()

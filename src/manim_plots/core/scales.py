@@ -618,6 +618,16 @@ class BrokenScale(_ScaleBase):
             raise ValueError("breaks must contain numeric endpoint pairs") from exc
         if intervals.shape == (0,):
             intervals = np.empty((0, 2))
+        if intervals.ndim == 2 and intervals.shape[1] == 2:
+            bad = ~np.isfinite(intervals).all(axis=1) | (
+                intervals[:, 0] >= intervals[:, 1]
+            )
+            bad[1:] |= intervals[1:, 0] <= intervals[:-1, 1]
+            if bad.any():
+                raise ValueError(
+                    f"breaks[{np.flatnonzero(bad)[0]}] must be finite, "
+                    "ordered and disjoint"
+                )
         if (
             intervals.ndim != 2
             or intervals.shape[1] != 2

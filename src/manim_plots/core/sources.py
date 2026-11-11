@@ -944,6 +944,8 @@ class ArraySource:
         Path connectivity or independent points.
     dim
         Number of coordinate columns, defaulting to two.
+    names
+        Public coordinate parameter names used in diagnostics.
     """
 
     data: FloatArray
@@ -956,18 +958,22 @@ class ArraySource:
         *,
         kind: Literal["path", "points"] = "path",
         dim: int = 2,
+        names: tuple[str, str] = ("xs", "ys"),
     ) -> None:
-        x = _numeric(xs, "xs")
+        xname, yname = names
+        x = _numeric(xs, xname)
         if ys is None:
             if x.ndim != 2 or x.shape[1] != dim:
-                raise ValueError(f"pairs must have shape (n, {dim})")
+                raise ValueError(f"{xname} pairs must have shape (n, {dim})")
             data = x.copy()
         else:
-            y = _numeric(ys, "ys")
+            y = _numeric(ys, yname)
             if x.ndim != 1 or y.ndim != 1:
-                raise ValueError("xs and ys must be one-dimensional")
+                raise ValueError(f"{xname} and {yname} must be one-dimensional")
             if len(x) != len(y):
-                raise ValueError(f"xs length {len(x)} differs from ys length {len(y)}")
+                raise ValueError(
+                    f"{xname} length {len(x)} differs from {yname} length {len(y)}"
+                )
             data = np.column_stack((x, y))
         if not isinstance(kind, str):
             raise TypeError("kind must be a str")

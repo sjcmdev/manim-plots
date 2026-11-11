@@ -31,7 +31,7 @@ from manim_plots.mobjects.leaves import FrameLeaf
 from manim_plots.mobjects.polar import PolarAxes, PolarPlane
 from manim_plots.mobjects.system import CartesianAxes
 
-from ._base import flags
+from ._base import check_lag, flags
 from ._spatial import _Spatial
 
 
@@ -55,10 +55,11 @@ class SweepPolar(_Spatial):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         if not isinstance(ax, (PolarAxes, PolarPlane)):
             raise TypeError("ax must be PolarPlane or PolarAxes")
         if not np.isfinite([start_angle, angle]).all():
-            raise ValueError("angular options must be finite")
+            raise ValueError("start_angle and angle must be finite")
         self.ax, self.start_angle, self.angle = ax, start_angle, angle
         self._involved_system = ax
         parts = VGroup(*(part for part in ax.submobjects if part is not ax.frame))
@@ -171,6 +172,7 @@ class BuildAxes(AnimationGroup):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         known = {
             "lines",
             "tips",
@@ -188,12 +190,14 @@ class BuildAxes(AnimationGroup):
             else [("lines", "tips"), "ticks", "numbers", ("labels", "grid")]
         )
         factories = dict(stage_animations or {})
-        if any(
-            name not in known
-            for stage in selected
-            for name in ((stage,) if isinstance(stage, str) else stage)
-        ) or any(name not in known for name in factories):
-            raise ValueError("unknown stage")
+        for i, stage in enumerate(selected):
+            if any(
+                name not in known
+                for name in ((stage,) if isinstance(stage, str) else stage)
+            ):
+                raise ValueError(f"unknown stage at index {i}")
+        if any(name not in known for name in factories):
+            raise ValueError("unknown stage in stage_animations")
         self.ax = ax
         self._involved_system = ax
         flags(reverse, remover, kwargs)

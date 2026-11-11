@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from builtins import range as builtins_range
 from collections.abc import Callable, Sequence
 from functools import partial
@@ -15,7 +16,7 @@ from manim.typing import PathFuncType
 from numpy.typing import NDArray
 
 import manim_plots as mp
-from manim_plots.core import FloatArray
+from manim_plots.core import FloatArray, ManimPlotsWarning
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import LinePlot, _CurvePlot, _cycle_style
 from manim_plots.mobjects.bars import BarPlot, _Bar
@@ -37,8 +38,12 @@ def _step_vertices(x: object, y: object, where: str) -> NDArray[np.float64]:
     if where not in ("pre", "post", "mid"):
         raise ValueError("where must be pre, post or mid")
     xs, ys = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
-    if xs.ndim != 1 or ys.shape != xs.shape or not len(xs):
-        raise ValueError("x and y must be matching nonempty one-dimensional arrays")
+    if xs.ndim != 1 or ys.ndim != 1:
+        raise ValueError("x and y must be one-dimensional")
+    if len(xs) != len(ys):
+        raise ValueError(f"y length {len(ys)} differs from x length {len(xs)}")
+    if not len(xs):
+        return np.empty((0, 2))
     if where == "mid":
         mid = (xs[:-1] + xs[1:]) / 2
         return np.column_stack(
@@ -58,10 +63,12 @@ def _stairs_vertices(
         if edges is None
         else np.asarray(edges, dtype=float)
     )
-    if v.ndim != 1 or not len(v) or e.shape != (len(v) + 1,):
-        raise ValueError("edges must contain one more entry than values")
-    if not np.isfinite(e).all() or not np.isfinite(v).all() or np.any(np.diff(e) <= 0):
-        raise ValueError("values must be finite and edges must increase")
+    if v.ndim != 1 or e.shape != (len(v) + 1,):
+        raise ValueError(f"edges count {e.size} must equal required count {len(v) + 1}")
+    if not len(v):
+        return np.empty((0, 2))
+    if not np.isfinite(e).all() or np.any(np.diff(e) <= 0):
+        raise ValueError("edges must be finite and increase")
     if fill and baseline is None:
         raise ValueError("fill requires a baseline")
     if orientation not in ("vertical", "horizontal"):
@@ -172,7 +179,22 @@ class HistPlot(VGroup):
         self._draw()
 
     def _count(self, x: object, bins: object, weights: object) -> None:
+        if (
+            np.isscalar(bins)
+            and not isinstance(bins, str)
+            and (not np.isfinite(float(cast(Any, bins))) or float(cast(Any, bins)) <= 0)
+        ):
+            raise ValueError("bins must be finite and positive")
         datasets = _datasets(x)
+        for data in datasets:
+            bad = np.flatnonzero(~np.isfinite(data))
+            if len(bad):
+                if np.isscalar(bins) and self._range is None:
+                    raise ValueError(f"x[{bad[0]}] must be finite for automatic bins")
+                warnings.warn(
+                    "histogram omits invalid samples", ManimPlotsWarning, stacklevel=3
+                )
+                break
         edges = np.histogram_bin_edges(
             np.concatenate(datasets), bins=cast(Any, bins), range=cast(Any, self._range)
         )
@@ -450,16 +472,17 @@ class StackPlot(VGroup):
         baseline: str = "zero",
         **style: object,
     ) -> None:
-        values = np.asarray(ys, dtype=float)
+        values = np.atleast_2d(np.asarray(ys, dtype=float))
         if baseline not in ("zero", "sym"):
             raise ValueError("baseline must be zero or sym")
         if (
             values.ndim != 2
             or not len(values)
             or values.shape[1:] != np.asarray(x).shape
-            or not np.isfinite(values).all()
         ):
-            raise ValueError("series must be finite and match x")
+            raise ValueError(
+                f"ys length {values.shape[-1]} must match x length {np.asarray(x).size}"
+            )
         if labels and len(labels) != len(values):
             raise ValueError("labels must match the series")
         if colors is not None and len(cast(Sequence[object], colors)) != len(values):

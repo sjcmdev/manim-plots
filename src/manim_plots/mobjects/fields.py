@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 import inspect
-import warnings
 from collections.abc import Callable, Sequence
 from itertools import pairwise
 from typing import Any, Self, cast
@@ -31,7 +30,7 @@ from manim.utils.color import ManimColor, ParsableManimColor
 from numpy.typing import ArrayLike
 
 import manim_plots as mp
-from manim_plots.core import FloatArray, ManimPlotsWarning
+from manim_plots.core import FloatArray
 from manim_plots.core import lifecycle as lc
 from manim_plots.core.coordinates import (
     cartesian_to_cylindrical,
@@ -54,6 +53,7 @@ from manim_plots.mobjects.artists import (
     _CurvePlot,
     _parameterize,
     _ParameterizedFunction,
+    _SampleWarnings,
     _unclipped_box,
     _validate_clip,
 )
@@ -295,7 +295,8 @@ class _Field(VGroup):
         self._movement: Callable[[Mobject, float], None] | None = None
         self._clip = _validate_clip(kwargs.pop("clip", True))
         _clip_box(system, self._clip)
-        self._warned = False
+        self._sample_warnings = _SampleWarnings()
+        self._warning_source = self.source
         super().__init__(**cast(dict[str, Any], kwargs))
         self.add_updater(_synchronise)
 
@@ -331,6 +332,7 @@ class _Field(VGroup):
             np.clip((value - self._minimum) / (self._maximum - self._minimum), 0, 1)
         )
         scaled = alpha * (len(self._colors) - 1)
+        scaled = scaled if np.isfinite(scaled) else 0.0
         index = int(scaled)
         fraction = scaled - index
         rgb = (1 - fraction) * self._colors[index] + fraction * self._colors[
@@ -369,13 +371,16 @@ class _Field(VGroup):
         self._order = np.arange(len(payload.coords))
         if self._dimension == 2:
             self._order = self._order.reshape(rows, cols).T.ravel()
-        if payload.valid is not None and not self._warned:
-            warnings.warn(
+        if (
+            payload.valid is not None
+            or not self.system._data.valid(payload.coords).all()
+        ):
+            self._sample_warnings.warn(
+                self.system,
+                self._warning_source,
                 "field contains invalid samples; they are not drawn",
-                ManimPlotsWarning,
-                stacklevel=4,
+                (self._binding.version,),
             )
-            self._warned = True
         return payload
 
     def _derive(self, binding: _Binding) -> None:

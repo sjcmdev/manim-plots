@@ -323,6 +323,8 @@ class PolarPlane(CartesianAxes):
     ) -> None:
         self.azimuth_step = _azimuth(azimuth_units, azimuth_direction, azimuth_step)
         self.azimuth_units, self.azimuth_direction = azimuth_units, azimuth_direction
+        if not np.isfinite(azimuth_offset):
+            raise ValueError("azimuth_offset must be finite")
         self.azimuth_offset = azimuth_offset
         self.azimuth_compact_fraction = azimuth_compact_fraction
         self.azimuth_label_buff, self.azimuth_label_font_size = (
@@ -344,6 +346,8 @@ class PolarPlane(CartesianAxes):
             **(radius_config or {}),
         }
         resolved = _resolve_theme(theme)
+        if size is not None and (not np.isfinite(size) or size <= 0):
+            raise ValueError("size must be finite and positive")
         diameter = 2 * radius_max if size is None else size
         super().__init__(
             (-radius_max, radius_max, radius_step),
@@ -834,6 +838,8 @@ class PolarAxes(CartesianAxes):
         self._polar_ready = False
         self.azimuth_step = _azimuth(azimuth_units, azimuth_direction, azimuth_step)
         self.azimuth_units, self.azimuth_direction = azimuth_units, azimuth_direction
+        if not np.isfinite(azimuth_offset):
+            raise ValueError("azimuth_offset must be finite")
         self.azimuth_offset, self.r_axis_angle = azimuth_offset, r_axis_angle
         self._sign = 1 if azimuth_direction == "CCW" else -1
         self._r_scale = _scale(r_scale, "r_scale")

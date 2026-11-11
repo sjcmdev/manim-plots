@@ -103,6 +103,9 @@ def test_do3_each_difference_is_stated_where_users_meet_it(name):
 # --- DO-4 ----------------------------------------------------------------------------
 
 BLOCK = re.compile(r"^\.\. code-block:: python\n((?:\n|[ \t]+.*\n)+)", re.MULTILINE)
+FENCE = re.compile(r"^```python\n(.*?)^```", re.MULTILINE | re.DOTALL)
+ROOT = SITE.parents[1]
+EXAMPLES = sorted((ROOT / "examples").glob("[0-9][0-9]_*.py"))
 
 
 def blocks() -> list[tuple[str, int, str]]:
@@ -111,6 +114,9 @@ def blocks() -> list[tuple[str, int, str]]:
         text = path.read_text(encoding="utf-8")
         for k, match in enumerate(BLOCK.finditer(text)):
             found.append((path.stem, k, textwrap.dedent(match.group(1))))
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    for k, match in enumerate(FENCE.finditer(readme)):
+        found.append(("README", k, match.group(1)))
     return found
 
 
@@ -125,6 +131,18 @@ def test_do4_the_site_has_code():
     "where, index, code", BLOCKS, ids=[f"{w}-{i}" for w, i, _ in BLOCKS]
 )
 def test_do4_every_code_block_runs(where, index, code):
+    run_scenes(code, f"{where}_{index}")
+
+
+@pytest.mark.render
+@pytest.mark.parametrize("path", EXAMPLES, ids=[p.stem for p in EXAMPLES])
+def test_do4_every_example_runs(path):
+    """The scenes in `examples/`, which the README's gallery shows."""
+    run_scenes(path.read_text(encoding="utf-8"), path.stem)
+
+
+def run_scenes(code: str, name: str) -> None:
+    """Run every Scene the code defines, without writing a video."""
     config = {
         "dry_run": True,
         "disable_caching": True,
@@ -134,9 +152,9 @@ def test_do4_every_code_block_runs(where, index, code):
         "pixel_height": 180,
         "frame_rate": 6,
     }
-    namespace: dict[str, object] = {"__name__": f"docs_{where}_{index}"}
+    namespace: dict[str, object] = {"__name__": f"docs_{name}"}
     with tempconfig(config):
-        exec(compile(code, f"{where}.rst block {index}", "exec"), namespace)
+        exec(compile(code, name, "exec"), namespace)
         for value in list(namespace.values()):
             # Only the scenes the block defines, not the ones a star import brings.
             if (

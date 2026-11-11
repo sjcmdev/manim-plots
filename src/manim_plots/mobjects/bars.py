@@ -32,7 +32,12 @@ from manim_plots.core import FloatArray
 from manim_plots.core.payload import Payload
 from manim_plots.core.shape import corners
 from manim_plots.core.sources import ArraySource
-from manim_plots.mobjects.artists import _CurvePlot, _cycle_style
+from manim_plots.mobjects.artists import (
+    _CurvePlot,
+    _cycle_style,
+    _is_binding,
+    _SampleWarnings,
+)
 from manim_plots.mobjects.axis import resolve_categories
 from manim_plots.mobjects.colormaps import resolve_colorscale
 from manim_plots.mobjects.context import (
@@ -79,8 +84,10 @@ class _Bar(_CurvePlot):
         values: Sequence[object],
         horizontal: bool,
         lift: Callable[[FloatArray], FloatArray] | None = None,
+        _warnings: _SampleWarnings | None = None,
         **style: Unpack[_ArtistOptions],
     ) -> None:
+        self._sample_warnings = _warnings or _SampleWarnings()
         self._lift = lift
         self.horizontal = horizontal
         self._label_bindings: list[_LabelBinding] = []
@@ -150,51 +157,58 @@ class _Bar(_CurvePlot):
             for name in ("x", "height", "width", "bottom")
         )
         height *= self.__dict__.get("_height_scale", 1.0)
-        if not np.isfinite([x, height, width, bottom]).all():
-            raise ValueError("bar coordinates must be finite")
-        a, b = (
-            np.array([x - width / 2, bottom]),
-            np.array([x + width / 2, bottom + height]),
-        )
-        if self.horizontal:
-            a, b = a[::-1], b[::-1]
-        if self._lift is not None:
-            polygon = self._lift(np.array([b, [a[0], b[1]], a, [b[0], a[1]], b]))
-            for i, axis in enumerate(system._ranges):
-                invalid = ~np.isfinite(axis._scale.forward(polygon[:, i]))
-                polygon[invalid, i] = min(axis.range.value)
-            native = system._data.forward(polygon)
-            outside = np.any(native.max(axis=0) < system.bounds.lower) or np.any(
-                native.min(axis=0) > system.bounds.upper
+        invalid = not np.isfinite(height)
+        end = np.array([[bottom], [bottom + height]])
+        axis = system.x if self.horizontal else system.y
+        invalid |= not np.isfinite(axis._scale.forward(end)).any()
+        if invalid:
+            self._sample_warnings.warn(
+                system,
+                self.source,
+                "bar contains invalid samples; they are not drawn",
+                tuple(p.version for p in self.parameters.values()),
             )
-            native = (
-                native[:0]
-                if outside
-                else np.clip(native, system.bounds.lower, system.bounds.upper)
+            self._geometry_payload = Payload.empty("path", 2)
+        else:
+            a, b = (
+                np.array([x - width / 2, bottom]),
+                np.array([x + width / 2, bottom + height]),
             )
-            self._geometry_payload = corners(Payload.path(native), system.bounds)
-            self._place(self._frame())
-            self._data_seen = system._data_version
-            self._parameter_versions = {
-                name: p.version for name, p in self.parameters.items()
-            }
-            self._dirty = False
-            return
-        for i, axis in enumerate(system._ranges):
-            low = min(axis.range.value)
-            if not np.isfinite(axis._scale.forward([a[i]])).all():
-                a[i] = low
-            if not np.isfinite(axis._scale.forward([b[i]])).all():
-                b[i] = low
-        native = system._data.forward(np.array([a, b]))
-        low = np.maximum(native.min(axis=0), system.bounds.lower)
-        high = np.minimum(native.max(axis=0), system.bounds.upper)
-        polygon = (
-            np.empty((0, 2))
-            if np.any(low > high)
-            else np.array([high, [low[0], high[1]], low, [high[0], low[1]], high])
-        )
-        self._geometry_payload = corners(Payload.path(polygon), system.bounds)
+            if self.horizontal:
+                a, b = a[::-1], b[::-1]
+            if self._lift is not None:
+                polygon = self._lift(np.array([b, [a[0], b[1]], a, [b[0], a[1]], b]))
+                for i, axis in enumerate(system._ranges):
+                    invalid_corners = ~np.isfinite(axis._scale.forward(polygon[:, i]))
+                    polygon[invalid_corners, i] = min(axis.range.value)
+                native = system._data.forward(polygon)
+                outside = np.any(native.max(axis=0) < system.bounds.lower) or np.any(
+                    native.min(axis=0) > system.bounds.upper
+                )
+                native = (
+                    native[:0]
+                    if outside
+                    else np.clip(native, system.bounds.lower, system.bounds.upper)
+                )
+                self._geometry_payload = corners(Payload.path(native), system.bounds)
+            else:
+                for i, axis in enumerate(system._ranges):
+                    low = min(axis.range.value)
+                    if not np.isfinite(axis._scale.forward([a[i]])).all():
+                        a[i] = low
+                    if not np.isfinite(axis._scale.forward([b[i]])).all():
+                        b[i] = low
+                native = system._data.forward(np.array([a, b]))
+                low = np.maximum(native.min(axis=0), system.bounds.lower)
+                high = np.minimum(native.max(axis=0), system.bounds.upper)
+                polygon = (
+                    np.empty((0, 2))
+                    if np.any(low > high)
+                    else np.array(
+                        [high, [low[0], high[1]], low, [high[0], low[1]], high]
+                    )
+                )
+                self._geometry_payload = corners(Payload.path(polygon), system.bounds)
         self._place(self._frame())
         self._data_seen = system._data_version
         self._parameter_versions = {
@@ -307,8 +321,25 @@ class BarPlot(VGroup):
         self._keys = list(np.atleast_1d(np.asarray(x)))
         axis = system.y if horizontal else system.x
         positions = resolve_categories(axis, x)
+        position = np.atleast_1d(np.asarray(positions))
+        if position.ndim != 1:
+            raise ValueError(f"{'y' if horizontal else 'x'} must be one-dimensional")
+        heights = _entries(height)
+        if len(position) != len(heights) and len(position) != 1 and len(heights) != 1:
+            raise ValueError(
+                f"{'width' if horizontal else 'height'} length {len(heights)} "
+                f"differs from {'y' if horizontal else 'x'} length {len(position)}"
+            )
+        for name, value in (
+            ("height" if horizontal else "width", width),
+            ("left" if horizontal else "bottom", bottom),
+        ):
+            for i, entry in enumerate(_entries(value)):
+                if not _is_binding(entry) and not np.isfinite(float(entry)):
+                    raise ValueError(f"{name}[{i}] must be finite")
+        self._sample_warnings = _SampleWarnings(ArraySource(np.empty((0, 2))))
         arrays = np.broadcast_arrays(
-            np.atleast_1d(np.asarray(positions)),
+            position,
             _entries(height),
             np.asarray(width),
             np.asarray(bottom),
@@ -369,12 +400,18 @@ class BarPlot(VGroup):
                 bar_values,
                 horizontal,
                 None if _lift is None else partial(_lift_bar, _lift, i),
+                _warnings=self._sample_warnings,
                 **cast(_ArtistOptions, own),
             )
             if isinstance(c, str) and c == "height":
                 bar._height_mapping = self._color_mapping
             self.add(bar)
             system.add(bar)
+
+        if not len(arrays[0]):
+            self._sample_warnings.warn(
+                system, ArraySource(np.empty((0, 2))), "bar contains empty samples"
+            )
 
     @property
     def color_mapping(self) -> mp.ColorMapping | None:
@@ -440,9 +477,20 @@ class BarPlot(VGroup):
                 )
             )
             # Resolve all replacement arrays before changing membership.
-            for value in (height, width, bottom, c):
+            for name, value in (
+                ("height", height),
+                ("width", width),
+                ("bottom", bottom),
+                ("c", c),
+            ):
                 if value is not None:
-                    np.broadcast_to(_entries(value), (len(keys),))
+                    entries = _entries(value)
+                    if len(entries) not in (1, len(keys)):
+                        raise ValueError(
+                            f"{name} length {len(entries)} "
+                            f"differs from x length {len(keys)}"
+                        )
+                    np.broadcast_to(entries, (len(keys),))
             old = dict(zip(self._keys, self.submobjects, strict=True))
             ordered: list[VMobject] = []
             for i, key in enumerate(keys):
@@ -618,6 +666,8 @@ def bar_label(
         raise ValueError("label_type must be edge or center")
     if labels is not None and len(labels) != len(container):
         raise ValueError("labels must contain one string per bar")
+    if not np.isfinite(padding):
+        raise ValueError("padding must be finite")
     result = VGroup()
     for i, mob in enumerate(container.submobjects):
         bar = cast(_Bar, mob)
@@ -844,7 +894,10 @@ def _grouped_bar(
         or group_spacing < 0
         or bar_spacing < 0
     ):
-        raise ValueError("positions must increase and spacing must be nonnegative")
+        raise ValueError(
+            "positions must increase and group_spacing and bar_spacing "
+            "must be finite and nonnegative"
+        )
     if labels is not None and len(labels) != m:
         raise ValueError("labels must contain one string per dataset")
     if colors is not None and len(cast(Sequence[object], colors)) != m:

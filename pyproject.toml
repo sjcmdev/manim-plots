@@ -1,6 +1,6 @@
 [project]
 name = "manim-plots"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Correct, extensible plotting primitives for Manim"
 readme = "README.md"
 authors = [
@@ -11,7 +11,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["manim", "plotting", "animation", "visualization"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Topic :: Multimedia :: Graphics",
@@ -86,6 +86,8 @@ convention = "numpy"
 "src/manim_plots/animations/*" = ["TID251"]
 "tests/*" = ["D", "ANN", "TID251"]
 "tools/*" = ["TID251"]
+# Examples are written as Manim users write scenes: `from manim import *`, no annotations.
+"examples/*" = ["D", "ANN", "F403", "F405", "TID251"]
 
 [tool.mypy]
 python_version = "3.12"

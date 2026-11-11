@@ -214,7 +214,8 @@ def _dash_pattern(
 
 
 class _SampleWarnings:
-    def __init__(self) -> None:
+    def __init__(self, source: Source | None = None) -> None:
+        self._source = source
         self._seen: object | None = None
         self._warned: object | None = None
 
@@ -225,6 +226,7 @@ class _SampleWarnings:
         message: str,
         versions: tuple[int, ...] = (),
     ) -> None:
+        source = self._source if self._source is not None else source
         seen = (id(system), id(source), system._data_version, versions)
         if self._seen == seen:
             return
@@ -930,6 +932,10 @@ class _ParameterizedFunction:
         return cast(ArrayLike, self.function(*args, **kwargs))
 
 
+def _is_binding(value: object) -> bool:
+    return callable(value) or callable(getattr(value, "get_value", None))
+
+
 def _parameterize(
     function: Callable[..., Any], kwargs: dict[str, object]
 ) -> tuple[Callable[..., Any], dict[str, Parameter[Any]]]:
@@ -951,7 +957,7 @@ def _parameterize(
         value = kwargs.pop(item.name, item.default)
         if value is inspect.Parameter.empty:
             raise TypeError(f"missing function parameter {item.name!r}")
-        bound = callable(value) or callable(getattr(value, "get_value", None))
+        bound = _is_binding(value)
         parameter: Parameter[Any] = Parameter(None if bound else value, name=item.name)
         if bound:
             parameter.bind(value)

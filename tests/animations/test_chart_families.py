@@ -287,6 +287,7 @@ def test_rc1_cell_order_opacity_and_annotations(order, ranks):
     assert [c.get_fill_opacity() for c in cells] == pytest.approx([0.4] * 6)
 
 
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_rc2_invalid_cells_stay_empty():
     ax = axes()
     heat = ax.imshow([[1, np.nan], [2, 3]], extent=(0, 4, 0, 4))

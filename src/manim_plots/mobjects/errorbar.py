@@ -271,7 +271,7 @@ class ErrorBars(VGroup):
     ) -> None:
         self._dim = len(system._ranges)
         x, y = _resolve_coordinates(system, x, y)
-        source = ArraySource(x, y, kind="points", dim=self._dim)
+        source = ArraySource(x, y, kind="points", dim=self._dim, names=("x", "y"))
         errors: tuple[FloatArray | None, ...] = (
             _errors(xerr, len(source.data), "xerr"),
             _errors(yerr, len(source.data), "yerr"),

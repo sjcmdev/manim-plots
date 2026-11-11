@@ -48,8 +48,11 @@ def test_rl2_the_project_urls():
     assert urls["Documentation"].startswith("https://github.com/sjcmdev/manim-plots")
 
 
-def test_rl4_the_version_is_still_a_development_one():
-    assert PYPROJECT["project"]["version"].endswith(".dev0")
+def test_rl4_the_version_is_the_changelogs_latest_release():
+    version = PYPROJECT["project"]["version"]
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    releases = re.findall(r"^## \[(\d[^\]]*)\]", text, re.MULTILINE)
+    assert releases and releases[0] == version, (releases[:1], version)
 
 
 def run(*cmd: str, cwd: Path) -> str:

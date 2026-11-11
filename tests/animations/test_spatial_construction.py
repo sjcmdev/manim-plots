@@ -587,6 +587,7 @@ def test_ss4_triangle_front_is_a_data_halfspace():
     animation.finish()
 
 
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_ss5_reversed_intervals_and_holes_do_not_bridge_missing_cells():
     ax = axes3()
     surface = ax.plot_surface(
@@ -665,6 +666,7 @@ def test_gf4_order_is_stable_and_resolved_at_begin(order):
     animation.finish()
 
 
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_gf4_flat_zero_and_invalid_vectors_keep_canonical_semantics():
     ax = axes3()
     with pytest.warns(mp.ManimPlotsWarning, match="invalid"):
@@ -683,6 +685,7 @@ def test_gf4_flat_zero_and_invalid_vectors_keep_canonical_semantics():
 
 
 @pytest.mark.parametrize("bad", [0.0, np.nan, np.inf])
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_gf5_solid_field_constructs_with_degenerate_vectors_and_grows_the_others(bad):
     ax = axes3()
     warning = (
