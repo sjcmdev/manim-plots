@@ -24,7 +24,14 @@ from manim_plots.mobjects.bars import BarPlot, _Bar
 from manim_plots.mobjects.heatmaps import ContourSetPlot, HeatmapPlot, _Cell
 from manim_plots.mobjects.histograms import HistPlot, _stairs_vertices
 
-from ._base import MappedPresentation, Presentation, flags, window
+from ._base import (
+    MappedPresentation,
+    Presentation,
+    check_lag,
+    check_order,
+    flags,
+    window,
+)
 
 
 class RebinHistogram(Presentation):
@@ -145,6 +152,7 @@ class GrowBars(MappedPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_order(order)
         from manim_plots.mobjects.bars import _Bar
         from manim_plots.mobjects.plots3d import BarPlot3D
 
@@ -293,6 +301,7 @@ class ShrinkBars(GrowBars):
     """
 
     def __init__(self, bars: VGroup, lag_ratio: float = 0.05, **kwargs: object) -> None:
+        check_lag(lag_ratio)
         kwargs.setdefault("introducer", False)
         kwargs.setdefault("remover", True)
         super().__init__(bars, lag_ratio=lag_ratio, **cast(dict[str, Any], kwargs))
@@ -317,6 +326,8 @@ class SortBars(Animation):
     ) -> None:
         if not isinstance(bars, BarPlot):
             raise TypeError("bars must be a BarPlot")
+        if key is not None and not callable(key):
+            raise TypeError("key must be callable or None")
         self.bars, self.key, self.reverse = bars, key, reverse
         super().__init__(bars, **cast(dict[str, Any], kwargs))
 
@@ -389,7 +400,10 @@ class HighlightBar(AnimationGroup):
     ) -> None:
         if not np.isfinite(dim_opacity) or not 0 <= dim_opacity <= 1:
             raise ValueError("dim_opacity must be between zero and one")
-        selected = bars.at(key)
+        try:
+            selected = bars.at(key)
+        except ValueError as exc:
+            raise ValueError(f"unknown key {key!r}") from exc
         self._fills = [
             (leaf, float(leaf.get_fill_opacity()))
             for bar in bars
@@ -615,6 +629,8 @@ class RevealCells(_ChartPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
+        check_order(order)
         from manim_plots.mobjects.heatmaps import HexbinPlot
 
         if not callable(order) and (
@@ -685,6 +701,8 @@ class RevealContours(_ChartPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
+        check_order(order)
         if not callable(order) and order != "level":
             raise ValueError("unknown contour order")
         self.contours, self.order = contours, order

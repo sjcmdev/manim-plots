@@ -166,6 +166,13 @@ class ThreeDAxes(CartesianAxes):
         cycle: str | Sequence[ParsableManimColor] | None = None,
         **kwargs: object,
     ) -> None:
+        for name, length in (
+            ("x_length", x_length),
+            ("y_length", y_length),
+            ("z_length", z_length),
+        ):
+            if length is not None and (not np.isfinite(length) or length <= 0):
+                raise ValueError(f"{name} must be finite and positive")
         original_ranges = (x_range, y_range, z_range)
         date_ranges = {
             i: limits[:2]
@@ -1242,7 +1249,7 @@ class ThreeDAxes(CartesianAxes):
             else np.asarray(F, float)
         )
         if samples.ndim != 3 or min(samples.shape) < 2:
-            raise ValueError("samples must have at least two values per axis")
+            raise ValueError("F must have at least two values per axis")
         spacing = [
             (r[1] - r[0]) / (n - 1) for r, n in zip(ranges, samples.shape, strict=True)
         ]
@@ -1254,6 +1261,8 @@ class ThreeDAxes(CartesianAxes):
             vertices[:, 1],
             vertices[:, 2],
             triangles=triangles,
+            _warn_empty=False,
+            _invalid_samples=not np.isfinite(samples).all(),
             colorscale=colorscale,
             colorscale_axis=colorscale_axis,
             vmin=vmin,
@@ -1295,7 +1304,16 @@ class ThreeDAxes(CartesianAxes):
         """
         from scipy.spatial import Delaunay  # type: ignore[import-untyped]
 
-        vertices = np.column_stack((x, y, z)).astype(float)
+        columns = [np.asarray(v, float) for v in (x, y, z)]
+        for name, column in zip("xyz", columns, strict=True):
+            if column.ndim != 1:
+                raise ValueError(f"{name} must be one-dimensional")
+            if len(column) != len(columns[0]):
+                raise ValueError(
+                    f"{name} length {len(column)} "
+                    f"differs from x length {len(columns[0])}"
+                )
+        vertices = np.column_stack(columns)
         indices = (
             Delaunay(vertices[:, :2]).simplices
             if triangles is None
@@ -1303,6 +1321,15 @@ class ThreeDAxes(CartesianAxes):
         )
         if indices.ndim != 2 or indices.shape[1] != 3:
             raise ValueError("triangles must have shape (k, 3)")
+        invalid = (
+            np.any((indices < 0) | (indices >= len(vertices)), axis=1)
+            | (indices[:, 0] == indices[:, 1])
+            | (indices[:, 1] == indices[:, 2])
+            | (indices[:, 0] == indices[:, 2])
+        )
+        if invalid.any():
+            i = np.flatnonzero(invalid)[0]
+            raise ValueError(f"triangles cell {i} has invalid corners")
         return SurfacePlot(
             self,
             lambda u, v: 0,
@@ -1517,7 +1544,7 @@ class ThreeDAxes(CartesianAxes):
         from manim_plots.mobjects.surfaces import _plane_trace, _slice_input
         from manim_plots.mobjects.system import Axes
 
-        index, value = _slice_input("slice_view", (x, y, plane))
+        index, value = _slice_input("slice_view", (x, y, plane), "xyp")
         if side not in ("right", "left", "up", "down"):
             raise ValueError("side must be right, left, up or down")
         if not isinstance(surface, SurfacePlot) or surface._kind != "height":

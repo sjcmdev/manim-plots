@@ -27,7 +27,7 @@ from manim_plots.mobjects.inset import InsetAxes
 from manim_plots.mobjects.leaves import Leaf
 from manim_plots.mobjects.legend import Legend
 
-from ._base import MappedPresentation, flags
+from ._base import MappedPresentation, check_lag, flags
 from ._spatial import _Spatial
 from .helpers import _Composition, _LiveFadeIn, _LiveFadeOut
 
@@ -55,6 +55,7 @@ class RevealLegend(_Composition, LaggedStart):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         rate = cast(Callable[[float], float], kwargs.pop("rate_func", linear))
         linked = list(artist_animations or [])
         self._linked = linked
@@ -158,6 +159,7 @@ class FillColorbar(_Composition):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         rate = cast(Callable[[float], float], kwargs.pop("rate_func", linear))
         self.bar = bar
         self._involved_system = bar
@@ -242,6 +244,7 @@ class OpenInset(AnimationGroup):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         self.inset = inset
         self._involved_system = inset
         options = dict(kwargs)

@@ -35,7 +35,15 @@ from manim_plots.mobjects.helpers import (
     _RiemannGroup,
 )
 
-from ._base import MappedPresentation, Presentation, flags, window
+from ._base import (
+    MappedPresentation,
+    Presentation,
+    check_direction,
+    check_lag,
+    check_order,
+    flags,
+    window,
+)
 
 
 class ExtendReference(MappedPresentation):
@@ -163,6 +171,7 @@ class SweepRegion(GrowRegion):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_direction(direction)
         if direction not in (-1, 1):
             raise ValueError("direction must be 1 or -1")
         if axis not in ("x", "y"):
@@ -235,6 +244,7 @@ class GrowRiemann(MappedPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         if not isinstance(rectangles, _RiemannGroup):
             raise TypeError("rectangles must be bound Riemann rectangles")
         self.rectangles, self.reverse = rectangles, reverse
@@ -280,6 +290,7 @@ class GrowErrorBars(MappedPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         if not isinstance(errors, ErrorBars):
             raise TypeError("errors must be ErrorBars")
         if not np.isfinite(cap_lag) or not 0 <= cap_lag <= 1:
@@ -464,6 +475,7 @@ class RevealAnnotation(_Composition):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         text = cast(Any, annotation).text
         arrow = cast(Any, annotation).arrow
         rate = cast(Callable[[float], float], kwargs.pop("rate_func", linear))
@@ -541,6 +553,7 @@ class RevealCrosshair(_Composition):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         cross = cast(Any, crosshair)
         rate = cast(Callable[[float], float], kwargs.pop("rate_func", linear))
         fade = _LiveFadeOut if reverse else _LiveFadeIn
@@ -591,6 +604,7 @@ class RefineRiemann(Presentation):
         order: str | Callable[[tuple[float, float]], Any] = "data",
         **kwargs: object,
     ) -> None:
+        check_order(order)
         if not isinstance(rectangles, _RiemannGroup):
             raise TypeError("rectangles must be bound Riemann rectangles")
         if not np.isfinite(dx) or dx <= 0:

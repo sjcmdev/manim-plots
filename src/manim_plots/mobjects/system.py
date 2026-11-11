@@ -378,9 +378,12 @@ class CartesianAxes(VGroup):
                 locators[i] = MultipleLocator(abs(factor) * ranges[i][2])
             else:
                 scale = scales[i]
-                lo, hi = scale.limit_range(
-                    float(ranges[i][0]), float(ranges[i][1]), MINPOS_UNKNOWN
-                )
+                try:
+                    lo, hi = scale.limit_range(
+                        float(ranges[i][0]), float(ranges[i][1]), MINPOS_UNKNOWN
+                    )
+                except ValueError as exc:
+                    raise ValueError(f"{'xy'[i]}_range: {exc}") from exc
                 ranges[i][:2] = [lo, hi]
                 if isinstance(scale, LogScale):
                     tick_base = scale.base if scale.base > 1 else 1 / scale.base
@@ -2313,7 +2316,7 @@ class CartesianAxes(VGroup):
 
         if len(self._ranges) == 3:
             raise NotImplementedError("plot_slice is unavailable on ThreeDAxes")
-        axis, value = _slice_input("plot_slice", (x, y, plane))
+        axis, value = _slice_input("plot_slice", (x, y, plane), "xyp")
         if not isinstance(surface, SurfacePlot) or surface._kind != "height":
             raise TypeError("plot_slice requires a surface from plot_surface")
         artist = (

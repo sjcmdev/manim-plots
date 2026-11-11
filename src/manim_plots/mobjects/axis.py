@@ -702,7 +702,10 @@ class Axis(VGroup):
         return result
 
     def _validate_range(self, value: ArrayLike) -> FloatArray:
-        limits = _scale_range(self._scale, value)
+        try:
+            limits = _scale_range(self._scale, value)
+        except ValueError as exc:
+            raise ValueError(f"{'xyz'[self.index]}_range: {exc}") from exc
         for secondary in self._secondaries:
             secondary._validate_functions(limits)
         return limits

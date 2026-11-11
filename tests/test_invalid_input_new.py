@@ -529,8 +529,9 @@ def test_ba3_invalid_bar_sample(method, bad):
             bars = getattr(ax, method)([0, 2], [1, bad])
         touch(bars)
     assert library(caught) == 1
-    assert bars[0].get_all_points().size
-    empty(bars[1])
+    parts = bars.bars if method == "bar3d" else bars  # BR-1: bar i is .bars[i]
+    assert parts[0].get_all_points().size
+    empty(parts[1])
     with counted() as caught:
         bars.set_color(RED)
         touch(bars)

@@ -13,6 +13,7 @@ from manim_plots.mobjects.artists import LinePlot
 from manim_plots.mobjects.helpers import FilledRegion
 from manim_plots.mobjects.statistics import BoxPlot, PieChart, ViolinPlot, _Wedge
 
+from ._base import check_lag
 from .bars import _ChartPresentation
 
 
@@ -58,6 +59,7 @@ class SweepPie(_PiePresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         self.pie = pie
         super().__init__(
             pie, lag_ratio=lag_ratio, reverse=reverse, remover=remover, **kwargs
@@ -212,6 +214,7 @@ class GrowBoxPlot(_ChartPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         if not np.isfinite(box_ratio) or not 0 < box_ratio < 1:
             raise ValueError("box_ratio must be strictly between zero and one")
         self.plot, self.box_ratio = plot, box_ratio
@@ -267,6 +270,7 @@ class UnfoldViolin(_ChartPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         if not np.isfinite(body_ratio) or not 0 < body_ratio < 1:
             raise ValueError("body_ratio must be strictly between zero and one")
         self.plot, self.body_ratio = plot, body_ratio

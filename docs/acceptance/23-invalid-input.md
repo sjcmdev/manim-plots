@@ -302,15 +302,16 @@ stairs supplied/required edge counts; silent empty append; nonnegative percent
 decimals; valid-only pie normalisation; all-false voxel warning; wrong-type animation
 choices distinguished from earlier invalid-value rows.
 
-Maintainer decisions needed before these oracles freeze:
+The maintainer's decisions, 2026-11-11 — each confirms the default and freezes its
+oracles:
 
-- Does “logit range outside (0,1)” override F-311 for *partial* overhang? The tests
-  preserve F-311 and test a wholly disjoint range; changing partial overhang needs an
-  explicit exception like polar PX-2 or 3D TF-4.
-- Confirm valid-only pie normalisation and one-dataset-per-box/violin masking. The
-  scope specifies sample masking but does not define aggregate statistical units.
-- Confirm the warning boundary for composite artists, and silent intentional masks.
-  Counting each internal leaf would conflict with the artist-level release rule.
+- A logit range that only partly leaves (0, 1) is clipped as F-311 says; only a range
+  wholly outside raises.
+- A pie normalises over its valid wedges; a box or violin is one statistical unit, so a
+  dataset with an invalid sample is hidden whole, with one warning.
+- A composite artist (bars, a heatmap, a box plot) warns once per data change, not once
+  per leaf; an intentional mask (`np.ma.masked`, `hist2d`'s `cmin` and `cmax`) is
+  silent.
 
 ## Local verification, 2026-11-08
 
@@ -423,3 +424,10 @@ All table rows were executed. Rendering, glyph appearance, the full existing sui
 the other three Python/Manim matrix cells were not checked; no row is skipped or xfailed.
 For rows with several assertions, execution stops at the first failure in that instance;
 a passing count never implies that later assertions in a failed instance ran.
+
+## Implementation, 2026-11-11
+
+All 87 rows pass: 272 of 272 cases. One oracle corrected at review: BA-3 addressed a
+`BarPlot3D`'s second bar as `bars[1]`; BR-1 makes it `bars.bars[1]`, the plot's own
+children being its `bars` group. Six existing tests that build invalid samples on
+purpose now ignore the warning they raise; this table's tests count it.

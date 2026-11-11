@@ -17,6 +17,7 @@ from manim import (
 
 from manim_plots.core import FloatArray
 
+from ._base import check_lag, check_order
 from ._spatial import _Spatial
 
 
@@ -104,6 +105,8 @@ class GrowField(_Spatial):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
+        check_order(order)
         if not callable(order) and order not in ("data", "x", "y", "z", "value"):
             raise ValueError("unknown field order")
         self.field, self.order = field, order

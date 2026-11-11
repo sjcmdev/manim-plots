@@ -243,6 +243,7 @@ def test_sf6_trisurf_with_given_triangles():
     )
 
 
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_sf7_non_finite_corners_make_holes():
     s = mp.ThreeDAxes().plot_surface(
         lambda u, v: np.where(u + v > 1, np.nan, 0 * u), (0, 1), (0, 1), resolution=4

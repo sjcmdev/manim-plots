@@ -16,7 +16,7 @@ from manim_plots.mobjects.plots3d import _BOX_FACES, VoxelPlot
 from manim_plots.mobjects.slice_view import SliceView
 from manim_plots.mobjects.surfaces import ContourPlot, SurfacePlot, _Face
 
-from ._base import MappedPresentation, Presentation, flags, window
+from ._base import MappedPresentation, Presentation, check_direction, flags, window
 
 
 class StackVoxels(MappedPresentation):
@@ -39,6 +39,7 @@ class StackVoxels(MappedPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_direction(direction)
         if not isinstance(voxels, VoxelPlot):
             raise TypeError("voxels must be a VoxelPlot")
         if axis not in ("x", "y", "z") or direction not in (-1, 1):
