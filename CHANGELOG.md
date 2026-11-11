@@ -92,6 +92,10 @@ tutorial and a gallery of eighteen example scenes, each in `examples/` with its 
   `ShrinkSurface`, `SweepSurface`, `RevealWireframe`, `RevealWaterfall`, `SweepPolar`,
   `OpenInset`, `CloseInset`; `RefineRiemann`, `RebinHistogram`, `StackVoxels`,
   `SweepIsovalue` and `SweepSlice`.
+- **Invalid input, one rule everywhere:** a wrong type raises `TypeError` and a
+  malformed value `ValueError`, naming the public parameter, the first invalid index
+  and both lengths of a mismatch; a non-finite data sample is not drawn and raises one
+  `ManimPlotsWarning` per artist per data change; an intentional mask is silent.
 - **Documentation and packaging:** a README with installation, a tutorial and a gallery
   of eighteen example scenes with their videos (`examples/`, rendered by
   `tools/examples.py`); Sphinx and numpydoc API documentation, a migration guide,
