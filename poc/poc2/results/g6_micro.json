@@ -1,0 +1,15 @@
+{
+  "copy_median_ms": 0.4369,
+  "copy_p95_ms": 0.5938049999999999,
+  "frame_comparison_ns": {
+    "9": 1308.3,
+    "17": 1633.34,
+    "33": 2818.83,
+    "65": 8151.81
+  },
+  "group_update_ns": {
+    "none": 2241.0,
+    "empty": 19247.5
+  },
+  "empty_updater_overhead_ns": 17006.5
+}

@@ -1,0 +1,4871 @@
+{
+  "machine": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+  "cpus": 24,
+  "python": "3.13.2",
+  "numpy": "2.5.2",
+  "manim": "0.21.0",
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 60,
+  "calls": 608,
+  "rendered_frames": 606,
+  "dirty_frames": 606,
+  "rebuild_median_ms": 2.7902,
+  "rebuild_p95_ms": 3.754375,
+  "comparison_p95_ms": 0.35895,
+  "comparison_calls_median": 60.0,
+  "passes_4ms": true,
+  "frames": [
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253000,
+      "compare_calls": 60,
+      "rebuild_ns": 2772100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253700,
+      "compare_calls": 60,
+      "rebuild_ns": 2781200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244700,
+      "compare_calls": 60,
+      "rebuild_ns": 2982800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 307100,
+      "compare_calls": 60,
+      "rebuild_ns": 3208800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243000,
+      "compare_calls": 60,
+      "rebuild_ns": 2864700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248100,
+      "compare_calls": 60,
+      "rebuild_ns": 2905800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254100,
+      "compare_calls": 60,
+      "rebuild_ns": 3445400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 2780200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243000,
+      "compare_calls": 60,
+      "rebuild_ns": 2617800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253300,
+      "compare_calls": 60,
+      "rebuild_ns": 2641200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249100,
+      "compare_calls": 60,
+      "rebuild_ns": 2815900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 270900,
+      "compare_calls": 60,
+      "rebuild_ns": 3355100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260100,
+      "compare_calls": 60,
+      "rebuild_ns": 3001900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248200,
+      "compare_calls": 60,
+      "rebuild_ns": 2878700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264700,
+      "compare_calls": 60,
+      "rebuild_ns": 2790800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243800,
+      "compare_calls": 60,
+      "rebuild_ns": 2795900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 293900,
+      "compare_calls": 60,
+      "rebuild_ns": 3223100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 299000,
+      "compare_calls": 60,
+      "rebuild_ns": 3420600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253300,
+      "compare_calls": 60,
+      "rebuild_ns": 3130400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250500,
+      "compare_calls": 60,
+      "rebuild_ns": 3113400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252500,
+      "compare_calls": 60,
+      "rebuild_ns": 3077900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235600,
+      "compare_calls": 60,
+      "rebuild_ns": 2688200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246500,
+      "compare_calls": 60,
+      "rebuild_ns": 2902900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240200,
+      "compare_calls": 60,
+      "rebuild_ns": 2700000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249500,
+      "compare_calls": 60,
+      "rebuild_ns": 2967500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 275500,
+      "compare_calls": 60,
+      "rebuild_ns": 2915700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 416600,
+      "compare_calls": 60,
+      "rebuild_ns": 2644100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247600,
+      "compare_calls": 60,
+      "rebuild_ns": 2834800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228700,
+      "compare_calls": 60,
+      "rebuild_ns": 2847200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 291600,
+      "compare_calls": 60,
+      "rebuild_ns": 2968800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 418600,
+      "compare_calls": 60,
+      "rebuild_ns": 3783000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240800,
+      "compare_calls": 60,
+      "rebuild_ns": 2544100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244700,
+      "compare_calls": 60,
+      "rebuild_ns": 2599800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260000,
+      "compare_calls": 60,
+      "rebuild_ns": 2905300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 276300,
+      "compare_calls": 60,
+      "rebuild_ns": 2733500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250200,
+      "compare_calls": 60,
+      "rebuild_ns": 2910600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243500,
+      "compare_calls": 60,
+      "rebuild_ns": 2748100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 257100,
+      "compare_calls": 60,
+      "rebuild_ns": 3025600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237500,
+      "compare_calls": 60,
+      "rebuild_ns": 2847000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 317300,
+      "compare_calls": 60,
+      "rebuild_ns": 3096700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 259700,
+      "compare_calls": 60,
+      "rebuild_ns": 2783300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256800,
+      "compare_calls": 60,
+      "rebuild_ns": 3017600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235900,
+      "compare_calls": 60,
+      "rebuild_ns": 2834900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243500,
+      "compare_calls": 60,
+      "rebuild_ns": 3509100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242700,
+      "compare_calls": 60,
+      "rebuild_ns": 3289200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264100,
+      "compare_calls": 60,
+      "rebuild_ns": 2956800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 305200,
+      "compare_calls": 60,
+      "rebuild_ns": 2683900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 287300,
+      "compare_calls": 60,
+      "rebuild_ns": 3282200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249300,
+      "compare_calls": 60,
+      "rebuild_ns": 2895800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228100,
+      "compare_calls": 60,
+      "rebuild_ns": 2949300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237700,
+      "compare_calls": 60,
+      "rebuild_ns": 3309900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 281100,
+      "compare_calls": 60,
+      "rebuild_ns": 3234700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 267600,
+      "compare_calls": 60,
+      "rebuild_ns": 3511700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245600,
+      "compare_calls": 60,
+      "rebuild_ns": 2589900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 464700,
+      "compare_calls": 60,
+      "rebuild_ns": 2861600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 319400,
+      "compare_calls": 60,
+      "rebuild_ns": 3228300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249600,
+      "compare_calls": 60,
+      "rebuild_ns": 2837000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 229400,
+      "compare_calls": 60,
+      "rebuild_ns": 2765100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249800,
+      "compare_calls": 60,
+      "rebuild_ns": 2771600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249800,
+      "compare_calls": 60,
+      "rebuild_ns": 2685000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240700,
+      "compare_calls": 60,
+      "rebuild_ns": 2836400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 371300,
+      "compare_calls": 60,
+      "rebuild_ns": 3715400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255500,
+      "compare_calls": 60,
+      "rebuild_ns": 3135000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249100,
+      "compare_calls": 60,
+      "rebuild_ns": 2756700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 257800,
+      "compare_calls": 60,
+      "rebuild_ns": 2837000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252300,
+      "compare_calls": 60,
+      "rebuild_ns": 2784100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237600,
+      "compare_calls": 60,
+      "rebuild_ns": 2655400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252200,
+      "compare_calls": 60,
+      "rebuild_ns": 2687300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237600,
+      "compare_calls": 60,
+      "rebuild_ns": 2536000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 292700,
+      "compare_calls": 60,
+      "rebuild_ns": 2624300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256600,
+      "compare_calls": 60,
+      "rebuild_ns": 2896400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 267000,
+      "compare_calls": 60,
+      "rebuild_ns": 2844500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269200,
+      "compare_calls": 60,
+      "rebuild_ns": 2987100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 333200,
+      "compare_calls": 60,
+      "rebuild_ns": 3097800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 272800,
+      "compare_calls": 60,
+      "rebuild_ns": 3273400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 277800,
+      "compare_calls": 60,
+      "rebuild_ns": 3308100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 268600,
+      "compare_calls": 60,
+      "rebuild_ns": 2893500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249500,
+      "compare_calls": 60,
+      "rebuild_ns": 2708500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248800,
+      "compare_calls": 60,
+      "rebuild_ns": 2667300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 281700,
+      "compare_calls": 60,
+      "rebuild_ns": 2831000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 271600,
+      "compare_calls": 60,
+      "rebuild_ns": 2805600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269900,
+      "compare_calls": 60,
+      "rebuild_ns": 3088200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264700,
+      "compare_calls": 60,
+      "rebuild_ns": 2735400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247100,
+      "compare_calls": 60,
+      "rebuild_ns": 2830100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269000,
+      "compare_calls": 60,
+      "rebuild_ns": 2576000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249900,
+      "compare_calls": 60,
+      "rebuild_ns": 2798700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 449600,
+      "compare_calls": 60,
+      "rebuild_ns": 3680300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 2673900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 241600,
+      "compare_calls": 60,
+      "rebuild_ns": 3139700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242300,
+      "compare_calls": 60,
+      "rebuild_ns": 2623100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260100,
+      "compare_calls": 60,
+      "rebuild_ns": 2615100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245500,
+      "compare_calls": 60,
+      "rebuild_ns": 2661600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 442800,
+      "compare_calls": 60,
+      "rebuild_ns": 2870200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 284300,
+      "compare_calls": 60,
+      "rebuild_ns": 2945500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 354900,
+      "compare_calls": 60,
+      "rebuild_ns": 4298100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237400,
+      "compare_calls": 60,
+      "rebuild_ns": 2650500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 302500,
+      "compare_calls": 60,
+      "rebuild_ns": 2773600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 230800,
+      "compare_calls": 60,
+      "rebuild_ns": 2747100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234400,
+      "compare_calls": 60,
+      "rebuild_ns": 2632300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264200,
+      "compare_calls": 60,
+      "rebuild_ns": 2802300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234200,
+      "compare_calls": 60,
+      "rebuild_ns": 2772200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 356700,
+      "compare_calls": 60,
+      "rebuild_ns": 4323900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 347300,
+      "compare_calls": 60,
+      "rebuild_ns": 2899500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237300,
+      "compare_calls": 60,
+      "rebuild_ns": 2699700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 282000,
+      "compare_calls": 60,
+      "rebuild_ns": 3200200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 294800,
+      "compare_calls": 60,
+      "rebuild_ns": 2770700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 263800,
+      "compare_calls": 60,
+      "rebuild_ns": 2815500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 262500,
+      "compare_calls": 60,
+      "rebuild_ns": 3321400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 261700,
+      "compare_calls": 60,
+      "rebuild_ns": 3157100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237200,
+      "compare_calls": 60,
+      "rebuild_ns": 2894300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 227500,
+      "compare_calls": 60,
+      "rebuild_ns": 2930800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249000,
+      "compare_calls": 60,
+      "rebuild_ns": 3352400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 266500,
+      "compare_calls": 60,
+      "rebuild_ns": 2635700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246700,
+      "compare_calls": 60,
+      "rebuild_ns": 2596200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246700,
+      "compare_calls": 60,
+      "rebuild_ns": 2579300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238900,
+      "compare_calls": 60,
+      "rebuild_ns": 2642000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 317500,
+      "compare_calls": 60,
+      "rebuild_ns": 3077600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237000,
+      "compare_calls": 60,
+      "rebuild_ns": 2612700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239600,
+      "compare_calls": 60,
+      "rebuild_ns": 2673600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 348700,
+      "compare_calls": 60,
+      "rebuild_ns": 3922100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 280700,
+      "compare_calls": 60,
+      "rebuild_ns": 3252400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253700,
+      "compare_calls": 60,
+      "rebuild_ns": 2827800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255300,
+      "compare_calls": 60,
+      "rebuild_ns": 2706200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 280600,
+      "compare_calls": 60,
+      "rebuild_ns": 2982700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 272700,
+      "compare_calls": 60,
+      "rebuild_ns": 2638100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 379700,
+      "compare_calls": 60,
+      "rebuild_ns": 4304000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247200,
+      "compare_calls": 60,
+      "rebuild_ns": 3264300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247700,
+      "compare_calls": 60,
+      "rebuild_ns": 2608800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 359200,
+      "compare_calls": 60,
+      "rebuild_ns": 3190100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249500,
+      "compare_calls": 60,
+      "rebuild_ns": 2742500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237400,
+      "compare_calls": 60,
+      "rebuild_ns": 2576300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237900,
+      "compare_calls": 60,
+      "rebuild_ns": 2546400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 224500,
+      "compare_calls": 60,
+      "rebuild_ns": 2589300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 230500,
+      "compare_calls": 60,
+      "rebuild_ns": 2805300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 463300,
+      "compare_calls": 60,
+      "rebuild_ns": 2782600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 241900,
+      "compare_calls": 60,
+      "rebuild_ns": 2626600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 259300,
+      "compare_calls": 60,
+      "rebuild_ns": 2901300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 241000,
+      "compare_calls": 60,
+      "rebuild_ns": 2610600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254900,
+      "compare_calls": 60,
+      "rebuild_ns": 2781200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228200,
+      "compare_calls": 60,
+      "rebuild_ns": 2715200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242300,
+      "compare_calls": 60,
+      "rebuild_ns": 2617900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240200,
+      "compare_calls": 60,
+      "rebuild_ns": 2814500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256100,
+      "compare_calls": 60,
+      "rebuild_ns": 2872900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 369100,
+      "compare_calls": 60,
+      "rebuild_ns": 3288600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252000,
+      "compare_calls": 60,
+      "rebuild_ns": 3075800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269600,
+      "compare_calls": 60,
+      "rebuild_ns": 3103200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234300,
+      "compare_calls": 60,
+      "rebuild_ns": 2710700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239700,
+      "compare_calls": 60,
+      "rebuild_ns": 2982100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245900,
+      "compare_calls": 60,
+      "rebuild_ns": 2564700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264200,
+      "compare_calls": 60,
+      "rebuild_ns": 3096900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 270200,
+      "compare_calls": 60,
+      "rebuild_ns": 3332300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269000,
+      "compare_calls": 60,
+      "rebuild_ns": 2690200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245400,
+      "compare_calls": 60,
+      "rebuild_ns": 3117700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228000,
+      "compare_calls": 60,
+      "rebuild_ns": 2658000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 233900,
+      "compare_calls": 60,
+      "rebuild_ns": 2615800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245100,
+      "compare_calls": 60,
+      "rebuild_ns": 2920500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 289900,
+      "compare_calls": 60,
+      "rebuild_ns": 2946100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260500,
+      "compare_calls": 60,
+      "rebuild_ns": 3054500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264700,
+      "compare_calls": 60,
+      "rebuild_ns": 3098200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 356500,
+      "compare_calls": 60,
+      "rebuild_ns": 3292500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 391400,
+      "compare_calls": 60,
+      "rebuild_ns": 4109200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 296000,
+      "compare_calls": 60,
+      "rebuild_ns": 2875500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 348000,
+      "compare_calls": 60,
+      "rebuild_ns": 4218700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 233500,
+      "compare_calls": 60,
+      "rebuild_ns": 2808900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 292200,
+      "compare_calls": 60,
+      "rebuild_ns": 2620100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 295400,
+      "compare_calls": 60,
+      "rebuild_ns": 2830500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237400,
+      "compare_calls": 60,
+      "rebuild_ns": 3110100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 275900,
+      "compare_calls": 60,
+      "rebuild_ns": 2670800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250400,
+      "compare_calls": 60,
+      "rebuild_ns": 2960100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253800,
+      "compare_calls": 60,
+      "rebuild_ns": 3146400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260500,
+      "compare_calls": 60,
+      "rebuild_ns": 2830800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 267100,
+      "compare_calls": 60,
+      "rebuild_ns": 3156100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245700,
+      "compare_calls": 60,
+      "rebuild_ns": 3251200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 251400,
+      "compare_calls": 60,
+      "rebuild_ns": 3121900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246400,
+      "compare_calls": 60,
+      "rebuild_ns": 2704800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264000,
+      "compare_calls": 60,
+      "rebuild_ns": 2662900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264200,
+      "compare_calls": 60,
+      "rebuild_ns": 2883100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248600,
+      "compare_calls": 60,
+      "rebuild_ns": 2584700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245100,
+      "compare_calls": 60,
+      "rebuild_ns": 2875000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 276500,
+      "compare_calls": 60,
+      "rebuild_ns": 2730100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 232000,
+      "compare_calls": 60,
+      "rebuild_ns": 2708500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 546600,
+      "compare_calls": 60,
+      "rebuild_ns": 2713800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243300,
+      "compare_calls": 60,
+      "rebuild_ns": 2672400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 296000,
+      "compare_calls": 60,
+      "rebuild_ns": 3213000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 314200,
+      "compare_calls": 60,
+      "rebuild_ns": 3117700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 356900,
+      "compare_calls": 60,
+      "rebuild_ns": 3788700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240100,
+      "compare_calls": 60,
+      "rebuild_ns": 3065200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 290800,
+      "compare_calls": 60,
+      "rebuild_ns": 2633700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 278900,
+      "compare_calls": 60,
+      "rebuild_ns": 4244100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254400,
+      "compare_calls": 60,
+      "rebuild_ns": 3215700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 461700,
+      "compare_calls": 60,
+      "rebuild_ns": 3276900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 275400,
+      "compare_calls": 60,
+      "rebuild_ns": 2806900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240900,
+      "compare_calls": 60,
+      "rebuild_ns": 2741400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245200,
+      "compare_calls": 60,
+      "rebuild_ns": 2637000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 324900,
+      "compare_calls": 60,
+      "rebuild_ns": 2916500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 338600,
+      "compare_calls": 60,
+      "rebuild_ns": 3677700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253300,
+      "compare_calls": 60,
+      "rebuild_ns": 2714100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249100,
+      "compare_calls": 60,
+      "rebuild_ns": 2682600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 271600,
+      "compare_calls": 60,
+      "rebuild_ns": 2645500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 302500,
+      "compare_calls": 60,
+      "rebuild_ns": 3055400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 295200,
+      "compare_calls": 60,
+      "rebuild_ns": 3012000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231400,
+      "compare_calls": 60,
+      "rebuild_ns": 2739200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 309600,
+      "compare_calls": 60,
+      "rebuild_ns": 3054700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247300,
+      "compare_calls": 60,
+      "rebuild_ns": 2678400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256200,
+      "compare_calls": 60,
+      "rebuild_ns": 2817900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242200,
+      "compare_calls": 60,
+      "rebuild_ns": 2896200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231300,
+      "compare_calls": 60,
+      "rebuild_ns": 2603300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 268900,
+      "compare_calls": 60,
+      "rebuild_ns": 2806000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239800,
+      "compare_calls": 60,
+      "rebuild_ns": 2658300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 270500,
+      "compare_calls": 60,
+      "rebuild_ns": 3232700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 274400,
+      "compare_calls": 60,
+      "rebuild_ns": 3544900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269700,
+      "compare_calls": 60,
+      "rebuild_ns": 2948800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 274200,
+      "compare_calls": 60,
+      "rebuild_ns": 3745300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 303100,
+      "compare_calls": 60,
+      "rebuild_ns": 3757400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 306400,
+      "compare_calls": 60,
+      "rebuild_ns": 3388600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237100,
+      "compare_calls": 60,
+      "rebuild_ns": 3045200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 428300,
+      "compare_calls": 60,
+      "rebuild_ns": 2544200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 335000,
+      "compare_calls": 60,
+      "rebuild_ns": 2822800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255000,
+      "compare_calls": 60,
+      "rebuild_ns": 2621900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248200,
+      "compare_calls": 60,
+      "rebuild_ns": 2646700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 312500,
+      "compare_calls": 60,
+      "rebuild_ns": 2619500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 334000,
+      "compare_calls": 60,
+      "rebuild_ns": 4011200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248300,
+      "compare_calls": 60,
+      "rebuild_ns": 2556300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 267400,
+      "compare_calls": 60,
+      "rebuild_ns": 2690200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 261500,
+      "compare_calls": 60,
+      "rebuild_ns": 2748200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 304600,
+      "compare_calls": 60,
+      "rebuild_ns": 3111800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242300,
+      "compare_calls": 60,
+      "rebuild_ns": 2780200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 265300,
+      "compare_calls": 60,
+      "rebuild_ns": 2732200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235100,
+      "compare_calls": 60,
+      "rebuild_ns": 2734200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 346200,
+      "compare_calls": 60,
+      "rebuild_ns": 3086100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243300,
+      "compare_calls": 60,
+      "rebuild_ns": 2744900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231300,
+      "compare_calls": 60,
+      "rebuild_ns": 2741700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 289600,
+      "compare_calls": 60,
+      "rebuild_ns": 3278300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246300,
+      "compare_calls": 60,
+      "rebuild_ns": 3114400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 270000,
+      "compare_calls": 60,
+      "rebuild_ns": 3036700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 342700,
+      "compare_calls": 60,
+      "rebuild_ns": 3417400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242500,
+      "compare_calls": 60,
+      "rebuild_ns": 2599200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 351200,
+      "compare_calls": 60,
+      "rebuild_ns": 4062400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 291800,
+      "compare_calls": 60,
+      "rebuild_ns": 3172000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 597900,
+      "compare_calls": 60,
+      "rebuild_ns": 3705200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254100,
+      "compare_calls": 60,
+      "rebuild_ns": 2662700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248500,
+      "compare_calls": 60,
+      "rebuild_ns": 2624500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231500,
+      "compare_calls": 60,
+      "rebuild_ns": 2647900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235400,
+      "compare_calls": 60,
+      "rebuild_ns": 2696000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 290600,
+      "compare_calls": 60,
+      "rebuild_ns": 2715300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255200,
+      "compare_calls": 60,
+      "rebuild_ns": 2973800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 259200,
+      "compare_calls": 60,
+      "rebuild_ns": 2720600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254800,
+      "compare_calls": 60,
+      "rebuild_ns": 2880000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 229500,
+      "compare_calls": 60,
+      "rebuild_ns": 2650000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254100,
+      "compare_calls": 60,
+      "rebuild_ns": 2935700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245000,
+      "compare_calls": 60,
+      "rebuild_ns": 2852800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 519900,
+      "compare_calls": 60,
+      "rebuild_ns": 3081900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 380300,
+      "compare_calls": 60,
+      "rebuild_ns": 2753000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 300600,
+      "compare_calls": 60,
+      "rebuild_ns": 3088600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 335100,
+      "compare_calls": 60,
+      "rebuild_ns": 2729500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245200,
+      "compare_calls": 60,
+      "rebuild_ns": 3712900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231700,
+      "compare_calls": 60,
+      "rebuild_ns": 2570600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 306800,
+      "compare_calls": 60,
+      "rebuild_ns": 2655000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234800,
+      "compare_calls": 60,
+      "rebuild_ns": 2672400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249400,
+      "compare_calls": 60,
+      "rebuild_ns": 2705900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260200,
+      "compare_calls": 60,
+      "rebuild_ns": 3019200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242500,
+      "compare_calls": 60,
+      "rebuild_ns": 2632900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252500,
+      "compare_calls": 60,
+      "rebuild_ns": 2612600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237700,
+      "compare_calls": 60,
+      "rebuild_ns": 2678800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 280700,
+      "compare_calls": 60,
+      "rebuild_ns": 2730000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 233400,
+      "compare_calls": 60,
+      "rebuild_ns": 2727600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 251500,
+      "compare_calls": 60,
+      "rebuild_ns": 2764100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 267000,
+      "compare_calls": 60,
+      "rebuild_ns": 3296700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 292700,
+      "compare_calls": 60,
+      "rebuild_ns": 3393900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253900,
+      "compare_calls": 60,
+      "rebuild_ns": 2868200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 327200,
+      "compare_calls": 60,
+      "rebuild_ns": 3163300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242500,
+      "compare_calls": 60,
+      "rebuild_ns": 3106100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238900,
+      "compare_calls": 60,
+      "rebuild_ns": 3102800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246300,
+      "compare_calls": 60,
+      "rebuild_ns": 2542500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249700,
+      "compare_calls": 60,
+      "rebuild_ns": 2608700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 358200,
+      "compare_calls": 60,
+      "rebuild_ns": 4153200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252200,
+      "compare_calls": 60,
+      "rebuild_ns": 2615200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240000,
+      "compare_calls": 60,
+      "rebuild_ns": 2604700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245900,
+      "compare_calls": 60,
+      "rebuild_ns": 2918000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 236100,
+      "compare_calls": 60,
+      "rebuild_ns": 2698300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243500,
+      "compare_calls": 60,
+      "rebuild_ns": 2679300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 271200,
+      "compare_calls": 60,
+      "rebuild_ns": 2677600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238900,
+      "compare_calls": 60,
+      "rebuild_ns": 2825700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250000,
+      "compare_calls": 60,
+      "rebuild_ns": 3096400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 257700,
+      "compare_calls": 60,
+      "rebuild_ns": 3332100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244500,
+      "compare_calls": 60,
+      "rebuild_ns": 3189500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243300,
+      "compare_calls": 60,
+      "rebuild_ns": 2514500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 273200,
+      "compare_calls": 60,
+      "rebuild_ns": 2636600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250600,
+      "compare_calls": 60,
+      "rebuild_ns": 2597000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254800,
+      "compare_calls": 60,
+      "rebuild_ns": 2662100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247800,
+      "compare_calls": 60,
+      "rebuild_ns": 2997000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245800,
+      "compare_calls": 60,
+      "rebuild_ns": 2739400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239100,
+      "compare_calls": 60,
+      "rebuild_ns": 2569300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 283100,
+      "compare_calls": 60,
+      "rebuild_ns": 2667000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 355600,
+      "compare_calls": 60,
+      "rebuild_ns": 3964300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248400,
+      "compare_calls": 60,
+      "rebuild_ns": 2661800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269900,
+      "compare_calls": 60,
+      "rebuild_ns": 3235200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247500,
+      "compare_calls": 60,
+      "rebuild_ns": 2742300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 229700,
+      "compare_calls": 60,
+      "rebuild_ns": 2715400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250300,
+      "compare_calls": 60,
+      "rebuild_ns": 2896100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260300,
+      "compare_calls": 60,
+      "rebuild_ns": 2812000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248300,
+      "compare_calls": 60,
+      "rebuild_ns": 2832800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234300,
+      "compare_calls": 60,
+      "rebuild_ns": 3051800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 338300,
+      "compare_calls": 60,
+      "rebuild_ns": 2797400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 265900,
+      "compare_calls": 60,
+      "rebuild_ns": 3249300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247700,
+      "compare_calls": 60,
+      "rebuild_ns": 2650800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246800,
+      "compare_calls": 60,
+      "rebuild_ns": 2629600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 284900,
+      "compare_calls": 60,
+      "rebuild_ns": 3246100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250200,
+      "compare_calls": 60,
+      "rebuild_ns": 2661900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 251200,
+      "compare_calls": 60,
+      "rebuild_ns": 2751200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238500,
+      "compare_calls": 60,
+      "rebuild_ns": 2948800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 263700,
+      "compare_calls": 60,
+      "rebuild_ns": 2791700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 282200,
+      "compare_calls": 60,
+      "rebuild_ns": 2756800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269600,
+      "compare_calls": 60,
+      "rebuild_ns": 2770000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 442000,
+      "compare_calls": 60,
+      "rebuild_ns": 2721100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242300,
+      "compare_calls": 60,
+      "rebuild_ns": 2919600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242100,
+      "compare_calls": 60,
+      "rebuild_ns": 2776700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255500,
+      "compare_calls": 60,
+      "rebuild_ns": 3104700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 624700,
+      "compare_calls": 60,
+      "rebuild_ns": 5842700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228600,
+      "compare_calls": 60,
+      "rebuild_ns": 2616800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 232300,
+      "compare_calls": 60,
+      "rebuild_ns": 2585000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242400,
+      "compare_calls": 60,
+      "rebuild_ns": 2527100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256700,
+      "compare_calls": 60,
+      "rebuild_ns": 3938500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 265300,
+      "compare_calls": 60,
+      "rebuild_ns": 3045300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 530400,
+      "compare_calls": 60,
+      "rebuild_ns": 2660700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254300,
+      "compare_calls": 60,
+      "rebuild_ns": 2625500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264400,
+      "compare_calls": 60,
+      "rebuild_ns": 3097300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235300,
+      "compare_calls": 60,
+      "rebuild_ns": 2671600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254000,
+      "compare_calls": 60,
+      "rebuild_ns": 2600000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 232800,
+      "compare_calls": 60,
+      "rebuild_ns": 2621400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 276000,
+      "compare_calls": 60,
+      "rebuild_ns": 2656700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264900,
+      "compare_calls": 60,
+      "rebuild_ns": 2734800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245400,
+      "compare_calls": 60,
+      "rebuild_ns": 2666800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246100,
+      "compare_calls": 60,
+      "rebuild_ns": 2750700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243200,
+      "compare_calls": 60,
+      "rebuild_ns": 3104000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 259100,
+      "compare_calls": 60,
+      "rebuild_ns": 2756900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 232700,
+      "compare_calls": 60,
+      "rebuild_ns": 2857300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 292300,
+      "compare_calls": 60,
+      "rebuild_ns": 3513900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 329400,
+      "compare_calls": 60,
+      "rebuild_ns": 3076500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 421400,
+      "compare_calls": 60,
+      "rebuild_ns": 4082800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 271400,
+      "compare_calls": 60,
+      "rebuild_ns": 2909900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 314900,
+      "compare_calls": 60,
+      "rebuild_ns": 3309700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237000,
+      "compare_calls": 60,
+      "rebuild_ns": 2650400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260000,
+      "compare_calls": 60,
+      "rebuild_ns": 3091200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 259600,
+      "compare_calls": 60,
+      "rebuild_ns": 2628400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 334600,
+      "compare_calls": 60,
+      "rebuild_ns": 3074600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238300,
+      "compare_calls": 60,
+      "rebuild_ns": 2722000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228000,
+      "compare_calls": 60,
+      "rebuild_ns": 2663000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242700,
+      "compare_calls": 60,
+      "rebuild_ns": 2601800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 276500,
+      "compare_calls": 60,
+      "rebuild_ns": 2867400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250100,
+      "compare_calls": 60,
+      "rebuild_ns": 2717300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231700,
+      "compare_calls": 60,
+      "rebuild_ns": 2665700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256700,
+      "compare_calls": 60,
+      "rebuild_ns": 2881700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245700,
+      "compare_calls": 60,
+      "rebuild_ns": 3168500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 233900,
+      "compare_calls": 60,
+      "rebuild_ns": 2525400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255300,
+      "compare_calls": 60,
+      "rebuild_ns": 2603800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245400,
+      "compare_calls": 60,
+      "rebuild_ns": 2586600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 227700,
+      "compare_calls": 60,
+      "rebuild_ns": 2582100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238600,
+      "compare_calls": 60,
+      "rebuild_ns": 2670500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 284400,
+      "compare_calls": 60,
+      "rebuild_ns": 2827200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 368400,
+      "compare_calls": 60,
+      "rebuild_ns": 4139800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244000,
+      "compare_calls": 60,
+      "rebuild_ns": 2696600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249300,
+      "compare_calls": 60,
+      "rebuild_ns": 2700900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243900,
+      "compare_calls": 60,
+      "rebuild_ns": 2710400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264700,
+      "compare_calls": 60,
+      "rebuild_ns": 2595200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 354700,
+      "compare_calls": 60,
+      "rebuild_ns": 3049500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 262600,
+      "compare_calls": 60,
+      "rebuild_ns": 2861800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 262500,
+      "compare_calls": 60,
+      "rebuild_ns": 2575000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 302900,
+      "compare_calls": 60,
+      "rebuild_ns": 2659500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 342300,
+      "compare_calls": 60,
+      "rebuild_ns": 3132900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 241300,
+      "compare_calls": 60,
+      "rebuild_ns": 2742600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240000,
+      "compare_calls": 60,
+      "rebuild_ns": 2992000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 299300,
+      "compare_calls": 60,
+      "rebuild_ns": 3076700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 348200,
+      "compare_calls": 60,
+      "rebuild_ns": 3711000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 230300,
+      "compare_calls": 60,
+      "rebuild_ns": 2726900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247500,
+      "compare_calls": 60,
+      "rebuild_ns": 2677500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 329900,
+      "compare_calls": 60,
+      "rebuild_ns": 2951900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249100,
+      "compare_calls": 60,
+      "rebuild_ns": 2894400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255100,
+      "compare_calls": 60,
+      "rebuild_ns": 3630600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 286900,
+      "compare_calls": 60,
+      "rebuild_ns": 2696600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 276900,
+      "compare_calls": 60,
+      "rebuild_ns": 3868700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 262300,
+      "compare_calls": 60,
+      "rebuild_ns": 2619400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 258000,
+      "compare_calls": 60,
+      "rebuild_ns": 3189700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243800,
+      "compare_calls": 60,
+      "rebuild_ns": 2585400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231600,
+      "compare_calls": 60,
+      "rebuild_ns": 2647700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234200,
+      "compare_calls": 60,
+      "rebuild_ns": 2662000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 246500,
+      "compare_calls": 60,
+      "rebuild_ns": 2698500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245500,
+      "compare_calls": 60,
+      "rebuild_ns": 2688300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 286000,
+      "compare_calls": 60,
+      "rebuild_ns": 3084500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256300,
+      "compare_calls": 60,
+      "rebuild_ns": 2817700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 324900,
+      "compare_calls": 60,
+      "rebuild_ns": 2704300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239900,
+      "compare_calls": 60,
+      "rebuild_ns": 2748700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 312200,
+      "compare_calls": 60,
+      "rebuild_ns": 3569200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244100,
+      "compare_calls": 60,
+      "rebuild_ns": 2915700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243800,
+      "compare_calls": 60,
+      "rebuild_ns": 3232300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248000,
+      "compare_calls": 60,
+      "rebuild_ns": 2656100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235100,
+      "compare_calls": 60,
+      "rebuild_ns": 2627700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 279200,
+      "compare_calls": 60,
+      "rebuild_ns": 2666900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243400,
+      "compare_calls": 60,
+      "rebuild_ns": 2653200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 355100,
+      "compare_calls": 60,
+      "rebuild_ns": 3813400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 287400,
+      "compare_calls": 60,
+      "rebuild_ns": 2658200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 368600,
+      "compare_calls": 60,
+      "rebuild_ns": 4115800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 278100,
+      "compare_calls": 60,
+      "rebuild_ns": 2764400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 257300,
+      "compare_calls": 60,
+      "rebuild_ns": 2683800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 257200,
+      "compare_calls": 60,
+      "rebuild_ns": 2983700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239600,
+      "compare_calls": 60,
+      "rebuild_ns": 2691400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245500,
+      "compare_calls": 60,
+      "rebuild_ns": 2807100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 261700,
+      "compare_calls": 60,
+      "rebuild_ns": 2817200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256300,
+      "compare_calls": 60,
+      "rebuild_ns": 2608800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 263100,
+      "compare_calls": 60,
+      "rebuild_ns": 2797400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244300,
+      "compare_calls": 60,
+      "rebuild_ns": 3154900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 258400,
+      "compare_calls": 60,
+      "rebuild_ns": 3126400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 236100,
+      "compare_calls": 60,
+      "rebuild_ns": 2794800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256900,
+      "compare_calls": 60,
+      "rebuild_ns": 2622700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 596600,
+      "compare_calls": 60,
+      "rebuild_ns": 3600500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 299500,
+      "compare_calls": 60,
+      "rebuild_ns": 3240600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249700,
+      "compare_calls": 60,
+      "rebuild_ns": 3628600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245400,
+      "compare_calls": 60,
+      "rebuild_ns": 2563200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 233600,
+      "compare_calls": 60,
+      "rebuild_ns": 2554900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235900,
+      "compare_calls": 60,
+      "rebuild_ns": 2805200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 279500,
+      "compare_calls": 60,
+      "rebuild_ns": 2677200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 263300,
+      "compare_calls": 60,
+      "rebuild_ns": 2851300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 262500,
+      "compare_calls": 60,
+      "rebuild_ns": 2882200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 261200,
+      "compare_calls": 60,
+      "rebuild_ns": 2630600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 259900,
+      "compare_calls": 60,
+      "rebuild_ns": 3012500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 270700,
+      "compare_calls": 60,
+      "rebuild_ns": 3230300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239300,
+      "compare_calls": 60,
+      "rebuild_ns": 2693100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 266700,
+      "compare_calls": 60,
+      "rebuild_ns": 2769100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 2652800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 278300,
+      "compare_calls": 60,
+      "rebuild_ns": 2628600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 371000,
+      "compare_calls": 60,
+      "rebuild_ns": 3928000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 300300,
+      "compare_calls": 60,
+      "rebuild_ns": 2923800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 317300,
+      "compare_calls": 60,
+      "rebuild_ns": 2969900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 303300,
+      "compare_calls": 60,
+      "rebuild_ns": 2713400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 266700,
+      "compare_calls": 60,
+      "rebuild_ns": 2672800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 282900,
+      "compare_calls": 60,
+      "rebuild_ns": 2607800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 353500,
+      "compare_calls": 60,
+      "rebuild_ns": 4091700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238800,
+      "compare_calls": 60,
+      "rebuild_ns": 2689100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253600,
+      "compare_calls": 60,
+      "rebuild_ns": 2614200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 262500,
+      "compare_calls": 60,
+      "rebuild_ns": 2652100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243600,
+      "compare_calls": 60,
+      "rebuild_ns": 2687500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 341200,
+      "compare_calls": 60,
+      "rebuild_ns": 2738400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240600,
+      "compare_calls": 60,
+      "rebuild_ns": 2738800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269000,
+      "compare_calls": 60,
+      "rebuild_ns": 2711800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 251900,
+      "compare_calls": 60,
+      "rebuild_ns": 2929000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254600,
+      "compare_calls": 60,
+      "rebuild_ns": 2650500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 2633400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 309800,
+      "compare_calls": 60,
+      "rebuild_ns": 3938100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 262100,
+      "compare_calls": 60,
+      "rebuild_ns": 2595900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235300,
+      "compare_calls": 60,
+      "rebuild_ns": 2585000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248500,
+      "compare_calls": 60,
+      "rebuild_ns": 2700000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 233000,
+      "compare_calls": 60,
+      "rebuild_ns": 2691600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 296600,
+      "compare_calls": 60,
+      "rebuild_ns": 2727400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235400,
+      "compare_calls": 60,
+      "rebuild_ns": 2557900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 227500,
+      "compare_calls": 60,
+      "rebuild_ns": 2570500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 290500,
+      "compare_calls": 60,
+      "rebuild_ns": 3133900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253000,
+      "compare_calls": 60,
+      "rebuild_ns": 2673900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255000,
+      "compare_calls": 60,
+      "rebuild_ns": 3113700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260800,
+      "compare_calls": 60,
+      "rebuild_ns": 3031300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 286300,
+      "compare_calls": 60,
+      "rebuild_ns": 3003100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240000,
+      "compare_calls": 60,
+      "rebuild_ns": 3114000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 266500,
+      "compare_calls": 60,
+      "rebuild_ns": 3122600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 284900,
+      "compare_calls": 60,
+      "rebuild_ns": 3213000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 249900,
+      "compare_calls": 60,
+      "rebuild_ns": 2665000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 251100,
+      "compare_calls": 60,
+      "rebuild_ns": 2685900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254200,
+      "compare_calls": 60,
+      "rebuild_ns": 2661400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 264900,
+      "compare_calls": 60,
+      "rebuild_ns": 3097900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247800,
+      "compare_calls": 60,
+      "rebuild_ns": 2736400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 230900,
+      "compare_calls": 60,
+      "rebuild_ns": 2604700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238800,
+      "compare_calls": 60,
+      "rebuild_ns": 2618700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 315700,
+      "compare_calls": 60,
+      "rebuild_ns": 3032800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252300,
+      "compare_calls": 60,
+      "rebuild_ns": 3215300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244300,
+      "compare_calls": 60,
+      "rebuild_ns": 2921400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 282300,
+      "compare_calls": 60,
+      "rebuild_ns": 3262600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 296600,
+      "compare_calls": 60,
+      "rebuild_ns": 3078000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 272200,
+      "compare_calls": 60,
+      "rebuild_ns": 3120800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 266100,
+      "compare_calls": 60,
+      "rebuild_ns": 2689900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234100,
+      "compare_calls": 60,
+      "rebuild_ns": 2588100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235500,
+      "compare_calls": 60,
+      "rebuild_ns": 2723500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 291900,
+      "compare_calls": 60,
+      "rebuild_ns": 2980800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 257700,
+      "compare_calls": 60,
+      "rebuild_ns": 2800000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238800,
+      "compare_calls": 60,
+      "rebuild_ns": 2951800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235900,
+      "compare_calls": 60,
+      "rebuild_ns": 2533600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 230200,
+      "compare_calls": 60,
+      "rebuild_ns": 2564900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237000,
+      "compare_calls": 60,
+      "rebuild_ns": 2597200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 306900,
+      "compare_calls": 60,
+      "rebuild_ns": 2843900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 388400,
+      "compare_calls": 60,
+      "rebuild_ns": 4052200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 294400,
+      "compare_calls": 60,
+      "rebuild_ns": 3109300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 258300,
+      "compare_calls": 60,
+      "rebuild_ns": 2547600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243200,
+      "compare_calls": 60,
+      "rebuild_ns": 2603800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243100,
+      "compare_calls": 60,
+      "rebuild_ns": 2777100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234700,
+      "compare_calls": 60,
+      "rebuild_ns": 2723200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243600,
+      "compare_calls": 60,
+      "rebuild_ns": 2686800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 251200,
+      "compare_calls": 60,
+      "rebuild_ns": 2773100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 260600,
+      "compare_calls": 60,
+      "rebuild_ns": 2828100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 282600,
+      "compare_calls": 60,
+      "rebuild_ns": 3174700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 282700,
+      "compare_calls": 60,
+      "rebuild_ns": 3113700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 236300,
+      "compare_calls": 60,
+      "rebuild_ns": 2610200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237300,
+      "compare_calls": 60,
+      "rebuild_ns": 2798800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 279200,
+      "compare_calls": 60,
+      "rebuild_ns": 3050700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239600,
+      "compare_calls": 60,
+      "rebuild_ns": 2561500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240100,
+      "compare_calls": 60,
+      "rebuild_ns": 2551400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244100,
+      "compare_calls": 60,
+      "rebuild_ns": 2591000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238200,
+      "compare_calls": 60,
+      "rebuild_ns": 2625900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237800,
+      "compare_calls": 60,
+      "rebuild_ns": 2772600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248800,
+      "compare_calls": 60,
+      "rebuild_ns": 2764400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254100,
+      "compare_calls": 60,
+      "rebuild_ns": 2895700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 280100,
+      "compare_calls": 60,
+      "rebuild_ns": 2633300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 340700,
+      "compare_calls": 60,
+      "rebuild_ns": 4210500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 339000,
+      "compare_calls": 60,
+      "rebuild_ns": 2840300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237000,
+      "compare_calls": 60,
+      "rebuild_ns": 2789800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243300,
+      "compare_calls": 60,
+      "rebuild_ns": 2862000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 356200,
+      "compare_calls": 60,
+      "rebuild_ns": 4183700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253700,
+      "compare_calls": 60,
+      "rebuild_ns": 2668500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 254900,
+      "compare_calls": 60,
+      "rebuild_ns": 2844600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 352600,
+      "compare_calls": 60,
+      "rebuild_ns": 3449900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237500,
+      "compare_calls": 60,
+      "rebuild_ns": 2664400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234100,
+      "compare_calls": 60,
+      "rebuild_ns": 2734600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 402600,
+      "compare_calls": 60,
+      "rebuild_ns": 2572900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 285000,
+      "compare_calls": 60,
+      "rebuild_ns": 2846900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 236600,
+      "compare_calls": 60,
+      "rebuild_ns": 2716700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 298500,
+      "compare_calls": 60,
+      "rebuild_ns": 3456700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 251800,
+      "compare_calls": 60,
+      "rebuild_ns": 2867800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 441800,
+      "compare_calls": 60,
+      "rebuild_ns": 2925000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244100,
+      "compare_calls": 60,
+      "rebuild_ns": 3146300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 259000,
+      "compare_calls": 60,
+      "rebuild_ns": 2660700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245400,
+      "compare_calls": 60,
+      "rebuild_ns": 2610000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243500,
+      "compare_calls": 60,
+      "rebuild_ns": 2592100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247900,
+      "compare_calls": 60,
+      "rebuild_ns": 2788800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240900,
+      "compare_calls": 60,
+      "rebuild_ns": 2654200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 285600,
+      "compare_calls": 60,
+      "rebuild_ns": 2751800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 304700,
+      "compare_calls": 60,
+      "rebuild_ns": 4259600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238900,
+      "compare_calls": 60,
+      "rebuild_ns": 2683700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245100,
+      "compare_calls": 60,
+      "rebuild_ns": 2827900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243900,
+      "compare_calls": 60,
+      "rebuild_ns": 2727500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238200,
+      "compare_calls": 60,
+      "rebuild_ns": 2708300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228200,
+      "compare_calls": 60,
+      "rebuild_ns": 2606500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 242900,
+      "compare_calls": 60,
+      "rebuild_ns": 2959300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252900,
+      "compare_calls": 60,
+      "rebuild_ns": 2867300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238600,
+      "compare_calls": 60,
+      "rebuild_ns": 2944900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235400,
+      "compare_calls": 60,
+      "rebuild_ns": 2551900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239500,
+      "compare_calls": 60,
+      "rebuild_ns": 2684600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247900,
+      "compare_calls": 60,
+      "rebuild_ns": 2644200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 250900,
+      "compare_calls": 60,
+      "rebuild_ns": 2874800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 265700,
+      "compare_calls": 60,
+      "rebuild_ns": 2866700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245700,
+      "compare_calls": 60,
+      "rebuild_ns": 2758300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247600,
+      "compare_calls": 60,
+      "rebuild_ns": 2748700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 417400,
+      "compare_calls": 60,
+      "rebuild_ns": 3965600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 373600,
+      "compare_calls": 60,
+      "rebuild_ns": 4224300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 261400,
+      "compare_calls": 60,
+      "rebuild_ns": 2573000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247100,
+      "compare_calls": 60,
+      "rebuild_ns": 2712900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252900,
+      "compare_calls": 60,
+      "rebuild_ns": 2663100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245800,
+      "compare_calls": 60,
+      "rebuild_ns": 2766300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 240400,
+      "compare_calls": 60,
+      "rebuild_ns": 2976900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 261200,
+      "compare_calls": 60,
+      "rebuild_ns": 3240000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 231400,
+      "compare_calls": 60,
+      "rebuild_ns": 2674000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255200,
+      "compare_calls": 60,
+      "rebuild_ns": 2936800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235600,
+      "compare_calls": 60,
+      "rebuild_ns": 2704800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244000,
+      "compare_calls": 60,
+      "rebuild_ns": 3017600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237000,
+      "compare_calls": 60,
+      "rebuild_ns": 2540300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244800,
+      "compare_calls": 60,
+      "rebuild_ns": 2587800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 236200,
+      "compare_calls": 60,
+      "rebuild_ns": 2560200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 237700,
+      "compare_calls": 60,
+      "rebuild_ns": 2695000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 230500,
+      "compare_calls": 60,
+      "rebuild_ns": 2618400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 327100,
+      "compare_calls": 60,
+      "rebuild_ns": 2781000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 349800,
+      "compare_calls": 60,
+      "rebuild_ns": 4111600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248500,
+      "compare_calls": 60,
+      "rebuild_ns": 2647200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 257700,
+      "compare_calls": 60,
+      "rebuild_ns": 2989500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245200,
+      "compare_calls": 60,
+      "rebuild_ns": 2597500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 239700,
+      "compare_calls": 60,
+      "rebuild_ns": 2696400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 303900,
+      "compare_calls": 60,
+      "rebuild_ns": 2793200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 227000,
+      "compare_calls": 60,
+      "rebuild_ns": 2633400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248100,
+      "compare_calls": 60,
+      "rebuild_ns": 2680300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 362000,
+      "compare_calls": 60,
+      "rebuild_ns": 2937800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255700,
+      "compare_calls": 60,
+      "rebuild_ns": 2876900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253700,
+      "compare_calls": 60,
+      "rebuild_ns": 3016500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 296500,
+      "compare_calls": 60,
+      "rebuild_ns": 3170100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 269700,
+      "compare_calls": 60,
+      "rebuild_ns": 2914500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235500,
+      "compare_calls": 60,
+      "rebuild_ns": 2719300,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252200,
+      "compare_calls": 60,
+      "rebuild_ns": 3056000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255100,
+      "compare_calls": 60,
+      "rebuild_ns": 2847400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235900,
+      "compare_calls": 60,
+      "rebuild_ns": 2696600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 234200,
+      "compare_calls": 60,
+      "rebuild_ns": 2623900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 248900,
+      "compare_calls": 60,
+      "rebuild_ns": 2749200,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 235700,
+      "compare_calls": 60,
+      "rebuild_ns": 2790600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253900,
+      "compare_calls": 60,
+      "rebuild_ns": 2840100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 265600,
+      "compare_calls": 60,
+      "rebuild_ns": 2603800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 252200,
+      "compare_calls": 60,
+      "rebuild_ns": 2765500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 238800,
+      "compare_calls": 60,
+      "rebuild_ns": 2727700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 290000,
+      "compare_calls": 60,
+      "rebuild_ns": 3219900,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 247300,
+      "compare_calls": 60,
+      "rebuild_ns": 2680100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 233500,
+      "compare_calls": 60,
+      "rebuild_ns": 2654500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 285200,
+      "compare_calls": 60,
+      "rebuild_ns": 2982400,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 244900,
+      "compare_calls": 60,
+      "rebuild_ns": 3063000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255400,
+      "compare_calls": 60,
+      "rebuild_ns": 2657500,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 253600,
+      "compare_calls": 60,
+      "rebuild_ns": 2577600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 272600,
+      "compare_calls": 60,
+      "rebuild_ns": 2662700,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 228100,
+      "compare_calls": 60,
+      "rebuild_ns": 2738800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 255100,
+      "compare_calls": 60,
+      "rebuild_ns": 2618800,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 236900,
+      "compare_calls": 60,
+      "rebuild_ns": 2576000,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 232000,
+      "compare_calls": 60,
+      "rebuild_ns": 2631100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243600,
+      "compare_calls": 60,
+      "rebuild_ns": 2807100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 256100,
+      "compare_calls": 60,
+      "rebuild_ns": 3390600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 273600,
+      "compare_calls": 60,
+      "rebuild_ns": 2654100,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 243900,
+      "compare_calls": 60,
+      "rebuild_ns": 2698600,
+      "rebuilds": 16
+    },
+    {
+      "source_samples": 4,
+      "weight_builds": 4,
+      "compare_ns": 245300,
+      "compare_calls": 60,
+      "rebuild_ns": 2577600,
+      "rebuilds": 16
+    }
+  ]
+}

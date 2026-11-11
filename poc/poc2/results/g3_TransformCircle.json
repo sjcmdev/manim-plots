@@ -1,0 +1,54 @@
+{
+  "criteria": [
+    false,
+    false,
+    true,
+    true
+  ],
+  "runs": [
+    {
+      "changed_data": false,
+      "native_end_error": 0.000950036710643098,
+      "persistence_error": 0.000950036710643098,
+      "derived_error": 0.0,
+      "data_applied_error": 0.0,
+      "tracker": 1.0,
+      "changes": [],
+      "frame_error": 0.0,
+      "sibling_initial_error": 0.0,
+      "sibling_rebuild_error": 0.0,
+      "in_scene": true,
+      "native_in_scene": true,
+      "point_count": 32,
+      "native_point_count": 160,
+      "adopted": true,
+      "detached": true,
+      "interpolate_calls": 11,
+      "native_interpolate_calls": 11,
+      "rendered_frames": 9
+    },
+    {
+      "changed_data": true,
+      "native_end_error": 0.000950036710643098,
+      "persistence_error": null,
+      "derived_error": 0.0,
+      "data_applied_error": 0.0,
+      "tracker": 1.5,
+      "changes": [
+        0.2
+      ],
+      "frame_error": 0.0,
+      "sibling_initial_error": 0.0,
+      "sibling_rebuild_error": 0.0,
+      "in_scene": true,
+      "native_in_scene": true,
+      "point_count": 32,
+      "native_point_count": 160,
+      "adopted": true,
+      "detached": true,
+      "interpolate_calls": 11,
+      "native_interpolate_calls": 11,
+      "rendered_frames": 9
+    }
+  ]
+}

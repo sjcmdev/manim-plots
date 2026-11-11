@@ -1,0 +1,4237 @@
+[
+  {
+    "getters": 28,
+    "shadow_ns": 125400,
+    "shadow_calls": 28,
+    "rebuild_ns": 326800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128000,
+    "shadow_calls": 28,
+    "rebuild_ns": 290200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 119900,
+    "shadow_calls": 28,
+    "rebuild_ns": 287300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135800,
+    "shadow_calls": 28,
+    "rebuild_ns": 256300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154000,
+    "shadow_calls": 28,
+    "rebuild_ns": 281600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132200,
+    "shadow_calls": 28,
+    "rebuild_ns": 345100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 118800,
+    "shadow_calls": 28,
+    "rebuild_ns": 260200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 122100,
+    "shadow_calls": 28,
+    "rebuild_ns": 262400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144000,
+    "shadow_calls": 28,
+    "rebuild_ns": 256400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123100,
+    "shadow_calls": 28,
+    "rebuild_ns": 249400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145200,
+    "shadow_calls": 28,
+    "rebuild_ns": 275900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123900,
+    "shadow_calls": 28,
+    "rebuild_ns": 270800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127800,
+    "shadow_calls": 28,
+    "rebuild_ns": 258400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132600,
+    "shadow_calls": 28,
+    "rebuild_ns": 300700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132400,
+    "shadow_calls": 28,
+    "rebuild_ns": 294100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127000,
+    "shadow_calls": 28,
+    "rebuild_ns": 267700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 126200,
+    "shadow_calls": 28,
+    "rebuild_ns": 301300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125100,
+    "shadow_calls": 28,
+    "rebuild_ns": 247100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 126600,
+    "shadow_calls": 28,
+    "rebuild_ns": 250000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147100,
+    "shadow_calls": 28,
+    "rebuild_ns": 269200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 159900,
+    "shadow_calls": 28,
+    "rebuild_ns": 289800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 143500,
+    "shadow_calls": 28,
+    "rebuild_ns": 319500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142600,
+    "shadow_calls": 28,
+    "rebuild_ns": 268000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 143300,
+    "shadow_calls": 28,
+    "rebuild_ns": 278800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132700,
+    "shadow_calls": 28,
+    "rebuild_ns": 265400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137900,
+    "shadow_calls": 28,
+    "rebuild_ns": 280000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145300,
+    "shadow_calls": 28,
+    "rebuild_ns": 277100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136100,
+    "shadow_calls": 28,
+    "rebuild_ns": 271500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 179500,
+    "shadow_calls": 28,
+    "rebuild_ns": 331100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149200,
+    "shadow_calls": 28,
+    "rebuild_ns": 276700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140400,
+    "shadow_calls": 28,
+    "rebuild_ns": 273400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 152200,
+    "shadow_calls": 28,
+    "rebuild_ns": 264400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142500,
+    "shadow_calls": 28,
+    "rebuild_ns": 279000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 143700,
+    "shadow_calls": 28,
+    "rebuild_ns": 273100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133600,
+    "shadow_calls": 28,
+    "rebuild_ns": 274300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147300,
+    "shadow_calls": 28,
+    "rebuild_ns": 290000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150300,
+    "shadow_calls": 28,
+    "rebuild_ns": 276600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146800,
+    "shadow_calls": 28,
+    "rebuild_ns": 275700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146000,
+    "shadow_calls": 28,
+    "rebuild_ns": 288500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134900,
+    "shadow_calls": 28,
+    "rebuild_ns": 292100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125900,
+    "shadow_calls": 28,
+    "rebuild_ns": 271600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 118200,
+    "shadow_calls": 28,
+    "rebuild_ns": 251500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 121300,
+    "shadow_calls": 28,
+    "rebuild_ns": 264000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131300,
+    "shadow_calls": 28,
+    "rebuild_ns": 307400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127100,
+    "shadow_calls": 28,
+    "rebuild_ns": 259600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132000,
+    "shadow_calls": 28,
+    "rebuild_ns": 268100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 119500,
+    "shadow_calls": 28,
+    "rebuild_ns": 258700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 118900,
+    "shadow_calls": 28,
+    "rebuild_ns": 255500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 116900,
+    "shadow_calls": 28,
+    "rebuild_ns": 253800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 115800,
+    "shadow_calls": 28,
+    "rebuild_ns": 254300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125800,
+    "shadow_calls": 28,
+    "rebuild_ns": 244500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139700,
+    "shadow_calls": 28,
+    "rebuild_ns": 277700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 120800,
+    "shadow_calls": 28,
+    "rebuild_ns": 253700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 119400,
+    "shadow_calls": 28,
+    "rebuild_ns": 248500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127900,
+    "shadow_calls": 28,
+    "rebuild_ns": 269500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 120200,
+    "shadow_calls": 28,
+    "rebuild_ns": 261300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 117800,
+    "shadow_calls": 28,
+    "rebuild_ns": 259400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 119400,
+    "shadow_calls": 28,
+    "rebuild_ns": 254600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 121900,
+    "shadow_calls": 28,
+    "rebuild_ns": 258900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 124500,
+    "shadow_calls": 28,
+    "rebuild_ns": 259300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148800,
+    "shadow_calls": 28,
+    "rebuild_ns": 247800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130900,
+    "shadow_calls": 28,
+    "rebuild_ns": 300100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 118300,
+    "shadow_calls": 28,
+    "rebuild_ns": 243800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 186700,
+    "shadow_calls": 28,
+    "rebuild_ns": 286300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132700,
+    "shadow_calls": 28,
+    "rebuild_ns": 288000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128500,
+    "shadow_calls": 28,
+    "rebuild_ns": 272800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146800,
+    "shadow_calls": 28,
+    "rebuild_ns": 294900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157600,
+    "shadow_calls": 28,
+    "rebuild_ns": 289300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 172900,
+    "shadow_calls": 28,
+    "rebuild_ns": 318500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149900,
+    "shadow_calls": 28,
+    "rebuild_ns": 279100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 171700,
+    "shadow_calls": 28,
+    "rebuild_ns": 300000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142500,
+    "shadow_calls": 28,
+    "rebuild_ns": 280500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 179200,
+    "shadow_calls": 28,
+    "rebuild_ns": 273400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151400,
+    "shadow_calls": 28,
+    "rebuild_ns": 281300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154200,
+    "shadow_calls": 28,
+    "rebuild_ns": 285800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151300,
+    "shadow_calls": 28,
+    "rebuild_ns": 289600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134400,
+    "shadow_calls": 28,
+    "rebuild_ns": 276600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139700,
+    "shadow_calls": 28,
+    "rebuild_ns": 292700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142400,
+    "shadow_calls": 28,
+    "rebuild_ns": 287300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136200,
+    "shadow_calls": 28,
+    "rebuild_ns": 276500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141900,
+    "shadow_calls": 28,
+    "rebuild_ns": 278400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144900,
+    "shadow_calls": 28,
+    "rebuild_ns": 275900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148300,
+    "shadow_calls": 28,
+    "rebuild_ns": 296100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136100,
+    "shadow_calls": 28,
+    "rebuild_ns": 277500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123400,
+    "shadow_calls": 28,
+    "rebuild_ns": 258600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127900,
+    "shadow_calls": 28,
+    "rebuild_ns": 285000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 121800,
+    "shadow_calls": 28,
+    "rebuild_ns": 255400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 119400,
+    "shadow_calls": 28,
+    "rebuild_ns": 247000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 120000,
+    "shadow_calls": 28,
+    "rebuild_ns": 249800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137700,
+    "shadow_calls": 28,
+    "rebuild_ns": 273900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 165700,
+    "shadow_calls": 28,
+    "rebuild_ns": 301400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 174900,
+    "shadow_calls": 28,
+    "rebuild_ns": 287200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 192500,
+    "shadow_calls": 28,
+    "rebuild_ns": 299000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 176500,
+    "shadow_calls": 28,
+    "rebuild_ns": 308700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157300,
+    "shadow_calls": 28,
+    "rebuild_ns": 286300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 164400,
+    "shadow_calls": 28,
+    "rebuild_ns": 289000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157800,
+    "shadow_calls": 28,
+    "rebuild_ns": 286700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 159900,
+    "shadow_calls": 28,
+    "rebuild_ns": 284300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 158200,
+    "shadow_calls": 28,
+    "rebuild_ns": 293600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 178200,
+    "shadow_calls": 28,
+    "rebuild_ns": 293300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142900,
+    "shadow_calls": 28,
+    "rebuild_ns": 286100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 122800,
+    "shadow_calls": 28,
+    "rebuild_ns": 269100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 118900,
+    "shadow_calls": 28,
+    "rebuild_ns": 257300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 120800,
+    "shadow_calls": 28,
+    "rebuild_ns": 269300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 124800,
+    "shadow_calls": 28,
+    "rebuild_ns": 246700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 120600,
+    "shadow_calls": 28,
+    "rebuild_ns": 250700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 172300,
+    "shadow_calls": 28,
+    "rebuild_ns": 342700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 156100,
+    "shadow_calls": 28,
+    "rebuild_ns": 308900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 117700,
+    "shadow_calls": 28,
+    "rebuild_ns": 252400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129500,
+    "shadow_calls": 28,
+    "rebuild_ns": 298700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141800,
+    "shadow_calls": 28,
+    "rebuild_ns": 341700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 116100,
+    "shadow_calls": 28,
+    "rebuild_ns": 257600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125300,
+    "shadow_calls": 28,
+    "rebuild_ns": 247800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132100,
+    "shadow_calls": 28,
+    "rebuild_ns": 268100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136200,
+    "shadow_calls": 28,
+    "rebuild_ns": 278500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130400,
+    "shadow_calls": 28,
+    "rebuild_ns": 275300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127900,
+    "shadow_calls": 28,
+    "rebuild_ns": 261300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135100,
+    "shadow_calls": 28,
+    "rebuild_ns": 261700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130900,
+    "shadow_calls": 28,
+    "rebuild_ns": 265800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128800,
+    "shadow_calls": 28,
+    "rebuild_ns": 264000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127800,
+    "shadow_calls": 28,
+    "rebuild_ns": 267300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131300,
+    "shadow_calls": 28,
+    "rebuild_ns": 273500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157600,
+    "shadow_calls": 28,
+    "rebuild_ns": 330200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130700,
+    "shadow_calls": 28,
+    "rebuild_ns": 275500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145500,
+    "shadow_calls": 28,
+    "rebuild_ns": 288900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129500,
+    "shadow_calls": 28,
+    "rebuild_ns": 262800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153400,
+    "shadow_calls": 28,
+    "rebuild_ns": 271400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150600,
+    "shadow_calls": 28,
+    "rebuild_ns": 437100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130700,
+    "shadow_calls": 28,
+    "rebuild_ns": 262500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151100,
+    "shadow_calls": 28,
+    "rebuild_ns": 306800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129900,
+    "shadow_calls": 28,
+    "rebuild_ns": 256800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136200,
+    "shadow_calls": 28,
+    "rebuild_ns": 288600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140600,
+    "shadow_calls": 28,
+    "rebuild_ns": 273800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150600,
+    "shadow_calls": 28,
+    "rebuild_ns": 272800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 152400,
+    "shadow_calls": 28,
+    "rebuild_ns": 302900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147600,
+    "shadow_calls": 28,
+    "rebuild_ns": 293200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 161900,
+    "shadow_calls": 28,
+    "rebuild_ns": 275400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 162800,
+    "shadow_calls": 28,
+    "rebuild_ns": 286500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 163100,
+    "shadow_calls": 28,
+    "rebuild_ns": 311300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135000,
+    "shadow_calls": 28,
+    "rebuild_ns": 263500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136400,
+    "shadow_calls": 28,
+    "rebuild_ns": 254500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136900,
+    "shadow_calls": 28,
+    "rebuild_ns": 269100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145900,
+    "shadow_calls": 28,
+    "rebuild_ns": 278300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133800,
+    "shadow_calls": 28,
+    "rebuild_ns": 255300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 159300,
+    "shadow_calls": 28,
+    "rebuild_ns": 291600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153600,
+    "shadow_calls": 28,
+    "rebuild_ns": 285100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147000,
+    "shadow_calls": 28,
+    "rebuild_ns": 261700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136000,
+    "shadow_calls": 28,
+    "rebuild_ns": 264000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140000,
+    "shadow_calls": 28,
+    "rebuild_ns": 271500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134800,
+    "shadow_calls": 28,
+    "rebuild_ns": 266900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134100,
+    "shadow_calls": 28,
+    "rebuild_ns": 259900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129300,
+    "shadow_calls": 28,
+    "rebuild_ns": 260900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128400,
+    "shadow_calls": 28,
+    "rebuild_ns": 273400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132900,
+    "shadow_calls": 28,
+    "rebuild_ns": 273000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127000,
+    "shadow_calls": 28,
+    "rebuild_ns": 256500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132100,
+    "shadow_calls": 28,
+    "rebuild_ns": 258800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 169400,
+    "shadow_calls": 28,
+    "rebuild_ns": 273500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 183700,
+    "shadow_calls": 28,
+    "rebuild_ns": 346200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 161900,
+    "shadow_calls": 28,
+    "rebuild_ns": 336600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 155600,
+    "shadow_calls": 28,
+    "rebuild_ns": 282900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150300,
+    "shadow_calls": 28,
+    "rebuild_ns": 280100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140300,
+    "shadow_calls": 28,
+    "rebuild_ns": 263100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154500,
+    "shadow_calls": 28,
+    "rebuild_ns": 267700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 286700,
+    "shadow_calls": 28,
+    "rebuild_ns": 662800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144600,
+    "shadow_calls": 28,
+    "rebuild_ns": 293700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 179400,
+    "shadow_calls": 28,
+    "rebuild_ns": 296900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 178900,
+    "shadow_calls": 28,
+    "rebuild_ns": 302700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137800,
+    "shadow_calls": 28,
+    "rebuild_ns": 267500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 183800,
+    "shadow_calls": 28,
+    "rebuild_ns": 403800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 158000,
+    "shadow_calls": 28,
+    "rebuild_ns": 282500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144600,
+    "shadow_calls": 28,
+    "rebuild_ns": 274000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 156900,
+    "shadow_calls": 28,
+    "rebuild_ns": 273600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 152400,
+    "shadow_calls": 28,
+    "rebuild_ns": 287700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 165100,
+    "shadow_calls": 28,
+    "rebuild_ns": 326900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 228400,
+    "shadow_calls": 28,
+    "rebuild_ns": 285000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 252800,
+    "shadow_calls": 28,
+    "rebuild_ns": 340100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 184200,
+    "shadow_calls": 28,
+    "rebuild_ns": 313400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 178500,
+    "shadow_calls": 28,
+    "rebuild_ns": 287600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 470900,
+    "shadow_calls": 28,
+    "rebuild_ns": 762200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 240900,
+    "shadow_calls": 28,
+    "rebuild_ns": 419400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 176100,
+    "shadow_calls": 28,
+    "rebuild_ns": 283400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 212900,
+    "shadow_calls": 28,
+    "rebuild_ns": 334700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 177500,
+    "shadow_calls": 28,
+    "rebuild_ns": 299300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 203100,
+    "shadow_calls": 28,
+    "rebuild_ns": 324400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 204000,
+    "shadow_calls": 28,
+    "rebuild_ns": 281000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 192100,
+    "shadow_calls": 28,
+    "rebuild_ns": 290600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 184800,
+    "shadow_calls": 28,
+    "rebuild_ns": 284000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 171900,
+    "shadow_calls": 28,
+    "rebuild_ns": 295000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 173900,
+    "shadow_calls": 28,
+    "rebuild_ns": 286400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 242100,
+    "shadow_calls": 28,
+    "rebuild_ns": 329600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 190000,
+    "shadow_calls": 28,
+    "rebuild_ns": 289300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 186500,
+    "shadow_calls": 28,
+    "rebuild_ns": 293500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 188700,
+    "shadow_calls": 28,
+    "rebuild_ns": 309700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 183000,
+    "shadow_calls": 28,
+    "rebuild_ns": 284500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 189800,
+    "shadow_calls": 28,
+    "rebuild_ns": 286500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 257300,
+    "shadow_calls": 28,
+    "rebuild_ns": 288600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 341800,
+    "shadow_calls": 28,
+    "rebuild_ns": 821000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 215200,
+    "shadow_calls": 28,
+    "rebuild_ns": 347200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 217600,
+    "shadow_calls": 28,
+    "rebuild_ns": 296100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 234200,
+    "shadow_calls": 28,
+    "rebuild_ns": 303800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 192800,
+    "shadow_calls": 28,
+    "rebuild_ns": 278200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 263100,
+    "shadow_calls": 28,
+    "rebuild_ns": 317900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 292000,
+    "shadow_calls": 28,
+    "rebuild_ns": 316800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 211500,
+    "shadow_calls": 28,
+    "rebuild_ns": 323400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 212600,
+    "shadow_calls": 28,
+    "rebuild_ns": 341400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 238500,
+    "shadow_calls": 28,
+    "rebuild_ns": 302200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 253700,
+    "shadow_calls": 28,
+    "rebuild_ns": 396800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 193900,
+    "shadow_calls": 28,
+    "rebuild_ns": 315800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145800,
+    "shadow_calls": 28,
+    "rebuild_ns": 275100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148500,
+    "shadow_calls": 28,
+    "rebuild_ns": 294000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151600,
+    "shadow_calls": 28,
+    "rebuild_ns": 268300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 200800,
+    "shadow_calls": 28,
+    "rebuild_ns": 320300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 238700,
+    "shadow_calls": 28,
+    "rebuild_ns": 311100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 261100,
+    "shadow_calls": 28,
+    "rebuild_ns": 568800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 156400,
+    "shadow_calls": 28,
+    "rebuild_ns": 359700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144000,
+    "shadow_calls": 28,
+    "rebuild_ns": 255600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 159900,
+    "shadow_calls": 28,
+    "rebuild_ns": 320400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141700,
+    "shadow_calls": 28,
+    "rebuild_ns": 266500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148200,
+    "shadow_calls": 28,
+    "rebuild_ns": 293600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141900,
+    "shadow_calls": 28,
+    "rebuild_ns": 280800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142500,
+    "shadow_calls": 28,
+    "rebuild_ns": 253900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140000,
+    "shadow_calls": 28,
+    "rebuild_ns": 295200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137600,
+    "shadow_calls": 28,
+    "rebuild_ns": 269600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127700,
+    "shadow_calls": 28,
+    "rebuild_ns": 259400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130900,
+    "shadow_calls": 28,
+    "rebuild_ns": 269700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139600,
+    "shadow_calls": 28,
+    "rebuild_ns": 300300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 122200,
+    "shadow_calls": 28,
+    "rebuild_ns": 248500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135900,
+    "shadow_calls": 28,
+    "rebuild_ns": 249600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140400,
+    "shadow_calls": 28,
+    "rebuild_ns": 297300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 124600,
+    "shadow_calls": 28,
+    "rebuild_ns": 254300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 120000,
+    "shadow_calls": 28,
+    "rebuild_ns": 244000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131900,
+    "shadow_calls": 28,
+    "rebuild_ns": 264900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127600,
+    "shadow_calls": 28,
+    "rebuild_ns": 262600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129100,
+    "shadow_calls": 28,
+    "rebuild_ns": 268800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125300,
+    "shadow_calls": 28,
+    "rebuild_ns": 248600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 124300,
+    "shadow_calls": 28,
+    "rebuild_ns": 246900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 122000,
+    "shadow_calls": 28,
+    "rebuild_ns": 243700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 124000,
+    "shadow_calls": 28,
+    "rebuild_ns": 245700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 122700,
+    "shadow_calls": 28,
+    "rebuild_ns": 245200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131100,
+    "shadow_calls": 28,
+    "rebuild_ns": 245500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 168900,
+    "shadow_calls": 28,
+    "rebuild_ns": 367800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 122500,
+    "shadow_calls": 28,
+    "rebuild_ns": 245800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144600,
+    "shadow_calls": 28,
+    "rebuild_ns": 249400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153400,
+    "shadow_calls": 28,
+    "rebuild_ns": 259300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148400,
+    "shadow_calls": 28,
+    "rebuild_ns": 268800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149000,
+    "shadow_calls": 28,
+    "rebuild_ns": 282100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144800,
+    "shadow_calls": 28,
+    "rebuild_ns": 286300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134000,
+    "shadow_calls": 28,
+    "rebuild_ns": 251000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140100,
+    "shadow_calls": 28,
+    "rebuild_ns": 272200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134600,
+    "shadow_calls": 28,
+    "rebuild_ns": 252200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 164300,
+    "shadow_calls": 28,
+    "rebuild_ns": 313700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 200200,
+    "shadow_calls": 28,
+    "rebuild_ns": 445100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 220200,
+    "shadow_calls": 28,
+    "rebuild_ns": 416500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 328500,
+    "shadow_calls": 28,
+    "rebuild_ns": 613000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 241100,
+    "shadow_calls": 28,
+    "rebuild_ns": 480500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131100,
+    "shadow_calls": 28,
+    "rebuild_ns": 252400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144300,
+    "shadow_calls": 28,
+    "rebuild_ns": 251000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141800,
+    "shadow_calls": 28,
+    "rebuild_ns": 324100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141200,
+    "shadow_calls": 28,
+    "rebuild_ns": 314800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 190000,
+    "shadow_calls": 28,
+    "rebuild_ns": 333300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 284600,
+    "shadow_calls": 28,
+    "rebuild_ns": 331600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157100,
+    "shadow_calls": 28,
+    "rebuild_ns": 284200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132500,
+    "shadow_calls": 28,
+    "rebuild_ns": 270700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142300,
+    "shadow_calls": 28,
+    "rebuild_ns": 274900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145500,
+    "shadow_calls": 28,
+    "rebuild_ns": 269200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138100,
+    "shadow_calls": 28,
+    "rebuild_ns": 272500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129000,
+    "shadow_calls": 28,
+    "rebuild_ns": 269800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 124100,
+    "shadow_calls": 28,
+    "rebuild_ns": 249500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 121400,
+    "shadow_calls": 28,
+    "rebuild_ns": 250800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127000,
+    "shadow_calls": 28,
+    "rebuild_ns": 251100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 143400,
+    "shadow_calls": 28,
+    "rebuild_ns": 283600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144900,
+    "shadow_calls": 28,
+    "rebuild_ns": 256800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123300,
+    "shadow_calls": 28,
+    "rebuild_ns": 249600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 166000,
+    "shadow_calls": 28,
+    "rebuild_ns": 289600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 126900,
+    "shadow_calls": 28,
+    "rebuild_ns": 253200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139000,
+    "shadow_calls": 28,
+    "rebuild_ns": 267500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129800,
+    "shadow_calls": 28,
+    "rebuild_ns": 273500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 118200,
+    "shadow_calls": 28,
+    "rebuild_ns": 247200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123300,
+    "shadow_calls": 28,
+    "rebuild_ns": 259300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135000,
+    "shadow_calls": 28,
+    "rebuild_ns": 249700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129400,
+    "shadow_calls": 28,
+    "rebuild_ns": 255800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141300,
+    "shadow_calls": 28,
+    "rebuild_ns": 336700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136100,
+    "shadow_calls": 28,
+    "rebuild_ns": 244300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157900,
+    "shadow_calls": 28,
+    "rebuild_ns": 286100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134000,
+    "shadow_calls": 28,
+    "rebuild_ns": 252000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133300,
+    "shadow_calls": 28,
+    "rebuild_ns": 254800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123100,
+    "shadow_calls": 28,
+    "rebuild_ns": 262700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 117900,
+    "shadow_calls": 28,
+    "rebuild_ns": 250900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130100,
+    "shadow_calls": 28,
+    "rebuild_ns": 255700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127700,
+    "shadow_calls": 28,
+    "rebuild_ns": 247900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131300,
+    "shadow_calls": 28,
+    "rebuild_ns": 262100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138900,
+    "shadow_calls": 28,
+    "rebuild_ns": 250600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139100,
+    "shadow_calls": 28,
+    "rebuild_ns": 274400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141400,
+    "shadow_calls": 28,
+    "rebuild_ns": 294900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 121600,
+    "shadow_calls": 28,
+    "rebuild_ns": 259200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129700,
+    "shadow_calls": 28,
+    "rebuild_ns": 274800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140800,
+    "shadow_calls": 28,
+    "rebuild_ns": 308800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 167200,
+    "shadow_calls": 28,
+    "rebuild_ns": 259200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 185500,
+    "shadow_calls": 28,
+    "rebuild_ns": 283100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 189200,
+    "shadow_calls": 28,
+    "rebuild_ns": 304600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 200100,
+    "shadow_calls": 28,
+    "rebuild_ns": 289300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 166300,
+    "shadow_calls": 28,
+    "rebuild_ns": 294900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 168000,
+    "shadow_calls": 28,
+    "rebuild_ns": 366900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151900,
+    "shadow_calls": 28,
+    "rebuild_ns": 317800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144700,
+    "shadow_calls": 28,
+    "rebuild_ns": 269000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153100,
+    "shadow_calls": 28,
+    "rebuild_ns": 265200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134100,
+    "shadow_calls": 28,
+    "rebuild_ns": 254000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146000,
+    "shadow_calls": 28,
+    "rebuild_ns": 277300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139800,
+    "shadow_calls": 28,
+    "rebuild_ns": 273300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134200,
+    "shadow_calls": 28,
+    "rebuild_ns": 271000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135500,
+    "shadow_calls": 28,
+    "rebuild_ns": 263600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137700,
+    "shadow_calls": 28,
+    "rebuild_ns": 278600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 152100,
+    "shadow_calls": 28,
+    "rebuild_ns": 257600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150500,
+    "shadow_calls": 28,
+    "rebuild_ns": 311300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 162600,
+    "shadow_calls": 28,
+    "rebuild_ns": 286100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154300,
+    "shadow_calls": 28,
+    "rebuild_ns": 294700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 163500,
+    "shadow_calls": 28,
+    "rebuild_ns": 329700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 160200,
+    "shadow_calls": 28,
+    "rebuild_ns": 301400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 172100,
+    "shadow_calls": 28,
+    "rebuild_ns": 303400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139100,
+    "shadow_calls": 28,
+    "rebuild_ns": 262900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132900,
+    "shadow_calls": 28,
+    "rebuild_ns": 270300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131300,
+    "shadow_calls": 28,
+    "rebuild_ns": 257700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134100,
+    "shadow_calls": 28,
+    "rebuild_ns": 274500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138900,
+    "shadow_calls": 28,
+    "rebuild_ns": 284500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146300,
+    "shadow_calls": 28,
+    "rebuild_ns": 273800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131100,
+    "shadow_calls": 28,
+    "rebuild_ns": 278100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157000,
+    "shadow_calls": 28,
+    "rebuild_ns": 300400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148400,
+    "shadow_calls": 28,
+    "rebuild_ns": 286400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150400,
+    "shadow_calls": 28,
+    "rebuild_ns": 302800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148300,
+    "shadow_calls": 28,
+    "rebuild_ns": 269400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132500,
+    "shadow_calls": 28,
+    "rebuild_ns": 258100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144500,
+    "shadow_calls": 28,
+    "rebuild_ns": 257900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 168000,
+    "shadow_calls": 28,
+    "rebuild_ns": 305100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134500,
+    "shadow_calls": 28,
+    "rebuild_ns": 267300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140400,
+    "shadow_calls": 28,
+    "rebuild_ns": 271500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151200,
+    "shadow_calls": 28,
+    "rebuild_ns": 298200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148500,
+    "shadow_calls": 28,
+    "rebuild_ns": 296100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 159600,
+    "shadow_calls": 28,
+    "rebuild_ns": 284600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 179200,
+    "shadow_calls": 28,
+    "rebuild_ns": 312300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136000,
+    "shadow_calls": 28,
+    "rebuild_ns": 266100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140400,
+    "shadow_calls": 28,
+    "rebuild_ns": 268800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 159600,
+    "shadow_calls": 28,
+    "rebuild_ns": 301200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142500,
+    "shadow_calls": 28,
+    "rebuild_ns": 264200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 155600,
+    "shadow_calls": 28,
+    "rebuild_ns": 292900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 143100,
+    "shadow_calls": 28,
+    "rebuild_ns": 263100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153000,
+    "shadow_calls": 28,
+    "rebuild_ns": 262800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 162200,
+    "shadow_calls": 28,
+    "rebuild_ns": 284200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147600,
+    "shadow_calls": 28,
+    "rebuild_ns": 291400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147400,
+    "shadow_calls": 28,
+    "rebuild_ns": 350400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132500,
+    "shadow_calls": 28,
+    "rebuild_ns": 267000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 164700,
+    "shadow_calls": 28,
+    "rebuild_ns": 281900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 158600,
+    "shadow_calls": 28,
+    "rebuild_ns": 297500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151300,
+    "shadow_calls": 28,
+    "rebuild_ns": 304200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 167900,
+    "shadow_calls": 28,
+    "rebuild_ns": 367800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149000,
+    "shadow_calls": 28,
+    "rebuild_ns": 285100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145500,
+    "shadow_calls": 28,
+    "rebuild_ns": 286100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136700,
+    "shadow_calls": 28,
+    "rebuild_ns": 270100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133300,
+    "shadow_calls": 28,
+    "rebuild_ns": 258200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138700,
+    "shadow_calls": 28,
+    "rebuild_ns": 263000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 160000,
+    "shadow_calls": 28,
+    "rebuild_ns": 274800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145400,
+    "shadow_calls": 28,
+    "rebuild_ns": 273100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137900,
+    "shadow_calls": 28,
+    "rebuild_ns": 270800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127200,
+    "shadow_calls": 28,
+    "rebuild_ns": 272900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136000,
+    "shadow_calls": 28,
+    "rebuild_ns": 263200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144600,
+    "shadow_calls": 28,
+    "rebuild_ns": 286100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157800,
+    "shadow_calls": 28,
+    "rebuild_ns": 306900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135700,
+    "shadow_calls": 28,
+    "rebuild_ns": 265500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139600,
+    "shadow_calls": 28,
+    "rebuild_ns": 270600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147900,
+    "shadow_calls": 28,
+    "rebuild_ns": 281300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136000,
+    "shadow_calls": 28,
+    "rebuild_ns": 272300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133700,
+    "shadow_calls": 28,
+    "rebuild_ns": 254800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132900,
+    "shadow_calls": 28,
+    "rebuild_ns": 275300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153000,
+    "shadow_calls": 28,
+    "rebuild_ns": 314100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134600,
+    "shadow_calls": 28,
+    "rebuild_ns": 271200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145200,
+    "shadow_calls": 28,
+    "rebuild_ns": 261200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 156300,
+    "shadow_calls": 28,
+    "rebuild_ns": 288600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138300,
+    "shadow_calls": 28,
+    "rebuild_ns": 266600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137500,
+    "shadow_calls": 28,
+    "rebuild_ns": 269600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129300,
+    "shadow_calls": 28,
+    "rebuild_ns": 263100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125800,
+    "shadow_calls": 28,
+    "rebuild_ns": 254700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 155200,
+    "shadow_calls": 28,
+    "rebuild_ns": 267500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154300,
+    "shadow_calls": 28,
+    "rebuild_ns": 318500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151400,
+    "shadow_calls": 28,
+    "rebuild_ns": 281900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139400,
+    "shadow_calls": 28,
+    "rebuild_ns": 263000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139100,
+    "shadow_calls": 28,
+    "rebuild_ns": 273300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140600,
+    "shadow_calls": 28,
+    "rebuild_ns": 281700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153000,
+    "shadow_calls": 28,
+    "rebuild_ns": 274000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 126400,
+    "shadow_calls": 28,
+    "rebuild_ns": 256300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 165700,
+    "shadow_calls": 28,
+    "rebuild_ns": 351900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 152400,
+    "shadow_calls": 28,
+    "rebuild_ns": 281200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 163500,
+    "shadow_calls": 28,
+    "rebuild_ns": 279700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 238700,
+    "shadow_calls": 28,
+    "rebuild_ns": 327600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 233600,
+    "shadow_calls": 28,
+    "rebuild_ns": 319800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 344700,
+    "shadow_calls": 28,
+    "rebuild_ns": 602800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 185800,
+    "shadow_calls": 28,
+    "rebuild_ns": 335400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 223000,
+    "shadow_calls": 28,
+    "rebuild_ns": 290700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 168700,
+    "shadow_calls": 28,
+    "rebuild_ns": 302300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 174700,
+    "shadow_calls": 28,
+    "rebuild_ns": 305600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 177600,
+    "shadow_calls": 28,
+    "rebuild_ns": 290700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 171800,
+    "shadow_calls": 28,
+    "rebuild_ns": 294800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 191100,
+    "shadow_calls": 28,
+    "rebuild_ns": 293800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 195300,
+    "shadow_calls": 28,
+    "rebuild_ns": 309900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 168600,
+    "shadow_calls": 28,
+    "rebuild_ns": 286900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 170700,
+    "shadow_calls": 28,
+    "rebuild_ns": 289800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154400,
+    "shadow_calls": 28,
+    "rebuild_ns": 280100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 158700,
+    "shadow_calls": 28,
+    "rebuild_ns": 290700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 173500,
+    "shadow_calls": 28,
+    "rebuild_ns": 300800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 158100,
+    "shadow_calls": 28,
+    "rebuild_ns": 294100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149200,
+    "shadow_calls": 28,
+    "rebuild_ns": 315200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145300,
+    "shadow_calls": 28,
+    "rebuild_ns": 278500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 165500,
+    "shadow_calls": 28,
+    "rebuild_ns": 270300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 156600,
+    "shadow_calls": 28,
+    "rebuild_ns": 270800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 172200,
+    "shadow_calls": 28,
+    "rebuild_ns": 289900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 208100,
+    "shadow_calls": 28,
+    "rebuild_ns": 322800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 204500,
+    "shadow_calls": 28,
+    "rebuild_ns": 325300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 172300,
+    "shadow_calls": 28,
+    "rebuild_ns": 299900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 195400,
+    "shadow_calls": 28,
+    "rebuild_ns": 287300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 205800,
+    "shadow_calls": 28,
+    "rebuild_ns": 322100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153500,
+    "shadow_calls": 28,
+    "rebuild_ns": 289200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 181900,
+    "shadow_calls": 28,
+    "rebuild_ns": 287300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 164400,
+    "shadow_calls": 28,
+    "rebuild_ns": 283800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 182000,
+    "shadow_calls": 28,
+    "rebuild_ns": 284900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 232300,
+    "shadow_calls": 28,
+    "rebuild_ns": 352500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 193400,
+    "shadow_calls": 28,
+    "rebuild_ns": 311600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 170600,
+    "shadow_calls": 28,
+    "rebuild_ns": 279600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 199400,
+    "shadow_calls": 28,
+    "rebuild_ns": 305600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 191400,
+    "shadow_calls": 28,
+    "rebuild_ns": 309300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 167500,
+    "shadow_calls": 28,
+    "rebuild_ns": 281800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 162900,
+    "shadow_calls": 28,
+    "rebuild_ns": 284200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 383600,
+    "shadow_calls": 28,
+    "rebuild_ns": 666600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150100,
+    "shadow_calls": 28,
+    "rebuild_ns": 291300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139900,
+    "shadow_calls": 28,
+    "rebuild_ns": 289700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 168100,
+    "shadow_calls": 28,
+    "rebuild_ns": 256900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130100,
+    "shadow_calls": 28,
+    "rebuild_ns": 275800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 153700,
+    "shadow_calls": 28,
+    "rebuild_ns": 276500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139600,
+    "shadow_calls": 28,
+    "rebuild_ns": 298700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128900,
+    "shadow_calls": 28,
+    "rebuild_ns": 268200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146300,
+    "shadow_calls": 28,
+    "rebuild_ns": 278900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 152300,
+    "shadow_calls": 28,
+    "rebuild_ns": 355600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145700,
+    "shadow_calls": 28,
+    "rebuild_ns": 317300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129500,
+    "shadow_calls": 28,
+    "rebuild_ns": 257500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149000,
+    "shadow_calls": 28,
+    "rebuild_ns": 284800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 163900,
+    "shadow_calls": 28,
+    "rebuild_ns": 249700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 166600,
+    "shadow_calls": 28,
+    "rebuild_ns": 286500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146000,
+    "shadow_calls": 28,
+    "rebuild_ns": 284900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128500,
+    "shadow_calls": 28,
+    "rebuild_ns": 262000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 120900,
+    "shadow_calls": 28,
+    "rebuild_ns": 253500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 127800,
+    "shadow_calls": 28,
+    "rebuild_ns": 277000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128400,
+    "shadow_calls": 28,
+    "rebuild_ns": 293800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140200,
+    "shadow_calls": 28,
+    "rebuild_ns": 274800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123000,
+    "shadow_calls": 28,
+    "rebuild_ns": 250500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128500,
+    "shadow_calls": 28,
+    "rebuild_ns": 257600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133900,
+    "shadow_calls": 28,
+    "rebuild_ns": 263500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147800,
+    "shadow_calls": 28,
+    "rebuild_ns": 274900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 126700,
+    "shadow_calls": 28,
+    "rebuild_ns": 248800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135400,
+    "shadow_calls": 28,
+    "rebuild_ns": 277600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125000,
+    "shadow_calls": 28,
+    "rebuild_ns": 258900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125000,
+    "shadow_calls": 28,
+    "rebuild_ns": 242600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134900,
+    "shadow_calls": 28,
+    "rebuild_ns": 269200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 176300,
+    "shadow_calls": 28,
+    "rebuild_ns": 292700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132200,
+    "shadow_calls": 28,
+    "rebuild_ns": 252200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 129600,
+    "shadow_calls": 28,
+    "rebuild_ns": 256000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133300,
+    "shadow_calls": 28,
+    "rebuild_ns": 251600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130700,
+    "shadow_calls": 28,
+    "rebuild_ns": 249600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145900,
+    "shadow_calls": 28,
+    "rebuild_ns": 275800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 123700,
+    "shadow_calls": 28,
+    "rebuild_ns": 258200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133500,
+    "shadow_calls": 28,
+    "rebuild_ns": 259400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 125100,
+    "shadow_calls": 28,
+    "rebuild_ns": 267400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141400,
+    "shadow_calls": 28,
+    "rebuild_ns": 285000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 134500,
+    "shadow_calls": 28,
+    "rebuild_ns": 294100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 176900,
+    "shadow_calls": 28,
+    "rebuild_ns": 285100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 215500,
+    "shadow_calls": 28,
+    "rebuild_ns": 347400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 175700,
+    "shadow_calls": 28,
+    "rebuild_ns": 292300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 207200,
+    "shadow_calls": 28,
+    "rebuild_ns": 297700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 213600,
+    "shadow_calls": 28,
+    "rebuild_ns": 359100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 188000,
+    "shadow_calls": 28,
+    "rebuild_ns": 287400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 191300,
+    "shadow_calls": 28,
+    "rebuild_ns": 300200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 225800,
+    "shadow_calls": 28,
+    "rebuild_ns": 369300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 201600,
+    "shadow_calls": 28,
+    "rebuild_ns": 290200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 184100,
+    "shadow_calls": 28,
+    "rebuild_ns": 288800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 183800,
+    "shadow_calls": 28,
+    "rebuild_ns": 298700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 187900,
+    "shadow_calls": 28,
+    "rebuild_ns": 286100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 180800,
+    "shadow_calls": 28,
+    "rebuild_ns": 299500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 174000,
+    "shadow_calls": 28,
+    "rebuild_ns": 364900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 167200,
+    "shadow_calls": 28,
+    "rebuild_ns": 274000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 258500,
+    "shadow_calls": 28,
+    "rebuild_ns": 272800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 174800,
+    "shadow_calls": 28,
+    "rebuild_ns": 302500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 189400,
+    "shadow_calls": 28,
+    "rebuild_ns": 276300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 162700,
+    "shadow_calls": 28,
+    "rebuild_ns": 280100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147700,
+    "shadow_calls": 28,
+    "rebuild_ns": 295600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 124200,
+    "shadow_calls": 28,
+    "rebuild_ns": 254100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 130300,
+    "shadow_calls": 28,
+    "rebuild_ns": 252100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 121800,
+    "shadow_calls": 28,
+    "rebuild_ns": 251100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 126400,
+    "shadow_calls": 28,
+    "rebuild_ns": 266300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 118700,
+    "shadow_calls": 28,
+    "rebuild_ns": 248400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145300,
+    "shadow_calls": 28,
+    "rebuild_ns": 259400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132200,
+    "shadow_calls": 28,
+    "rebuild_ns": 271100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131800,
+    "shadow_calls": 28,
+    "rebuild_ns": 270200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145000,
+    "shadow_calls": 28,
+    "rebuild_ns": 272800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131500,
+    "shadow_calls": 28,
+    "rebuild_ns": 265700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149200,
+    "shadow_calls": 28,
+    "rebuild_ns": 280700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142700,
+    "shadow_calls": 28,
+    "rebuild_ns": 279400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139200,
+    "shadow_calls": 28,
+    "rebuild_ns": 287700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141200,
+    "shadow_calls": 28,
+    "rebuild_ns": 281000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136500,
+    "shadow_calls": 28,
+    "rebuild_ns": 263500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141800,
+    "shadow_calls": 28,
+    "rebuild_ns": 265900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133700,
+    "shadow_calls": 28,
+    "rebuild_ns": 269700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133500,
+    "shadow_calls": 28,
+    "rebuild_ns": 270600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133000,
+    "shadow_calls": 28,
+    "rebuild_ns": 264800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 161000,
+    "shadow_calls": 28,
+    "rebuild_ns": 268800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133000,
+    "shadow_calls": 28,
+    "rebuild_ns": 266800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137000,
+    "shadow_calls": 28,
+    "rebuild_ns": 296100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132900,
+    "shadow_calls": 28,
+    "rebuild_ns": 273600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157400,
+    "shadow_calls": 28,
+    "rebuild_ns": 267700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 141800,
+    "shadow_calls": 28,
+    "rebuild_ns": 274500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 180800,
+    "shadow_calls": 28,
+    "rebuild_ns": 282800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 183600,
+    "shadow_calls": 28,
+    "rebuild_ns": 290400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 161500,
+    "shadow_calls": 28,
+    "rebuild_ns": 272300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 170000,
+    "shadow_calls": 28,
+    "rebuild_ns": 306700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 167500,
+    "shadow_calls": 28,
+    "rebuild_ns": 286700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 176800,
+    "shadow_calls": 28,
+    "rebuild_ns": 281200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 177600,
+    "shadow_calls": 28,
+    "rebuild_ns": 307600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 168300,
+    "shadow_calls": 28,
+    "rebuild_ns": 304000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 183700,
+    "shadow_calls": 28,
+    "rebuild_ns": 305700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 165700,
+    "shadow_calls": 28,
+    "rebuild_ns": 287200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 248500,
+    "shadow_calls": 28,
+    "rebuild_ns": 502200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 351100,
+    "shadow_calls": 28,
+    "rebuild_ns": 604400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 180100,
+    "shadow_calls": 28,
+    "rebuild_ns": 279500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 189200,
+    "shadow_calls": 28,
+    "rebuild_ns": 306500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 179700,
+    "shadow_calls": 28,
+    "rebuild_ns": 286000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154500,
+    "shadow_calls": 28,
+    "rebuild_ns": 279200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 174900,
+    "shadow_calls": 28,
+    "rebuild_ns": 285400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 156000,
+    "shadow_calls": 28,
+    "rebuild_ns": 302300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 159800,
+    "shadow_calls": 28,
+    "rebuild_ns": 311300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147600,
+    "shadow_calls": 28,
+    "rebuild_ns": 269000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151400,
+    "shadow_calls": 28,
+    "rebuild_ns": 311200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136500,
+    "shadow_calls": 28,
+    "rebuild_ns": 276500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 164200,
+    "shadow_calls": 28,
+    "rebuild_ns": 294700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 143400,
+    "shadow_calls": 28,
+    "rebuild_ns": 284700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144400,
+    "shadow_calls": 28,
+    "rebuild_ns": 275700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 166500,
+    "shadow_calls": 28,
+    "rebuild_ns": 309200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140800,
+    "shadow_calls": 28,
+    "rebuild_ns": 264900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138800,
+    "shadow_calls": 28,
+    "rebuild_ns": 265800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139000,
+    "shadow_calls": 28,
+    "rebuild_ns": 293100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145000,
+    "shadow_calls": 28,
+    "rebuild_ns": 285500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139800,
+    "shadow_calls": 28,
+    "rebuild_ns": 285600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149100,
+    "shadow_calls": 28,
+    "rebuild_ns": 292700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 152400,
+    "shadow_calls": 28,
+    "rebuild_ns": 284800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140100,
+    "shadow_calls": 28,
+    "rebuild_ns": 275000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138600,
+    "shadow_calls": 28,
+    "rebuild_ns": 266600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131800,
+    "shadow_calls": 28,
+    "rebuild_ns": 265900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 128400,
+    "shadow_calls": 28,
+    "rebuild_ns": 264300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151000,
+    "shadow_calls": 28,
+    "rebuild_ns": 303100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148100,
+    "shadow_calls": 28,
+    "rebuild_ns": 257900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147500,
+    "shadow_calls": 28,
+    "rebuild_ns": 283100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 161900,
+    "shadow_calls": 28,
+    "rebuild_ns": 269700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 164900,
+    "shadow_calls": 28,
+    "rebuild_ns": 313800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 173200,
+    "shadow_calls": 28,
+    "rebuild_ns": 355500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 155100,
+    "shadow_calls": 28,
+    "rebuild_ns": 282000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146300,
+    "shadow_calls": 28,
+    "rebuild_ns": 297600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 131100,
+    "shadow_calls": 28,
+    "rebuild_ns": 254700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 132300,
+    "shadow_calls": 28,
+    "rebuild_ns": 273200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138800,
+    "shadow_calls": 28,
+    "rebuild_ns": 258100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 139200,
+    "shadow_calls": 28,
+    "rebuild_ns": 251100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151100,
+    "shadow_calls": 28,
+    "rebuild_ns": 286400,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 165900,
+    "shadow_calls": 28,
+    "rebuild_ns": 287200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 154800,
+    "shadow_calls": 28,
+    "rebuild_ns": 315800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 140400,
+    "shadow_calls": 28,
+    "rebuild_ns": 270700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147200,
+    "shadow_calls": 28,
+    "rebuild_ns": 277300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 135700,
+    "shadow_calls": 28,
+    "rebuild_ns": 255500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145100,
+    "shadow_calls": 28,
+    "rebuild_ns": 259800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149700,
+    "shadow_calls": 28,
+    "rebuild_ns": 304700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144700,
+    "shadow_calls": 28,
+    "rebuild_ns": 261800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 148000,
+    "shadow_calls": 28,
+    "rebuild_ns": 285300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 147200,
+    "shadow_calls": 28,
+    "rebuild_ns": 266800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 146300,
+    "shadow_calls": 28,
+    "rebuild_ns": 284100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133000,
+    "shadow_calls": 28,
+    "rebuild_ns": 269700,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 155800,
+    "shadow_calls": 28,
+    "rebuild_ns": 282900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 150100,
+    "shadow_calls": 28,
+    "rebuild_ns": 275300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151500,
+    "shadow_calls": 28,
+    "rebuild_ns": 278900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157800,
+    "shadow_calls": 28,
+    "rebuild_ns": 298600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151200,
+    "shadow_calls": 28,
+    "rebuild_ns": 300000,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138100,
+    "shadow_calls": 28,
+    "rebuild_ns": 280500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 155900,
+    "shadow_calls": 28,
+    "rebuild_ns": 295900,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 137500,
+    "shadow_calls": 28,
+    "rebuild_ns": 264300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 160700,
+    "shadow_calls": 28,
+    "rebuild_ns": 294500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 171100,
+    "shadow_calls": 28,
+    "rebuild_ns": 346100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 142100,
+    "shadow_calls": 28,
+    "rebuild_ns": 265200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 196500,
+    "shadow_calls": 28,
+    "rebuild_ns": 416200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 174300,
+    "shadow_calls": 28,
+    "rebuild_ns": 262600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 157000,
+    "shadow_calls": 28,
+    "rebuild_ns": 275800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149500,
+    "shadow_calls": 28,
+    "rebuild_ns": 296600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 136200,
+    "shadow_calls": 28,
+    "rebuild_ns": 279800,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 133400,
+    "shadow_calls": 28,
+    "rebuild_ns": 268500,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 149600,
+    "shadow_calls": 28,
+    "rebuild_ns": 281300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 151400,
+    "shadow_calls": 28,
+    "rebuild_ns": 263100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 165900,
+    "shadow_calls": 28,
+    "rebuild_ns": 289200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 158300,
+    "shadow_calls": 28,
+    "rebuild_ns": 303100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 156300,
+    "shadow_calls": 28,
+    "rebuild_ns": 280200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 280100,
+    "shadow_calls": 28,
+    "rebuild_ns": 332300,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 145100,
+    "shadow_calls": 28,
+    "rebuild_ns": 255200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 164200,
+    "shadow_calls": 28,
+    "rebuild_ns": 299600,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 138600,
+    "shadow_calls": 28,
+    "rebuild_ns": 268200,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 144100,
+    "shadow_calls": 28,
+    "rebuild_ns": 265100,
+    "rebuilds": 14
+  },
+  {
+    "getters": 28,
+    "shadow_ns": 155200,
+    "shadow_calls": 28,
+    "rebuild_ns": 265500,
+    "rebuilds": 14
+  }
+]

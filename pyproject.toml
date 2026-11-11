@@ -1,36 +1,43 @@
 [project]
 name = "manim-plots"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Correct, extensible plotting primitives for Manim"
 readme = "README.md"
 authors = [
     { name = "SirJamesClarkMaxwell", email = "fzabier@gmail.com" }
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["manim", "plotting", "animation", "visualization"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Topic :: Multimedia :: Graphics",
     "Typing :: Typed",
 ]
 dependencies = [
-    "manim>=0.19",
-    "numpy>=2.1",
+    "manim>=0.21,<0.23",
+    "numpy>=2.5",
+    "scipy>=1.15",
 ]
 
 [project.urls]
 Repository = "https://github.com/sjcmdev/manim-plots"
+Documentation = "https://github.com/sjcmdev/manim-plots/blob/main/README.md#documentation"
+Issues = "https://github.com/sjcmdev/manim-plots/issues"
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.100",
-    "mypy>=1.11",
-    "pytest>=8.0",
-    "pytest-cov>=5.0",
-    "ruff>=0.6",
+    "hypothesis>=6.167",
+    "mypy>=2.3",
+    "pytest>=9.1",
+    "ruff>=0.16",
+]
+docs = [
+    "numpydoc>=1.9",
+    "sphinx>=8.2",
 ]
 
 [build-system]
@@ -40,6 +47,8 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 88
 src = ["src", "tests"]
+# The four proofs of concept are frozen evidence: a ruff upgrade must not touch them.
+extend-exclude = ["poc"]
 
 [tool.ruff.lint]
 select = [
@@ -53,7 +62,13 @@ select = [
     "D",        # pydocstyle
     "ANN",      # annotations
     "RUF",
+    "G",        # logging-format: lazy %-style arguments, never an f-string
+    "LOG",      # flake8-logging
+    "TID251",   # banned imports: the core never imports Manim (ADR 0001 §1)
 ]
+# Off under the numpy convention; it catches a Parameters section left stale by a
+# rename to Manim's spelling (D17).
+extend-select = ["D417"]
 ignore = [
     "D105",  # magic method docstring
     "D107",  # __init__ docstring (documented on the class)
@@ -62,22 +77,40 @@ ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"manim".msg = "only mobjects/ imports Manim; core/ is NumPy, SciPy and the standard library (ADR 0001 §1)"
+
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "ANN"]
+"src/manim_plots/__init__.py" = ["TID251"]
+"src/manim_plots/mobjects/*" = ["TID251"]
+"src/manim_plots/animations/*" = ["TID251"]
+"tests/*" = ["D", "ANN", "TID251"]
+"tools/*" = ["TID251"]
+# Examples are written as Manim users write scenes: `from manim import *`, no annotations.
+"examples/*" = ["D", "ANN", "F403", "F405", "TID251"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
-module = "manim.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
 module = "tests.*"
+# Tests are typed loosely on purpose: helpers may leave parameters unannotated, and a
+# local needs no annotation that the test does not care about. The public API's own
+# annotations are still checked at every call (F-1002).
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disable_error_code = ["var-annotated"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers --strict-config"
+addopts = "--strict-markers --strict-config -m 'not render and not benchmark and not release'"
+# A library warning is a test failure (ADR 0003 §3); a test that expects one says so.
+filterwarnings = ["error::manim_plots.ManimPlotsWarning"]
+markers = [
+    "render: needs a full Manim render; excluded by default, run with `pytest -m render`",
+    "benchmark: measures frame cost (F-1001); excluded by default, run with `pytest -m benchmark`",
+    "release: builds and installs the package; excluded by default, run by `tools/check.py --release`",
+]

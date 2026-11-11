@@ -1,0 +1,6 @@
+{
+  "analytic_local_error": 0.15099467943379596,
+  "interior_analytic_local_error": 0.00764780124043285,
+  "immediate_scene_error": 1.9860273225978185e-15,
+  "later_rotation_error": 3.9979832900417415e-15
+}

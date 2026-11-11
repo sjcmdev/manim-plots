@@ -1,0 +1,2539 @@
+"""Inventory and source pins for the Manim internals used by the library."""
+
+import ast
+import hashlib
+import inspect
+import sys
+import textwrap
+import warnings
+import weakref
+from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
+from types import FrameType
+from typing import Any, cast
+
+import manim
+import numpy as np
+from manim import (
+    Animation,
+    AnimationGroup,
+    AnnularSector,
+    Arc,
+    Arrow,
+    Arrow3D,
+    ArrowVectorField,
+    Axes,
+    BarChart,
+    CoordinateSystem,
+    Create,
+    DashedLine,
+    DashedVMobject,
+    DecimalNumber,
+    Dot,
+    FadeIn,
+    FadeOut,
+    Indicate,
+    LaggedStart,
+    Line,
+    Line3D,
+    LogBase,
+    ManimColor,
+    Mobject,
+    MoveAlongPath,
+    NumberLine,
+    NumberPlane,
+    PhaseFlow,
+    PolarPlane,
+    Scene,
+    Sector,
+    ShowIncreasingSubsets,
+    ShowPassingFlash,
+    StreamLines,
+    Succession,
+    Surface,
+    TangentLine,
+    Text,
+    ThreeDAxes,
+    ThreeDCamera,
+    Transform,
+    TransformFromCopy,
+    Uncreate,
+    Unwrite,
+    Vector,
+    VectorField,
+    VGroup,
+    VMobject,
+    Wiggle,
+    Write,
+    always_redraw,
+)
+from manim.animation.creation import DrawBorderThenFill, ShowPartial
+from manim.animation.growing import GrowFromCenter, GrowFromPoint
+from manim.animation.transform import ShrinkToCenter, _MethodAnimation
+from manim.camera.camera import Camera
+from manim.mobject.mobject import _AnimationBuilder
+from manim.mobject.three_d.three_dimensions import ThreeDVMobject
+from manim.renderer.cairo_renderer import CairoRenderer
+from manim.utils.color import color_gradient, invert_color
+from manim.utils.hashing import (
+    _CustomEncoder,
+    _Memoizer,
+    get_hash_from_play_call,
+    get_json,
+)
+
+from manim_plots.core import FloatArray, ManimPlotsWarning
+
+SYMBOLS: tuple[Callable[..., object], ...] = (
+    Transform.get_all_mobjects,
+    Animation,
+    Animation.__new__,
+    Animation.__init__,
+    Animation.interpolate,
+    Animation._setup_scene,
+    Animation.update_mobjects,
+    Animation.get_all_mobjects,
+    Animation.get_all_mobjects_to_update,
+    AnimationGroup,
+    AnimationGroup.__init__,
+    AnimationGroup._setup_scene,
+    AnimationGroup.interpolate,
+    AnimationGroup.update_mobjects,
+    AnimationGroup.init_run_time,
+    Arc,
+    Arc.__init__,
+    Arc._set_pre_positioned_points,
+    Arc.generate_points,
+    LaggedStart,
+    LaggedStart.__init__,
+    Uncreate,
+    Uncreate.__init__,
+    Write,
+    Write.__init__,
+    Write._set_default_config_from_length,
+    Write.reverse_submobjects,
+    Write.begin,
+    Write.finish,
+    Unwrite,
+    Unwrite.__init__,
+    FadeOut,
+    FadeOut.__init__,
+    FadeOut.create_target,
+    Sector,
+    Sector.__init__,
+    AnnularSector,
+    AnnularSector.__init__,
+    AnnularSector.generate_points,
+    Mobject.get_end,
+    AnimationGroup.build_animations_with_timings,
+    Indicate,
+    Indicate.__init__,
+    Indicate.create_target,
+    Create,
+    Create.__init__,
+    Create._get_bounds,
+    FadeIn,
+    FadeIn.__init__,
+    FadeIn.create_target,
+    FadeIn.create_starting_mobject,
+    BarChart.__init__,
+    BarChart._add_x_axis_labels,
+    BarChart._create_bar,
+    BarChart._add_bars,
+    BarChart._update_colors,
+    BarChart.get_bar_labels,
+    BarChart.change_bar_values,
+    Mobject.set_color_by_gradient,
+    get_json,
+    get_hash_from_play_call,
+    _CustomEncoder.default,
+    _Memoizer._handle_already_processed,
+    NumberLine.__init__,
+    NumberLine.get_tick,
+    NumberLine.get_tick_range,
+    NumberLine.number_to_point,
+    NumberLine.point_to_number,
+    NumberLine.get_unit_size,
+    NumberLine.get_unit_vector,
+    NumberLine.get_number_mobject,
+    NumberLine.add_numbers,
+    NumberLine.add_labels,
+    NumberLine._create_label_tex,
+    NumberLine._decimal_places_from_step,
+    Axes.__init__,
+    Axes._create_axis,
+    Axes._origin_shift,
+    Axes.coords_to_point,
+    Axes.point_to_coords,
+    Axes.get_axis_labels,
+    CoordinateSystem.add_coordinates,
+    CoordinateSystem.get_x_axis_label,
+    CoordinateSystem.get_y_axis_label,
+    CoordinateSystem._get_axis_label,
+    CoordinateSystem.get_graph_label,
+    CoordinateSystem.get_line_from_axis_to_point,
+    CoordinateSystem.get_vertical_line,
+    CoordinateSystem.get_horizontal_line,
+    CoordinateSystem.get_lines_to_point,
+    CoordinateSystem.get_vertical_lines_to_graph,
+    CoordinateSystem.get_T_label,
+    CoordinateSystem.angle_of_tangent,
+    CoordinateSystem.slope_of_tangent,
+    CoordinateSystem.get_secant_slope_group,
+    CoordinateSystem.plot_derivative_graph,
+    CoordinateSystem.plot_antiderivative_graph,
+    CoordinateSystem.get_area,
+    CoordinateSystem.get_riemann_rectangles,
+    color_gradient,
+    invert_color,
+    VMobject.set_color,
+    Mobject.set_color,
+    DashedLine.__init__,
+    DashedLine._calculate_num_dashes,
+    DashedVMobject.__init__,
+    TangentLine.__init__,
+    Line.__init__,
+    Line._account_for_buff,
+    DecimalNumber._set_submobjects_from_number,
+    DecimalNumber._get_num_string,
+    DecimalNumber._get_formatter,
+    NumberPlane.__init__,
+    NumberPlane._init_background_lines,
+    NumberPlane._get_lines,
+    NumberPlane._get_lines_parallel_to_axis,
+    LogBase.get_custom_labels,
+    Mobject.rotate,
+    Mobject.scale,
+    Mobject.stretch,
+    Mobject.apply_matrix,
+    Animation.create_starting_mobject,
+    Animation.clean_up_from_scene,
+    Animation.is_remover,
+    Animation.is_introducer,
+    Transform.interpolate_submobject,
+    Transform.get_all_families_zipped,
+    GrowFromCenter.__init__,
+    GrowFromPoint.create_starting_mobject,
+    ShrinkToCenter.__init__,
+    NumberPlane.prepare_for_nonlinear_transform,
+    Mobject.shift,
+    Mobject.apply_points_function_about_point,
+    VMobject.apply_function,
+    VMobject.scale_handle_to_anchor_distances,
+    VMobject.get_anchors,
+    VMobject.get_points_defining_boundary,
+    VMobject.set_anchors_and_handles,
+    Mobject.__deepcopy__,
+    Mobject.copy,
+    Mobject.suspend_updating,
+    Mobject.resume_updating,
+    Mobject.become,
+    Mobject.align_data,
+    Mobject.align_submobjects,
+    Mobject.add_n_more_submobjects,
+    Mobject.interpolate,
+    VMobject.align_points,
+    VMobject.get_subpaths,
+    Animation.begin,
+    Animation.finish,
+    Animation.get_all_families_zipped,
+    Animation.get_sub_alpha,
+    AnimationGroup.begin,
+    AnimationGroup.finish,
+    AnimationGroup.clean_up_from_scene,
+    Succession.begin,
+    Succession.finish,
+    Succession.update_active_animation,
+    ShowPartial.interpolate_submobject,
+    DrawBorderThenFill.interpolate_submobject,
+    Wiggle.interpolate_submobject,
+    Transform.begin,
+    Transform.clean_up_from_scene,
+    TransformFromCopy.__init__,
+    TransformFromCopy.interpolate,
+    _MethodAnimation.finish,
+    FadeOut.clean_up_from_scene,
+    ShowPassingFlash.clean_up_from_scene,
+    MoveAlongPath.__init__,
+    MoveAlongPath.interpolate_mobject,
+    PhaseFlow.__init__,
+    PhaseFlow.interpolate_mobject,
+    ShowIncreasingSubsets.__init__,
+    ShowIncreasingSubsets.interpolate_mobject,
+    _AnimationBuilder.__init__,
+    _AnimationBuilder.__getattr__,
+    always_redraw,
+    Scene.get_moving_mobjects,
+    Scene.get_moving_and_static_mobjects,
+    Scene.should_update_mobjects,
+    Scene.update_to_time,
+    Scene.play_internal,
+    Scene.add,
+    Scene.add_mobjects_from_animations,
+    CairoRenderer.play,
+    Camera.set_cairo_context_path,
+    Camera.set_cairo_context_color,
+    Camera.apply_fill,
+    DrawBorderThenFill.begin,
+    Mobject.get_family_updaters,
+    Mobject.__getattr__,
+    VMobject.set_fill,
+    VMobject.set_stroke,
+    VMobject.interpolate_color,
+    VMobject.pointwise_become_partial,
+    VGroup.__init__,
+    VGroup.add,
+    Mobject.remove,
+    Mobject.reduce_across_dimension,
+    VMobject.scale,
+    VMobject.split,
+    Animation.interpolate_mobject,
+    Mobject.family_members_with_points,
+    VectorField.__init__,
+    VectorField.fit_to_coordinate_system,
+    VectorField.nudge,
+    VectorField.nudge_submobjects,
+    VectorField.get_nudge_updater,
+    VectorField.start_submobject_movement,
+    VectorField.stop_submobject_movement,
+    VectorField.get_colored_background_image,
+    VectorField.get_vectorized_rgba_gradient_function,
+    ArrowVectorField.__init__,
+    ArrowVectorField.get_vector,
+    StreamLines.__init__,
+    StreamLines.create,
+    StreamLines.start_animation,
+    StreamLines.end_animation,
+    Vector.__init__,
+    Arrow.__init__,
+    ShowPassingFlash.__init__,
+    ShowPassingFlash._get_bounds,
+    NumberPlane.get_vector,
+    CoordinateSystem.plot_implicit_curve,
+    VectorField.shift_func,
+    VectorField.scale_func,
+    PolarPlane._init_background_lines,
+    PolarPlane._get_lines,
+    PolarPlane.get_axes,
+    PolarPlane.get_vector,
+    PolarPlane.prepare_for_nonlinear_transform,
+    PolarPlane.get_coordinate_labels,
+    PolarPlane.add_coordinates,
+    PolarPlane.get_radian_label,
+    PolarPlane.__init__,
+    CoordinateSystem.polar_to_point,
+    CoordinateSystem.point_to_polar,
+    CoordinateSystem.pr2pt,
+    CoordinateSystem.pt2pr,
+    CoordinateSystem.plot_polar_graph,
+    VMobject.get_subpath_split_indices_from_points,
+    Camera.transform_points_pre_display,
+    ThreeDAxes.__init__,
+    ThreeDAxes._add_3d_pieces,
+    ThreeDAxes._set_axis_shading,
+    ThreeDAxes.get_y_axis_label,
+    ThreeDAxes.get_z_axis_label,
+    ThreeDAxes.get_axis_labels,
+    ThreeDCamera.__init__,
+    ThreeDCamera.add_fixed_in_frame_mobjects,
+    ThreeDCamera.get_phi,
+    ThreeDCamera.get_theta,
+    ThreeDCamera.get_rotation_matrix,
+    ThreeDCamera.reset_rotation_matrix,
+    ThreeDCamera.generate_rotation_matrix,
+    ThreeDCamera.project_points,
+    Scene.update_mobjects,
+    Mobject.get_pieces,
+    Camera,
+    Camera.capture_mobjects,
+    Mobject.get_family,
+    ThreeDCamera.get_gamma,
+    Surface,
+    Surface.__init__,
+    Surface._get_u_values_and_v_values,
+    Surface._setup_in_uv_space,
+    Surface.func,
+    Surface.set_fill_by_checkerboard,
+    Surface.set_fill_by_value,
+    CoordinateSystem.plot_surface,
+    ThreeDVMobject,
+    VMobject.set_points_as_corners,
+    VMobject.get_style,
+    VMobject.set_style,
+    VMobject.get_fill_color,
+    VMobject.get_stroke_color,
+    Arrow3D,
+    Arrow3D.__init__,
+    Arrow3D.get_end,
+    Line3D,
+    Line3D.__init__,
+    Line3D.get_start,
+    Line3D.get_end,
+    ThreeDCamera.get_focal_distance,
+    ThreeDCamera.get_zoom,
+    Camera.points_to_pixel_coords,
+    Camera.points_to_subpixel_coords,
+    Text,
+    Text.__init__,
+    Dot.__init__,
+    Mobject.next_to,
+    Mobject.move_to,
+    Mobject.get_center,
+    Mobject.get_left,
+    Mobject.get_right,
+    Mobject.get_top,
+    Mobject.get_bottom,
+    Mobject.add_updater,
+    VMobject.match_style,
+    VMobject.clear_points,
+    VMobject.get_color,
+    Line.put_start_and_end_on,
+    Arrow.get_end,
+    ManimColor.__init__,
+    ManimColor.to_rgb,
+)
+
+PINS: Mapping[str, Mapping[str, str]] = {
+    "0.21.0": {
+        "Transform.get_all_mobjects": (
+            "780e2bd227d7b0e890a48dd295d8929890b5a0f86423d951a12b224505c38da6"
+        ),
+        "Animation": "e78e125520ac3228288913c25c53abfb3ef4108b424fa2dcefe1f44e3012fb34",
+        "Animation.__new__": (
+            "3368aa91d93fcde302de391ceb71e1bcb3d99cb25958a167506416a45da5b819"
+        ),
+        "Animation.__init__": (
+            "1d1bde290ccbf7049af502ad1012c99f12c5d951fa72f1709730eb35a593cfc2"
+        ),
+        "Animation.interpolate": (
+            "ef6a9a690c6beb24d0040a04ea75e0d537ee0647d42ae63af5b8e45e42165693"
+        ),
+        "Animation._setup_scene": (
+            "ab4be56fdfd185a65678b0a45bcf840c4826518fb75d786430dbfc1e52072b7d"
+        ),
+        "Animation.update_mobjects": (
+            "5629df7ac89024b14dfa0fc4fe30ca61a734387fc8f121b6c3b0eda41ce93478"
+        ),
+        "Animation.get_all_mobjects": (
+            "72575a2dcaef276eb58210de7fffc8fb757e114a216f7f9d393ebd42176b9740"
+        ),
+        "Animation.get_all_mobjects_to_update": (
+            "2501639e4aaf8184855ac7c90bbc6e1f5aae23b34c720709362f3b73d8172ba0"
+        ),
+        "AnimationGroup": (
+            "63cc31ddd3cf7e02c7659287892811c98f712632e838217602e7d961b9db2bc1"
+        ),
+        "AnimationGroup.__init__": (
+            "a297ab07c0797cfc9e7273ecd2340de6f3baf0d041ee434a8c3b8afc3849a32a"
+        ),
+        "AnimationGroup._setup_scene": (
+            "b5af14f240591739f48d6a9702940952c6753b246fb4f165c0c99cdf5302e763"
+        ),
+        "AnimationGroup.interpolate": (
+            "777aed72eb93c35d55c49cbf433afa3a35615b2055cfd8e4f5edd0fa58478e63"
+        ),
+        "AnimationGroup.update_mobjects": (
+            "86707eb52cfc466318667fccc7992cf2860a4c25ef21f70ddecd731588966578"
+        ),
+        "AnimationGroup.init_run_time": (
+            "02411ece571a7868714b7cbf39d7596fae557a99e84f21fba3ded7615a34a064"
+        ),
+        "Arc": ("c2d82ff7e077b0d8cef33af9920bb4a2cdeaaa688392b40080a7720fb8d64342"),
+        "Arc.__init__": (
+            "046d0d70251b0c2d70a2c1711f49f09d6fd23d71cdf93bcb475346fc61698525"
+        ),
+        "Arc._set_pre_positioned_points": (
+            "790f4b51f346f5870df6ff0a60adad87343fc7c41da19ba701e236d1a67156d7"
+        ),
+        "Arc.generate_points": (
+            "9096ad9cc913ba934428db784a6e5bf8b73cf19440de4a6d7fbe84435b352a33"
+        ),
+        "LaggedStart": (
+            "45aed5029bf09e8c20e835022803405049931aeacd0bc1232d4f951f77480c90"
+        ),
+        "LaggedStart.__init__": (
+            "a84ffb88ff3a11a72a817ed04ec1078e6c034a9d6576e6f3633f109cbb035600"
+        ),
+        "Uncreate": "0b985b7fc6bc363e09b0d01306c5b6beeb1c68ef07d5b9b1c10cbb3073017b3c",
+        "Uncreate.__init__": (
+            "ea142c4decb8e2df309b3af059d02b5df1e46fee2e31d468f4b6301e6a41cf7d"
+        ),
+        "Write": "4e363e011f0b541f949b5fad69f60974d9c60192a77fc2d5bdf033a649c83f85",
+        "Write.__init__": (
+            "8064ca956e6c5112e480c479713861eeb4d787cd38c9cde2d84fb30e895c26e4"
+        ),
+        "Write._set_default_config_from_length": (
+            "d76c136a68c1797e4ec28aa2fe58df6da445f975fa57334f47199d3c01ffd115"
+        ),
+        "Write.reverse_submobjects": (
+            "6213103f6dcb49c8a1f46a6b454064dca187da27d57d363cd5bb35f3c55b9d83"
+        ),
+        "Write.begin": (
+            "190e65a135d2493ad4e52c4a8b3fa98db0d59abd2953aff81a4342d4bb5c9c3d"
+        ),
+        "Write.finish": (
+            "2baee9fccc87adbcca2e130c10fa8913c10481003f0e99ebe74b8b63ae8ebe5a"
+        ),
+        "Unwrite": "66744282774fe977b0475efb9b3da388a3bc076907b0f3451c7bb45b3648bad6",
+        "Unwrite.__init__": (
+            "acecf9a290f9dd5ac1f292bdf682b276c6bd9f8c2b6416d6cb9c58deead4ad20"
+        ),
+        "FadeOut": "1a52d84df1bcdd37a5fee71e19f1d20ee3e57c916f84c4834089929bec15f5ed",
+        "FadeOut.__init__": (
+            "633e042dc516018ebab954d2ca1ebf49d74b18ee397e0dfe71a60defaba92f30"
+        ),
+        "FadeOut.create_target": (
+            "b0a5b60c75fd7f9ce1ceebc7c01866271967b6707807bb3d8bc789da27cd9483"
+        ),
+        "ManimColor.__init__": (
+            "3eda25e075202fb58fb262f996b2c657bc1994b2535465de8c779111abaa4312"
+        ),
+        "ManimColor.to_rgb": (
+            "62b4ec147b506020b8b25253ba67c7c3fa66da48e05f716d1c79faade7eb4326"
+        ),
+        "Sector": ("8b53634aad65114c8fec871d4279730fea5ecd12197978a9191845d3ac394e6c"),
+        "Sector.__init__": (
+            "c5c6c2823c1ba34865673ec6df2397667d08066dcc513c61d08349d712dc2767"
+        ),
+        "AnnularSector": (
+            "ab70480c08f8787a3953948658b950b7e1880f92d5b30a29027c6868b2dda0a1"
+        ),
+        "AnnularSector.__init__": (
+            "0651d7b2c8b018b6234d9932d2c0e8c55737a2fa7069867df49b673bc9393320"
+        ),
+        "AnnularSector.generate_points": (
+            "d767e421efd5eb1d2f9e08d8e73c9941c735b65718dd6b2161b1b941146a2b6f"
+        ),
+        "AnimationGroup.build_animations_with_timings": (
+            "7b937329a0645d66bc122695844411ce624266b914b2ed9de736b4563c69bc0b"
+        ),
+        "Indicate": (
+            "b4444303d5907c065cda697cd7c6566b523f74643707dc19b06c0b0ea7cc9987"
+        ),
+        "Indicate.__init__": (
+            "047a2612696476e2b125661a184a8f87a55506804128c14bdae4a4fc68cc7eff"
+        ),
+        "Indicate.create_target": (
+            "6323f7b466a28aa5b0924876cec203373a6f518b0a6efeb34d86e11852903fbd"
+        ),
+        "Create": ("498d7330b7868e7b9690dabeca5461fb7524a538cfb3b9a51e85461dc8cb576e"),
+        "Create.__init__": (
+            "fa32c53d2d4c971260aeb83d39d5e44f17d81204c95d4fa1b168d2ebadca73ef"
+        ),
+        "Create._get_bounds": (
+            "a22a9696c365a4638fcbcbafffbde5d05cfa64dbe743f623ec90e96cc0c03df4"
+        ),
+        "FadeIn": ("88761e7314623b3021b557582edd884423431ea03b1c41b00dacbb89559143c2"),
+        "FadeIn.__init__": (
+            "06fafd7d841a47cf7323c3385fbd6e8c2b4880d974afcdd25685e960e6755577"
+        ),
+        "FadeIn.create_target": (
+            "da19446dbf1059e6f0bdea4de7eb88c55d8898c696cf33d7d6beebf5df279e9f"
+        ),
+        "FadeIn.create_starting_mobject": (
+            "e66a79b93a2d127a911be3beb4ffb182514827e512f41d76303db4d3169abef3"
+        ),
+        "Dot.__init__": (
+            "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
+        ),
+        "Mobject.next_to": (
+            "7549416a44449a31d4b029e048d9274328065587053fa6616a27c31eab022ce7"
+        ),
+        "Mobject.move_to": (
+            "7d4cb5c577c9365f9f6167a754bfd445c86e4530053435cf92f3de15caf9b9c0"
+        ),
+        "Mobject.get_center": (
+            "c68f83d88e581586de506b6a8ae9825908d1cb37e43901cc559147f51979f62f"
+        ),
+        "Mobject.get_left": (
+            "c3d886e5716c51f611ad4c1d712337a13147652a1ce55f00bb1a1f2c88d2c0d9"
+        ),
+        "Mobject.get_right": (
+            "511755817190042384a4571e5cda76c4e2d6aedeb5688ad9b27c2187da82df4d"
+        ),
+        "Mobject.get_top": (
+            "93a1686b338e17daec4afb1dcdbfb6d516e6eb841a9c4468b37fde13ab753151"
+        ),
+        "Mobject.get_bottom": (
+            "ed99826984aac88e3ccd804b01f7d0c17e81de4c6776d62968c7c562a07c2924"
+        ),
+        "Mobject.add_updater": (
+            "133e36f1549b430dd1db6fd8bc0a46290a42e2b65b7273b595b4a56f293b9c0d"
+        ),
+        "VMobject.match_style": (
+            "0942f747a12ae3efa14b9862fdbd387394a7171d6c3781236af6387c37f874b2"
+        ),
+        "VMobject.clear_points": (
+            "8e0f9a9249b27f7cff5519257d8216434c658a56aa60e29c4b6e6ebbff4d83ac"
+        ),
+        "Mobject.get_end": (
+            "1bce30a148b51017eabf3b4e60aa82b0e69ec6ae70b8b4c7cd32879b9cebe036"
+        ),
+        "VMobject.get_color": (
+            "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"
+        ),
+        "Line.put_start_and_end_on": (
+            "85af73568273ccc96fc790b248868d64f12707c5bca72313b72d6d1c6511d69d"
+        ),
+        "TipableVMobject.get_end": (
+            "c28bb1b7f189da418dc1a6ddba669e3bd9038f095e9a505177623d52966d4bcc"
+        ),
+        "BarChart.__init__": (
+            "ffee8386f40624010f023dc4de4988b04c1c6a78ba3ed4c1ecdbe59829c39854"
+        ),
+        "BarChart._add_x_axis_labels": (
+            "40be30b418d1caef54e0d6a3f7a3ff5bf6a8e537700a23171c81535c59fec253"
+        ),
+        "BarChart._create_bar": (
+            "fb668ff3904ca6f9dbf86e46684a776adc15ffb2da53395879709fa704738c03"
+        ),
+        "BarChart._add_bars": (
+            "77b6fb996004169d8a2cee0cb8d57d6ebc539f440b18df29bed3a440b3405edb"
+        ),
+        "BarChart._update_colors": (
+            "54e3508d18e28935ab2b7e8a74bbe8fd3c2ee7161d685ec80e86ec45de533772"
+        ),
+        "BarChart.get_bar_labels": (
+            "c82aa20a17beba85b9a66b5c2d02268d5d8fa58e4e316fff1a93471d08d558b2"
+        ),
+        "BarChart.change_bar_values": (
+            "80e6f1f7f7802c7a0ff2dac15a1447d0b41c87ee352bb22f30b69aa1eaf95af4"
+        ),
+        "Mobject.set_color_by_gradient": (
+            "992a62b5f27e4e0dd1f461d45d5582b417b30302a2ec5d2dddfd52456051a623"
+        ),
+        "Text": ("7309c3da35c7a3f3637ce23ef5f6e22545f090d18dd78b1d4e47ec610839b444"),
+        "Text.__init__": (
+            "29f31b1e7da83530ca933772008400a653e611709beb867e811852f154f6e407"
+        ),
+        "ThreeDCamera.project_points": (
+            "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
+        ),
+        "ThreeDCamera.get_focal_distance": (
+            "297e2da7a4029ac706ad638ac5face90ff2c5aa2cd0a605f1ba1aac569ad944a"
+        ),
+        "ThreeDCamera.get_zoom": (
+            "64f4c43ef900c52d437d2b9ecf6bb0cb4d7f61f1434da9e5d03ac9e1d5387b9f"
+        ),
+        "Camera.points_to_pixel_coords": (
+            "35664b1a5868743c690fb33cf0f56b6cbc7c08887893ea9338bf8b18de2e9a41"
+        ),
+        "Camera.points_to_subpixel_coords": (
+            "5220cd1f87dc3c380d76320d7bcfcd0e637e94c1c69afb03533ad47d9905dfab"
+        ),
+        "Arrow3D.get_end": (
+            "15089dbdeef393857a1a974e9866ea0e78d6178ed80235e62d3ed8e2273ee85f"
+        ),
+        "Arrow3D": ("dd1a13ffc7db42fad44719c6cb3cada433aa982369d17fc7754e1bcd857b382d"),
+        "Arrow3D.__init__": (
+            "e89db431164efc17a0451e556344d4ccf63e025ce0a0061b59a4a2b3b85a26d1"
+        ),
+        "Line3D": ("bc2e4d728fa5edbe811b0e4ac0dbe3599a280ebb868b2e6cc58dd94d82a2f905"),
+        "Line3D.__init__": (
+            "a9aeb2516090bb2ae6688e9599711a190543faa85f841743b15cfa1648fde9f0"
+        ),
+        "Line3D.get_start": (
+            "b09fef38db1b15df2ef6f1139bc2d49c977d213099c1674fb8decf62ed0a6b08"
+        ),
+        "Line3D.get_end": (
+            "426c9903382f0930f2f56d51e93f0d61de01e6824f0756ef0f624a1367c8e1f5"
+        ),
+        "Surface": ("5efd13b05fc45289e7f8d5dbf0e7fa2ab680d0a46eee1e7c27702eed5ab662c8"),
+        "Surface.__init__": (
+            "0dec826329a458b52579802351fd834b500da8477a8c00f25d738e0afe8563c7"
+        ),
+        "Surface._get_u_values_and_v_values": (
+            "544fd65e60434439a8b7f8bd0a58c383a0094716b8e2173bd1af8a08e03e6306"
+        ),
+        "Surface._setup_in_uv_space": (
+            "ecf2ab08360988f255cd4046578d3edb49c72a80606118909678355eee7df924"
+        ),
+        "Surface.func": (
+            "c90473e4fb517b22740ad21b57260a0ae4d741890d80f57013adc0e9ca98de34"
+        ),
+        "Surface.set_fill_by_checkerboard": (
+            "52feec233be288b70c98910b52740a010de67dc557a3013a3acf25223ebc3075"
+        ),
+        "Surface.set_fill_by_value": (
+            "e1bae5fbc36642125bdc1414d3cf9db776beb2eb7ea8cf90f5f0a5ee369e772e"
+        ),
+        "CoordinateSystem.plot_surface": (
+            "a4baed845b234914171cd72f1727b34f23e1e1f5f5f9ae3ac31bac8f0b22c68c"
+        ),
+        "ThreeDVMobject": (
+            "f57ee19613bf7cbc69593eaf9552811cdf33186299d1248841d848a85f0ca01c"
+        ),
+        "VMobject.set_points_as_corners": (
+            "da22591520b847b12ba20d1dc0dfe9d44b591f03ff14f4e349fcf5f1374e1ad7"
+        ),
+        "VMobject.get_style": (
+            "077727354e4d7adf03b29f8bb732b40849cc21ac96415f350456e5d30889fa9c"
+        ),
+        "VMobject.set_style": (
+            "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"
+        ),
+        "VMobject.get_fill_color": (
+            "610941a212afa2f4f00a4ea471573515368d194efb6127fb4f017e4c9422cf8c"
+        ),
+        "VMobject.get_stroke_color": (
+            "a73e4804d4cd5431a8377aa0de0d699527f69fe3612b2ca32377b17f117200c8"
+        ),
+        "Camera": ("a4bc43d2af494b4a33370cff0c3e21fbc1f8454f22beebe6e570b8034c93d576"),
+        "Camera.capture_mobjects": (
+            "958b8f23af48f900a4bca8a6eee38bb39de4aeff7a2e1ee3ba11ee5f370af526"
+        ),
+        "Mobject.get_family": (
+            "6335b7e3fc2f5cb8d3edf37261ed9c944614948a915381680d8a19621098e6d7"
+        ),
+        "ThreeDCamera.get_gamma": (
+            "79f1c64bf6de437112fb08d7ad3f8f7ce97279fa5462402667efb4226bab5eaf"
+        ),
+        "ThreeDCamera.add_fixed_in_frame_mobjects": (
+            "8c714c6cfe1dad948b9ee2842f679da799aaa2b47bc787c67dbb20bc735f76ba"
+        ),
+        "ThreeDAxes.__init__": (
+            "9c61175bcf12a80b68bc7cf8f72c9f3306ced9f805ad48eeba7b1c5f9b723374"
+        ),
+        "ThreeDAxes._add_3d_pieces": (
+            "abe2a7f8922a6081df702eb04a0b7672aa70ece713caa60c561c9b8363f6ea70"
+        ),
+        "ThreeDAxes._set_axis_shading": (
+            "730315b205c01f1d70313e596b7c42659e1702e1e530a398ceee1afe5387dd83"
+        ),
+        "ThreeDAxes.get_y_axis_label": (
+            "6c03129efc0d05d37784240262eff82a72c67b4f00642879c7a11c2ee8552a74"
+        ),
+        "ThreeDAxes.get_z_axis_label": (
+            "de33d29ae01852d0cd3e8c6b05f64e2e0a39f78162ccd06bd66a62fe79d4c4cc"
+        ),
+        "ThreeDAxes.get_axis_labels": (
+            "ce9536dc4ff053f8af24cb0871788047c7181617be1b6845110ece7a59e4c91e"
+        ),
+        "ThreeDCamera.__init__": (
+            "221f5f8dc3d01535ead1350cfe8557fdf2bd6b16dabddee3a319cd5d4234db79"
+        ),
+        "ThreeDCamera.get_phi": (
+            "1f631e2d34012d5f4fa5cf1619477fd4cbab7b9dfa75af95e3ca443314c8e094"
+        ),
+        "ThreeDCamera.get_theta": (
+            "0313fb1c16e5fe1fe1945087a10ee38865b4da9bb516e146875a36f94b0dd6ad"
+        ),
+        "ThreeDCamera.get_rotation_matrix": (
+            "a6ad11cc4f9c7e6433ad63ffd45d96ef6aa7516675053410064bfe3cd4c191dd"
+        ),
+        "ThreeDCamera.reset_rotation_matrix": (
+            "74ac1fec34c4bf3e5ea0c9aee54a668c6664353ca93f80bbd8c0f309c631facb"
+        ),
+        "ThreeDCamera.generate_rotation_matrix": (
+            "c5e496e456b3ffa908d20bd64d26b055c4e7fc4bf39fd178b0f957ed6216f444"
+        ),
+        "Scene.update_mobjects": (
+            "8d4edd0afd900f5993f878c3ad6d7ab5a8d29872c3682523551da4b1cd4e77dc"
+        ),
+        "Mobject.get_pieces": (
+            "176d5845ad6d953bd7f04052471e7aeaea4030d4dccf8cc1eb00b61335cde256"
+        ),
+        "VectorField.__init__": (
+            "bd5b0886cfa6186ad12cd868ca9b2bf3e6c7ac021d531d68d062cebe415a8018"
+        ),
+        "VectorField.fit_to_coordinate_system": (
+            "f6bf0f9a819a25cb19e480c4a5dac13378aeea68108505a98ceb3ee3b98ae8b3"
+        ),
+        "VectorField.nudge": (
+            "9f5afe12e9a2a50423ec89bd182cb67fd3badf460bdd8ca9d63ea3dc22282451"
+        ),
+        "VectorField.nudge_submobjects": (
+            "4c5f877497b18eedc3f5f2206da69143d18b29e9077bc86197a74ab39d597426"
+        ),
+        "VectorField.get_nudge_updater": (
+            "ac57f8505bbcd2c7b2dc22292210eaf48b8220c114c02ae27631c87be958c766"
+        ),
+        "VectorField.start_submobject_movement": (
+            "5edd169bcecd2027c848c66c88e2b54ebd21ef7b5c29b8c8328bffdddd7853c5"
+        ),
+        "VectorField.stop_submobject_movement": (
+            "8f7bcfde33b6dd57468ebab37fd2a0a0e7fba1e8128e8bd7f58d3b68d2956c1a"
+        ),
+        "VectorField.get_colored_background_image": (
+            "1a588a917c4d374bcf2d6251aef8f1889771addecb0ea047121a93159157f31c"
+        ),
+        "VectorField.get_vectorized_rgba_gradient_function": (
+            "54bfe5020db9f88e62063971976bfc90d5eef61e76b0906fefa1e49948ec5a46"
+        ),
+        "ArrowVectorField.__init__": (
+            "9cec329935b0870d41a63df9229edfed69ae43f302ef5fb7a614989020f057be"
+        ),
+        "ArrowVectorField.get_vector": (
+            "dce59be06da3b6a867bdc089c4e486ee22465a6efc7ec2417ee3f6c6bd813894"
+        ),
+        "StreamLines.__init__": (
+            "6391a837ca70b8e458a40a8dc7fe68ae10c81ef34cea860f6713df5bda6f2e7d"
+        ),
+        "StreamLines.create": (
+            "a9b14688b01e5084a0b2e0244a7f09dd15c3b0212ca7b862911314ad835218bd"
+        ),
+        "StreamLines.start_animation": (
+            "416e78f338d1e96fd577bcbf4c1c2405e07b47400d45ad60dad915e3bec71510"
+        ),
+        "StreamLines.end_animation": (
+            "6a8d559f605757187b9ab83c67b92fbb45fff0457e64e3209a13bc85952be5d7"
+        ),
+        "Vector.__init__": (
+            "7db92f923b54a4e9f5b23059ecb162f73a26ee02f72c96b2d2764b05568ae594"
+        ),
+        "Arrow.__init__": (
+            "76cfd9890aeace0ed442e35aa0e3a81cfbd368580cedf7b81f54f348292797a1"
+        ),
+        "ShowPassingFlash.__init__": (
+            "7a5cebb1946e03e14bcfe035dbe23e754b328892e523335b4f360e1e48813f33"
+        ),
+        "ShowPassingFlash._get_bounds": (
+            "2c6d9350f5de2119afdc052ee9b2ccecf0903bff204d3ef881efe0b002865d1d"
+        ),
+        "NumberPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "CoordinateSystem.plot_implicit_curve": (
+            "8c315192e0855e979be8ea3ac7c0af22612625c36667e07cefdb5d9166aed609"
+        ),
+        "VectorField.shift_func": (
+            "34c4749a5e73faf486a52e05d9effb7c6eb72c0cc1c3861775e507a43d9b613c"
+        ),
+        "VectorField.scale_func": (
+            "647ccfede01ef25dbdd4f75b35014896481694905dfbc506eec4d374a8817f9b"
+        ),
+        "VMobject.get_subpath_split_indices_from_points": (
+            "f6390df4e1903191807df6181bb8e83ec09107d93cbd1962d7bc80b1e9ce8c24"
+        ),
+        "Camera.transform_points_pre_display": (
+            "04eaaf6f29c6dd0a56798d398448c3d451555ca6c774b88dfc40d2765d8d4999"
+        ),
+        "PolarPlane._init_background_lines": (
+            "ce9eb25873ab6f30dd407669f034fc329cd5c1afae8d3cbfe9007f4757e9ed07"
+        ),
+        "PolarPlane._get_lines": (
+            "12136a54a93ff9dabc6fee75d0e869800f99648e7a51d21d5718aecb319bb8c0"
+        ),
+        "PolarPlane.get_axes": (
+            "9b2d48c3b0f126bae8eac2112cbee5d091d0ecd8eed8b5708fef95c5ae97eb54"
+        ),
+        "PolarPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "PolarPlane.prepare_for_nonlinear_transform": (
+            "51cc9eb09a6381171721c581f1c2e34af49e1c718e57e1bdb17bc93420037185"
+        ),
+        "PolarPlane.get_coordinate_labels": (
+            "be282258437953815f202144bc7c45b5bd04b0d1a8e971560210975ca9eb7cca"
+        ),
+        "PolarPlane.add_coordinates": (
+            "615b4ca34cee5663a719c9ad889764de6b13bd65f75a6659ba087365d04bce28"
+        ),
+        "PolarPlane.get_radian_label": (
+            "695a83f72d4259ee8268b6b8c13a2a528015e9a7e1c5a4a41c3c8452fc4162d8"
+        ),
+        "PolarPlane.__init__": (
+            "1b0837070c74e35df72907038b6c8ff8792d1de6fc7dd94e217265c465746edc"
+        ),
+        "CoordinateSystem.polar_to_point": (
+            "3d96ef62964b76edd62327d9aebd7345477bf6812163a7fe6abba884aa0fba1a"
+        ),
+        "CoordinateSystem.point_to_polar": (
+            "11dfff47f4e0b285566d67da9303e94bf13c17ddfe4636609b4338939a1d6c39"
+        ),
+        "CoordinateSystem.pr2pt": (
+            "6b704e8e05b968c59cb5ac7373bc7e092bf3f89e977c6b3f310976a6a54182fd"
+        ),
+        "CoordinateSystem.pt2pr": (
+            "c83dcdf7c95fb0f2bb6b05decb0d04a32e88276551c83471950c8f945a8eaba5"
+        ),
+        "CoordinateSystem.plot_polar_graph": (
+            "5b18016ce7db866c38a02341ad27762a09b0221d74a23667ab53358816cfe12b"
+        ),
+        "VMobject.get_subpaths": (
+            "a3b39f251f72c2d4e3c5392c079f8b659457e875c9630bd59d20057a4472e0e2"
+        ),
+        "CoordinateSystem.get_area": (
+            "4b24b4037cd9abe31a566691d25d1844e1e41f01a04da9d2b9f9ab17531af970"
+        ),
+        "CoordinateSystem.get_riemann_rectangles": (
+            "0c7e7662dcc6a231c7f571c5e631324a2ad8eece108342758c48950ec05cce05"
+        ),
+        "color_gradient": (
+            "c6b28da6e0eda69ca481272eabe9917bf50143c9bdcc4d549e28d31bab4b2fe3"
+        ),
+        "invert_color": (
+            "7ac36a3cd0299d60d53fb2030eab37ba79b38478f1fc67dd4d433b722fe72a9d"
+        ),
+        "VMobject.set_color": (
+            "2acb9bb456271e1b4451beee65b5c1ae692e775ff8538646fe3f11f6c6b7000b"
+        ),
+        "Mobject.set_color": (
+            "606032a80b1946464607d0018644c5170aa1180282d033cec67a51c96d93e3b9"
+        ),
+        "DashedVMobject.__init__": (
+            "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
+        ),
+        "CoordinateSystem.get_line_from_axis_to_point": (
+            "a2aba1ee4fee10863c51ea03536a6650be0228d35b3d60d70d68be6302a12465"
+        ),
+        "CoordinateSystem.get_vertical_line": (
+            "454572845bb8950b67337ebed2d3d07f125d6a617257f4c9a5bc6d0d02952488"
+        ),
+        "CoordinateSystem.get_horizontal_line": (
+            "ff27b3c362ea3ba1bf52cf452afdae57f6af0f8757129c11a1e69e148879c59f"
+        ),
+        "CoordinateSystem.get_lines_to_point": (
+            "a74430bffacac4937b316b806d97fa042bcbb72b756860489a1e62dfce1f4d49"
+        ),
+        "CoordinateSystem.get_vertical_lines_to_graph": (
+            "21a720a4cb00aa75b6429530db11c368b1d7e0b2200ddb1117ba61530472f869"
+        ),
+        "CoordinateSystem.get_T_label": (
+            "8c77bbb14a30496fc11cf0b230f36cd1796bb603f6b8ad819f2ca11682d7c48a"
+        ),
+        "CoordinateSystem.angle_of_tangent": (
+            "9f35b1c8d595882ca436dc3211519187a78aa3dc66eb68042cb04a3bcfb9f6a6"
+        ),
+        "CoordinateSystem.slope_of_tangent": (
+            "fcb9e995f09dfa7a9317d5fa7d520334f33deb22311e31b3fcad7f2e27417985"
+        ),
+        "CoordinateSystem.get_secant_slope_group": (
+            "5ba9cba3d65e5bd56134349c4cd077e3319806104f5809471ee9fdc8597e641b"
+        ),
+        "CoordinateSystem.plot_derivative_graph": (
+            "37b6974aedda180664cd7579b417bb0fdd5abd302cc5605b675245436c2b3e05"
+        ),
+        "CoordinateSystem.plot_antiderivative_graph": (
+            "a98df77383cebe0f341393f2a95f7a20b209e1dca30783e9efcb71ba1e27bd2e"
+        ),
+        "DashedLine.__init__": (
+            "9d507bbe97021a4a0a4125443d350ce428cbe556d9b928ffa4ccb9f3c2007fa8"
+        ),
+        "DashedLine._calculate_num_dashes": (
+            "a7f096d1f0585ece460d84711c8ffb4cb6a11a620e8827bfa5dfcb2d6ed0a6c4"
+        ),
+        "TangentLine.__init__": (
+            "135a555ebd431ad3d882fef073a8e17205418a4650808186c81ff8738989913f"
+        ),
+        "Line.__init__": (
+            "f878f82eced744c5893e782dcf324b309266900bb948293a7313f701fe3ac0bf"
+        ),
+        "Line._account_for_buff": (
+            "834ce9ce3971cc11fc7aec7b1747c432df83a49b6a572ab56c38bce9cff6908a"
+        ),
+        "get_json": (
+            "dbe7d2639c78f2dcc702c9b4f325e59498789259aa738f5ac75c408ed5e4ae87"
+        ),
+        "get_hash_from_play_call": (
+            "b7d5f2fe8ab3ab9c84dbe8ee9fbac4babaafbff8ec5c1408bb6d81b92b017373"
+        ),
+        "_CustomEncoder.default": (
+            "39c83d428607292ace2ec8a2a2d1bd5e636d95cadf38da2b44d35dcfafac1125"
+        ),
+        "_Memoizer._handle_already_processed": (
+            "717d612fcdd1a521fd45ba92f47cdfdc2e32c5c647090cfdf2aa40e17d208d5d"
+        ),
+        "NumberLine.__init__": (
+            "009ac481d80c22e2859219dfb574bfb554c9dcb029980de5097076ca01098b8b"
+        ),
+        "NumberLine.get_tick": (
+            "657a50c4eb02d7a777299f3797143fbf1d954cd19e962934f1fc7ee040bf3c98"
+        ),
+        "NumberLine.get_tick_range": (
+            "038e6d4154a1459f85b5c3179c5dac62140687f499f464edcdb3131e6a662a64"
+        ),
+        "NumberLine.number_to_point": (
+            "32c1849884ab85687754a14e6b0ed60b733f14e8ab7c3d5ec160406af03346a2"
+        ),
+        "NumberLine.point_to_number": (
+            "afd72e45e8ed16aad8b45e60692f30f36e001e93f10b4ec9accfa00e036d6d6b"
+        ),
+        "NumberLine.get_unit_size": (
+            "914414aea7e3ae8f81bdac76e2197a89e37b70040cae21f1e4f5228107aa031e"
+        ),
+        "NumberLine.get_unit_vector": (
+            "9606242fc88ed1e75138f7ca2bcd2d3d4b71cc4f0fd566fae54356cdcd3d4d54"
+        ),
+        "NumberLine.get_number_mobject": (
+            "27f88fb21d4212b024cc3718f5e0b20346ad67478c287b362a09860cca144be5"
+        ),
+        "NumberLine.add_numbers": (
+            "14bfde7e479edcceae448457a60a1a2cc55e68d96b8d49bd0748fed6228d1dcd"
+        ),
+        "NumberLine.add_labels": (
+            "42dc9735756061afaada6aae089d35f5d7c2aa787da6df5485b5df51ffee8028"
+        ),
+        "NumberLine._create_label_tex": (
+            "786c70857fd0172d7da86c9ed8dc487174dc0cb8fac601427bd5a65efd51c190"
+        ),
+        "NumberLine._decimal_places_from_step": (
+            "f0d11aaf66140c5b6c2c0f44d73d2105251d95cccab66532620b407715855633"
+        ),
+        "Axes.__init__": (
+            "e28c172944e9412f15465f44684c6275381e395fc1b79ce1764c7a6599a6ce23"
+        ),
+        "Axes._create_axis": (
+            "a2341426a116935894bedb7d649632bfc4897bcfa8a0f67e61c3be7eba5aab36"
+        ),
+        "Axes._origin_shift": (
+            "09850bdcba2b1bb775dcae0f38ebb1d77cacf2ba0ef3618f34e013aef1dbd254"
+        ),
+        "Axes.coords_to_point": (
+            "9ea620816d0ab8e55620fd277504fb3a2558a400afdb1c46ddb560111823139d"
+        ),
+        "Axes.point_to_coords": (
+            "e26c9b825c9315b444ecb7ae755ee594d471b87d3c8d2e3c40d20015b7a4834f"
+        ),
+        "Axes.get_axis_labels": (
+            "91b177522bb84d93481e3e5c9db628eb61f75247c6f77c85a047c05f9196061b"
+        ),
+        "CoordinateSystem.add_coordinates": (
+            "114651538830075b663f08d5b49bc1597ad9e3d254e19d6d348f591b5f16bf11"
+        ),
+        "CoordinateSystem.get_x_axis_label": (
+            "914e181b3fb7b98e75cfae4a7e46faa79628f0d14f2f857318388412ae7e6fe3"
+        ),
+        "CoordinateSystem.get_y_axis_label": (
+            "2cdfc799f218b08f46e638e2cfbec45f3e22f060d592d0493399d2dec5d6a3a2"
+        ),
+        "CoordinateSystem._get_axis_label": (
+            "7caef98d9da34e8068d0cacded98ed11d66afa87d62986ea6dc5373b5177404f"
+        ),
+        "CoordinateSystem.get_graph_label": (
+            "85b36b3439d0f908acee5d2efa1b8a1d1901a06ef19088cbf4138e50a810cad3"
+        ),
+        "DecimalNumber._set_submobjects_from_number": (
+            "70e08296f775e5f7585a3eb28a42717842812b2aafe8268c417584377b345609"
+        ),
+        "DecimalNumber._get_num_string": (
+            "f4f4b1da599a62bade405dd85546db63377b9767364d4e82bd7f4903f8c41c11"
+        ),
+        "DecimalNumber._get_formatter": (
+            "d16c844a43a9c5f8e569f7a1fbf8f3738361d043fbe85605f3f92181788fe9f6"
+        ),
+        "NumberPlane.__init__": (
+            "ddf180e3a3253a7c68ac1bbf745bc5a30533cb6fbe5572c3fac0a19370fcd68c"
+        ),
+        "NumberPlane._init_background_lines": (
+            "002687c99d845acab6a9b470c50260b81b8357c655552f2ec46d9a08e74339fd"
+        ),
+        "NumberPlane._get_lines": (
+            "953654c1ac8bea9da7878170bd569cfb8604a5c4e178262b6b183d78b1da510b"
+        ),
+        "NumberPlane._get_lines_parallel_to_axis": (
+            "03fde9988571dc6dc28ba3ff8ff4914e1774159e09040be502da40cc68e34c5b"
+        ),
+        "LogBase.get_custom_labels": (
+            "d92f86ca4ffedbb5c4844c8657003d9d9f06c8ad66f76eb128e8a4a4f1415c36"
+        ),
+        "VMobject.scale": (
+            "a49555af84f1592f2649dfc9bd89f8b91331b3193ff00162185d462b40a54a37"
+        ),
+        "VMobject.split": (
+            "ed5b27ee300e1e74e5ad8a3d30b6c0ac0e60cbba3604d275577272f6c1d04371"
+        ),
+        "Animation.interpolate_mobject": (
+            "6df42ab42e168d57a38584100dd57cc87b474fcee5a2531ca3d0c4465b28bb66"
+        ),
+        "Mobject.reduce_across_dimension": (
+            "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
+        ),
+        "Mobject.remove": (
+            "b57f7a7caadb6f17c0e9a2211a2b3ed39f43c48949238387901aba2ab78b4aa8"
+        ),
+        "Mobject.rotate": (
+            "d8654a36c8cb817b8341eda2498230b26a1f9d010fc1c2d8f9383057134d8ae8"
+        ),
+        "Mobject.scale": (
+            "1d0aea25b5972bd6c5c5d97920630f9a2895785375cde30e4b2592c26696e9ff"
+        ),
+        "Mobject.stretch": (
+            "9b3b0d4a2f31648728f6b517436ce7fe1041e1f14b6adf9a733a54bf6ff04612"
+        ),
+        "Mobject.apply_matrix": (
+            "2b3bde85e4a300231fa471a7e64c9233cd1fdee96b71d9a42ae86ab9f90dee97"
+        ),
+        "Animation.create_starting_mobject": (
+            "fe0863e67d120ef6082b445efa8936594aa29cb264b10ba568656e97057295ba"
+        ),
+        "Animation.clean_up_from_scene": (
+            "055f70240b012325e907d4b1a1b100902cab25470d23461dfa27880cace73a08"
+        ),
+        "Animation.is_remover": (
+            "77ac7ad2318b0009e4d9acb4dff085dcc2427d3d56f37a8e7619cc53ce28fa63"
+        ),
+        "Animation.is_introducer": (
+            "7e93728ee70a1eb1657d09595443bd48b6465864b7924f3d9fa49b1240d2f9b0"
+        ),
+        "Transform.interpolate_submobject": (
+            "cb3c7233b8c1b8984279be518952b174d5c4560432dc70957a4b8857605089eb"
+        ),
+        "Transform.get_all_families_zipped": (
+            "cf5fcb6ffe0afe4b4a282dd2931caa46b8af493e6ef68437028a9e319c683f92"
+        ),
+        "GrowFromCenter.__init__": (
+            "3fd32eff781147b363c628178bd0032bdd4c6aca7d91cbd53547e1bfa3bfbb3b"
+        ),
+        "GrowFromPoint.create_starting_mobject": (
+            "b24d2fdf31e9e91d4dfcfe71a4501e3c71aa2e4257a69d7bcffc1bd6b9d9807a"
+        ),
+        "ShrinkToCenter.__init__": (
+            "08f570bb39d7725fc28d0c1a1f96385e2fb15940058eb6cace80d8a74b8664aa"
+        ),
+        "NumberPlane.prepare_for_nonlinear_transform": (
+            "51cc9eb09a6381171721c581f1c2e34af49e1c718e57e1bdb17bc93420037185"
+        ),
+        "Mobject.shift": (
+            "97ca5b9d0d14d3af137ba3b5a1a200df62b18b3ed1858bbd15e154745aaeb6bb"
+        ),
+        "Mobject.apply_points_function_about_point": (
+            "f2b6e32d3786c133abd3bfe2aede34deef497b751fec09a3486e95ec9852aea9"
+        ),
+        "VMobject.apply_function": (
+            "5d9a613d12cb0f4f5d42fe457cda427a1b6a667904894a2c42b80992e58fa211"
+        ),
+        "VMobject.scale_handle_to_anchor_distances": (
+            "b688e7c2b3c6f2b6657ddc4584cf055f89301d1ece78cf7c2927b50ba35bc5eb"
+        ),
+        "VMobject.get_anchors": (
+            "570aac67257a511caf8e9a34e11a649bd4de323f0e5cd1264cbe5fc3ea1a9083"
+        ),
+        "VMobject.get_points_defining_boundary": (
+            "13057979b204e9b663c283c3d37e857b9db75500b0d4db15b8335acb55dae0ad"
+        ),
+        "VMobject.set_anchors_and_handles": (
+            "9f613d1c80c2b15d6b05de012d4e54318aa92e2bbe0f9a2fa3abe56d2065c91d"
+        ),
+        "Mobject.__deepcopy__": (
+            "8a1349b6fc8ab459e17e26106fb1c7595853e3369231f936624170f283ea8ab1"
+        ),
+        "Mobject.copy": (
+            "a22dc312aed0c05826bb8075283239e1be2bc7932f4f9089dbfebf46a1dafef0"
+        ),
+        "Mobject.suspend_updating": (
+            "7b3bd9c5a1074658788a96e5a1bd87be7d7b2595d2cdf36dd911d8ba3e23c707"
+        ),
+        "Mobject.resume_updating": (
+            "19c067227bfac76acdd307a0a6a534e36a2dd7a6cda754a137af2033a437bb27"
+        ),
+        "Mobject.become": (
+            "c3f4317909fdc29b4606604409498fdc9100aef5c71cab2b3166a15e8685af9a"
+        ),
+        "Mobject.align_data": (
+            "2cd75be4af9373f3675f5b65a99cb2099c8f7abf7f871770fda8c9f737e81ae9"
+        ),
+        "Mobject.align_submobjects": (
+            "9fbf260aba9889e49b55bde0143a81bdb620ee82d926f8f712814f0f618f1662"
+        ),
+        "Mobject.add_n_more_submobjects": (
+            "24032de9fc777929e32fa9216077b21f493ed395e3e689605840cb59a850848c"
+        ),
+        "Mobject.interpolate": (
+            "398eaf3ece840bb3cd5b6f4edbd30457a6a5113498428b7013002b044b88338e"
+        ),
+        "VMobject.align_points": (
+            "a89a89c591626d9bff406d393490b335440c03680280711b7ba448d37751dbce"
+        ),
+        "Animation.begin": (
+            "fbc294d3275d1b3d00ca4124de1cb8c61449c0fb09968b1fbf5b5b853a47537e"
+        ),
+        "Animation.finish": (
+            "d2cb9ad54830c1d4e55cebc699e92d01b61ff78ba3e243246c8bdaedffa6bbf5"
+        ),
+        "Animation.get_all_families_zipped": (
+            "dbbf81642ac72debb5e3f9f85cb7ca102c4970bbe374060d8d994254aa8ec67d"
+        ),
+        "Animation.get_sub_alpha": (
+            "0e40f96921a785d4543640f55db12b0a1022222e6b4dfd1444fc1a03bf008ecb"
+        ),
+        "AnimationGroup.begin": (
+            "10edfa32b8d2f3cdf154b03e7557f3de9377c8940c3194a4f68c8eb7bfd0f101"
+        ),
+        "AnimationGroup.finish": (
+            "8066d4d0dcc90d1c20e48043acd08ba59f3fb1dad0964738637667ded27e6885"
+        ),
+        "AnimationGroup.clean_up_from_scene": (
+            "84ffb0311bb261733d8cc04c8d1c30955620ef5f8a5a2cbc57525773249b67cc"
+        ),
+        "Succession.begin": (
+            "bfd139ca7f5f5cf638caedd34a03fea95a20182d515f69c361040bbf61d9139b"
+        ),
+        "Succession.finish": (
+            "78ee18e9ad1f6fe34bd241e6861caf612e5855490769980ca0a6893dafd04e30"
+        ),
+        "Succession.update_active_animation": (
+            "dbc7d5bf8ce748044ce7ce7bb99d2054cd74de5a21cc495988795eab78ae869c"
+        ),
+        "ShowPartial.interpolate_submobject": (
+            "3417be750ae2aa25996ed01eb325ecc343503124fbdb46b5899e9daeb371b0e5"
+        ),
+        "DrawBorderThenFill.interpolate_submobject": (
+            "00247978857bbd07703afcb2fb42119463cba177d07bae8ec18c347c75b84444"
+        ),
+        "Wiggle.interpolate_submobject": (
+            "288d509867cc4f263f070c757c23cf112d39f0bf79835df649739fc34fc903af"
+        ),
+        "Transform.begin": (
+            "b9563496ce8c5e8b1641008f4952fc8ccfa36cb184f4bb8e5d89d3c001713ede"
+        ),
+        "Transform.clean_up_from_scene": (
+            "9c000453019af523c2c179666b51f83732bfe085616b0f46e6e1a0c036aea4e1"
+        ),
+        "TransformFromCopy.__init__": (
+            "1e896249051c4f3de525f228c9a79be8df2be1aa5abb6c0a03a67e148cf7ae3c"
+        ),
+        "TransformFromCopy.interpolate": (
+            "5ffff83ca927ff6bcf07bdb331f08903d62b3135ec13e11839e54da67ece6cb4"
+        ),
+        "_MethodAnimation.finish": (
+            "f72a27b80c7a9f252827ba1ca0a9eff70d132e019d648625eddb0a7e4423dcc1"
+        ),
+        "FadeOut.clean_up_from_scene": (
+            "f4e88d8794e885384b0b18b259c715a37c53e440017ba405eb7225b573d1d709"
+        ),
+        "ShowPassingFlash.clean_up_from_scene": (
+            "eceffc730400765bbb9e56e46b00ff1955a5fb28f21997786f9e1dd484172e9f"
+        ),
+        "MoveAlongPath.__init__": (
+            "c0f57d41170cce6475933edf1c316f49c69be56461710564b98b402d4aa2a602"
+        ),
+        "MoveAlongPath.interpolate_mobject": (
+            "1284e87007a053ddb9ff46d22f5e80780b2bbb2816f11e777762c286422f280f"
+        ),
+        "PhaseFlow.__init__": (
+            "550a9d92bd1e1ebbfa4ef514b528465b302a3bf93ab52090b076c8fc7f1c0fac"
+        ),
+        "PhaseFlow.interpolate_mobject": (
+            "4ffc3cb74f4e4056f45330adb4a1c80740e54f5b067320ed4594b952bb0c6a2c"
+        ),
+        "ShowIncreasingSubsets.__init__": (
+            "bcdfc0aa8ec20603f35a37b3012d8ce77370da1c078bece81aef0ecc32af68f3"
+        ),
+        "ShowIncreasingSubsets.interpolate_mobject": (
+            "a45a8d8693f0e09d464eac40962a5b17d0fb5cbbcb924084d6b05cf62a9593fe"
+        ),
+        "_AnimationBuilder.__init__": (
+            "66e570764c551d4b7f2b70ab21ca397df8a931071c50977c2cd77288a4204966"
+        ),
+        "_AnimationBuilder.__getattr__": (
+            "6b7caeec3a7b73f27b49e5f2576ae99809d7b956468ed1947d0dace317510e03"
+        ),
+        "always_redraw": (
+            "f725d6d9c3fbbe1ec63f06926d17055b8946d171e7e71b6bf9e7cc069a7317cf"
+        ),
+        "Scene.get_moving_and_static_mobjects": (
+            "c72dd989507bf3295850382bd0e57a6d101b774c387bbdf884ae63c209ccc113"
+        ),
+        "Scene.get_moving_mobjects": (
+            "26646c79589a5fe64a66bb69a6fbe5437d367490f871ae156a7a651ca0a194c9"
+        ),
+        "Scene.should_update_mobjects": (
+            "28c43743dc124aaaf3008b756eca0e42c64efcfa4faaba29ecf00afad9f74d4c"
+        ),
+        "Scene.update_to_time": (
+            "c554748b52bb38f61efaa8b973568bcfc69069b8c51a065e8ce24745af118836"
+        ),
+        "Scene.play_internal": (
+            "c83eff575fd7732171dbc37a99b443b03f577361efe2f528375da418783639c5"
+        ),
+        "Scene.add": (
+            "5b1b4b7970420ce937cb5e6117f510314cf35275a249051ec9e33fadc5cdd923"
+        ),
+        "Scene.add_mobjects_from_animations": (
+            "a236f35c5ee7b1231fd9d70d04fd4c4e4150022068f7ae92d48db565af37c4e7"
+        ),
+        "CairoRenderer.play": (
+            "4cad6da1e0bcec34dacad1b8c35388d3df6a8e787e5a27544e6a0fa6deb4a4b3"
+        ),
+        "Camera.set_cairo_context_color": (
+            "2c53d3a7c71e425077321fd329431338ea8db489e0de870b21e6c3758ac46d4c"
+        ),
+        "Camera.apply_fill": (
+            "021a92466cd3f4930fb15d40785b9171da1db5b8d2acfd67a6dd1f3558f882bd"
+        ),
+        "Camera.set_cairo_context_path": (
+            "0e53e5837e78857d20178931c265487d10db6d8eb57c6784b6dee9feb4375dbf"
+        ),
+        "DrawBorderThenFill.begin": (
+            "a4a73c4ecb61734d10a94bfad4a53f0e7cd135ebd9653065820e90ca1f76d720"
+        ),
+        "Mobject.__getattr__": (
+            "4b63b7f9c1e9a41087e93e3c5c9fea4413523b5511af51caf4f06d8f2c6d451b"
+        ),
+        "VMobject.set_fill": (
+            "e325766f129f638c59186f1b32ff63d4601a653a20744467f62db4713772f49e"
+        ),
+        "VMobject.set_stroke": (
+            "1ee05806ebe6f8558b037e760bdcfac0ad9595bced1d993a85c8abee95772595"
+        ),
+        "VMobject.interpolate_color": (
+            "1f9f95a1383f72ba1576bb0177cb81b32b95dc115b337b36b152c3c521b2d72d"
+        ),
+        "VMobject.pointwise_become_partial": (
+            "c78b17aeb714c07dc36e800a54c642f1226503698ed9a38224322eb45ac1f21d"
+        ),
+        "VGroup.__init__": (
+            "72cee23eee8accbe91f891aee7a0f4dcbe55bdeba2825c4b4d9419e208ebb42b"
+        ),
+        "VGroup.add": (
+            "0c23544a19789dd871a576725ac0832fe2a0af89a75dac8c7c26eb598edd515a"
+        ),
+        "Mobject.get_family_updaters": (
+            "37cd7d253aa5e9d4ccfaddd4e81677fadaf99600f4b9ba7b6d9d5717f71e86c8"
+        ),
+        "Mobject.family_members_with_points": (
+            "fc69ac2726f2d19db2e5785f72daa86622157cd1efbe74fc91bd25e51dc38c26"
+        ),
+    },
+    "0.22.0": {
+        "Transform.get_all_mobjects": (
+            "780e2bd227d7b0e890a48dd295d8929890b5a0f86423d951a12b224505c38da6"
+        ),
+        "Animation": "e78e125520ac3228288913c25c53abfb3ef4108b424fa2dcefe1f44e3012fb34",
+        "Animation.__new__": (
+            "3368aa91d93fcde302de391ceb71e1bcb3d99cb25958a167506416a45da5b819"
+        ),
+        "Animation.__init__": (
+            "1d1bde290ccbf7049af502ad1012c99f12c5d951fa72f1709730eb35a593cfc2"
+        ),
+        "Animation.interpolate": (
+            "ef6a9a690c6beb24d0040a04ea75e0d537ee0647d42ae63af5b8e45e42165693"
+        ),
+        "Animation._setup_scene": (
+            "ab4be56fdfd185a65678b0a45bcf840c4826518fb75d786430dbfc1e52072b7d"
+        ),
+        "Animation.update_mobjects": (
+            "5629df7ac89024b14dfa0fc4fe30ca61a734387fc8f121b6c3b0eda41ce93478"
+        ),
+        "Animation.get_all_mobjects": (
+            "72575a2dcaef276eb58210de7fffc8fb757e114a216f7f9d393ebd42176b9740"
+        ),
+        "Animation.get_all_mobjects_to_update": (
+            "2501639e4aaf8184855ac7c90bbc6e1f5aae23b34c720709362f3b73d8172ba0"
+        ),
+        "AnimationGroup": (
+            "63cc31ddd3cf7e02c7659287892811c98f712632e838217602e7d961b9db2bc1"
+        ),
+        "AnimationGroup.__init__": (
+            "a297ab07c0797cfc9e7273ecd2340de6f3baf0d041ee434a8c3b8afc3849a32a"
+        ),
+        "AnimationGroup._setup_scene": (
+            "b5af14f240591739f48d6a9702940952c6753b246fb4f165c0c99cdf5302e763"
+        ),
+        "AnimationGroup.interpolate": (
+            "777aed72eb93c35d55c49cbf433afa3a35615b2055cfd8e4f5edd0fa58478e63"
+        ),
+        "AnimationGroup.update_mobjects": (
+            "86707eb52cfc466318667fccc7992cf2860a4c25ef21f70ddecd731588966578"
+        ),
+        "AnimationGroup.init_run_time": (
+            "02411ece571a7868714b7cbf39d7596fae557a99e84f21fba3ded7615a34a064"
+        ),
+        "Arc": ("c2d82ff7e077b0d8cef33af9920bb4a2cdeaaa688392b40080a7720fb8d64342"),
+        "Arc.__init__": (
+            "046d0d70251b0c2d70a2c1711f49f09d6fd23d71cdf93bcb475346fc61698525"
+        ),
+        "Arc._set_pre_positioned_points": (
+            "790f4b51f346f5870df6ff0a60adad87343fc7c41da19ba701e236d1a67156d7"
+        ),
+        "Arc.generate_points": (
+            "9096ad9cc913ba934428db784a6e5bf8b73cf19440de4a6d7fbe84435b352a33"
+        ),
+        "LaggedStart": (
+            "45aed5029bf09e8c20e835022803405049931aeacd0bc1232d4f951f77480c90"
+        ),
+        "LaggedStart.__init__": (
+            "a84ffb88ff3a11a72a817ed04ec1078e6c034a9d6576e6f3633f109cbb035600"
+        ),
+        "Uncreate": "0b985b7fc6bc363e09b0d01306c5b6beeb1c68ef07d5b9b1c10cbb3073017b3c",
+        "Uncreate.__init__": (
+            "ea142c4decb8e2df309b3af059d02b5df1e46fee2e31d468f4b6301e6a41cf7d"
+        ),
+        "Write": "4e363e011f0b541f949b5fad69f60974d9c60192a77fc2d5bdf033a649c83f85",
+        "Write.__init__": (
+            "8064ca956e6c5112e480c479713861eeb4d787cd38c9cde2d84fb30e895c26e4"
+        ),
+        "Write._set_default_config_from_length": (
+            "d76c136a68c1797e4ec28aa2fe58df6da445f975fa57334f47199d3c01ffd115"
+        ),
+        "Write.reverse_submobjects": (
+            "6213103f6dcb49c8a1f46a6b454064dca187da27d57d363cd5bb35f3c55b9d83"
+        ),
+        "Write.begin": (
+            "190e65a135d2493ad4e52c4a8b3fa98db0d59abd2953aff81a4342d4bb5c9c3d"
+        ),
+        "Write.finish": (
+            "2baee9fccc87adbcca2e130c10fa8913c10481003f0e99ebe74b8b63ae8ebe5a"
+        ),
+        "Unwrite": "66744282774fe977b0475efb9b3da388a3bc076907b0f3451c7bb45b3648bad6",
+        "Unwrite.__init__": (
+            "acecf9a290f9dd5ac1f292bdf682b276c6bd9f8c2b6416d6cb9c58deead4ad20"
+        ),
+        "FadeOut": "1a52d84df1bcdd37a5fee71e19f1d20ee3e57c916f84c4834089929bec15f5ed",
+        "FadeOut.__init__": (
+            "633e042dc516018ebab954d2ca1ebf49d74b18ee397e0dfe71a60defaba92f30"
+        ),
+        "FadeOut.create_target": (
+            "b0a5b60c75fd7f9ce1ceebc7c01866271967b6707807bb3d8bc789da27cd9483"
+        ),
+        "ManimColor.__init__": (
+            "3eda25e075202fb58fb262f996b2c657bc1994b2535465de8c779111abaa4312"
+        ),
+        "ManimColor.to_rgb": (
+            "62b4ec147b506020b8b25253ba67c7c3fa66da48e05f716d1c79faade7eb4326"
+        ),
+        "Sector": ("8b53634aad65114c8fec871d4279730fea5ecd12197978a9191845d3ac394e6c"),
+        "Sector.__init__": (
+            "c5c6c2823c1ba34865673ec6df2397667d08066dcc513c61d08349d712dc2767"
+        ),
+        "AnnularSector": (
+            "ab70480c08f8787a3953948658b950b7e1880f92d5b30a29027c6868b2dda0a1"
+        ),
+        "AnnularSector.__init__": (
+            "0651d7b2c8b018b6234d9932d2c0e8c55737a2fa7069867df49b673bc9393320"
+        ),
+        "AnnularSector.generate_points": (
+            "d767e421efd5eb1d2f9e08d8e73c9941c735b65718dd6b2161b1b941146a2b6f"
+        ),
+        "AnimationGroup.build_animations_with_timings": (
+            "7b937329a0645d66bc122695844411ce624266b914b2ed9de736b4563c69bc0b"
+        ),
+        "Indicate": (
+            "b4444303d5907c065cda697cd7c6566b523f74643707dc19b06c0b0ea7cc9987"
+        ),
+        "Indicate.__init__": (
+            "047a2612696476e2b125661a184a8f87a55506804128c14bdae4a4fc68cc7eff"
+        ),
+        "Indicate.create_target": (
+            "6323f7b466a28aa5b0924876cec203373a6f518b0a6efeb34d86e11852903fbd"
+        ),
+        "Create": ("498d7330b7868e7b9690dabeca5461fb7524a538cfb3b9a51e85461dc8cb576e"),
+        "Create.__init__": (
+            "fa32c53d2d4c971260aeb83d39d5e44f17d81204c95d4fa1b168d2ebadca73ef"
+        ),
+        "Create._get_bounds": (
+            "a22a9696c365a4638fcbcbafffbde5d05cfa64dbe743f623ec90e96cc0c03df4"
+        ),
+        "FadeIn": ("88761e7314623b3021b557582edd884423431ea03b1c41b00dacbb89559143c2"),
+        "FadeIn.__init__": (
+            "06fafd7d841a47cf7323c3385fbd6e8c2b4880d974afcdd25685e960e6755577"
+        ),
+        "FadeIn.create_target": (
+            "da19446dbf1059e6f0bdea4de7eb88c55d8898c696cf33d7d6beebf5df279e9f"
+        ),
+        "FadeIn.create_starting_mobject": (
+            "e66a79b93a2d127a911be3beb4ffb182514827e512f41d76303db4d3169abef3"
+        ),
+        "Dot.__init__": (
+            "8d08506b38220a1d7ed15e1e540fdae5a0efd84a8f11d1d007be4e88a17be2b5"
+        ),
+        "Mobject.next_to": (
+            "7549416a44449a31d4b029e048d9274328065587053fa6616a27c31eab022ce7"
+        ),
+        "Mobject.move_to": (
+            "7d4cb5c577c9365f9f6167a754bfd445c86e4530053435cf92f3de15caf9b9c0"
+        ),
+        "Mobject.get_center": (
+            "c68f83d88e581586de506b6a8ae9825908d1cb37e43901cc559147f51979f62f"
+        ),
+        "Mobject.get_left": (
+            "c3d886e5716c51f611ad4c1d712337a13147652a1ce55f00bb1a1f2c88d2c0d9"
+        ),
+        "Mobject.get_right": (
+            "511755817190042384a4571e5cda76c4e2d6aedeb5688ad9b27c2187da82df4d"
+        ),
+        "Mobject.get_top": (
+            "93a1686b338e17daec4afb1dcdbfb6d516e6eb841a9c4468b37fde13ab753151"
+        ),
+        "Mobject.get_bottom": (
+            "ed99826984aac88e3ccd804b01f7d0c17e81de4c6776d62968c7c562a07c2924"
+        ),
+        "Mobject.add_updater": (
+            "133e36f1549b430dd1db6fd8bc0a46290a42e2b65b7273b595b4a56f293b9c0d"
+        ),
+        "VMobject.match_style": (
+            "0942f747a12ae3efa14b9862fdbd387394a7171d6c3781236af6387c37f874b2"
+        ),
+        "VMobject.clear_points": (
+            "8e0f9a9249b27f7cff5519257d8216434c658a56aa60e29c4b6e6ebbff4d83ac"
+        ),
+        "Mobject.get_end": (
+            "1bce30a148b51017eabf3b4e60aa82b0e69ec6ae70b8b4c7cd32879b9cebe036"
+        ),
+        "VMobject.get_color": (
+            "ca822b067431f616e2afe25acb5a975ff8637f688f534f3fb57550c0ee9168f3"
+        ),
+        "Line.put_start_and_end_on": (
+            "85af73568273ccc96fc790b248868d64f12707c5bca72313b72d6d1c6511d69d"
+        ),
+        "TipableVMobject.get_end": (
+            "c28bb1b7f189da418dc1a6ddba669e3bd9038f095e9a505177623d52966d4bcc"
+        ),
+        "BarChart.__init__": (
+            "b65de39e4131cc183d2b714d8cdf17359a5f55dc73dd67a1c70dd31306f30fc0"
+        ),
+        "BarChart._add_x_axis_labels": (
+            "40be30b418d1caef54e0d6a3f7a3ff5bf6a8e537700a23171c81535c59fec253"
+        ),
+        "BarChart._create_bar": (
+            "fb668ff3904ca6f9dbf86e46684a776adc15ffb2da53395879709fa704738c03"
+        ),
+        "BarChart._add_bars": (
+            "77b6fb996004169d8a2cee0cb8d57d6ebc539f440b18df29bed3a440b3405edb"
+        ),
+        "BarChart._update_colors": (
+            "54e3508d18e28935ab2b7e8a74bbe8fd3c2ee7161d685ec80e86ec45de533772"
+        ),
+        "BarChart.get_bar_labels": (
+            "c82aa20a17beba85b9a66b5c2d02268d5d8fa58e4e316fff1a93471d08d558b2"
+        ),
+        "BarChart.change_bar_values": (
+            "80e6f1f7f7802c7a0ff2dac15a1447d0b41c87ee352bb22f30b69aa1eaf95af4"
+        ),
+        "Mobject.set_color_by_gradient": (
+            "992a62b5f27e4e0dd1f461d45d5582b417b30302a2ec5d2dddfd52456051a623"
+        ),
+        "Text": ("dcfdf52dad55d9508709687203f4f9d9523dc7b27af966236bf66a9a12233743"),
+        "Text.__init__": (
+            "70a2bf58dc91d8fc106bf56d596ac5edd8894d34c871264ac59d0a08315092e0"
+        ),
+        "ThreeDCamera.project_points": (
+            "044adac4f5e28fa28e94e42c9f4a46845bf26d14f6de99e6d2e7f74c02cbb665"
+        ),
+        "ThreeDCamera.get_focal_distance": (
+            "297e2da7a4029ac706ad638ac5face90ff2c5aa2cd0a605f1ba1aac569ad944a"
+        ),
+        "ThreeDCamera.get_zoom": (
+            "64f4c43ef900c52d437d2b9ecf6bb0cb4d7f61f1434da9e5d03ac9e1d5387b9f"
+        ),
+        "Camera.points_to_pixel_coords": (
+            "35664b1a5868743c690fb33cf0f56b6cbc7c08887893ea9338bf8b18de2e9a41"
+        ),
+        "Camera.points_to_subpixel_coords": (
+            "5220cd1f87dc3c380d76320d7bcfcd0e637e94c1c69afb03533ad47d9905dfab"
+        ),
+        "Arrow3D.get_end": (
+            "15089dbdeef393857a1a974e9866ea0e78d6178ed80235e62d3ed8e2273ee85f"
+        ),
+        "Arrow3D": ("dd1a13ffc7db42fad44719c6cb3cada433aa982369d17fc7754e1bcd857b382d"),
+        "Arrow3D.__init__": (
+            "e89db431164efc17a0451e556344d4ccf63e025ce0a0061b59a4a2b3b85a26d1"
+        ),
+        "Line3D": ("bc2e4d728fa5edbe811b0e4ac0dbe3599a280ebb868b2e6cc58dd94d82a2f905"),
+        "Line3D.__init__": (
+            "a9aeb2516090bb2ae6688e9599711a190543faa85f841743b15cfa1648fde9f0"
+        ),
+        "Line3D.get_start": (
+            "b09fef38db1b15df2ef6f1139bc2d49c977d213099c1674fb8decf62ed0a6b08"
+        ),
+        "Line3D.get_end": (
+            "426c9903382f0930f2f56d51e93f0d61de01e6824f0756ef0f624a1367c8e1f5"
+        ),
+        "Surface": ("5efd13b05fc45289e7f8d5dbf0e7fa2ab680d0a46eee1e7c27702eed5ab662c8"),
+        "Surface.__init__": (
+            "0dec826329a458b52579802351fd834b500da8477a8c00f25d738e0afe8563c7"
+        ),
+        "Surface._get_u_values_and_v_values": (
+            "544fd65e60434439a8b7f8bd0a58c383a0094716b8e2173bd1af8a08e03e6306"
+        ),
+        "Surface._setup_in_uv_space": (
+            "ecf2ab08360988f255cd4046578d3edb49c72a80606118909678355eee7df924"
+        ),
+        "Surface.func": (
+            "c90473e4fb517b22740ad21b57260a0ae4d741890d80f57013adc0e9ca98de34"
+        ),
+        "Surface.set_fill_by_checkerboard": (
+            "52feec233be288b70c98910b52740a010de67dc557a3013a3acf25223ebc3075"
+        ),
+        "Surface.set_fill_by_value": (
+            "e1bae5fbc36642125bdc1414d3cf9db776beb2eb7ea8cf90f5f0a5ee369e772e"
+        ),
+        "CoordinateSystem.plot_surface": (
+            "a4baed845b234914171cd72f1727b34f23e1e1f5f5f9ae3ac31bac8f0b22c68c"
+        ),
+        "ThreeDVMobject": (
+            "f57ee19613bf7cbc69593eaf9552811cdf33186299d1248841d848a85f0ca01c"
+        ),
+        "VMobject.set_points_as_corners": (
+            "da22591520b847b12ba20d1dc0dfe9d44b591f03ff14f4e349fcf5f1374e1ad7"
+        ),
+        "VMobject.get_style": (
+            "077727354e4d7adf03b29f8bb732b40849cc21ac96415f350456e5d30889fa9c"
+        ),
+        "VMobject.set_style": (
+            "8c5fd954a6683ff78c58156741a4cb56795dedd4a261bf42cd401a6b7d457b96"
+        ),
+        "VMobject.get_fill_color": (
+            "610941a212afa2f4f00a4ea471573515368d194efb6127fb4f017e4c9422cf8c"
+        ),
+        "VMobject.get_stroke_color": (
+            "a73e4804d4cd5431a8377aa0de0d699527f69fe3612b2ca32377b17f117200c8"
+        ),
+        "Camera": ("94e976f9408f176ab0fcaf6873a881333fe66938b90d5c6527e715eae988c2d6"),
+        "Camera.capture_mobjects": (
+            "958b8f23af48f900a4bca8a6eee38bb39de4aeff7a2e1ee3ba11ee5f370af526"
+        ),
+        "Mobject.get_family": (
+            "d0b2953532b4380ab77417bd43b5bdc64dafbe958441a9fdcf9450f5dbde2789"
+        ),
+        "ThreeDCamera.get_gamma": (
+            "79f1c64bf6de437112fb08d7ad3f8f7ce97279fa5462402667efb4226bab5eaf"
+        ),
+        "ThreeDCamera.add_fixed_in_frame_mobjects": (
+            "8c714c6cfe1dad948b9ee2842f679da799aaa2b47bc787c67dbb20bc735f76ba"
+        ),
+        "ThreeDAxes.__init__": (
+            "9c61175bcf12a80b68bc7cf8f72c9f3306ced9f805ad48eeba7b1c5f9b723374"
+        ),
+        "ThreeDAxes._add_3d_pieces": (
+            "abe2a7f8922a6081df702eb04a0b7672aa70ece713caa60c561c9b8363f6ea70"
+        ),
+        "ThreeDAxes._set_axis_shading": (
+            "730315b205c01f1d70313e596b7c42659e1702e1e530a398ceee1afe5387dd83"
+        ),
+        "ThreeDAxes.get_y_axis_label": (
+            "6c03129efc0d05d37784240262eff82a72c67b4f00642879c7a11c2ee8552a74"
+        ),
+        "ThreeDAxes.get_z_axis_label": (
+            "de33d29ae01852d0cd3e8c6b05f64e2e0a39f78162ccd06bd66a62fe79d4c4cc"
+        ),
+        "ThreeDAxes.get_axis_labels": (
+            "ce9536dc4ff053f8af24cb0871788047c7181617be1b6845110ece7a59e4c91e"
+        ),
+        "ThreeDCamera.__init__": (
+            "221f5f8dc3d01535ead1350cfe8557fdf2bd6b16dabddee3a319cd5d4234db79"
+        ),
+        "ThreeDCamera.get_phi": (
+            "1f631e2d34012d5f4fa5cf1619477fd4cbab7b9dfa75af95e3ca443314c8e094"
+        ),
+        "ThreeDCamera.get_theta": (
+            "0313fb1c16e5fe1fe1945087a10ee38865b4da9bb516e146875a36f94b0dd6ad"
+        ),
+        "ThreeDCamera.get_rotation_matrix": (
+            "a6ad11cc4f9c7e6433ad63ffd45d96ef6aa7516675053410064bfe3cd4c191dd"
+        ),
+        "ThreeDCamera.reset_rotation_matrix": (
+            "74ac1fec34c4bf3e5ea0c9aee54a668c6664353ca93f80bbd8c0f309c631facb"
+        ),
+        "ThreeDCamera.generate_rotation_matrix": (
+            "c5e496e456b3ffa908d20bd64d26b055c4e7fc4bf39fd178b0f957ed6216f444"
+        ),
+        "Scene.update_mobjects": (
+            "8d4edd0afd900f5993f878c3ad6d7ab5a8d29872c3682523551da4b1cd4e77dc"
+        ),
+        "Mobject.get_pieces": (
+            "55997ea46f1eaad3bdfd8f7ab12125778dcd3f9cd1ec20fd9ae6b4a6eb430911"
+        ),
+        "VectorField.__init__": (
+            "9daf0191595a1903e5bbe8a8db26dea7f542926d1b7b1589d7649fd960596de1"
+        ),
+        "VectorField.fit_to_coordinate_system": (
+            "f6bf0f9a819a25cb19e480c4a5dac13378aeea68108505a98ceb3ee3b98ae8b3"
+        ),
+        "VectorField.nudge": (
+            "0cf0fee6d27065a56f7db0474f252f85ae0dfc3e12d44041bbb8cc357f23b9da"
+        ),
+        "VectorField.nudge_submobjects": (
+            "4c5f877497b18eedc3f5f2206da69143d18b29e9077bc86197a74ab39d597426"
+        ),
+        "VectorField.get_nudge_updater": (
+            "ac57f8505bbcd2c7b2dc22292210eaf48b8220c114c02ae27631c87be958c766"
+        ),
+        "VectorField.start_submobject_movement": (
+            "5edd169bcecd2027c848c66c88e2b54ebd21ef7b5c29b8c8328bffdddd7853c5"
+        ),
+        "VectorField.stop_submobject_movement": (
+            "f0db183caac6e433db95b3cf1439b00f8c08b0a9626180ade7f2779cf42894e9"
+        ),
+        "VectorField.get_colored_background_image": (
+            "90237652e8d44c354cb00d4ec385db7aa88503e3cf90a033d368abbe9997ed24"
+        ),
+        "VectorField.get_vectorized_rgba_gradient_function": (
+            "54bfe5020db9f88e62063971976bfc90d5eef61e76b0906fefa1e49948ec5a46"
+        ),
+        "ArrowVectorField.__init__": (
+            "bb5956db7cd5063bdab39554b81cfb0a14d2be534213c264d2b0afdee53ba0e8"
+        ),
+        "ArrowVectorField.get_vector": (
+            "02099921b2c30a178baacb1ef151082c721ab6aedd61a55ef9f957be769f1238"
+        ),
+        "StreamLines.__init__": (
+            "3d725e54bbff1a4e6dff6bb9b43d8c97157d0f7e829aca2b0f36e40e85277572"
+        ),
+        "StreamLines.create": (
+            "23917d4c7d3d6b0a0c58fc72347fa58340c03a677b003ad00ed2958d9a98a0d7"
+        ),
+        "StreamLines.start_animation": (
+            "36fe1058dd3aaee53f6ec7802a1c6f186ce164b3a9faafb87947c560d99ff4f3"
+        ),
+        "StreamLines.end_animation": (
+            "1a69ee7e977c0e5eb7013edacf5b755c618bb2ab9daed1725a2c0802fb382a48"
+        ),
+        "Vector.__init__": (
+            "7db92f923b54a4e9f5b23059ecb162f73a26ee02f72c96b2d2764b05568ae594"
+        ),
+        "Arrow.__init__": (
+            "76cfd9890aeace0ed442e35aa0e3a81cfbd368580cedf7b81f54f348292797a1"
+        ),
+        "ShowPassingFlash.__init__": (
+            "7a5cebb1946e03e14bcfe035dbe23e754b328892e523335b4f360e1e48813f33"
+        ),
+        "ShowPassingFlash._get_bounds": (
+            "2c6d9350f5de2119afdc052ee9b2ccecf0903bff204d3ef881efe0b002865d1d"
+        ),
+        "NumberPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "CoordinateSystem.plot_implicit_curve": (
+            "8c315192e0855e979be8ea3ac7c0af22612625c36667e07cefdb5d9166aed609"
+        ),
+        "VectorField.shift_func": (
+            "f4c446462935910b176317b5469ed6aac6612ee7fcbf7a4458759901abf7c0b6"
+        ),
+        "VectorField.scale_func": (
+            "1944d75f52cf323858f16fb5d7403e399144c24033d92913bbb2fdbd4c7015d5"
+        ),
+        "VMobject.get_subpath_split_indices_from_points": (
+            "f6390df4e1903191807df6181bb8e83ec09107d93cbd1962d7bc80b1e9ce8c24"
+        ),
+        "Camera.transform_points_pre_display": (
+            "04eaaf6f29c6dd0a56798d398448c3d451555ca6c774b88dfc40d2765d8d4999"
+        ),
+        "PolarPlane._init_background_lines": (
+            "ce9eb25873ab6f30dd407669f034fc329cd5c1afae8d3cbfe9007f4757e9ed07"
+        ),
+        "PolarPlane._get_lines": (
+            "12136a54a93ff9dabc6fee75d0e869800f99648e7a51d21d5718aecb319bb8c0"
+        ),
+        "PolarPlane.get_axes": (
+            "9b2d48c3b0f126bae8eac2112cbee5d091d0ecd8eed8b5708fef95c5ae97eb54"
+        ),
+        "PolarPlane.get_vector": (
+            "98dd860009c43215de5f7ce51620608b86087647c45f8448d48d1331b0aa0b68"
+        ),
+        "PolarPlane.prepare_for_nonlinear_transform": (
+            "51cc9eb09a6381171721c581f1c2e34af49e1c718e57e1bdb17bc93420037185"
+        ),
+        "PolarPlane.get_coordinate_labels": (
+            "be282258437953815f202144bc7c45b5bd04b0d1a8e971560210975ca9eb7cca"
+        ),
+        "PolarPlane.add_coordinates": (
+            "615b4ca34cee5663a719c9ad889764de6b13bd65f75a6659ba087365d04bce28"
+        ),
+        "PolarPlane.get_radian_label": (
+            "695a83f72d4259ee8268b6b8c13a2a528015e9a7e1c5a4a41c3c8452fc4162d8"
+        ),
+        "PolarPlane.__init__": (
+            "1b0837070c74e35df72907038b6c8ff8792d1de6fc7dd94e217265c465746edc"
+        ),
+        "CoordinateSystem.polar_to_point": (
+            "3d96ef62964b76edd62327d9aebd7345477bf6812163a7fe6abba884aa0fba1a"
+        ),
+        "CoordinateSystem.point_to_polar": (
+            "11dfff47f4e0b285566d67da9303e94bf13c17ddfe4636609b4338939a1d6c39"
+        ),
+        "CoordinateSystem.pr2pt": (
+            "6b704e8e05b968c59cb5ac7373bc7e092bf3f89e977c6b3f310976a6a54182fd"
+        ),
+        "CoordinateSystem.pt2pr": (
+            "c83dcdf7c95fb0f2bb6b05decb0d04a32e88276551c83471950c8f945a8eaba5"
+        ),
+        "CoordinateSystem.plot_polar_graph": (
+            "5b18016ce7db866c38a02341ad27762a09b0221d74a23667ab53358816cfe12b"
+        ),
+        "VMobject.get_subpaths": (
+            "a3b39f251f72c2d4e3c5392c079f8b659457e875c9630bd59d20057a4472e0e2"
+        ),
+        "CoordinateSystem.get_area": (
+            "4b24b4037cd9abe31a566691d25d1844e1e41f01a04da9d2b9f9ab17531af970"
+        ),
+        "CoordinateSystem.get_riemann_rectangles": (
+            "0c7e7662dcc6a231c7f571c5e631324a2ad8eece108342758c48950ec05cce05"
+        ),
+        "color_gradient": (
+            "c6b28da6e0eda69ca481272eabe9917bf50143c9bdcc4d549e28d31bab4b2fe3"
+        ),
+        "invert_color": (
+            "7ac36a3cd0299d60d53fb2030eab37ba79b38478f1fc67dd4d433b722fe72a9d"
+        ),
+        "VMobject.set_color": (
+            "2acb9bb456271e1b4451beee65b5c1ae692e775ff8538646fe3f11f6c6b7000b"
+        ),
+        "Mobject.set_color": (
+            "606032a80b1946464607d0018644c5170aa1180282d033cec67a51c96d93e3b9"
+        ),
+        "DashedVMobject.__init__": (
+            "94025800226b238d2f97601266292fb00f4785049dc231d3387e063106b174d8"
+        ),
+        "CoordinateSystem.get_line_from_axis_to_point": (
+            "a2aba1ee4fee10863c51ea03536a6650be0228d35b3d60d70d68be6302a12465"
+        ),
+        "CoordinateSystem.get_vertical_line": (
+            "454572845bb8950b67337ebed2d3d07f125d6a617257f4c9a5bc6d0d02952488"
+        ),
+        "CoordinateSystem.get_horizontal_line": (
+            "ff27b3c362ea3ba1bf52cf452afdae57f6af0f8757129c11a1e69e148879c59f"
+        ),
+        "CoordinateSystem.get_lines_to_point": (
+            "a74430bffacac4937b316b806d97fa042bcbb72b756860489a1e62dfce1f4d49"
+        ),
+        "CoordinateSystem.get_vertical_lines_to_graph": (
+            "21a720a4cb00aa75b6429530db11c368b1d7e0b2200ddb1117ba61530472f869"
+        ),
+        "CoordinateSystem.get_T_label": (
+            "8c77bbb14a30496fc11cf0b230f36cd1796bb603f6b8ad819f2ca11682d7c48a"
+        ),
+        "CoordinateSystem.angle_of_tangent": (
+            "9f35b1c8d595882ca436dc3211519187a78aa3dc66eb68042cb04a3bcfb9f6a6"
+        ),
+        "CoordinateSystem.slope_of_tangent": (
+            "fcb9e995f09dfa7a9317d5fa7d520334f33deb22311e31b3fcad7f2e27417985"
+        ),
+        "CoordinateSystem.get_secant_slope_group": (
+            "5ba9cba3d65e5bd56134349c4cd077e3319806104f5809471ee9fdc8597e641b"
+        ),
+        "CoordinateSystem.plot_derivative_graph": (
+            "37b6974aedda180664cd7579b417bb0fdd5abd302cc5605b675245436c2b3e05"
+        ),
+        "CoordinateSystem.plot_antiderivative_graph": (
+            "a98df77383cebe0f341393f2a95f7a20b209e1dca30783e9efcb71ba1e27bd2e"
+        ),
+        "DashedLine.__init__": (
+            "9d507bbe97021a4a0a4125443d350ce428cbe556d9b928ffa4ccb9f3c2007fa8"
+        ),
+        "DashedLine._calculate_num_dashes": (
+            "a7f096d1f0585ece460d84711c8ffb4cb6a11a620e8827bfa5dfcb2d6ed0a6c4"
+        ),
+        "TangentLine.__init__": (
+            "135a555ebd431ad3d882fef073a8e17205418a4650808186c81ff8738989913f"
+        ),
+        "Line.__init__": (
+            "f878f82eced744c5893e782dcf324b309266900bb948293a7313f701fe3ac0bf"
+        ),
+        "Line._account_for_buff": (
+            "834ce9ce3971cc11fc7aec7b1747c432df83a49b6a572ab56c38bce9cff6908a"
+        ),
+        "get_json": (
+            "dbe7d2639c78f2dcc702c9b4f325e59498789259aa738f5ac75c408ed5e4ae87"
+        ),
+        "get_hash_from_play_call": (
+            "ac69107783b6cf4dc819baa833aed7ae323a8fb8180770642be74fa6300c21f5"
+        ),
+        "_CustomEncoder.default": (
+            "39c83d428607292ace2ec8a2a2d1bd5e636d95cadf38da2b44d35dcfafac1125"
+        ),
+        "_Memoizer._handle_already_processed": (
+            "717d612fcdd1a521fd45ba92f47cdfdc2e32c5c647090cfdf2aa40e17d208d5d"
+        ),
+        "NumberLine.__init__": (
+            "009ac481d80c22e2859219dfb574bfb554c9dcb029980de5097076ca01098b8b"
+        ),
+        "NumberLine.get_tick": (
+            "657a50c4eb02d7a777299f3797143fbf1d954cd19e962934f1fc7ee040bf3c98"
+        ),
+        "NumberLine.get_tick_range": (
+            "038e6d4154a1459f85b5c3179c5dac62140687f499f464edcdb3131e6a662a64"
+        ),
+        "NumberLine.number_to_point": (
+            "32c1849884ab85687754a14e6b0ed60b733f14e8ab7c3d5ec160406af03346a2"
+        ),
+        "NumberLine.point_to_number": (
+            "82ad8de92c7eefc5be9a45b86bbc7056e302c05d516a2873f9e3ca7324b4d763"
+        ),
+        "NumberLine.get_unit_size": (
+            "914414aea7e3ae8f81bdac76e2197a89e37b70040cae21f1e4f5228107aa031e"
+        ),
+        "NumberLine.get_unit_vector": (
+            "9606242fc88ed1e75138f7ca2bcd2d3d4b71cc4f0fd566fae54356cdcd3d4d54"
+        ),
+        "NumberLine.get_number_mobject": (
+            "27f88fb21d4212b024cc3718f5e0b20346ad67478c287b362a09860cca144be5"
+        ),
+        "NumberLine.add_numbers": (
+            "14bfde7e479edcceae448457a60a1a2cc55e68d96b8d49bd0748fed6228d1dcd"
+        ),
+        "NumberLine.add_labels": (
+            "42dc9735756061afaada6aae089d35f5d7c2aa787da6df5485b5df51ffee8028"
+        ),
+        "NumberLine._create_label_tex": (
+            "786c70857fd0172d7da86c9ed8dc487174dc0cb8fac601427bd5a65efd51c190"
+        ),
+        "NumberLine._decimal_places_from_step": (
+            "f0d11aaf66140c5b6c2c0f44d73d2105251d95cccab66532620b407715855633"
+        ),
+        "Axes.__init__": (
+            "e28c172944e9412f15465f44684c6275381e395fc1b79ce1764c7a6599a6ce23"
+        ),
+        "Axes._create_axis": (
+            "a2341426a116935894bedb7d649632bfc4897bcfa8a0f67e61c3be7eba5aab36"
+        ),
+        "Axes._origin_shift": (
+            "09850bdcba2b1bb775dcae0f38ebb1d77cacf2ba0ef3618f34e013aef1dbd254"
+        ),
+        "Axes.coords_to_point": (
+            "9ea620816d0ab8e55620fd277504fb3a2558a400afdb1c46ddb560111823139d"
+        ),
+        "Axes.point_to_coords": (
+            "e26c9b825c9315b444ecb7ae755ee594d471b87d3c8d2e3c40d20015b7a4834f"
+        ),
+        "Axes.get_axis_labels": (
+            "91b177522bb84d93481e3e5c9db628eb61f75247c6f77c85a047c05f9196061b"
+        ),
+        "CoordinateSystem.add_coordinates": (
+            "114651538830075b663f08d5b49bc1597ad9e3d254e19d6d348f591b5f16bf11"
+        ),
+        "CoordinateSystem.get_x_axis_label": (
+            "914e181b3fb7b98e75cfae4a7e46faa79628f0d14f2f857318388412ae7e6fe3"
+        ),
+        "CoordinateSystem.get_y_axis_label": (
+            "2cdfc799f218b08f46e638e2cfbec45f3e22f060d592d0493399d2dec5d6a3a2"
+        ),
+        "CoordinateSystem._get_axis_label": (
+            "7caef98d9da34e8068d0cacded98ed11d66afa87d62986ea6dc5373b5177404f"
+        ),
+        "CoordinateSystem.get_graph_label": (
+            "85b36b3439d0f908acee5d2efa1b8a1d1901a06ef19088cbf4138e50a810cad3"
+        ),
+        "DecimalNumber._set_submobjects_from_number": (
+            "70e08296f775e5f7585a3eb28a42717842812b2aafe8268c417584377b345609"
+        ),
+        "DecimalNumber._get_num_string": (
+            "f4f4b1da599a62bade405dd85546db63377b9767364d4e82bd7f4903f8c41c11"
+        ),
+        "DecimalNumber._get_formatter": (
+            "d16c844a43a9c5f8e569f7a1fbf8f3738361d043fbe85605f3f92181788fe9f6"
+        ),
+        "NumberPlane.__init__": (
+            "ddf180e3a3253a7c68ac1bbf745bc5a30533cb6fbe5572c3fac0a19370fcd68c"
+        ),
+        "NumberPlane._init_background_lines": (
+            "002687c99d845acab6a9b470c50260b81b8357c655552f2ec46d9a08e74339fd"
+        ),
+        "NumberPlane._get_lines": (
+            "953654c1ac8bea9da7878170bd569cfb8604a5c4e178262b6b183d78b1da510b"
+        ),
+        "NumberPlane._get_lines_parallel_to_axis": (
+            "03fde9988571dc6dc28ba3ff8ff4914e1774159e09040be502da40cc68e34c5b"
+        ),
+        "LogBase.get_custom_labels": (
+            "d92f86ca4ffedbb5c4844c8657003d9d9f06c8ad66f76eb128e8a4a4f1415c36"
+        ),
+        "VMobject.scale": (
+            "a49555af84f1592f2649dfc9bd89f8b91331b3193ff00162185d462b40a54a37"
+        ),
+        "VMobject.split": (
+            "ed5b27ee300e1e74e5ad8a3d30b6c0ac0e60cbba3604d275577272f6c1d04371"
+        ),
+        "Animation.interpolate_mobject": (
+            "6df42ab42e168d57a38584100dd57cc87b474fcee5a2531ca3d0c4465b28bb66"
+        ),
+        "Mobject.reduce_across_dimension": (
+            "ab90aae167a0147ef3ef80088f6ad58518da78650f1d9b9d9bad12dfdf1a7b47"
+        ),
+        "Mobject.remove": (
+            "0de58573f90f6468ac258de89cad2eae2b84cdeddc859a67f492333259864f5d"
+        ),
+        "Mobject.rotate": (
+            "d8654a36c8cb817b8341eda2498230b26a1f9d010fc1c2d8f9383057134d8ae8"
+        ),
+        "Mobject.scale": (
+            "1d0aea25b5972bd6c5c5d97920630f9a2895785375cde30e4b2592c26696e9ff"
+        ),
+        "Mobject.stretch": (
+            "9b3b0d4a2f31648728f6b517436ce7fe1041e1f14b6adf9a733a54bf6ff04612"
+        ),
+        "Mobject.apply_matrix": (
+            "2b3bde85e4a300231fa471a7e64c9233cd1fdee96b71d9a42ae86ab9f90dee97"
+        ),
+        "Animation.create_starting_mobject": (
+            "fe0863e67d120ef6082b445efa8936594aa29cb264b10ba568656e97057295ba"
+        ),
+        "Animation.clean_up_from_scene": (
+            "055f70240b012325e907d4b1a1b100902cab25470d23461dfa27880cace73a08"
+        ),
+        "Animation.is_remover": (
+            "77ac7ad2318b0009e4d9acb4dff085dcc2427d3d56f37a8e7619cc53ce28fa63"
+        ),
+        "Animation.is_introducer": (
+            "7e93728ee70a1eb1657d09595443bd48b6465864b7924f3d9fa49b1240d2f9b0"
+        ),
+        "Transform.interpolate_submobject": (
+            "cb3c7233b8c1b8984279be518952b174d5c4560432dc70957a4b8857605089eb"
+        ),
+        "Transform.get_all_families_zipped": (
+            "cf5fcb6ffe0afe4b4a282dd2931caa46b8af493e6ef68437028a9e319c683f92"
+        ),
+        "GrowFromCenter.__init__": (
+            "3fd32eff781147b363c628178bd0032bdd4c6aca7d91cbd53547e1bfa3bfbb3b"
+        ),
+        "GrowFromPoint.create_starting_mobject": (
+            "b24d2fdf31e9e91d4dfcfe71a4501e3c71aa2e4257a69d7bcffc1bd6b9d9807a"
+        ),
+        "ShrinkToCenter.__init__": (
+            "08f570bb39d7725fc28d0c1a1f96385e2fb15940058eb6cace80d8a74b8664aa"
+        ),
+        "NumberPlane.prepare_for_nonlinear_transform": (
+            "51cc9eb09a6381171721c581f1c2e34af49e1c718e57e1bdb17bc93420037185"
+        ),
+        "Mobject.shift": (
+            "97ca5b9d0d14d3af137ba3b5a1a200df62b18b3ed1858bbd15e154745aaeb6bb"
+        ),
+        "Mobject.apply_points_function_about_point": (
+            "f2b6e32d3786c133abd3bfe2aede34deef497b751fec09a3486e95ec9852aea9"
+        ),
+        "VMobject.apply_function": (
+            "5d9a613d12cb0f4f5d42fe457cda427a1b6a667904894a2c42b80992e58fa211"
+        ),
+        "VMobject.scale_handle_to_anchor_distances": (
+            "b688e7c2b3c6f2b6657ddc4584cf055f89301d1ece78cf7c2927b50ba35bc5eb"
+        ),
+        "VMobject.get_anchors": (
+            "570aac67257a511caf8e9a34e11a649bd4de323f0e5cd1264cbe5fc3ea1a9083"
+        ),
+        "VMobject.get_points_defining_boundary": (
+            "13057979b204e9b663c283c3d37e857b9db75500b0d4db15b8335acb55dae0ad"
+        ),
+        "VMobject.set_anchors_and_handles": (
+            "9f613d1c80c2b15d6b05de012d4e54318aa92e2bbe0f9a2fa3abe56d2065c91d"
+        ),
+        "Mobject.__deepcopy__": (
+            "8a1349b6fc8ab459e17e26106fb1c7595853e3369231f936624170f283ea8ab1"
+        ),
+        "Mobject.copy": (
+            "a22dc312aed0c05826bb8075283239e1be2bc7932f4f9089dbfebf46a1dafef0"
+        ),
+        "Mobject.suspend_updating": (
+            "7b3bd9c5a1074658788a96e5a1bd87be7d7b2595d2cdf36dd911d8ba3e23c707"
+        ),
+        "Mobject.resume_updating": (
+            "19c067227bfac76acdd307a0a6a534e36a2dd7a6cda754a137af2033a437bb27"
+        ),
+        "Mobject.become": (
+            "c3f4317909fdc29b4606604409498fdc9100aef5c71cab2b3166a15e8685af9a"
+        ),
+        "Mobject.align_data": (
+            "2cd75be4af9373f3675f5b65a99cb2099c8f7abf7f871770fda8c9f737e81ae9"
+        ),
+        "Mobject.align_submobjects": (
+            "9fbf260aba9889e49b55bde0143a81bdb620ee82d926f8f712814f0f618f1662"
+        ),
+        "Mobject.add_n_more_submobjects": (
+            "24032de9fc777929e32fa9216077b21f493ed395e3e689605840cb59a850848c"
+        ),
+        "Mobject.interpolate": (
+            "398eaf3ece840bb3cd5b6f4edbd30457a6a5113498428b7013002b044b88338e"
+        ),
+        "VMobject.align_points": (
+            "a89a89c591626d9bff406d393490b335440c03680280711b7ba448d37751dbce"
+        ),
+        "Animation.begin": (
+            "fbc294d3275d1b3d00ca4124de1cb8c61449c0fb09968b1fbf5b5b853a47537e"
+        ),
+        "Animation.finish": (
+            "d2cb9ad54830c1d4e55cebc699e92d01b61ff78ba3e243246c8bdaedffa6bbf5"
+        ),
+        "Animation.get_all_families_zipped": (
+            "dbbf81642ac72debb5e3f9f85cb7ca102c4970bbe374060d8d994254aa8ec67d"
+        ),
+        "Animation.get_sub_alpha": (
+            "0e40f96921a785d4543640f55db12b0a1022222e6b4dfd1444fc1a03bf008ecb"
+        ),
+        "AnimationGroup.begin": (
+            "10edfa32b8d2f3cdf154b03e7557f3de9377c8940c3194a4f68c8eb7bfd0f101"
+        ),
+        "AnimationGroup.finish": (
+            "8066d4d0dcc90d1c20e48043acd08ba59f3fb1dad0964738637667ded27e6885"
+        ),
+        "AnimationGroup.clean_up_from_scene": (
+            "84ffb0311bb261733d8cc04c8d1c30955620ef5f8a5a2cbc57525773249b67cc"
+        ),
+        "Succession.begin": (
+            "bfd139ca7f5f5cf638caedd34a03fea95a20182d515f69c361040bbf61d9139b"
+        ),
+        "Succession.finish": (
+            "78ee18e9ad1f6fe34bd241e6861caf612e5855490769980ca0a6893dafd04e30"
+        ),
+        "Succession.update_active_animation": (
+            "dbc7d5bf8ce748044ce7ce7bb99d2054cd74de5a21cc495988795eab78ae869c"
+        ),
+        "ShowPartial.interpolate_submobject": (
+            "3417be750ae2aa25996ed01eb325ecc343503124fbdb46b5899e9daeb371b0e5"
+        ),
+        "DrawBorderThenFill.interpolate_submobject": (
+            "00247978857bbd07703afcb2fb42119463cba177d07bae8ec18c347c75b84444"
+        ),
+        "Wiggle.interpolate_submobject": (
+            "288d509867cc4f263f070c757c23cf112d39f0bf79835df649739fc34fc903af"
+        ),
+        "Transform.begin": (
+            "b9563496ce8c5e8b1641008f4952fc8ccfa36cb184f4bb8e5d89d3c001713ede"
+        ),
+        "Transform.clean_up_from_scene": (
+            "9c000453019af523c2c179666b51f83732bfe085616b0f46e6e1a0c036aea4e1"
+        ),
+        "TransformFromCopy.__init__": (
+            "1e896249051c4f3de525f228c9a79be8df2be1aa5abb6c0a03a67e148cf7ae3c"
+        ),
+        "TransformFromCopy.interpolate": (
+            "5ffff83ca927ff6bcf07bdb331f08903d62b3135ec13e11839e54da67ece6cb4"
+        ),
+        "_MethodAnimation.finish": (
+            "f72a27b80c7a9f252827ba1ca0a9eff70d132e019d648625eddb0a7e4423dcc1"
+        ),
+        "FadeOut.clean_up_from_scene": (
+            "f4e88d8794e885384b0b18b259c715a37c53e440017ba405eb7225b573d1d709"
+        ),
+        "ShowPassingFlash.clean_up_from_scene": (
+            "eceffc730400765bbb9e56e46b00ff1955a5fb28f21997786f9e1dd484172e9f"
+        ),
+        "MoveAlongPath.__init__": (
+            "c0f57d41170cce6475933edf1c316f49c69be56461710564b98b402d4aa2a602"
+        ),
+        "MoveAlongPath.interpolate_mobject": (
+            "1284e87007a053ddb9ff46d22f5e80780b2bbb2816f11e777762c286422f280f"
+        ),
+        "PhaseFlow.__init__": (
+            "550a9d92bd1e1ebbfa4ef514b528465b302a3bf93ab52090b076c8fc7f1c0fac"
+        ),
+        "PhaseFlow.interpolate_mobject": (
+            "4ffc3cb74f4e4056f45330adb4a1c80740e54f5b067320ed4594b952bb0c6a2c"
+        ),
+        "ShowIncreasingSubsets.__init__": (
+            "bcdfc0aa8ec20603f35a37b3012d8ce77370da1c078bece81aef0ecc32af68f3"
+        ),
+        "ShowIncreasingSubsets.interpolate_mobject": (
+            "a45a8d8693f0e09d464eac40962a5b17d0fb5cbbcb924084d6b05cf62a9593fe"
+        ),
+        "_AnimationBuilder.__init__": (
+            "66e570764c551d4b7f2b70ab21ca397df8a931071c50977c2cd77288a4204966"
+        ),
+        "_AnimationBuilder.__getattr__": (
+            "6b7caeec3a7b73f27b49e5f2576ae99809d7b956468ed1947d0dace317510e03"
+        ),
+        "always_redraw": (
+            "f725d6d9c3fbbe1ec63f06926d17055b8946d171e7e71b6bf9e7cc069a7317cf"
+        ),
+        "Scene.get_moving_and_static_mobjects": (
+            "c72dd989507bf3295850382bd0e57a6d101b774c387bbdf884ae63c209ccc113"
+        ),
+        "Scene.get_moving_mobjects": (
+            "d78d2af73679041f74533e42fea88d80c16ae9bf954de2216106b7f1fa69e0b2"
+        ),
+        "Scene.should_update_mobjects": (
+            "28c43743dc124aaaf3008b756eca0e42c64efcfa4faaba29ecf00afad9f74d4c"
+        ),
+        "Scene.update_to_time": (
+            "c554748b52bb38f61efaa8b973568bcfc69069b8c51a065e8ce24745af118836"
+        ),
+        "Scene.play_internal": (
+            "c83eff575fd7732171dbc37a99b443b03f577361efe2f528375da418783639c5"
+        ),
+        "Scene.add": (
+            "5b1b4b7970420ce937cb5e6117f510314cf35275a249051ec9e33fadc5cdd923"
+        ),
+        "Scene.add_mobjects_from_animations": (
+            "a236f35c5ee7b1231fd9d70d04fd4c4e4150022068f7ae92d48db565af37c4e7"
+        ),
+        "CairoRenderer.play": (
+            "5affbe0f311d60998ea09f67f9bf8c9b5355c04df1aff90808c3be85ea64e4a8"
+        ),
+        "Camera.set_cairo_context_color": (
+            "2c53d3a7c71e425077321fd329431338ea8db489e0de870b21e6c3758ac46d4c"
+        ),
+        "Camera.apply_fill": (
+            "021a92466cd3f4930fb15d40785b9171da1db5b8d2acfd67a6dd1f3558f882bd"
+        ),
+        "Camera.set_cairo_context_path": (
+            "0e53e5837e78857d20178931c265487d10db6d8eb57c6784b6dee9feb4375dbf"
+        ),
+        "DrawBorderThenFill.begin": (
+            "a4a73c4ecb61734d10a94bfad4a53f0e7cd135ebd9653065820e90ca1f76d720"
+        ),
+        "Mobject.__getattr__": (
+            "4b63b7f9c1e9a41087e93e3c5c9fea4413523b5511af51caf4f06d8f2c6d451b"
+        ),
+        "VMobject.set_fill": (
+            "e325766f129f638c59186f1b32ff63d4601a653a20744467f62db4713772f49e"
+        ),
+        "VMobject.set_stroke": (
+            "1ee05806ebe6f8558b037e760bdcfac0ad9595bced1d993a85c8abee95772595"
+        ),
+        "VMobject.interpolate_color": (
+            "1f9f95a1383f72ba1576bb0177cb81b32b95dc115b337b36b152c3c521b2d72d"
+        ),
+        "VMobject.pointwise_become_partial": (
+            "c78b17aeb714c07dc36e800a54c642f1226503698ed9a38224322eb45ac1f21d"
+        ),
+        "VGroup.__init__": (
+            "72cee23eee8accbe91f891aee7a0f4dcbe55bdeba2825c4b4d9419e208ebb42b"
+        ),
+        "VGroup.add": (
+            "0c23544a19789dd871a576725ac0832fe2a0af89a75dac8c7c26eb598edd515a"
+        ),
+        "Mobject.get_family_updaters": (
+            "37cd7d253aa5e9d4ccfaddd4e81677fadaf99600f4b9ba7b6d9d5717f71e86c8"
+        ),
+        "Mobject.family_members_with_points": (
+            "fc69ac2726f2d19db2e5785f72daa86622157cd1efbe74fc91bd25e51dc38c26"
+        ),
+    },
+}
+
+_WARNED: set[tuple[str, str]] = set()
+
+
+def symbol_name(symbol: Callable[..., object]) -> str:
+    """Return the qualified name used as a symbol's pin key.
+
+    Parameters
+    ----------
+    symbol
+        A callable from the Manim inventory.
+
+    Returns
+    -------
+    str
+        The callable's qualified name.
+    """
+    return symbol.__qualname__
+
+
+def source_hashes() -> dict[str, str]:
+    """Hash the exact UTF-8 source lines of every inventoried symbol.
+
+    Returns
+    -------
+    dict of str to str
+        Qualified names mapped to SHA-256 hexadecimal digests.
+    """
+    return {
+        symbol_name(symbol): hashlib.sha256(
+            "".join(inspect.getsourcelines(symbol)[0]).encode("utf-8")
+        ).hexdigest()
+        for symbol in SYMBOLS
+    }
+
+
+def check_pins(version: str | None = None) -> None:
+    """Warn once for an unsupported Manim version or changed source symbol.
+
+    Parameters
+    ----------
+    version
+        Version whose pins to compare, defaulting to the installed Manim version.
+    """
+    version = manim.__version__ if version is None else version
+    if version not in PINS:
+        key = (version, "")
+        message = f"Manim {version} is unpinned; supported versions: {', '.join(PINS)}"
+    else:
+        expected = PINS[version]
+        try:
+            actual = source_hashes()
+        except (OSError, TypeError) as exc:
+            key = (version, "source")
+            message = f"Manim {version} source pins could not be checked: {exc}"
+        else:
+            differing = next(
+                (name for name in expected if actual.get(name) != expected[name]), None
+            )
+            if differing is None:
+                differing = next(
+                    (name for name in actual if name not in expected), None
+                )
+            if differing is None:
+                return
+            key = (version, differing)
+            message = f"Manim {version} source pin differs for {differing}"
+    if key not in _WARNED:
+        _WARNED.add(key)
+        warnings.warn(message, ManimPlotsWarning, stacklevel=2)
+
+
+def _last_write(method: Callable[..., Any]) -> int:
+    lines, first = inspect.getsourcelines(method)
+    tree = ast.parse(textwrap.dedent("".join(lines)))
+    writes: list[int] = []
+    for node in ast.walk(tree):
+        targets = (
+            node.targets
+            if isinstance(node, ast.Assign)
+            else [node.target]
+            if isinstance(node, (ast.AugAssign, ast.AnnAssign))
+            else []
+        )
+        if any(isinstance(t, ast.Attribute) and t.attr == "points" for t in targets):
+            writes.append(first + cast(ast.stmt, node).lineno - 1)
+    return max(writes)
+
+
+_WRITERS = {
+    Mobject.shift.__code__: _last_write(Mobject.shift),
+    Mobject.apply_points_function_about_point.__code__: _last_write(
+        Mobject.apply_points_function_about_point
+    ),
+}
+_BEGIN = frozenset(
+    m.__code__
+    for m in (Animation.begin, AnimationGroup.begin, Succession.begin, Transform.begin)
+)
+_FINISH = frozenset(
+    m.__code__
+    for m in (
+        Animation.finish,
+        AnimationGroup.finish,
+        Succession.finish,
+        _MethodAnimation.finish,
+    )
+)
+
+
+def affine_context() -> FloatArray | None:
+    """Return the native operation's exact row-vector linear matrix, if any."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            code, values = frame.f_code, frame.f_locals
+            if code is Mobject.rotate.__code__:
+                return cast(FloatArray, values["rot_matrix"].T.copy())
+            if code is Mobject.scale.__code__:
+                return np.eye(3) * float(values["scale_factor"])
+            if code is Mobject.stretch.__code__:
+                matrix = np.eye(3)
+                matrix[values["dim"], values["dim"]] = values["factor"]
+                return matrix
+            if code is Mobject.apply_matrix.__code__:
+                return cast(FloatArray, values["full_matrix"].T.copy())
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
+
+
+def animation_context(
+    finishing: bool = False, transform_only: bool = False
+) -> Animation | None:
+    """Read the nearest animation begin or finish boundary.
+
+    Parameters
+    ----------
+    finishing
+        Read a finish boundary instead of a begin boundary.
+    transform_only
+        Restrict the query to Transform.begin, before point alignment.
+    """
+    codes = (
+        {Transform.begin.__code__}
+        if transform_only
+        else _FINISH
+        if finishing
+        else _BEGIN
+    )
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            if frame.f_code in codes:
+                return cast(Animation, frame.f_locals["self"])
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
+
+
+def data_interpolation() -> bool:
+    """Identify a Transform's simultaneous derived-data interpolation query."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            if frame.f_code is Transform.get_all_families_zipped.__code__:
+                return bool(frame.f_locals["self"].lag_ratio == 0)
+            frame = frame.f_back
+        return False
+    finally:
+        del frame
+
+
+@dataclass
+class WriterContext:
+    """Hold copied operation facts and a family memo, without retaining a frame.
+
+    Parameters
+    ----------
+    container, family
+        Native writer and its family, collected once per operation.
+    vector
+        Shift vector, or None for a points function.
+    function, pivot, matrix
+        Points function, pivot and optional exact row-vector linear matrix.
+    application
+        Original VMobject.apply_function invocation, if present.
+    last
+        Whether this assignment is the writer's final points assignment.
+    """
+
+    container: Mobject
+    family: frozenset[Mobject]
+    vector: FloatArray | None = None
+    function: Callable[[FloatArray], FloatArray] | None = None
+    pivot: FloatArray | None = None
+    matrix: FloatArray | None = None
+    application: tuple[VMobject, Callable[..., Any]] | None = None
+    last: bool = False
+
+
+def writer_context() -> WriterContext | None:
+    """Attribute a native geometric write and memoise its container family."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            code = frame.f_code
+            if code in _WRITERS:
+                values = frame.f_locals
+                result = values.get("__manim_plots_writer")
+                if result is None:
+                    container = values["self"]
+                    result = WriterContext(container, frozenset(container.get_family()))
+                    if code is Mobject.shift.__code__:
+                        # Manim passes a tuple through when one tuple is given.
+                        result.vector = np.array(values["total_vector"], dtype=float)
+                    else:
+                        result.function = values["func"]
+                        result.pivot = np.array(values["about_point"], dtype=float)
+                        result.matrix = affine_context()
+                        outer = frame.f_back
+                        try:
+                            while outer is not None:
+                                if outer.f_code is VMobject.apply_function.__code__:
+                                    result.application = (
+                                        outer.f_locals["self"],
+                                        outer.f_locals["function"],
+                                    )
+                                    break
+                                outer = outer.f_back
+                        finally:
+                            del outer
+                    values["__manim_plots_writer"] = result
+                result.last = frame.f_lineno == _WRITERS[code]
+                return cast(WriterContext, result)
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
+
+
+def buffer_write() -> bool:
+    """Return whether a getter is inside a multi-assignment native operation."""
+    frame: FrameType | None = sys._getframe(2)
+    try:
+        while frame is not None:
+            code = frame.f_code
+            if code in _WRITERS or code is VMobject.set_anchors_and_handles.__code__:
+                return True
+            frame = frame.f_back
+        return False
+    finally:
+        del frame
+
+
+type _PlaybackToken = tuple[weakref.ReferenceType[Scene], float | str, int]
+
+
+def playback_context() -> _PlaybackToken | None:
+    """Return a shared token for a rendered frame or a play's finish boundary."""
+    frame: FrameType | None = sys._getframe(1)
+    boundary = None
+    try:
+        while frame is not None:
+            if frame.f_code is Scene.update_to_time.__code__:
+                values = frame.f_locals
+                token = values.get("__manim_plots_playback")
+                if token is None:
+                    scene = values["self"]
+                    token = (
+                        weakref.ref(scene),
+                        values["t"],
+                        int(scene.renderer.num_plays),
+                    )
+                    values["__manim_plots_playback"] = token
+                return cast(_PlaybackToken, token)
+            if frame.f_code is Scene.play_internal.__code__:
+                scene = frame.f_locals["self"]
+                boundary = (weakref.ref(scene), "finish", int(scene.renderer.num_plays))
+            frame = frame.f_back
+        return boundary
+    finally:
+        del frame
+
+
+def moving_context() -> frozenset[Mobject] | None:
+    """Read and memoise animated families during Cairo's moving-object query."""
+    frame: FrameType | None = sys._getframe(1)
+    try:
+        while frame is not None:
+            if frame.f_code is Scene.get_moving_mobjects.__code__:
+                values = frame.f_locals
+                result = values.get("__manim_plots_moving")
+                if result is None:
+                    involved = set(values["animation_mobjects"])
+                    pending = list(values["animations"])
+                    while pending:
+                        animation = pending.pop()
+                        system = getattr(animation, "_involved_system", None)
+                        if system is not None:
+                            involved.update(system.get_family())
+                        if isinstance(animation, AnimationGroup):
+                            pending.extend(animation.animations)
+                    result = frozenset(involved)
+                    values["__manim_plots_moving"] = result
+                return cast(frozenset[Mobject], result)
+            frame = frame.f_back
+        return None
+    finally:
+        del frame
+
+
+def _scene_camera() -> Camera | None:
+    frame: FrameType | None = sys._getframe()
+    try:
+        while frame is not None:
+            scene = frame.f_locals.get("self")
+            if isinstance(scene, Scene):
+                return cast(Camera, scene.camera)
+            frame = frame.f_back
+    finally:
+        del frame
+    return None
+
+
+def _drawing_camera() -> Camera | None:
+    # Start at get_family's caller; stack access stays in the context layer.
+    frame: FrameType | None = sys._getframe(2)
+    try:
+        for _ in range(8):
+            if frame is None:
+                break
+            camera = frame.f_locals.get("self")
+            if isinstance(camera, Camera):
+                return camera
+            frame = frame.f_back
+    finally:
+        del frame
+    return None
+
+
+def _depth_order(
+    owner: Mobject, camera: ThreeDCamera, pieces: Iterable[Mobject], geometry: object
+) -> None:
+    signature = (id(camera), camera.get_phi(), camera.get_theta(), camera.get_gamma())
+    if (
+        owner.__dict__.get("_depth_signature") == signature
+        and owner.__dict__.get("_depth_geometry") is geometry
+    ):
+        return
+    # Centre queries traverse the family again.
+    owner.__dict__["_depth_signature"] = signature
+    owner.__dict__["_depth_geometry"] = geometry
+    rotation = camera.generate_rotation_matrix()
+    for piece in pieces:
+        piece.z_index = float((piece.get_center() @ rotation.T)[2])

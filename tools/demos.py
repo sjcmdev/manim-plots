@@ -1,0 +1,1133 @@
+"""Render short demo videos of the library, beside plain Manim, for review.
+
+    uv run python tools/demos.py            # every demo
+    uv run python tools/demos.py follow     # the demos whose name contains "follow"
+
+Each demo is a function below; its docstring is its caption in the gallery
+(`tools/gallery.py`). The videos go to ``tests/visual/_out/demos/``, which git ignores.
+They are for the eye only: the tests, not these, check the behaviour.
+"""
+
+from __future__ import annotations
+
+import sys
+from collections.abc import Callable
+from pathlib import Path
+
+import numpy as np
+from manim import (
+    BLUE,
+    DEGREES,
+    DOWN,
+    GREEN,
+    LEFT,
+    PI,
+    RED,
+    RIGHT,
+    UP,
+    WHITE,
+    YELLOW,
+    Axes,
+    Create,
+    Dot,
+    FadeIn,
+    FadeOut,
+    Indicate,
+    Rotate,
+    Scene,
+    Square,
+    Text,
+    ThreeDScene,
+    TracedPath,
+    Transform,
+    Uncreate,
+    ValueTracker,
+    VGroup,
+    Wiggle,
+    always_redraw,
+    tempconfig,
+)
+
+import manim_plots as mp
+from manim_plots import MultipleLocator, TickDirection
+
+OUT = Path(__file__).parents[1] / "tests" / "visual" / "_out"
+DEMOS = OUT / "demos"
+SMALL = {"x_range": (-3, 3, 1), "y_range": (-2, 2, 1), "x_length": 5.5, "y_length": 3.5}
+
+
+def pair(scene: Scene, **kwargs: object) -> tuple[mp.Axes, Axes]:
+    """Add titles; return the library's axes on the left and Manim's on the right."""
+    ours = mp.Axes(**kwargs).to_edge(LEFT, buff=0.6)
+    theirs = Axes(**kwargs).to_edge(RIGHT, buff=0.6)
+    for ax, title in ((ours, "manim-plots"), (theirs, "plain Manim")):
+        scene.add(Text(title, font_size=28).next_to(ax, UP, buff=0.4))
+    return ours, theirs
+
+
+def create_sine(scene: Scene) -> None:
+    """`Create(ax)` and then `Create(ax.plot(np.sin))` on the default `mp.Axes()`."""
+    ax = mp.Axes()
+    curve = ax.plot(np.sin, color=BLUE)
+    scene.play(Create(ax))
+    scene.play(Create(curve), run_time=2)
+    scene.wait(0.5)
+
+
+def follow(scene: Scene) -> None:
+    """Shift, rotate and scale the axes: the library's curve follows, Manim's stays.
+
+    `ax.animate.shift`, `Rotate(ax)`, `ax.animate.scale`, on the left with the library's
+    axes and on the right with plain Manim's.
+    """
+    ours, theirs = pair(scene, **SMALL)
+    scene.add(ours, ours.plot(np.sin, color=BLUE))
+    scene.add(theirs, theirs.plot(np.sin, color=BLUE))
+    scene.wait(0.5)
+    scene.play(ours.animate.shift(DOWN), theirs.animate.shift(DOWN))
+    scene.play(Rotate(ours, PI / 6), Rotate(theirs, PI / 6))
+    scene.play(ours.animate.scale(0.6), theirs.animate.scale(0.6))
+    scene.wait(0.5)
+
+
+def pan_and_zoom(scene: Scene) -> None:
+    """Pan and zoom by trackers: the ticks and the curve follow on every frame.
+
+    The x range is bound to a centre and a half width; the curve stays clipped to the
+    axes.
+    """
+    centre, half = ValueTracker(0.0), ValueTracker(3.0)
+    ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-2, 2, 1), x_length=11, y_length=5)
+    c, h = centre.get_value, half.get_value
+    ax.x.range.bind(lambda: (c() - h(), c() + h()))
+    curve = ax.plot(lambda x: np.sin(x) + 0.4 * np.sin(3 * x), color=BLUE)
+    scene.add(ax, curve)
+    scene.play(centre.animate.set_value(6), run_time=2)
+    scene.play(half.animate.set_value(10), run_time=2)
+    scene.play(centre.animate.set_value(0), half.animate.set_value(1.5), run_time=2)
+    scene.wait(0.5)
+
+
+def pole(scene: Scene) -> None:
+    """Draw `1 / (x - 4.5)`: the library splits the curve at the pole.
+
+    On axes whose x range excludes 0 the library's curve also stays inside the axes.
+    Plain Manim's samples beside the pole reach about 1e15 scene units, and Cairo
+    draws nothing of its curve.
+    """
+    ours, theirs = pair(
+        scene, x_range=(-1, 10, 1), y_range=(-2, 2, 0.5), x_length=5.5, y_length=4
+    )
+    scene.add(ours, theirs)
+    scene.play(
+        Create(ours.plot(lambda x: 1 / (x - 4.5), color=YELLOW)),
+        Create(theirs.plot(lambda x: 1 / (x - 4.5), color=YELLOW)),
+        run_time=2,
+    )
+    scene.wait(0.5)
+
+
+def lifecycle(scene: Scene) -> None:
+    """Play Manim's animations on a bound curve.
+
+    `Wiggle`; `Uncreate`, a range change by `ax.animate.set_x_range`, and `Create`
+    drawing the current curve (Manim would draw nothing); `Indicate(ax)` with the curve
+    still; `FadeOut` and `FadeIn`.
+    """
+    ax = mp.Axes(**SMALL)
+    curve = ax.plot(np.cos, color=BLUE)
+    scene.add(ax, curve)
+    scene.play(Wiggle(curve))
+    scene.play(Uncreate(curve))
+    scene.play(ax.animate.set_x_range((-1, 5)))
+    scene.play(Create(curve))
+    scene.play(Indicate(ax))
+    scene.play(FadeOut(curve))
+    scene.play(FadeIn(curve))
+    scene.wait(0.5)
+
+
+def redraw(scene: Scene) -> None:
+    """Redraw `sin(x + t)` on every frame with Manim's `always_redraw` idiom."""
+    t = ValueTracker(0.0)
+    ax = mp.Axes(**SMALL)
+    wave = always_redraw(
+        lambda: ax.plot(lambda x: np.sin(x + t.get_value()), color=BLUE)
+    )
+    scene.add(ax, wave)
+    scene.play(t.animate.set_value(2 * PI), run_time=3)
+
+
+def clip_margin(scene: Scene) -> None:
+    """Grow `a sin x` past the axes with `clip=True`, `clip=0.4` and `clip=False`.
+
+    The amplitude is a plot parameter bound to a tracker. `True` cuts the curve at the
+    axes, a margin lets it pass by that much, `False` never cuts it, as Manim draws.
+    """
+    a = ValueTracker(1.5)
+    small = {"x_range": (-3, 3, 1), "y_range": (-2, 2, 1), "x_length": 3.6}
+    for k, (clip, title) in enumerate(
+        [(True, "clip=True"), (0.4, "clip=0.4"), (False, "clip=False")]
+    ):
+        ax = mp.Axes(**small, y_length=2.4).move_to((k - 1) * 4.4 * RIGHT)
+        curve = ax.plot(lambda x, a=1.5: a * np.sin(x), a=a, clip=clip, color=BLUE)
+        scene.add(ax, curve, Text(title, font_size=26).next_to(ax, UP, buff=0.5))
+    scene.play(a.animate.set_value(2.6), run_time=2)
+    scene.play(a.animate.set_value(1.5), run_time=2)
+
+
+def trace_and_morph(scene: Scene) -> None:
+    """Trace `tanh(4x)` in data order, then morph a zigzag into a sine.
+
+    `TraceCurve` moves at a steady speed in x although the samples crowd near 0;
+    `Morph` turns a five-point zigzag into fifty samples of a sine without jitter.
+    """
+    ax = mp.Axes(**SMALL)
+    scene.add(ax)
+    curve = ax.plot(lambda x: np.tanh(4 * x), color=BLUE)
+    scene.play(mp.TraceCurve(curve), run_time=2)
+    scene.play(FadeOut(curve))
+    zigzag = ax.line([-3, -1, 0, 1, 3], [0, 1.5, -1.5, 1.5, 0], color=YELLOW)
+    xs = np.linspace(-3, 3, 50)
+    sine = ax.line(xs, np.sin(xs), color=BLUE)
+    scene.play(Create(zigzag))
+    scene.play(mp.Morph(zigzag, sine), run_time=2)
+    scene.wait(0.5)
+
+
+def legend_and_styles(scene: Scene) -> None:
+    """Draw three styled curves and their legend.
+
+    Without colour keywords they take the colour cycle; dashed and dotted line styles;
+    `ax.legend()` in the upper right corner, faded in with the curves.
+    """
+    ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-2, 2, 1), x_length=10, y_length=5)
+    curves = [
+        ax.plot(np.sin, label="sin x"),
+        ax.plot(np.cos, label="cos x", line_style=mp.LineStyle.DASHED),
+        ax.plot(lambda x: x / 3, label="x / 3", line_style=mp.LineStyle.DOTTED),
+    ]
+    scene.play(mp.DrawAxes(ax))
+    scene.play(*(Create(c) for c in curves), FadeIn(ax.legend()), run_time=2)
+    scene.wait(0.5)
+
+
+def show_call(scene: Scene, shown: list[Text], code: str) -> None:
+    """Put the call being made at the top of the frame, replacing the previous one."""
+    new = Text(code, font="Consolas", font_size=22).to_edge(UP, buff=0.35)
+    if shown:
+        scene.remove(shown.pop())
+    shown.append(new)
+    if isinstance(scene, ThreeDScene):
+        scene.add_fixed_in_frame_mobjects(new)
+    else:
+        scene.add(new)
+
+
+def legend_placement(scene: Scene) -> None:
+    """Place the legend: the default corner, the other three, and beside the axes.
+
+    `ax.legend()` sits in the upper right corner of the axes; `location` picks another
+    corner and `font_size` its size; each call replaces the axes' legend. The legend
+    is a mobject: `next_to` puts it outside the axes, and it moves with them.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-3, 3, 1), y_range=(-3, 3, 1), x_length=7, y_length=4.6)
+    ax.shift(1.6 * LEFT + 0.4 * DOWN)
+    curves = [
+        ax.plot(np.sin, label="sin x"),
+        ax.plot(np.cos, label="cos x", line_style=mp.LineStyle.DASHED),
+    ]
+    show_call(scene, shown, "ax.legend()")
+    legend = ax.legend()
+    scene.add(ax, *curves)
+    scene.play(FadeIn(legend))
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("upper left")')
+    ax.legend("upper left")
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("lower left")')
+    ax.legend("lower left")
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("lower right")')
+    ax.legend("lower right")
+    scene.wait(1)
+    show_call(scene, shown, 'ax.legend("upper left", font_size=32)')
+    ax.legend("upper left", font_size=32)
+    scene.wait(1)
+    show_call(scene, shown, "ax.legend().next_to(ax, RIGHT, aligned_edge=UP)")
+    ax.legend().next_to(ax, RIGHT, aligned_edge=UP)
+    scene.wait(1)
+    show_call(scene, shown, "self.play(ax.animate.shift(0.8 * RIGHT))")
+    scene.play(ax.animate.shift(0.8 * RIGHT))
+    scene.wait(0.6)
+
+
+def axis_controls(scene: Scene) -> None:
+    """Restyle the axes one call at a time, each call shown on screen.
+
+    The axes move to the borders, a locator adds minor ticks, the ticks point out, the
+    grids appear and a mirrored x axis closes the box. The curve stays where its data
+    is throughout.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(
+        x_range=(-2, 10, 2),
+        y_range=(-1, 5, 1),
+        x_length=10,
+        y_length=5,
+        axis_config={"include_numbers": True},
+    ).shift(0.4 * DOWN)
+    curve = ax.plot(lambda x: 2.5 + 2 * np.sin(x), color=RED)
+    show_call(scene, shown, 'ax = mp.Axes(..., axis_config={"include_numbers": True})')
+    scene.add(ax, curve)
+    scene.wait(1)
+    show_call(scene, shown, 'ax.x.set_position("bottom")')
+    ax.x.set_position("bottom")
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.y.set_position("left")')
+    ax.y.set_position("left")
+    scene.wait(1.2)
+    show_call(
+        scene, shown, "ax.x.set_locator(MultipleLocator(2), minor=MultipleLocator(1))"
+    )
+    ax.x.set_locator(MultipleLocator(2), minor=MultipleLocator(1))
+    scene.wait(1.2)
+    show_call(scene, shown, "ax.x.set_tick_style(direction=TickDirection.OUT)")
+    ax.x.set_tick_style(direction=TickDirection.OUT)
+    scene.wait(1.2)
+    show_call(scene, shown, "ax.y.set_tick_style(direction=TickDirection.OUT)")
+    ax.y.set_tick_style(direction=TickDirection.OUT)
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.x.set_grid("major", stroke_opacity=0.5)')
+    ax.x.set_grid("major", stroke_opacity=0.5)
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.x.set_grid("minor", stroke_opacity=0.2)')
+    ax.x.set_grid("minor", stroke_opacity=0.2)
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.y.set_grid("major", stroke_opacity=0.5)')
+    ax.y.set_grid("major", stroke_opacity=0.5)
+    scene.wait(1.2)
+    show_call(scene, shown, "ax.x.mirror()")
+    ax.x.mirror()
+    scene.wait(1.2)
+    show_call(scene, shown, 'ax.x.set_tick_style("minor", length=0.25, color=YELLOW)')
+    ax.x.set_tick_style("minor", length=0.25, color=YELLOW)
+    scene.wait(1.2)
+
+
+def animate_data(scene: Scene) -> None:
+    """Animate the data with Manim's own `.animate`, each call shown on screen.
+
+    `ax.animate.set_x_range` pans the range while the ticks and numbers keep their
+    identity; a plot parameter animates through `curve.animate.set_parameters`; data and
+    geometry chain into one animation; `Transform` turns one plot into another.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(
+        x_range=(-3, 3, 1),
+        y_range=(-3, 3, 1),
+        x_length=9,
+        y_length=5,
+        axis_config={"include_numbers": True},
+    ).shift(0.3 * DOWN)
+    wave = ax.plot(lambda x, a=1.0: a * np.sin(x), color=BLUE)
+    scene.add(ax, wave)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((0, 10)))")
+    scene.play(ax.animate.set_x_range((0, 10)), run_time=2)
+    show_call(scene, shown, "self.play(wave.animate.set_parameters(a=2.5))")
+    scene.play(wave.animate.set_parameters(a=2.5), run_time=1.5)
+    show_call(scene, shown, "self.play(ax.animate.scale(0.7).set_x_range((-6, 6)))")
+    scene.play(ax.animate.scale(0.7).set_x_range((-6, 6)), run_time=2)
+    parabola = ax.plot(lambda x: x**2 / 6 - 2, color=YELLOW)
+    show_call(scene, shown, "self.play(Transform(wave, parabola))")
+    scene.play(Transform(wave, parabola), run_time=1.5)
+    scene.wait(0.6)
+
+
+def clip_per_axis(scene: Scene) -> None:
+    """Clip one axis only: `clip=(True, False)` cuts at the sides, not the top.
+
+    The left curve clips on both axes, the right one on x only, so its peaks pass over
+    the axes while its ends stop at their sides; both follow an animated range.
+    """
+    a = ValueTracker(1.5)
+    small = {
+        "x_range": (-3, 3, 1),
+        "y_range": (-2, 2, 1),
+        "x_length": 5,
+        "y_length": 2.6,
+    }
+    for k, clip in enumerate([True, (True, False)]):
+        ax = mp.Axes(**small).move_to((2 * k - 1) * 3.4 * RIGHT + 0.5 * DOWN)
+        curve = ax.plot(
+            lambda x, a=1.5: a * np.sin(x), x_range=(-6, 6), a=a, clip=clip, color=BLUE
+        )
+        title = Text(f"clip={clip}", font="Consolas", font_size=24)
+        scene.add(ax, curve, title.next_to(ax, UP, buff=0.9))
+    scene.play(a.animate.set_value(2.8), run_time=2)
+    scene.play(a.animate.set_value(1.5), run_time=1.5)
+
+
+def t_label_slides(scene: Scene) -> None:
+    """Slide a T label and lines to the graph with a tracker, no `always_redraw`.
+
+    `get_T_label(t, graph, label=...)` takes the tracker itself, and the label is a
+    callable of the value; `get_lines_to_point` takes a callable point. Both follow the
+    axes when their range animates.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(-1, 6, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    graph = ax.plot(lambda x: x**2 / 4 + 0.5, color=BLUE)
+    t = ValueTracker(1.0)
+    label = ax.get_T_label(t, graph, label=lambda x: f"{x:.1f}")
+    lines = ax.get_lines_to_point(lambda: ax.i2gp(t.get_value(), graph), color=YELLOW)
+    scene.add(ax, graph, label, lines)
+    show_call(scene, shown, "self.play(t.animate.set_value(4))")
+    scene.play(t.animate.set_value(4.0), run_time=2.5)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((-1, 8)))")
+    scene.play(ax.animate.set_x_range((-1, 8)), run_time=2)
+    show_call(scene, shown, "self.play(t.animate.set_value(0.5))")
+    scene.play(t.animate.set_value(0.5), run_time=2)
+    scene.wait(0.5)
+
+
+def secant_to_tangent(scene: Scene) -> None:
+    """Close a secant into the tangent as `dx` goes to 0, then slide it along.
+
+    `get_secant_slope_group(x, graph, dx=dx)` takes trackers for `x` and `dx`; at
+    `dx = 0` the secant is the tangent. Its parts keep Manim's names and their styles.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(-1, 6, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    graph = ax.plot(lambda x: x**2 / 4 + 0.5, color=BLUE)
+    x, dx = ValueTracker(1.0), ValueTracker(2.0)
+    secant = ax.get_secant_slope_group(
+        x, graph, dx=dx, dx_label="dx", dy_label="dy", secant_line_length=7
+    )
+    scene.add(ax, graph, secant)
+    show_call(scene, shown, "self.play(dx.animate.set_value(0))")
+    scene.play(dx.animate.set_value(0.0), run_time=3)
+    show_call(scene, shown, "self.play(x.animate.set_value(3.5))")
+    scene.play(x.animate.set_value(3.5), run_time=2.5)
+    scene.wait(0.5)
+
+
+def riemann_refines(scene: Scene) -> None:
+    """Refine a Riemann sum as `dx` shrinks, over the area it approaches.
+
+    `get_riemann_rectangles(graph, dx=dx)` takes a tracker, so rectangles are added as
+    `dx` shrinks, with Manim's colours; `get_area` draws the exact area under them.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-1, 5, 1), y_range=(-1, 6, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    graph = ax.plot(lambda x: x**2 / 4 + 0.5, color=BLUE)
+    dx = ValueTracker(1.0)
+    rects = ax.get_riemann_rectangles(graph, x_range=(0, 4), dx=dx, fill_opacity=0.7)
+    area = ax.get_area(graph, x_range=(0, 4), opacity=0.25)
+    scene.add(ax, area, rects, graph)
+    show_call(scene, shown, "self.play(dx.animate.set_value(0.05))")
+    scene.play(dx.animate.set_value(0.05), run_time=4)
+    scene.wait(0.5)
+
+
+def derived_graphs(scene: Scene) -> None:
+    """Let a derivative and an antiderivative follow their parent's parameter.
+
+    `plot_derivative_graph` and `plot_antiderivative_graph` follow the parent when its
+    amplitude, a parameter bound to a tracker, animates.
+    """
+    a = ValueTracker(1.0)
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(-3, 3, 1), x_length=10, y_length=5.5)
+    parent = ax.plot(lambda x, a=1.0: a * np.sin(x), a=a, color=BLUE, label="a sin x")
+    derivative = ax.plot_derivative_graph(parent, label="derivative")
+    integral = ax.plot_antiderivative_graph(
+        parent, color=YELLOW, label="antiderivative"
+    )
+    scene.add(ax, parent, derivative, integral, ax.legend(location="upper left"))
+    scene.play(a.animate.set_value(2.0), run_time=2)
+    scene.play(a.animate.set_value(0.6), run_time=2)
+
+
+def twin_axes(scene: Scene) -> None:
+    """Plot two quantities on two y axes, then pan the shared x range.
+
+    `ax.twinx(y_range=...)` adds a y axis on the right with its own range; each plot
+    belongs to its pair of axes, and an animated x range moves both.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(
+        x_range=(0, 10, 1),
+        y_range=(0, 100, 20),
+        x_length=9,
+        y_length=4.8,
+        axis_config={"include_numbers": True, "font_size": 22},
+    ).shift(0.4 * DOWN)
+    pressure = ax.twinx(
+        y_range=(0, 2, 0.5), y_axis_config={"include_numbers": True, "font_size": 22}
+    )
+    temperature = ax.plot(lambda x: 50 + 30 * np.sin(x / 2), color=RED)
+    drop = pressure.plot(lambda x: 1.8 * np.exp(-x / 6), color=BLUE)
+    ax.y_axis.set_color(RED)
+    pressure.y_axis.set_color(BLUE)
+    show_call(scene, shown, "pressure = ax.twinx(y_range=(0, 2, 0.5))")
+    scene.play(Create(ax), Create(temperature), Create(drop), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((0, 20)))")
+    scene.play(ax.animate.set_x_range((0, 20)), run_time=2.5)
+    show_call(scene, shown, "self.play(pressure.animate.set_y_range((0, 1, 0.25)))")
+    scene.play(pressure.animate.set_y_range((0, 1, 0.25)), run_time=2)
+    scene.wait(0.5)
+
+
+def four_corners(scene: Scene) -> None:
+    """Bind one curve to each pair of a bottom or top x axis and a left or right y axis.
+
+    `ax.twinx` and `ax.twiny` add the right and the top axis; `ax.twin(x=top, y=right)`
+    is the pair of the two. A range animated on one axis moves only its curves.
+    """
+    shown: list[Text] = []
+    numbers = {"include_numbers": True, "font_size": 22}
+    ax = mp.Axes(
+        x_range=(0, 10, 2),
+        y_range=(0, 100, 20),
+        x_length=8.5,
+        y_length=4.4,
+        axis_config=numbers,
+        theme="origin",
+    ).shift(0.5 * DOWN)
+    right = ax.twinx(y_range=(0, 1, 0.2), y_axis_config=numbers)
+    top = ax.twiny(x_range=(0, 50, 10), x_axis_config=numbers)
+    corner = ax.twin(x=top, y=right)
+    right.y_axis.set_color(BLUE)
+    top.x_axis.set_color(GREEN)
+    curves = [
+        ax.plot(lambda x: 10 * x, color=WHITE),
+        right.plot(lambda x: 1 - x / 10, color=BLUE),
+        top.plot(lambda d: 50 + 40 * np.sin(d / 8), color=GREEN),
+        corner.plot(lambda d: 0.5 + 0.4 * np.cos(d / 8), color=YELLOW),
+    ]
+    show_call(scene, shown, "corner = ax.twin(x=top, y=right)")
+    scene.play(Create(ax), *(Create(c) for c in curves), run_time=2)
+    show_call(scene, shown, "self.play(top.animate.set_x_range((0, 100)))")
+    scene.play(top.animate.set_x_range((0, 100)), run_time=2)
+    show_call(scene, shown, "self.play(right.animate.set_y_range((0, 2)))")
+    scene.play(right.animate.set_y_range((0, 2)), run_time=2)
+    scene.wait(0.5)
+
+
+def secondary_axis(scene: Scene) -> None:
+    """Show electronvolts above a spectrum in nanometres, then zoom the wavelengths.
+
+    `ax.secondary_xaxis("top", functions=(forward, inverse))` puts ticks in `forward`'s
+    units where the bottom axis has `inverse` of them; they follow the range. Both axes
+    use `MaxNLocator(6)`, so their ticks thin and fill in as the range changes.
+    """
+    shown: list[Text] = []
+    hc = 1239.84198
+    ax = mp.Axes(
+        x_range=(400, 800, 100),
+        y_range=(0, 1, 0.25),
+        x_length=9,
+        y_length=4.6,
+        axis_config={"include_numbers": True, "font_size": 22},
+        theme="origin",
+    ).shift(0.5 * DOWN)
+    energy = ax.secondary_xaxis(
+        "top", functions=(lambda nm: hc / nm, lambda ev: hc / ev), font_size=22
+    )
+    for axis in (ax.x, energy):
+        axis.set_locator(mp.MaxNLocator(6))
+    energy.set_color(YELLOW)
+    peak = ax.plot(lambda nm: np.exp(-(((nm - 550) / 40) ** 2)), color=GREEN)
+    show_call(scene, shown, 'ax.secondary_xaxis("top", functions=(nm_to_ev, ev_to_nm))')
+    scene.play(Create(ax), Create(peak), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((500, 600)))")
+    scene.play(ax.animate.set_x_range((500, 600)), run_time=2.5)
+    scene.wait(0.5)
+
+
+def errorbar_data(scene: Scene) -> None:
+    """Move measured points and their error bars with `.animate.set_data`.
+
+    `ax.errorbar(x, y, yerr=..., xerr=...)` draws bars in data space and caps of a fixed
+    size; `set_data` under `.animate` moves and stretches each bar to its new place.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(0, 6, 1), y_range=(0, 5, 1), x_length=9, y_length=5)
+    ax.shift(0.4 * DOWN)
+    xs = np.arange(1.0, 6.0)
+    bars = ax.errorbar(xs, 1 + xs / 2, yerr=0.3, xerr=0.15, color=YELLOW, line=True)
+    scene.add(ax, bars)
+    show_call(scene, shown, "self.play(bars.animate.set_data(x, y, yerr=...))")
+    scene.play(
+        bars.animate.set_data(
+            xs, 4 - xs / 2, yerr=[[0.2, 0.4, 0.2, 0.5, 0.3], [0.6, 0.2, 0.5, 0.2, 0.4]]
+        ),
+        run_time=2.5,
+    )
+    show_call(scene, shown, "self.play(ax.animate.set_y_range((0, 8)))")
+    scene.play(ax.animate.set_y_range((0, 8)), run_time=2)
+    scene.wait(0.5)
+
+
+def swirl(point: np.ndarray) -> np.ndarray:
+    """Return the swirl of the field pictures: two vortices and a drift between."""
+    x, y = point[0], point[1]
+    return np.array([np.sin(y), np.cos(x) - 0.3 * y, 0.0])
+
+
+def field_flow(scene: Scene) -> None:
+    """Carry dots and shapes along an arrow field with `Flow`, then zoom the axes.
+
+    `Flow(field, dots)` with a group of dots moves each dot along its own path.
+    A shape is one object: `Flow(field, square)` moves it rigidly, and the point that
+    follows the field is its centre, marked red with its trace. `pointwise=True` moves
+    every point of the shape instead, so it bends with the flow. Animating the range
+    resamples the field on every frame.
+    """
+    shown: list[Text] = []
+    ax = mp.NumberPlane(x_range=(-6, 6, 1), y_range=(-3, 3, 1), x_length=12, y_length=6)
+    ax.shift(0.4 * DOWN)
+    field = ax.get_vector_field(swirl, opacity=0.6)
+    show_call(scene, shown, "field = ax.get_vector_field(swirl)")
+    scene.play(Create(ax), FadeIn(field), run_time=1.5)
+
+    dots = VGroup(
+        *(
+            Dot(ax.c2p(x, y), color=YELLOW)
+            for x in (-5, -3, -1, 1, 3, 5)
+            for y in (-2, 0, 2)
+        )
+    )
+    show_call(scene, shown, "self.play(Flow(field, dots))  # each dot on its own path")
+    scene.play(FadeIn(dots), run_time=0.5)
+    scene.play(mp.Flow(field, dots, run_time=4))
+    scene.play(FadeOut(dots), run_time=0.5)
+
+    square = Square(0.8, color=BLUE, fill_opacity=0.4).move_to(ax.c2p(-4.5, 1))
+    centre = Dot(square.get_center(), color=RED, radius=0.06)
+    trace = TracedPath(centre.get_center, stroke_color=RED, stroke_width=2)
+    show_call(
+        scene, shown, "self.play(Flow(field, square, centre))  # rigid, by its centre"
+    )
+    scene.play(FadeIn(square), FadeIn(centre), run_time=0.5)
+    scene.add(trace)
+    scene.play(mp.Flow(field, square, centre, run_time=4))
+    scene.play(FadeOut(square), FadeOut(centre), FadeOut(trace), run_time=0.5)
+
+    blob = Square(1.2, color=GREEN, fill_opacity=0.4).move_to(ax.c2p(-4.5, 1))
+    blob.insert_n_curves(40)
+    show_call(
+        scene, shown, "self.play(Flow(field, square, pointwise=True))  # every point"
+    )
+    scene.play(FadeIn(blob), run_time=0.5)
+    scene.play(mp.Flow(field, blob, pointwise=True, run_time=4))
+    scene.play(FadeOut(blob), run_time=0.5)
+
+    show_call(scene, shown, "self.play(ax.animate.set_x_range((-3, 3)))")
+    scene.play(ax.animate.set_x_range((-3, 3)), run_time=2)
+    scene.wait(0.5)
+
+
+def stream_lines_flow(scene: Scene) -> None:
+    """Draw stream lines, run Manim's flowing animation on them, then stop it.
+
+    `ax.get_stream_lines(swirl)` integrates each line with RK4 in data coordinates
+    and clips it to the axes; `create`, `start_animation` and `end_animation` keep
+    Manim's meaning.
+    """
+    shown: list[Text] = []
+    ax = mp.NumberPlane(x_range=(-6, 6, 1), y_range=(-3, 3, 1), x_length=12, y_length=6)
+    ax.shift(0.4 * DOWN)
+    lines = ax.get_stream_lines(swirl, stroke_width=2)
+    show_call(scene, shown, "lines = ax.get_stream_lines(swirl)")
+    scene.add(ax)
+    scene.play(lines.create(run_time=2))
+    show_call(scene, shown, "lines.start_animation(flow_speed=1.5)")
+    lines.start_animation(warm_up=False, flow_speed=1.5)
+    scene.wait(3)
+    show_call(scene, shown, "self.play(lines.end_animation())")
+    scene.play(lines.end_animation())
+    scene.wait(0.5)
+
+
+def polar_flower(scene: Scene) -> None:
+    """Grow a flower on true polar axes: `r = 1.5 + a sin 5θ` with `a` on a tracker.
+
+    `mp.PolarAxes` takes data in `(r, θ)`; `plot` draws `r = f(θ)`, clipped to the disk.
+    The petals pass the rim at `a > 1.5` and are cut there.
+    """
+    shown: list[Text] = []
+    a = ValueTracker(0.2)
+    ax = mp.PolarAxes(r_range=(0, 3, 1), size=6.4).shift(0.3 * DOWN)
+    flower = ax.plot(lambda t, a=0.2: 1.5 + a * np.sin(5 * t), a=a, color=YELLOW)
+    show_call(scene, shown, "ax.plot(lambda t, a: 1.5 + a * np.sin(5 * t), a=tracker)")
+    scene.play(Create(ax), Create(flower), run_time=2)
+    scene.play(a.animate.set_value(1.0), run_time=2)
+    show_call(scene, shown, "self.play(a.animate.set_value(2.2))  # past the rim")
+    scene.play(a.animate.set_value(2.2), run_time=2)
+    scene.wait(0.5)
+
+
+def polar_zoom(scene: Scene) -> None:
+    """Zoom a log-polar radius: the spiral, the points and the circles follow.
+
+    `mp.PolarAxes(r_range=(0.1, 100), r_scale="log")`; `ax.animate.set_r_range(...)`
+    moves the data and the radial grid while the rim and its degrees stay.
+    """
+    shown: list[Text] = []
+    ax = mp.PolarAxes(
+        r_range=(0.1, 100), r_scale="log", azimuth_units="degrees", azimuth_step=12
+    ).shift(0.3 * DOWN)
+    spiral = ax.plot(lambda t: 10 ** (t / PI - 0.5), theta_range=[0, 2.5 * PI])
+    dots = ax.scatter(np.ones(12), np.arange(12) * 2 * PI / 12, color=YELLOW)
+    show_call(scene, shown, 'mp.PolarAxes(r_range=(0.1, 100), r_scale="log")')
+    scene.play(Create(ax), Create(spiral), FadeIn(dots), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_r_range((1, 100)))")
+    scene.play(ax.animate.set_r_range((1, 100)), run_time=2)
+    scene.play(ax.animate.set_r_range((0.1, 100)), run_time=2)
+    scene.wait(0.5)
+
+
+def helix(t: float | np.ndarray) -> np.ndarray:
+    """Return the helix of two turns about (2, 2) rising to z = 2."""
+    return np.array([2 + 1.5 * np.cos(t), 2 + 1.5 * np.sin(t), t / (2 * PI)])
+
+
+def box_orbit(scene: Scene) -> None:
+    """Orbit a box frame: the panes and the axes change sides as the camera turns.
+
+    `mp.ThreeDAxes(frame="box")` draws matplotlib's box; it reads the `ThreeDScene`
+    camera on every frame, so `move_camera` swaps the panes and edges and the numbers
+    keep facing the camera.
+    """
+    shown: list[Text] = []
+    ax = mp.ThreeDAxes(
+        x_range=(0, 4, 1),
+        y_range=(0, 4, 1),
+        z_range=(0, 2, 0.5),
+        x_length=4,
+        y_length=4,
+        z_length=3,
+        frame="box",
+    )
+    scene.set_camera_orientation(**ax.view(25, -50))  # type: ignore[attr-defined]
+    curve = ax.plot_parametric_curve(helix, t_range=(0, 4 * PI), color=YELLOW)
+    t = np.linspace(0, 4 * PI, 13)
+    dots = ax.scatter(*helix(t))
+    show_call(scene, shown, 'mp.ThreeDAxes(frame="box")')
+    scene.play(Create(ax), Create(curve), FadeIn(dots), run_time=2)
+    show_call(scene, shown, "self.move_camera(**ax.view(25, 130))")
+    scene.move_camera(**ax.view(25, 130), run_time=5)  # type: ignore[attr-defined]
+    show_call(scene, shown, "self.move_camera(**ax.view(60, -50))")
+    scene.move_camera(**ax.view(60, -50), run_time=3)  # type: ignore[attr-defined]
+    scene.wait(0.5)
+
+
+def z_range_3d(scene: Scene) -> None:
+    """Animate a z range in 3D: the curves follow and are cut on the box.
+
+    Manim's `ThreeDAxes` picture, but every artist is bound: `ax.animate.set_z_range`
+    rescales the helix and the sine, and the helix is clipped at the new top and bottom.
+    """
+    shown: list[Text] = []
+    ax = mp.ThreeDAxes()
+    scene.set_camera_orientation(phi=65 * DEGREES, theta=-45 * DEGREES)  # type: ignore[attr-defined]
+    spiral = ax.plot_parametric_curve(
+        lambda t: np.array([2 * np.cos(t), 2 * np.sin(t), t / 2]),
+        t_range=(-8, 8),
+        color=YELLOW,
+    )
+    show_call(scene, shown, "mp.ThreeDAxes()")
+    scene.play(Create(ax), Create(spiral), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_z_range((-2, 2, 1)))")
+    scene.play(ax.animate.set_z_range((-2, 2, 1)), run_time=2)
+    show_call(scene, shown, "self.play(ax.animate.set_z_range((-4, 4, 1)))")
+    scene.play(ax.animate.set_z_range((-4, 4, 1)), run_time=2)
+    scene.wait(0.5)
+
+
+def flow_3d(scene: Scene) -> None:
+    """Move points and a shape along a field in 3D: stream lines, dots, a square.
+
+    `ax.get_vector_field` on `mp.ThreeDAxes` samples a 3D grid of flat arrows that turn
+    to face the camera; `ax.get_stream_lines` integrates in 3D; `mp.Flow` advects dots
+    each along its own path and, with `pointwise=True`, bends a square point by point.
+    """
+    shown: list[Text] = []
+    ax = mp.ThreeDAxes(
+        x_range=(-2, 2, 1),
+        y_range=(-2, 2, 1),
+        z_range=(-2, 2, 1),
+        x_length=4,
+        y_length=4,
+        z_length=4,
+        frame="box",
+    )
+    scene.set_camera_orientation(**ax.view(25, -50))  # type: ignore[attr-defined]
+
+    def swirl(p: np.ndarray) -> np.ndarray:
+        return np.array([-p[1], p[0], 0.3 - 0.15 * p[2]])
+
+    grid = {"x_range": (-2, 2, 1), "y_range": (-2, 2, 1), "z_range": (-2, 2, 1)}
+    field = ax.get_vector_field(swirl, **grid)
+    lines = ax.get_stream_lines(swirl, stroke_width=2, virtual_time=4)
+    ring = np.linspace(0, 2 * PI, 12, endpoint=False)
+    dots = VGroup(
+        *[Dot(ax.c2p(np.cos(a), np.sin(a), -1.5), color=YELLOW) for a in ring]
+    )
+    square = Square(0.6, color=RED, fill_opacity=0.5).move_to(ax.c2p(0, -1.2, -1))
+    show_call(scene, shown, "ax.get_vector_field(swirl)")
+    scene.play(Create(ax), FadeIn(field), run_time=2)
+    show_call(scene, shown, "ax.get_stream_lines(swirl)")
+    scene.play(lines.create(), run_time=2)
+    lines.start_animation(warm_up=False, flow_speed=1)
+    show_call(scene, shown, "mp.Flow(field, square, pointwise=True)")
+    scene.add(dots, square)
+    scene.play(
+        mp.Flow(field, dots, run_time=4),
+        mp.Flow(field, square, pointwise=True, run_time=4),
+    )
+    scene.move_camera(**ax.view(40, 40), run_time=3)  # type: ignore[attr-defined]
+    scene.wait(0.5)
+
+
+def bar_race(scene: Scene) -> None:
+    """Race five bars: each year's values arrive, then the bars sort themselves.
+
+    `mp.GrowBars` raises the bars from their base with a lag; `bars.animate.set_data`
+    moves every bar to its new height by its category; `mp.SortBars` slides them to
+    their places, and the category names travel with them.
+    """
+    shown: list[Text] = []
+    names = ["Ada", "Bob", "Cy", "Dee", "Eve"]
+    years = [
+        [3, 5, 2, 4, 1],
+        [4, 5, 6, 4, 3],
+        [6, 5, 7, 8, 5],
+        [9, 6, 7, 8, 10],
+    ]
+    ax = mp.Axes(y_range=(0, 10, 2), x_length=9, y_length=5).shift(0.3 * DOWN)
+    bars = ax.bar(names, years[0], c="height", colorscale="viridis", vmin=0, vmax=10)
+    scene.add(ax)
+    show_call(scene, shown, "self.play(mp.GrowBars(bars))")
+    scene.play(mp.GrowBars(bars, lag_ratio=0.15), run_time=1.5)
+    for values in years[1:]:
+        show_call(scene, shown, f"bars.animate.set_data(height={values})")
+        scene.play(bars.animate.set_data(x=names, height=values), run_time=1)
+        show_call(scene, shown, "self.play(mp.SortBars(bars, reverse=True))")
+        scene.play(mp.SortBars(bars, reverse=True), run_time=1)
+    scene.play(mp.HighlightBar(bars, ax.x.categories[0]), run_time=1.5)
+    scene.wait(0.5)
+
+
+def grow_histogram(scene: Scene) -> None:
+    """Grow a histogram coloured by count, then let it follow a moving sample.
+
+    `ax.hist(..., color_by="count")` maps every bin's count through viridis, with a
+    colorbar; `h.animate.set_data(sample)` recounts into the same bins and the colours
+    pass through the mapping of the counts in between.
+    """
+    shown: list[Text] = []
+    rng = np.random.default_rng(3)
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(0, 300, 100), x_length=8, y_length=5)
+    ax.shift(0.6 * LEFT + 0.3 * DOWN)
+    ax.y.set_position("left")
+    h = ax.hist(rng.normal(-1, 0.8, 1500), bins=24, range=(-4, 4), color_by="count",
+                vmin=0, vmax=300)  # fmt: skip
+    bar = ax.colorbar(h, label="n")
+    scene.add(ax, bar)
+    show_call(scene, shown, 'ax.hist(sample, color_by="count")')
+    scene.play(mp.GrowBars(h.bars, lag_ratio=0.03), run_time=2)
+    for centre in (0.5, 1.5):
+        show_call(scene, shown, "self.play(h.animate.set_data(new_sample))")
+        scene.play(h.animate.set_data(rng.normal(centre, 0.8, 1500)), run_time=1.5)
+    scene.wait(0.5)
+
+
+def live_append(scene: Scene) -> None:
+    """Append data live while the axes widen to keep it in view.
+
+    `mp.AppendData(line, x, y, autoscale=True)` draws the new points on one after
+    another and grows the ranges with matplotlib's margins; a label pinned to the end
+    of the line reads the latest value.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(
+        x_range=(0, 2, 1),
+        y_range=(0, 2, 1),
+        x_length=9,
+        y_length=5,
+        axis_config={"include_numbers": True},
+    ).shift(0.3 * DOWN)
+    xs = np.arange(0, 41) / 4
+    ys = 1 + xs / 3 + np.sin(xs)
+    line = ax.line(xs[:3], ys[:3], color=YELLOW)
+    label = ax.end_label(line)
+    scene.add(ax, line, label)
+    show_call(scene, shown, "mp.AppendData(line, x, y, autoscale=True)")
+    scene.play(mp.AppendData(line, xs[3:], ys[3:], autoscale=True), run_time=5)
+    scene.wait(0.5)
+
+
+def hist3d_orbit(scene: Scene) -> None:
+    """Grow a 3D histogram coloured by count and turn the camera around it.
+
+    `ax.hist3d` counts with `numpy.histogram2d` and draws shaded columns coloured by
+    viridis; `mp.GrowBars` raises them; the faces are drawn far to near as the camera
+    turns.
+    """
+    shown: list[Text] = []
+    rng = np.random.default_rng(5)
+    ax = mp.ThreeDAxes(
+        x_range=(-3, 3, 1),
+        y_range=(-3, 3, 1),
+        z_range=(0, 180, 60),
+        x_length=5,
+        y_length=5,
+        z_length=3.5,
+        frame="box",
+    )
+    scene.set_camera_orientation(**ax.view(25, -55))  # type: ignore[attr-defined]
+    x, y = rng.normal(0, 1, 2000), rng.normal(0, 1, 2000)
+    h = ax.hist3d(x, y, bins=8, range=((-3, 3), (-3, 3)))
+    scene.add(ax)
+    show_call(scene, shown, "self.play(mp.GrowBars(ax.hist3d(x, y)))")
+    scene.play(mp.GrowBars(h, lag_ratio=0.02), run_time=2.5)
+    scene.move_camera(**ax.view(35, 30), run_time=4)  # type: ignore[attr-defined]
+    scene.wait(0.5)
+
+
+def enter_and_exit(scene: Scene) -> None:
+    """Enter and leave with the library's animations, the exit a flag on the same class.
+
+    A spiral is traced by its parameter, so each turn takes the same time; points pop
+    in left to right; bars grow from their base and leave last bar first with
+    `reverse=True`, which also removes them, as Manim's `Uncreate` does.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(-4, 4, 1), y_range=(-4, 4, 1), x_length=6, y_length=6)
+    ax.shift(0.3 * DOWN)
+    t_max = 4 * PI
+    spiral = ax.plot_parametric_curve(
+        lambda t: (0.3 * t * np.cos(t), 0.3 * t * np.sin(t)), t_range=(0, t_max)
+    )
+    rng = np.random.default_rng(5)
+    x = rng.uniform(-3.5, 3.5, 12)
+    points = ax.scatter(x, 0.5 * x + rng.normal(0, 0.6, 12), color=YELLOW)
+    bars = ax.bar([-3, -1, 1, 3], [2, 3.5, 1.5, 3], width=1.2, color=GREEN)
+    scene.add(ax)
+    show_call(scene, shown, 'mp.TraceCurve(spiral, pacing="parameter")')
+    scene.play(mp.TraceCurve(spiral, pacing="parameter"), run_time=3)
+    show_call(scene, shown, "mp.TraceCurve(spiral, reverse=True)")
+    scene.play(mp.TraceCurve(spiral, reverse=True), run_time=1.5)
+    show_call(scene, shown, 'mp.ShowPoints(points, order="x", pop=True)')
+    scene.play(mp.ShowPoints(points, order="x", pop=True, lag_ratio=0.3), run_time=2)
+    show_call(scene, shown, "mp.GrowBars(bars, lag_ratio=0.2)")
+    scene.play(mp.GrowBars(bars, lag_ratio=0.2), run_time=1.5)
+    show_call(scene, shown, "mp.GrowBars(bars, lag_ratio=0.2, reverse=True)")
+    scene.play(mp.GrowBars(bars, lag_ratio=0.2, reverse=True), run_time=1.5)
+    show_call(scene, shown, "mp.ShowPoints(points, reverse=True)")
+    scene.play(mp.ShowPoints(points, order="x", reverse=True, lag_ratio=0.3))
+    scene.wait(0.5)
+
+
+def helpers_enter(scene: Scene) -> None:
+    """Bring 2D helpers in by their meaning, then take them out with `reverse=True`.
+
+    An area grows from the curve below it, a span sweeps across, Riemann rectangles
+    rise from the axis, error bars open from their samples, an annotation draws its
+    arrow then writes, and a colorbar fills from the bottom.
+    """
+    shown: list[Text] = []
+    ax = mp.Axes(x_range=(0, 6, 1), y_range=(0, 6, 1), x_length=7, y_length=5)
+    ax.shift(0.6 * LEFT + 0.3 * DOWN)
+    top = ax.plot(lambda x: 3 + np.sin(x), color=BLUE)
+    low = ax.plot(lambda x: 1 + 0.2 * x, color=GREEN)
+    area = ax.get_area(top, x_range=(0.5, 5.5), bounded_graph=low)
+    span = ax.axvspan(2, 3, color=YELLOW, fill_opacity=0.2)
+    rects = ax.get_riemann_rectangles(low, x_range=(0, 6), dx=0.5)
+    x = np.arange(0.5, 6, 1.0)
+    errors = ax.errorbar(x, 4.5 + 0.3 * np.cos(x), yerr=0.4, color=RED)
+    note = ax.annotate("peak", xy=(PI / 2, 4), xytext=(3.2, 5.4))
+    # A colorbar needs a mapping; this heatmap supplies one and stays off the scene.
+    heat = ax.imshow(np.outer(np.linspace(0, 1, 6), np.ones(6)))
+    bar = ax.colorbar(heat, label="v")
+    scene.add(ax, top, low)
+    steps = [
+        ("mp.GrowRegion(area)", mp.GrowRegion(area)),
+        ("mp.SweepSpan(span)", mp.SweepSpan(span)),
+        ("mp.GrowRiemann(rects, lag_ratio=0.1)", mp.GrowRiemann(rects, lag_ratio=0.1)),
+        ("mp.GrowErrorBars(errors)", mp.GrowErrorBars(errors, lag_ratio=0.15)),
+        ("mp.RevealAnnotation(note)", mp.RevealAnnotation(note)),
+        ("mp.FillColorbar(bar)", mp.FillColorbar(bar)),
+    ]
+    for call, animation in steps:
+        show_call(scene, shown, call)
+        scene.play(animation, run_time=1.5)
+    show_call(scene, shown, "the same classes with reverse=True")
+    scene.play(
+        mp.GrowRegion(area, reverse=True),
+        mp.SweepSpan(span, reverse=True),
+        mp.GrowRiemann(rects, lag_ratio=0.1, reverse=True),
+        mp.GrowErrorBars(errors, reverse=True),
+        mp.RevealAnnotation(note, reverse=True),
+        mp.FillColorbar(bar, reverse=True),
+        run_time=2,
+    )
+    scene.wait(0.5)
+
+
+def charts_enter(scene: Scene) -> None:
+    """Grow a stack, sweep a pie, open box plots from their medians.
+
+    `GrowStack` lifts each layer on the current top of the one below; `SweepPie`
+    sweeps the wedges by angle and `ExplodePie` pulls one out and back;
+    `GrowBoxPlot` opens each box from its median and `UnfoldViolin` from its centre.
+    """
+    shown: list[Text] = []
+    rng = np.random.default_rng(4)
+    left = mp.Axes(x_range=(0, 6, 1), y_range=(0, 9, 3), x_length=5, y_length=4)
+    right = mp.Axes(x_range=(0, 5, 1), y_range=(-3, 5, 1), x_length=5, y_length=4)
+    left.to_edge(LEFT).shift(0.4 * DOWN)
+    right.to_edge(RIGHT).shift(0.4 * DOWN)
+    x = np.linspace(0, 6, 25)
+    stack = left.stackplot(x, 1 + np.sin(x) ** 2, 2 + 0.3 * x, 1.5 + np.cos(x) ** 2)
+    samples = [rng.normal(m, s, 200) for m, s in ((0, 1), (1.5, 0.6), (2, 1.2))]
+    boxes = right.boxplot(samples[:2], positions=[1, 2])
+    violins = right.violinplot(samples[1:], positions=[3, 4])
+    scene.add(left, right)
+    show_call(scene, shown, "mp.GrowStack(stack)")
+    scene.play(mp.GrowStack(stack), run_time=2)
+    show_call(scene, shown, "mp.GrowBoxPlot(boxes), mp.UnfoldViolin(violins)")
+    scene.play(mp.GrowBoxPlot(boxes), mp.UnfoldViolin(violins), run_time=2)
+    scene.play(FadeOut(left, stack, right, boxes, violins))
+    pie = mp.PieChart([35, 25, 20, 20], radius=2, labels=["a", "b", "c", "d"])
+    pie.shift(0.3 * DOWN)
+    show_call(scene, shown, "mp.SweepPie(pie)")
+    scene.play(mp.SweepPie(pie), run_time=2)
+    show_call(scene, shown, "mp.ExplodePie(pie, indices=[1], amount=0.25)")
+    scene.play(mp.ExplodePie(pie, indices=[1], amount=0.25), run_time=1.5)
+    show_call(scene, shown, "mp.SweepPie(pie, reverse=True)")
+    scene.play(mp.SweepPie(pie, reverse=True), run_time=1.5)
+    scene.wait(0.5)
+
+
+def spatial_enter(scene: Scene) -> None:
+    """Build in 3D: sweep a surface, trace its wireframe, stack voxels, sweep a level.
+
+    `SweepSurface` reveals the surface along u; `RevealWireframe` traces its lines;
+    `StackVoxels` lays a block layer by layer, with shared faces gone as layers meet;
+    `SweepIsovalue` raises an isosurface's level until its two balls join, then back.
+    """
+    ax = mp.ThreeDAxes(
+        x_range=(-3, 3, 1), y_range=(-3, 3, 1), z_range=(-2, 3, 1),
+        x_length=5, y_length=5, z_length=3.5, frame="box",
+    )  # fmt: skip
+    scene.set_camera_orientation(phi=65 * DEGREES, theta=-50 * DEGREES)  # type: ignore[attr-defined]
+    surface = ax.plot_surface(
+        lambda u, v: np.sin(u) * np.cos(v), (-3, 3), (-3, 3), colorscale="viridis"
+    )
+    scene.add(ax)
+    scene.play(mp.SweepSurface(surface), run_time=2.5)
+    scene.play(mp.SweepSurface(surface, reverse=True), run_time=1.5)
+    filled = np.zeros((4, 4, 4), dtype=bool)
+    filled[:3, :3, :] = True
+    block = ax.voxels(filled, facecolors=BLUE)
+    scene.play(mp.StackVoxels(block, lag_ratio=0.3), run_time=2.5)
+    scene.play(mp.StackVoxels(block, lag_ratio=0.3, reverse=True), run_time=1.5)
+    blob = ax.plot_isosurface(
+        lambda x, y, z: np.minimum((x + 1.2) ** 2, (x - 1.2) ** 2) + y**2 + z**2,
+        level=0.6, x_range=(-3, 3), y_range=(-2, 2), z_range=(-2, 2), resolution=20,
+        color=YELLOW,
+    )  # fmt: skip
+    scene.play(FadeIn(blob))
+    scene.play(mp.SweepIsovalue(blob, 2.2), run_time=2.5)
+    scene.play(mp.SweepIsovalue(blob, 0.6), run_time=2)
+    scene.wait(0.5)
+
+
+DEMO_LIST: list[Callable[[Scene], None]] = [
+    create_sine,
+    follow,
+    pan_and_zoom,
+    pole,
+    lifecycle,
+    redraw,
+    clip_margin,
+    trace_and_morph,
+    legend_and_styles,
+    legend_placement,
+    axis_controls,
+    animate_data,
+    clip_per_axis,
+    t_label_slides,
+    secant_to_tangent,
+    riemann_refines,
+    derived_graphs,
+    twin_axes,
+    four_corners,
+    secondary_axis,
+    errorbar_data,
+    field_flow,
+    stream_lines_flow,
+    polar_flower,
+    polar_zoom,
+    box_orbit,
+    z_range_3d,
+    flow_3d,
+    bar_race,
+    grow_histogram,
+    live_append,
+    hist3d_orbit,
+    enter_and_exit,
+    helpers_enter,
+    charts_enter,
+    spatial_enter,
+]
+
+THREE_D = {box_orbit, z_range_3d, flow_3d, hist3d_orbit, spatial_enter}
+
+
+def render(demo: Callable[[Scene], None]) -> Path:
+    """Render one demo at 720p30 and return the video's path."""
+    base = ThreeDScene if demo in THREE_D else Scene
+
+    class Demo(base):  # type: ignore[valid-type,misc]
+        def construct(self) -> None:
+            demo(self)
+
+    with tempconfig(
+        {
+            "quality": "medium_quality",
+            "disable_caching": True,
+            "progress_bar": "none",
+            "media_dir": str(OUT / "media"),
+            "video_dir": str(DEMOS),
+            "output_file": demo.__name__,
+        }
+    ):
+        Demo().render()
+    return DEMOS / f"{demo.__name__}.mp4"
+
+
+def main() -> int:
+    """Render the demos named on the command line, or all, and report failures."""
+    wanted = sys.argv[1:]
+    failed = []
+    for demo in DEMO_LIST:
+        if wanted and not any(w in demo.__name__ for w in wanted):
+            continue
+        try:
+            print(render(demo), flush=True)
+        except Exception as error:  # a demo is a probe: report it and go on
+            failed.append(demo.__name__)
+            print(f"{demo.__name__} FAILED: {error!r}", flush=True)
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,31 @@
+{
+  "max_error": 1.3506446028928519e-15,
+  "samples_per_frame": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "samples_on_reread": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "wait_samples": 0,
+  "wait_render_calls": 0,
+  "initial_sampling_passes": 1,
+  "endpoint_sampling_passes": 1,
+  "calls": 11,
+  "frames": 9
+}

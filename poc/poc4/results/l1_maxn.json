@@ -1,0 +1,179 @@
+{
+  "frames": [
+    {
+      "error": 0.0,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 8.881784197001252e-16,
+      "range_error": 1.7763568394002505e-15,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        5.0,
+        10.0
+      ],
+      "partial_opacities": 2.0
+    },
+    {
+      "error": 8.881784197001252e-16,
+      "range_error": 3.552713678800501e-15,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        5.0,
+        10.0,
+        15.0,
+        20.0
+      ],
+      "partial_opacities": 3.0
+    },
+    {
+      "error": 8.881784197001252e-16,
+      "range_error": 7.105427357601002e-15,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        10.0,
+        20.0,
+        30.0
+      ],
+      "partial_opacities": 1.0
+    },
+    {
+      "error": 8.881784197001252e-16,
+      "range_error": 7.105427357601002e-15,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        10.0,
+        20.0,
+        30.0,
+        40.0
+      ],
+      "partial_opacities": 1.0
+    },
+    {
+      "error": 0.0,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        10.0,
+        20.0,
+        30.0,
+        40.0,
+        50.0
+      ],
+      "partial_opacities": 3.0
+    },
+    {
+      "error": 8.881784197001252e-16,
+      "range_error": 1.4210854715202004e-14,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        20.0,
+        40.0,
+        60.0
+      ],
+      "partial_opacities": 1.0
+    },
+    {
+      "error": 0.0,
+      "range_error": 0.0,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        20.0,
+        40.0,
+        60.0
+      ],
+      "partial_opacities": 0.0
+    },
+    {
+      "error": 8.881784197001252e-16,
+      "range_error": 1.4210854715202004e-14,
+      "keys_correct": true,
+      "roles_match": true,
+      "pool_size": 17,
+      "pixel_channels": 0,
+      "keys": [
+        0.0,
+        20.0,
+        40.0,
+        60.0,
+        80.0
+      ],
+      "partial_opacities": 1.0
+    }
+  ],
+  "calls": 11,
+  "final_error": 0.0,
+  "final_range": [
+    0.0,
+    100.0
+  ],
+  "pool": [
+    {
+      "samples": 10,
+      "keys": [
+        -3.0,
+        -2.0,
+        -1.0,
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        5.0,
+        10.0,
+        15.0,
+        20.0,
+        30.0,
+        40.0,
+        50.0,
+        60.0,
+        80.0,
+        100.0
+      ],
+      "align_ns": 4003600
+    }
+  ],
+  "starting_inherited_pool": true,
+  "final_leaves": 10
+}

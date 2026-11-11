@@ -1,0 +1,57 @@
+{
+  "permanent": false,
+  "max_frame_error": 0.0,
+  "max_motion": 0.0,
+  "reattach_error": 0.0,
+  "simulation_untouched": true,
+  "pixel_channel_difference": 0,
+  "calls": 9,
+  "frames": 9,
+  "axis_error": 0.0,
+  "poc_mid_axis": [
+    [
+      -3.0,
+      0.0,
+      0.0
+    ],
+    [
+      -1.0,
+      0.0,
+      0.0
+    ],
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      3.0,
+      0.0,
+      0.0
+    ]
+  ],
+  "native_mid_axis": [
+    [
+      -3.0,
+      0.0,
+      0.0
+    ],
+    [
+      -1.0,
+      0.0,
+      0.0
+    ],
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      3.0,
+      0.0,
+      0.0
+    ]
+  ],
+  "context_events": [],
+  "source_initial_motion": 0.0
+}

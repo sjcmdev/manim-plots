@@ -1,0 +1,27 @@
+{
+  "events": [
+    {
+      "animation": "LaggedStart",
+      "line": 94,
+      "permanent": false,
+      "stack_ns": 5300,
+      "simulation_ns": 4886000,
+      "playback": null,
+      "excluded_artists": 0
+    },
+    {
+      "animation": "Indicate",
+      "line": 213,
+      "permanent": false,
+      "stack_ns": 3600,
+      "simulation_ns": 32647200,
+      "playback": null,
+      "excluded_artists": 0
+    }
+  ],
+  "max_error": 0.0,
+  "reattach_error": 0.0,
+  "calls": 9,
+  "frames": 9,
+  "remaining_suspensions": 0
+}

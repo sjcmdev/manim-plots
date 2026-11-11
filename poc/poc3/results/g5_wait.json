@@ -1,0 +1,29 @@
+[
+  {
+    "mode": "none",
+    "median_seconds": 0.0009433999948669225,
+    "render_calls": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "empty",
+    "median_seconds": 0.0009214000019710511,
+    "render_calls": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "empty_dt",
+    "median_seconds": 0.024242400017101318,
+    "render_calls": [
+      30,
+      30,
+      30
+    ]
+  }
+]

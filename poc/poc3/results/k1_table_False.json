@@ -1,0 +1,292 @@
+[
+  {
+    "name": "Create",
+    "animation": "Create",
+    "suspends": [
+      {
+        "animation": "Create",
+        "line": 213,
+        "stack_ns": 5800,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "Write",
+    "animation": "Write",
+    "suspends": [
+      {
+        "animation": "Write",
+        "line": 213,
+        "stack_ns": 3400,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "ShowPassingFlash",
+    "animation": "ShowPassingFlash",
+    "suspends": [
+      {
+        "animation": "ShowPassingFlash",
+        "line": 213,
+        "stack_ns": 3200,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "Indicate",
+    "animation": "Indicate",
+    "suspends": [
+      {
+        "animation": "Indicate",
+        "line": 213,
+        "stack_ns": 2100,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "Wiggle",
+    "animation": "Wiggle",
+    "suspends": [
+      {
+        "animation": "Wiggle",
+        "line": 213,
+        "stack_ns": 4000,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "ApplyWave",
+    "animation": "ApplyWave",
+    "suspends": [
+      {
+        "animation": "ApplyWave",
+        "line": 213,
+        "stack_ns": 4700,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "Flash",
+    "animation": "Flash",
+    "suspends": [],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 9,
+    "frames": 9
+  },
+  {
+    "name": "Circumscribe",
+    "animation": "Circumscribe",
+    "suspends": [],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 9,
+    "frames": 9
+  },
+  {
+    "name": "Uncreate",
+    "animation": "Uncreate",
+    "suspends": [
+      {
+        "animation": "Uncreate",
+        "line": 213,
+        "stack_ns": 3600,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "Rotate",
+    "animation": "Rotate",
+    "suspends": [
+      {
+        "animation": "Rotate",
+        "line": 213,
+        "stack_ns": 1900,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "animate_shift",
+    "animation": "_MethodAnimation",
+    "suspends": [
+      {
+        "animation": "_MethodAnimation",
+        "line": 213,
+        "stack_ns": 1900,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "animate_chain",
+    "animation": "_MethodAnimation",
+    "suspends": [
+      {
+        "animation": "_MethodAnimation",
+        "line": 213,
+        "stack_ns": 2200,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "MoveToTarget",
+    "animation": "MoveToTarget",
+    "suspends": [
+      {
+        "animation": "MoveToTarget",
+        "line": 213,
+        "stack_ns": 3900,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "Transform",
+    "animation": "Transform",
+    "suspends": [
+      {
+        "animation": "Transform",
+        "line": 213,
+        "stack_ns": 2000,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "ReplacementTransform",
+    "animation": "ReplacementTransform",
+    "suspends": [
+      {
+        "animation": "ReplacementTransform",
+        "line": 213,
+        "stack_ns": 2000,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "TransformCircle",
+    "animation": "Transform",
+    "suspends": [
+      {
+        "animation": "Transform",
+        "line": 213,
+        "stack_ns": 2200,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "TransformFromCopy",
+    "animation": "TransformFromCopy",
+    "suspends": [
+      {
+        "animation": "TransformFromCopy",
+        "line": 213,
+        "stack_ns": 1900,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 11,
+    "frames": 9
+  },
+  {
+    "name": "FadeOutShift",
+    "animation": "FadeOut",
+    "suspends": [
+      {
+        "animation": "FadeOut",
+        "line": 213,
+        "stack_ns": 2100,
+        "playback": null,
+        "animation_contains_leaf": true
+      }
+    ],
+    "writes": [],
+    "frame_suspends": [],
+    "calls": 12,
+    "frames": 9
+  }
+]

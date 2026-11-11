@@ -1,0 +1,16 @@
+[
+  {
+    "kind": "MoveAlongPath",
+    "nodes": 1,
+    "error": 1.5543122344752192e-15,
+    "calls": 32,
+    "frames": 30
+  },
+  {
+    "kind": "PhaseFlow",
+    "nodes": 31,
+    "error": 0.0,
+    "calls": 32,
+    "frames": 30
+  }
+]

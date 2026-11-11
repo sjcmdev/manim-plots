@@ -1,0 +1,36 @@
+{
+  "immediate_error": 4.440892098500626e-16,
+  "rebuild_error": 1.4895204919483639e-15,
+  "second_immediate_error": 0,
+  "second_rebuild_error": 0,
+  "placement_nodes": 1,
+  "writer_events": [
+    {
+      "kind": "function",
+      "line": 1582,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 14600,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1583,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 7100,
+      "transient": false,
+      "container_contains_leaf": true
+    },
+    {
+      "kind": "function",
+      "line": 1584,
+      "container": "VGroup",
+      "contains_frame": false,
+      "stack_ns": 6200,
+      "transient": false,
+      "container_contains_leaf": true
+    }
+  ]
+}

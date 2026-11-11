@@ -1,0 +1,60 @@
+{
+  "k4_fadeout": {
+    "error": 1.0
+  },
+  "k4_local": {
+    "error": 1.4142135623730954
+  },
+  "k4_bounds": {
+    "center_error": 0.5,
+    "pivot_error": 0.19866933079506127
+  },
+  "k4_growth": [
+    {
+      "kind": "MoveAlongPath",
+      "nodes": 32,
+      "error": 0.0,
+      "calls": 32,
+      "frames": 30
+    },
+    {
+      "kind": "PhaseFlow",
+      "nodes": 31,
+      "error": 34.064041257538236,
+      "calls": 32,
+      "frames": 30
+    }
+  ],
+  "k4_weights": {
+    "weight_builds_for_ten_frame_changes": 0
+  },
+  "failures": {
+    "test_k4_fadeout_cleanup": "AssertionError: ",
+    "test_k4_larger_target": "ValueError: operands could not be broadcast together with shapes (36,3) (196,3) ",
+    "test_k4_local_placement": "AssertionError: ",
+    "test_k4_no_offplane_probe": "AssertionError: ",
+    "test_k4_placement_growth": "AssertionError: ",
+    "test_k4_cached_weights": "AssertionError: "
+  },
+  "g6_True": {
+    "machine": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "cpus": 24,
+    "python": "3.13.2",
+    "numpy": "2.5.2",
+    "manim": "0.21.0",
+    "resolution": [
+      1920,
+      1080
+    ],
+    "fps": 60,
+    "calls": 608,
+    "rendered_frames": 606,
+    "dirty_frames": 606,
+    "rebuild_median_ms": 3.9816000000000003,
+    "rebuild_p95_ms": 4.7991,
+    "comparison_p95_ms": 0.351375,
+    "comparison_calls_median": 60.0,
+    "passes_4ms": false
+  }
+}

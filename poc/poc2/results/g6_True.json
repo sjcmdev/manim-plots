@@ -1,0 +1,3659 @@
+{
+  "machine": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+  "cpus": 24,
+  "python": "3.13.2",
+  "numpy": "2.5.2",
+  "manim": "0.21.0",
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 60,
+  "calls": 608,
+  "rendered_frames": 606,
+  "dirty_frames": 606,
+  "rebuild_median_ms": 3.89195,
+  "rebuild_p95_ms": 4.244675,
+  "comparison_p95_ms": 0.2713,
+  "comparison_calls_median": 60.0,
+  "passes_4ms": false,
+  "frames": [
+    {
+      "compare_ns": 268400,
+      "compare_calls": 60,
+      "rebuild_ns": 3886400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 249400,
+      "compare_calls": 60,
+      "rebuild_ns": 4441400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223400,
+      "compare_calls": 60,
+      "rebuild_ns": 3869600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220000,
+      "compare_calls": 60,
+      "rebuild_ns": 3856300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228200,
+      "compare_calls": 60,
+      "rebuild_ns": 3789100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 243700,
+      "compare_calls": 60,
+      "rebuild_ns": 3844900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230600,
+      "compare_calls": 60,
+      "rebuild_ns": 3931900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217000,
+      "compare_calls": 60,
+      "rebuild_ns": 3939400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233600,
+      "compare_calls": 60,
+      "rebuild_ns": 4051300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225600,
+      "compare_calls": 60,
+      "rebuild_ns": 3857700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228200,
+      "compare_calls": 60,
+      "rebuild_ns": 3935800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216800,
+      "compare_calls": 60,
+      "rebuild_ns": 3960700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219400,
+      "compare_calls": 60,
+      "rebuild_ns": 3812600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226000,
+      "compare_calls": 60,
+      "rebuild_ns": 3841500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234300,
+      "compare_calls": 60,
+      "rebuild_ns": 4013600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217000,
+      "compare_calls": 60,
+      "rebuild_ns": 3784200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230200,
+      "compare_calls": 60,
+      "rebuild_ns": 3782200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235000,
+      "compare_calls": 60,
+      "rebuild_ns": 3864700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217600,
+      "compare_calls": 60,
+      "rebuild_ns": 3885500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234100,
+      "compare_calls": 60,
+      "rebuild_ns": 3811100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227300,
+      "compare_calls": 60,
+      "rebuild_ns": 3832000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 254500,
+      "compare_calls": 60,
+      "rebuild_ns": 4045900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224100,
+      "compare_calls": 60,
+      "rebuild_ns": 3918500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240300,
+      "compare_calls": 60,
+      "rebuild_ns": 3990700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 319300,
+      "compare_calls": 60,
+      "rebuild_ns": 3947600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228600,
+      "compare_calls": 60,
+      "rebuild_ns": 3959900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222200,
+      "compare_calls": 60,
+      "rebuild_ns": 3939700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219100,
+      "compare_calls": 60,
+      "rebuild_ns": 3806600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232900,
+      "compare_calls": 60,
+      "rebuild_ns": 4020700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231100,
+      "compare_calls": 60,
+      "rebuild_ns": 4048400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222500,
+      "compare_calls": 60,
+      "rebuild_ns": 3905900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 212300,
+      "compare_calls": 60,
+      "rebuild_ns": 3817400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236300,
+      "compare_calls": 60,
+      "rebuild_ns": 4199200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226100,
+      "compare_calls": 60,
+      "rebuild_ns": 3815900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235100,
+      "compare_calls": 60,
+      "rebuild_ns": 4078800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 260100,
+      "compare_calls": 60,
+      "rebuild_ns": 3900200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235700,
+      "compare_calls": 60,
+      "rebuild_ns": 3929700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239900,
+      "compare_calls": 60,
+      "rebuild_ns": 3949600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 245800,
+      "compare_calls": 60,
+      "rebuild_ns": 4202100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234300,
+      "compare_calls": 60,
+      "rebuild_ns": 3984100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233600,
+      "compare_calls": 60,
+      "rebuild_ns": 3878300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230100,
+      "compare_calls": 60,
+      "rebuild_ns": 3976300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228200,
+      "compare_calls": 60,
+      "rebuild_ns": 3905100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 269800,
+      "compare_calls": 60,
+      "rebuild_ns": 3876400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240300,
+      "compare_calls": 60,
+      "rebuild_ns": 3969900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230700,
+      "compare_calls": 60,
+      "rebuild_ns": 3843900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222400,
+      "compare_calls": 60,
+      "rebuild_ns": 3857500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217600,
+      "compare_calls": 60,
+      "rebuild_ns": 3827600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223400,
+      "compare_calls": 60,
+      "rebuild_ns": 3848200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218400,
+      "compare_calls": 60,
+      "rebuild_ns": 3787600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220700,
+      "compare_calls": 60,
+      "rebuild_ns": 3830800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221500,
+      "compare_calls": 60,
+      "rebuild_ns": 3807400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232900,
+      "compare_calls": 60,
+      "rebuild_ns": 3874200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 213000,
+      "compare_calls": 60,
+      "rebuild_ns": 3876700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221700,
+      "compare_calls": 60,
+      "rebuild_ns": 3823000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214600,
+      "compare_calls": 60,
+      "rebuild_ns": 3841100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 241900,
+      "compare_calls": 60,
+      "rebuild_ns": 3848200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232400,
+      "compare_calls": 60,
+      "rebuild_ns": 4021000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 241400,
+      "compare_calls": 60,
+      "rebuild_ns": 3877800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 259600,
+      "compare_calls": 60,
+      "rebuild_ns": 4024300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217000,
+      "compare_calls": 60,
+      "rebuild_ns": 3921700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226000,
+      "compare_calls": 60,
+      "rebuild_ns": 3988600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223900,
+      "compare_calls": 60,
+      "rebuild_ns": 3827500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216700,
+      "compare_calls": 60,
+      "rebuild_ns": 3833000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234500,
+      "compare_calls": 60,
+      "rebuild_ns": 3909200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221400,
+      "compare_calls": 60,
+      "rebuild_ns": 4245700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224600,
+      "compare_calls": 60,
+      "rebuild_ns": 3797400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 255400,
+      "compare_calls": 60,
+      "rebuild_ns": 4048900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221500,
+      "compare_calls": 60,
+      "rebuild_ns": 3828100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223900,
+      "compare_calls": 60,
+      "rebuild_ns": 3874300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224700,
+      "compare_calls": 60,
+      "rebuild_ns": 3841600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232700,
+      "compare_calls": 60,
+      "rebuild_ns": 3878900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227500,
+      "compare_calls": 60,
+      "rebuild_ns": 4035100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228600,
+      "compare_calls": 60,
+      "rebuild_ns": 3823700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218600,
+      "compare_calls": 60,
+      "rebuild_ns": 3831400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222700,
+      "compare_calls": 60,
+      "rebuild_ns": 3833500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216300,
+      "compare_calls": 60,
+      "rebuild_ns": 3823300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 213300,
+      "compare_calls": 60,
+      "rebuild_ns": 3760800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214500,
+      "compare_calls": 60,
+      "rebuild_ns": 3759400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214200,
+      "compare_calls": 60,
+      "rebuild_ns": 3796400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217700,
+      "compare_calls": 60,
+      "rebuild_ns": 3811800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 211800,
+      "compare_calls": 60,
+      "rebuild_ns": 3858200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226500,
+      "compare_calls": 60,
+      "rebuild_ns": 3983700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215000,
+      "compare_calls": 60,
+      "rebuild_ns": 3879200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217100,
+      "compare_calls": 60,
+      "rebuild_ns": 3823000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237100,
+      "compare_calls": 60,
+      "rebuild_ns": 4139800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225700,
+      "compare_calls": 60,
+      "rebuild_ns": 4096400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237900,
+      "compare_calls": 60,
+      "rebuild_ns": 4070900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231200,
+      "compare_calls": 60,
+      "rebuild_ns": 4121000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222200,
+      "compare_calls": 60,
+      "rebuild_ns": 3842900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214800,
+      "compare_calls": 60,
+      "rebuild_ns": 3770400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 250500,
+      "compare_calls": 60,
+      "rebuild_ns": 4450600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229900,
+      "compare_calls": 60,
+      "rebuild_ns": 4079300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218600,
+      "compare_calls": 60,
+      "rebuild_ns": 3868800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222900,
+      "compare_calls": 60,
+      "rebuild_ns": 3932200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222700,
+      "compare_calls": 60,
+      "rebuild_ns": 3936700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 243300,
+      "compare_calls": 60,
+      "rebuild_ns": 4198700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233900,
+      "compare_calls": 60,
+      "rebuild_ns": 3924700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240800,
+      "compare_calls": 60,
+      "rebuild_ns": 4244300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 304800,
+      "compare_calls": 60,
+      "rebuild_ns": 4208900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236900,
+      "compare_calls": 60,
+      "rebuild_ns": 4182200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 248200,
+      "compare_calls": 60,
+      "rebuild_ns": 4152400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 4094200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223100,
+      "compare_calls": 60,
+      "rebuild_ns": 3911900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224200,
+      "compare_calls": 60,
+      "rebuild_ns": 3907300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 253900,
+      "compare_calls": 60,
+      "rebuild_ns": 4011800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222100,
+      "compare_calls": 60,
+      "rebuild_ns": 3998200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 247700,
+      "compare_calls": 60,
+      "rebuild_ns": 4101000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231600,
+      "compare_calls": 60,
+      "rebuild_ns": 3977300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 243100,
+      "compare_calls": 60,
+      "rebuild_ns": 4052500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227000,
+      "compare_calls": 60,
+      "rebuild_ns": 4315100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229500,
+      "compare_calls": 60,
+      "rebuild_ns": 3976700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232600,
+      "compare_calls": 60,
+      "rebuild_ns": 3944900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236400,
+      "compare_calls": 60,
+      "rebuild_ns": 3964100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 280500,
+      "compare_calls": 60,
+      "rebuild_ns": 4418500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 283500,
+      "compare_calls": 60,
+      "rebuild_ns": 4244800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222900,
+      "compare_calls": 60,
+      "rebuild_ns": 4005900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237300,
+      "compare_calls": 60,
+      "rebuild_ns": 3912600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 264600,
+      "compare_calls": 60,
+      "rebuild_ns": 3859900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 291800,
+      "compare_calls": 60,
+      "rebuild_ns": 5566100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236400,
+      "compare_calls": 60,
+      "rebuild_ns": 3812100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232800,
+      "compare_calls": 60,
+      "rebuild_ns": 3902500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234600,
+      "compare_calls": 60,
+      "rebuild_ns": 3920700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242100,
+      "compare_calls": 60,
+      "rebuild_ns": 3971000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239100,
+      "compare_calls": 60,
+      "rebuild_ns": 4031600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233100,
+      "compare_calls": 60,
+      "rebuild_ns": 4019800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218500,
+      "compare_calls": 60,
+      "rebuild_ns": 3871300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219000,
+      "compare_calls": 60,
+      "rebuild_ns": 3790800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233700,
+      "compare_calls": 60,
+      "rebuild_ns": 3945400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233300,
+      "compare_calls": 60,
+      "rebuild_ns": 3927900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239700,
+      "compare_calls": 60,
+      "rebuild_ns": 3925600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221800,
+      "compare_calls": 60,
+      "rebuild_ns": 3830300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232700,
+      "compare_calls": 60,
+      "rebuild_ns": 3768800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231300,
+      "compare_calls": 60,
+      "rebuild_ns": 3901900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 261700,
+      "compare_calls": 60,
+      "rebuild_ns": 4224100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233800,
+      "compare_calls": 60,
+      "rebuild_ns": 4027400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222900,
+      "compare_calls": 60,
+      "rebuild_ns": 3828500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214300,
+      "compare_calls": 60,
+      "rebuild_ns": 3844100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214300,
+      "compare_calls": 60,
+      "rebuild_ns": 3818400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215200,
+      "compare_calls": 60,
+      "rebuild_ns": 3772900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215100,
+      "compare_calls": 60,
+      "rebuild_ns": 3804300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214600,
+      "compare_calls": 60,
+      "rebuild_ns": 3804000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217200,
+      "compare_calls": 60,
+      "rebuild_ns": 3763400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220900,
+      "compare_calls": 60,
+      "rebuild_ns": 3828200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230400,
+      "compare_calls": 60,
+      "rebuild_ns": 3879000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235800,
+      "compare_calls": 60,
+      "rebuild_ns": 4349200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227900,
+      "compare_calls": 60,
+      "rebuild_ns": 3859500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215600,
+      "compare_calls": 60,
+      "rebuild_ns": 3850100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223500,
+      "compare_calls": 60,
+      "rebuild_ns": 3820600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229500,
+      "compare_calls": 60,
+      "rebuild_ns": 3984700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 259300,
+      "compare_calls": 60,
+      "rebuild_ns": 4040400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 280600,
+      "compare_calls": 60,
+      "rebuild_ns": 4284900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239700,
+      "compare_calls": 60,
+      "rebuild_ns": 4176700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 260200,
+      "compare_calls": 60,
+      "rebuild_ns": 4189200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 264000,
+      "compare_calls": 60,
+      "rebuild_ns": 3988800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 283100,
+      "compare_calls": 60,
+      "rebuild_ns": 4330400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 298400,
+      "compare_calls": 60,
+      "rebuild_ns": 4116100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 299400,
+      "compare_calls": 60,
+      "rebuild_ns": 4734300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 282400,
+      "compare_calls": 60,
+      "rebuild_ns": 4307400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 269600,
+      "compare_calls": 60,
+      "rebuild_ns": 4031600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 336300,
+      "compare_calls": 60,
+      "rebuild_ns": 4931200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 268600,
+      "compare_calls": 60,
+      "rebuild_ns": 3996000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 290000,
+      "compare_calls": 60,
+      "rebuild_ns": 4024100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237300,
+      "compare_calls": 60,
+      "rebuild_ns": 3943900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234000,
+      "compare_calls": 60,
+      "rebuild_ns": 4057200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218700,
+      "compare_calls": 60,
+      "rebuild_ns": 3826900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214200,
+      "compare_calls": 60,
+      "rebuild_ns": 3830100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235400,
+      "compare_calls": 60,
+      "rebuild_ns": 3872800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237800,
+      "compare_calls": 60,
+      "rebuild_ns": 3960500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219500,
+      "compare_calls": 60,
+      "rebuild_ns": 3843200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 300500,
+      "compare_calls": 60,
+      "rebuild_ns": 3900700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 247600,
+      "compare_calls": 60,
+      "rebuild_ns": 3995500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242200,
+      "compare_calls": 60,
+      "rebuild_ns": 4028100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 258100,
+      "compare_calls": 60,
+      "rebuild_ns": 3893900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 238200,
+      "compare_calls": 60,
+      "rebuild_ns": 4065400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240600,
+      "compare_calls": 60,
+      "rebuild_ns": 3974800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240900,
+      "compare_calls": 60,
+      "rebuild_ns": 3892100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239400,
+      "compare_calls": 60,
+      "rebuild_ns": 3950800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239600,
+      "compare_calls": 60,
+      "rebuild_ns": 3941700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 252300,
+      "compare_calls": 60,
+      "rebuild_ns": 4077700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 253000,
+      "compare_calls": 60,
+      "rebuild_ns": 4038800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233900,
+      "compare_calls": 60,
+      "rebuild_ns": 3936900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228100,
+      "compare_calls": 60,
+      "rebuild_ns": 3853100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225000,
+      "compare_calls": 60,
+      "rebuild_ns": 3888100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237800,
+      "compare_calls": 60,
+      "rebuild_ns": 3856500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222800,
+      "compare_calls": 60,
+      "rebuild_ns": 3903800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219600,
+      "compare_calls": 60,
+      "rebuild_ns": 3875900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217800,
+      "compare_calls": 60,
+      "rebuild_ns": 3940200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215700,
+      "compare_calls": 60,
+      "rebuild_ns": 3816900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239100,
+      "compare_calls": 60,
+      "rebuild_ns": 3859600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223000,
+      "compare_calls": 60,
+      "rebuild_ns": 3820200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231600,
+      "compare_calls": 60,
+      "rebuild_ns": 3929200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237300,
+      "compare_calls": 60,
+      "rebuild_ns": 4069400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230900,
+      "compare_calls": 60,
+      "rebuild_ns": 4091900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232400,
+      "compare_calls": 60,
+      "rebuild_ns": 4196100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234300,
+      "compare_calls": 60,
+      "rebuild_ns": 3916300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237500,
+      "compare_calls": 60,
+      "rebuild_ns": 4065600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239700,
+      "compare_calls": 60,
+      "rebuild_ns": 4004300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 263400,
+      "compare_calls": 60,
+      "rebuild_ns": 4071400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242400,
+      "compare_calls": 60,
+      "rebuild_ns": 4012500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235500,
+      "compare_calls": 60,
+      "rebuild_ns": 3976500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237600,
+      "compare_calls": 60,
+      "rebuild_ns": 4150900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 247500,
+      "compare_calls": 60,
+      "rebuild_ns": 4012500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218000,
+      "compare_calls": 60,
+      "rebuild_ns": 3941500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217000,
+      "compare_calls": 60,
+      "rebuild_ns": 3792900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 250500,
+      "compare_calls": 60,
+      "rebuild_ns": 4650600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221400,
+      "compare_calls": 60,
+      "rebuild_ns": 3828200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 253800,
+      "compare_calls": 60,
+      "rebuild_ns": 4203000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240900,
+      "compare_calls": 60,
+      "rebuild_ns": 4282200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 315000,
+      "compare_calls": 60,
+      "rebuild_ns": 4792400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232600,
+      "compare_calls": 60,
+      "rebuild_ns": 4026500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232700,
+      "compare_calls": 60,
+      "rebuild_ns": 4120000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223200,
+      "compare_calls": 60,
+      "rebuild_ns": 3866000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219000,
+      "compare_calls": 60,
+      "rebuild_ns": 3861300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224400,
+      "compare_calls": 60,
+      "rebuild_ns": 4041400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216000,
+      "compare_calls": 60,
+      "rebuild_ns": 3847900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216500,
+      "compare_calls": 60,
+      "rebuild_ns": 3867700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216200,
+      "compare_calls": 60,
+      "rebuild_ns": 3916400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228900,
+      "compare_calls": 60,
+      "rebuild_ns": 3956600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240800,
+      "compare_calls": 60,
+      "rebuild_ns": 3962000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225400,
+      "compare_calls": 60,
+      "rebuild_ns": 4100000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217500,
+      "compare_calls": 60,
+      "rebuild_ns": 3876700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231200,
+      "compare_calls": 60,
+      "rebuild_ns": 4031000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 288200,
+      "compare_calls": 60,
+      "rebuild_ns": 4616200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216200,
+      "compare_calls": 60,
+      "rebuild_ns": 3819700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231000,
+      "compare_calls": 60,
+      "rebuild_ns": 3887600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237900,
+      "compare_calls": 60,
+      "rebuild_ns": 4053200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 246500,
+      "compare_calls": 60,
+      "rebuild_ns": 4045200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228000,
+      "compare_calls": 60,
+      "rebuild_ns": 4221500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 241000,
+      "compare_calls": 60,
+      "rebuild_ns": 3837200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227300,
+      "compare_calls": 60,
+      "rebuild_ns": 3910600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 272400,
+      "compare_calls": 60,
+      "rebuild_ns": 4125600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 212900,
+      "compare_calls": 60,
+      "rebuild_ns": 3775800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 260200,
+      "compare_calls": 60,
+      "rebuild_ns": 3900800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230200,
+      "compare_calls": 60,
+      "rebuild_ns": 4114800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 287000,
+      "compare_calls": 60,
+      "rebuild_ns": 3965000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222700,
+      "compare_calls": 60,
+      "rebuild_ns": 3834400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224000,
+      "compare_calls": 60,
+      "rebuild_ns": 3819100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223100,
+      "compare_calls": 60,
+      "rebuild_ns": 3829700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226600,
+      "compare_calls": 60,
+      "rebuild_ns": 3890600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240400,
+      "compare_calls": 60,
+      "rebuild_ns": 3910800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230700,
+      "compare_calls": 60,
+      "rebuild_ns": 3899600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219000,
+      "compare_calls": 60,
+      "rebuild_ns": 3911700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230900,
+      "compare_calls": 60,
+      "rebuild_ns": 3856900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 336500,
+      "compare_calls": 60,
+      "rebuild_ns": 3967700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226100,
+      "compare_calls": 60,
+      "rebuild_ns": 4053300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234000,
+      "compare_calls": 60,
+      "rebuild_ns": 3960300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235300,
+      "compare_calls": 60,
+      "rebuild_ns": 3890700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242400,
+      "compare_calls": 60,
+      "rebuild_ns": 4197800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229900,
+      "compare_calls": 60,
+      "rebuild_ns": 3858300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 311200,
+      "compare_calls": 60,
+      "rebuild_ns": 3909500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 276200,
+      "compare_calls": 60,
+      "rebuild_ns": 5671800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224000,
+      "compare_calls": 60,
+      "rebuild_ns": 4092800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225600,
+      "compare_calls": 60,
+      "rebuild_ns": 4443900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230000,
+      "compare_calls": 60,
+      "rebuild_ns": 3972400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216100,
+      "compare_calls": 60,
+      "rebuild_ns": 3800900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218200,
+      "compare_calls": 60,
+      "rebuild_ns": 3756400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 271800,
+      "compare_calls": 60,
+      "rebuild_ns": 3956300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 3949300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 248500,
+      "compare_calls": 60,
+      "rebuild_ns": 3999400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226100,
+      "compare_calls": 60,
+      "rebuild_ns": 3951000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 213800,
+      "compare_calls": 60,
+      "rebuild_ns": 3849000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216800,
+      "compare_calls": 60,
+      "rebuild_ns": 3855300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 251500,
+      "compare_calls": 60,
+      "rebuild_ns": 3982700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222500,
+      "compare_calls": 60,
+      "rebuild_ns": 4083200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235800,
+      "compare_calls": 60,
+      "rebuild_ns": 4148100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236900,
+      "compare_calls": 60,
+      "rebuild_ns": 3995200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220100,
+      "compare_calls": 60,
+      "rebuild_ns": 3915900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226700,
+      "compare_calls": 60,
+      "rebuild_ns": 3918200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233600,
+      "compare_calls": 60,
+      "rebuild_ns": 4040500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 254000,
+      "compare_calls": 60,
+      "rebuild_ns": 4163900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 249400,
+      "compare_calls": 60,
+      "rebuild_ns": 4140400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235400,
+      "compare_calls": 60,
+      "rebuild_ns": 4131200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224900,
+      "compare_calls": 60,
+      "rebuild_ns": 3948500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236000,
+      "compare_calls": 60,
+      "rebuild_ns": 3921400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221800,
+      "compare_calls": 60,
+      "rebuild_ns": 3788600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231000,
+      "compare_calls": 60,
+      "rebuild_ns": 3949100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 252300,
+      "compare_calls": 60,
+      "rebuild_ns": 4203900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 213100,
+      "compare_calls": 60,
+      "rebuild_ns": 3850100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225800,
+      "compare_calls": 60,
+      "rebuild_ns": 3843600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 209700,
+      "compare_calls": 60,
+      "rebuild_ns": 3832500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226500,
+      "compare_calls": 60,
+      "rebuild_ns": 3806100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218900,
+      "compare_calls": 60,
+      "rebuild_ns": 3860800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221000,
+      "compare_calls": 60,
+      "rebuild_ns": 3837200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215400,
+      "compare_calls": 60,
+      "rebuild_ns": 3850400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 311300,
+      "compare_calls": 60,
+      "rebuild_ns": 4402600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 238700,
+      "compare_calls": 60,
+      "rebuild_ns": 4093700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231600,
+      "compare_calls": 60,
+      "rebuild_ns": 3931700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 262000,
+      "compare_calls": 60,
+      "rebuild_ns": 4122300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 262700,
+      "compare_calls": 60,
+      "rebuild_ns": 4393200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 247200,
+      "compare_calls": 60,
+      "rebuild_ns": 4107000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 267300,
+      "compare_calls": 60,
+      "rebuild_ns": 4354900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222900,
+      "compare_calls": 60,
+      "rebuild_ns": 3898100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236100,
+      "compare_calls": 60,
+      "rebuild_ns": 4145600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 241900,
+      "compare_calls": 60,
+      "rebuild_ns": 4066200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228500,
+      "compare_calls": 60,
+      "rebuild_ns": 3858500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220000,
+      "compare_calls": 60,
+      "rebuild_ns": 3862800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 244200,
+      "compare_calls": 60,
+      "rebuild_ns": 4244000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232100,
+      "compare_calls": 60,
+      "rebuild_ns": 3882000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237700,
+      "compare_calls": 60,
+      "rebuild_ns": 4047100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226900,
+      "compare_calls": 60,
+      "rebuild_ns": 3892600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242500,
+      "compare_calls": 60,
+      "rebuild_ns": 4039900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227800,
+      "compare_calls": 60,
+      "rebuild_ns": 4005100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220700,
+      "compare_calls": 60,
+      "rebuild_ns": 3879700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215900,
+      "compare_calls": 60,
+      "rebuild_ns": 3783500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 212600,
+      "compare_calls": 60,
+      "rebuild_ns": 3886900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217900,
+      "compare_calls": 60,
+      "rebuild_ns": 3766300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221100,
+      "compare_calls": 60,
+      "rebuild_ns": 3857000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221700,
+      "compare_calls": 60,
+      "rebuild_ns": 3820200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220300,
+      "compare_calls": 60,
+      "rebuild_ns": 3801900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217600,
+      "compare_calls": 60,
+      "rebuild_ns": 3805900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239000,
+      "compare_calls": 60,
+      "rebuild_ns": 3881200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 256300,
+      "compare_calls": 60,
+      "rebuild_ns": 4941900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220700,
+      "compare_calls": 60,
+      "rebuild_ns": 3992100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221900,
+      "compare_calls": 60,
+      "rebuild_ns": 3932100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220600,
+      "compare_calls": 60,
+      "rebuild_ns": 3880300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225400,
+      "compare_calls": 60,
+      "rebuild_ns": 3963000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228400,
+      "compare_calls": 60,
+      "rebuild_ns": 4143600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 257900,
+      "compare_calls": 60,
+      "rebuild_ns": 5366000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234500,
+      "compare_calls": 60,
+      "rebuild_ns": 3945200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 264000,
+      "compare_calls": 60,
+      "rebuild_ns": 3871600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229000,
+      "compare_calls": 60,
+      "rebuild_ns": 3897700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226600,
+      "compare_calls": 60,
+      "rebuild_ns": 3775000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 274300,
+      "compare_calls": 60,
+      "rebuild_ns": 3879700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221800,
+      "compare_calls": 60,
+      "rebuild_ns": 3883500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 211300,
+      "compare_calls": 60,
+      "rebuild_ns": 3842900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217100,
+      "compare_calls": 60,
+      "rebuild_ns": 3804900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237700,
+      "compare_calls": 60,
+      "rebuild_ns": 3923300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215600,
+      "compare_calls": 60,
+      "rebuild_ns": 3812900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 212000,
+      "compare_calls": 60,
+      "rebuild_ns": 3853100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215500,
+      "compare_calls": 60,
+      "rebuild_ns": 3760900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214700,
+      "compare_calls": 60,
+      "rebuild_ns": 3786400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215000,
+      "compare_calls": 60,
+      "rebuild_ns": 3942600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214300,
+      "compare_calls": 60,
+      "rebuild_ns": 3804100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220000,
+      "compare_calls": 60,
+      "rebuild_ns": 3824000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 213500,
+      "compare_calls": 60,
+      "rebuild_ns": 3833600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226700,
+      "compare_calls": 60,
+      "rebuild_ns": 3960300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214700,
+      "compare_calls": 60,
+      "rebuild_ns": 3747900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230400,
+      "compare_calls": 60,
+      "rebuild_ns": 3913800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220000,
+      "compare_calls": 60,
+      "rebuild_ns": 3816800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215700,
+      "compare_calls": 60,
+      "rebuild_ns": 3856600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221200,
+      "compare_calls": 60,
+      "rebuild_ns": 3927500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222000,
+      "compare_calls": 60,
+      "rebuild_ns": 3933600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219600,
+      "compare_calls": 60,
+      "rebuild_ns": 3821300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216300,
+      "compare_calls": 60,
+      "rebuild_ns": 3792900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221100,
+      "compare_calls": 60,
+      "rebuild_ns": 3840700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225300,
+      "compare_calls": 60,
+      "rebuild_ns": 3877900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218500,
+      "compare_calls": 60,
+      "rebuild_ns": 3847200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 248000,
+      "compare_calls": 60,
+      "rebuild_ns": 3955300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228700,
+      "compare_calls": 60,
+      "rebuild_ns": 3828900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231100,
+      "compare_calls": 60,
+      "rebuild_ns": 3953200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216000,
+      "compare_calls": 60,
+      "rebuild_ns": 3807400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 286400,
+      "compare_calls": 60,
+      "rebuild_ns": 3860300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222600,
+      "compare_calls": 60,
+      "rebuild_ns": 3845300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223600,
+      "compare_calls": 60,
+      "rebuild_ns": 3839700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240200,
+      "compare_calls": 60,
+      "rebuild_ns": 3913400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230900,
+      "compare_calls": 60,
+      "rebuild_ns": 3882600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 241800,
+      "compare_calls": 60,
+      "rebuild_ns": 3867700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227400,
+      "compare_calls": 60,
+      "rebuild_ns": 3849600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225100,
+      "compare_calls": 60,
+      "rebuild_ns": 3848300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228100,
+      "compare_calls": 60,
+      "rebuild_ns": 3870800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227800,
+      "compare_calls": 60,
+      "rebuild_ns": 3805900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 444400,
+      "compare_calls": 60,
+      "rebuild_ns": 3879500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226600,
+      "compare_calls": 60,
+      "rebuild_ns": 3891800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240600,
+      "compare_calls": 60,
+      "rebuild_ns": 4017900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215300,
+      "compare_calls": 60,
+      "rebuild_ns": 3852200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 249900,
+      "compare_calls": 60,
+      "rebuild_ns": 4026600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 245900,
+      "compare_calls": 60,
+      "rebuild_ns": 4160400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230000,
+      "compare_calls": 60,
+      "rebuild_ns": 4015000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220900,
+      "compare_calls": 60,
+      "rebuild_ns": 3878700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226700,
+      "compare_calls": 60,
+      "rebuild_ns": 3889900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226200,
+      "compare_calls": 60,
+      "rebuild_ns": 4046500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226400,
+      "compare_calls": 60,
+      "rebuild_ns": 4049100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223900,
+      "compare_calls": 60,
+      "rebuild_ns": 4089800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 256000,
+      "compare_calls": 60,
+      "rebuild_ns": 4237100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 254900,
+      "compare_calls": 60,
+      "rebuild_ns": 3928800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242000,
+      "compare_calls": 60,
+      "rebuild_ns": 3933400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229100,
+      "compare_calls": 60,
+      "rebuild_ns": 3990000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 249800,
+      "compare_calls": 60,
+      "rebuild_ns": 3957500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223700,
+      "compare_calls": 60,
+      "rebuild_ns": 3885400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 245600,
+      "compare_calls": 60,
+      "rebuild_ns": 3850500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 258300,
+      "compare_calls": 60,
+      "rebuild_ns": 3856100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 343100,
+      "compare_calls": 60,
+      "rebuild_ns": 4206800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223600,
+      "compare_calls": 60,
+      "rebuild_ns": 3907000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 245700,
+      "compare_calls": 60,
+      "rebuild_ns": 4173000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223600,
+      "compare_calls": 60,
+      "rebuild_ns": 3844500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 267600,
+      "compare_calls": 60,
+      "rebuild_ns": 6156800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229500,
+      "compare_calls": 60,
+      "rebuild_ns": 3848500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220000,
+      "compare_calls": 60,
+      "rebuild_ns": 3861700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221700,
+      "compare_calls": 60,
+      "rebuild_ns": 3840500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219400,
+      "compare_calls": 60,
+      "rebuild_ns": 3909900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232700,
+      "compare_calls": 60,
+      "rebuild_ns": 3947700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222600,
+      "compare_calls": 60,
+      "rebuild_ns": 3939200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 250500,
+      "compare_calls": 60,
+      "rebuild_ns": 3822500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214400,
+      "compare_calls": 60,
+      "rebuild_ns": 3794300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218900,
+      "compare_calls": 60,
+      "rebuild_ns": 3795900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225200,
+      "compare_calls": 60,
+      "rebuild_ns": 3814400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221700,
+      "compare_calls": 60,
+      "rebuild_ns": 3839900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 3891500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228800,
+      "compare_calls": 60,
+      "rebuild_ns": 3949000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228500,
+      "compare_calls": 60,
+      "rebuild_ns": 3845100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233700,
+      "compare_calls": 60,
+      "rebuild_ns": 3881100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224000,
+      "compare_calls": 60,
+      "rebuild_ns": 3789700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223800,
+      "compare_calls": 60,
+      "rebuild_ns": 3890700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234000,
+      "compare_calls": 60,
+      "rebuild_ns": 4129000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226300,
+      "compare_calls": 60,
+      "rebuild_ns": 3795700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227300,
+      "compare_calls": 60,
+      "rebuild_ns": 3900000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220000,
+      "compare_calls": 60,
+      "rebuild_ns": 3855900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227900,
+      "compare_calls": 60,
+      "rebuild_ns": 3859600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222900,
+      "compare_calls": 60,
+      "rebuild_ns": 3791300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222200,
+      "compare_calls": 60,
+      "rebuild_ns": 3802000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225200,
+      "compare_calls": 60,
+      "rebuild_ns": 3889800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227100,
+      "compare_calls": 60,
+      "rebuild_ns": 3888600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223400,
+      "compare_calls": 60,
+      "rebuild_ns": 3853600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235600,
+      "compare_calls": 60,
+      "rebuild_ns": 4026600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223600,
+      "compare_calls": 60,
+      "rebuild_ns": 3808500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224700,
+      "compare_calls": 60,
+      "rebuild_ns": 3854200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 240500,
+      "compare_calls": 60,
+      "rebuild_ns": 3885100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229300,
+      "compare_calls": 60,
+      "rebuild_ns": 3864200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220300,
+      "compare_calls": 60,
+      "rebuild_ns": 3842700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226500,
+      "compare_calls": 60,
+      "rebuild_ns": 3839000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242400,
+      "compare_calls": 60,
+      "rebuild_ns": 3975700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230300,
+      "compare_calls": 60,
+      "rebuild_ns": 3960200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 245400,
+      "compare_calls": 60,
+      "rebuild_ns": 3866000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235100,
+      "compare_calls": 60,
+      "rebuild_ns": 3943000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225000,
+      "compare_calls": 60,
+      "rebuild_ns": 3923800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225000,
+      "compare_calls": 60,
+      "rebuild_ns": 3852600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226400,
+      "compare_calls": 60,
+      "rebuild_ns": 3894900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217400,
+      "compare_calls": 60,
+      "rebuild_ns": 3847700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225100,
+      "compare_calls": 60,
+      "rebuild_ns": 3810200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 246000,
+      "compare_calls": 60,
+      "rebuild_ns": 4291900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222400,
+      "compare_calls": 60,
+      "rebuild_ns": 3856800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 260700,
+      "compare_calls": 60,
+      "rebuild_ns": 4257400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232800,
+      "compare_calls": 60,
+      "rebuild_ns": 4182300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221300,
+      "compare_calls": 60,
+      "rebuild_ns": 3994900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225500,
+      "compare_calls": 60,
+      "rebuild_ns": 4066800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221300,
+      "compare_calls": 60,
+      "rebuild_ns": 4043500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227300,
+      "compare_calls": 60,
+      "rebuild_ns": 4053400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224300,
+      "compare_calls": 60,
+      "rebuild_ns": 3906300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226100,
+      "compare_calls": 60,
+      "rebuild_ns": 3844100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229500,
+      "compare_calls": 60,
+      "rebuild_ns": 3975300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239600,
+      "compare_calls": 60,
+      "rebuild_ns": 3902500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236300,
+      "compare_calls": 60,
+      "rebuild_ns": 3916400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 247300,
+      "compare_calls": 60,
+      "rebuild_ns": 4187900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225000,
+      "compare_calls": 60,
+      "rebuild_ns": 3826900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234700,
+      "compare_calls": 60,
+      "rebuild_ns": 3958800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234900,
+      "compare_calls": 60,
+      "rebuild_ns": 3892500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223900,
+      "compare_calls": 60,
+      "rebuild_ns": 3956900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217400,
+      "compare_calls": 60,
+      "rebuild_ns": 3790500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227000,
+      "compare_calls": 60,
+      "rebuild_ns": 3823500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 325000,
+      "compare_calls": 60,
+      "rebuild_ns": 4189200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 241200,
+      "compare_calls": 60,
+      "rebuild_ns": 3873400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219500,
+      "compare_calls": 60,
+      "rebuild_ns": 3899700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226600,
+      "compare_calls": 60,
+      "rebuild_ns": 3858300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218800,
+      "compare_calls": 60,
+      "rebuild_ns": 3887300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224000,
+      "compare_calls": 60,
+      "rebuild_ns": 3890000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215900,
+      "compare_calls": 60,
+      "rebuild_ns": 3829700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215300,
+      "compare_calls": 60,
+      "rebuild_ns": 3782600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214600,
+      "compare_calls": 60,
+      "rebuild_ns": 3826400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215000,
+      "compare_calls": 60,
+      "rebuild_ns": 3797200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220100,
+      "compare_calls": 60,
+      "rebuild_ns": 3815500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224900,
+      "compare_calls": 60,
+      "rebuild_ns": 3907900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230400,
+      "compare_calls": 60,
+      "rebuild_ns": 3857100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 238100,
+      "compare_calls": 60,
+      "rebuild_ns": 3909000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233600,
+      "compare_calls": 60,
+      "rebuild_ns": 3908300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223000,
+      "compare_calls": 60,
+      "rebuild_ns": 3849200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214200,
+      "compare_calls": 60,
+      "rebuild_ns": 3821600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224300,
+      "compare_calls": 60,
+      "rebuild_ns": 3848600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231900,
+      "compare_calls": 60,
+      "rebuild_ns": 4112900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229100,
+      "compare_calls": 60,
+      "rebuild_ns": 3914500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226100,
+      "compare_calls": 60,
+      "rebuild_ns": 3864300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226600,
+      "compare_calls": 60,
+      "rebuild_ns": 3868000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225300,
+      "compare_calls": 60,
+      "rebuild_ns": 3864800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234200,
+      "compare_calls": 60,
+      "rebuild_ns": 3889700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242800,
+      "compare_calls": 60,
+      "rebuild_ns": 4043900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231200,
+      "compare_calls": 60,
+      "rebuild_ns": 3875000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225400,
+      "compare_calls": 60,
+      "rebuild_ns": 3865200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227100,
+      "compare_calls": 60,
+      "rebuild_ns": 3947600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224600,
+      "compare_calls": 60,
+      "rebuild_ns": 3850400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237900,
+      "compare_calls": 60,
+      "rebuild_ns": 3860000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221800,
+      "compare_calls": 60,
+      "rebuild_ns": 3843500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225000,
+      "compare_calls": 60,
+      "rebuild_ns": 3805700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236500,
+      "compare_calls": 60,
+      "rebuild_ns": 3850700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 234600,
+      "compare_calls": 60,
+      "rebuild_ns": 3810800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236900,
+      "compare_calls": 60,
+      "rebuild_ns": 3897000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232800,
+      "compare_calls": 60,
+      "rebuild_ns": 3873300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236300,
+      "compare_calls": 60,
+      "rebuild_ns": 3838900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 246300,
+      "compare_calls": 60,
+      "rebuild_ns": 4165300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222000,
+      "compare_calls": 60,
+      "rebuild_ns": 3834500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219700,
+      "compare_calls": 60,
+      "rebuild_ns": 3839900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228100,
+      "compare_calls": 60,
+      "rebuild_ns": 3931900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220700,
+      "compare_calls": 60,
+      "rebuild_ns": 3817700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231400,
+      "compare_calls": 60,
+      "rebuild_ns": 3919100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215700,
+      "compare_calls": 60,
+      "rebuild_ns": 3873300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218100,
+      "compare_calls": 60,
+      "rebuild_ns": 3844000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223100,
+      "compare_calls": 60,
+      "rebuild_ns": 3776100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223500,
+      "compare_calls": 60,
+      "rebuild_ns": 3872400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225800,
+      "compare_calls": 60,
+      "rebuild_ns": 3826500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230300,
+      "compare_calls": 60,
+      "rebuild_ns": 3875000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224900,
+      "compare_calls": 60,
+      "rebuild_ns": 3896800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228600,
+      "compare_calls": 60,
+      "rebuild_ns": 4275300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225500,
+      "compare_calls": 60,
+      "rebuild_ns": 3848600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237700,
+      "compare_calls": 60,
+      "rebuild_ns": 4036500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225600,
+      "compare_calls": 60,
+      "rebuild_ns": 3922400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220400,
+      "compare_calls": 60,
+      "rebuild_ns": 4026200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220300,
+      "compare_calls": 60,
+      "rebuild_ns": 3896300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217900,
+      "compare_calls": 60,
+      "rebuild_ns": 3820000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216400,
+      "compare_calls": 60,
+      "rebuild_ns": 3852400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223400,
+      "compare_calls": 60,
+      "rebuild_ns": 3843500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229600,
+      "compare_calls": 60,
+      "rebuild_ns": 3839500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 239000,
+      "compare_calls": 60,
+      "rebuild_ns": 3958700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 241200,
+      "compare_calls": 60,
+      "rebuild_ns": 3838100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223800,
+      "compare_calls": 60,
+      "rebuild_ns": 3941400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230600,
+      "compare_calls": 60,
+      "rebuild_ns": 3928400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 243600,
+      "compare_calls": 60,
+      "rebuild_ns": 4097300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225300,
+      "compare_calls": 60,
+      "rebuild_ns": 3961100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219100,
+      "compare_calls": 60,
+      "rebuild_ns": 3858300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229100,
+      "compare_calls": 60,
+      "rebuild_ns": 3888500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236500,
+      "compare_calls": 60,
+      "rebuild_ns": 4024600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221200,
+      "compare_calls": 60,
+      "rebuild_ns": 3889800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 213500,
+      "compare_calls": 60,
+      "rebuild_ns": 3823500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215700,
+      "compare_calls": 60,
+      "rebuild_ns": 3772200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215900,
+      "compare_calls": 60,
+      "rebuild_ns": 3788000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 212700,
+      "compare_calls": 60,
+      "rebuild_ns": 3762400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216400,
+      "compare_calls": 60,
+      "rebuild_ns": 3774100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235600,
+      "compare_calls": 60,
+      "rebuild_ns": 3847600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230200,
+      "compare_calls": 60,
+      "rebuild_ns": 3797200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214100,
+      "compare_calls": 60,
+      "rebuild_ns": 3852600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214300,
+      "compare_calls": 60,
+      "rebuild_ns": 3787000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214400,
+      "compare_calls": 60,
+      "rebuild_ns": 3744300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227800,
+      "compare_calls": 60,
+      "rebuild_ns": 3855800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217900,
+      "compare_calls": 60,
+      "rebuild_ns": 3826500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 236000,
+      "compare_calls": 60,
+      "rebuild_ns": 3831100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232500,
+      "compare_calls": 60,
+      "rebuild_ns": 3914100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 225600,
+      "compare_calls": 60,
+      "rebuild_ns": 3750100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 265700,
+      "compare_calls": 60,
+      "rebuild_ns": 4152700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217100,
+      "compare_calls": 60,
+      "rebuild_ns": 3802700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 210700,
+      "compare_calls": 60,
+      "rebuild_ns": 3858000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231100,
+      "compare_calls": 60,
+      "rebuild_ns": 3799500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237400,
+      "compare_calls": 60,
+      "rebuild_ns": 3949300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221400,
+      "compare_calls": 60,
+      "rebuild_ns": 3813600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215300,
+      "compare_calls": 60,
+      "rebuild_ns": 3817300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219100,
+      "compare_calls": 60,
+      "rebuild_ns": 3828500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232500,
+      "compare_calls": 60,
+      "rebuild_ns": 3924300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226300,
+      "compare_calls": 60,
+      "rebuild_ns": 3965500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217700,
+      "compare_calls": 60,
+      "rebuild_ns": 3807000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228800,
+      "compare_calls": 60,
+      "rebuild_ns": 3862000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224300,
+      "compare_calls": 60,
+      "rebuild_ns": 3845800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223600,
+      "compare_calls": 60,
+      "rebuild_ns": 3848700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223100,
+      "compare_calls": 60,
+      "rebuild_ns": 3855800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219700,
+      "compare_calls": 60,
+      "rebuild_ns": 3778600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228500,
+      "compare_calls": 60,
+      "rebuild_ns": 3857900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 221000,
+      "compare_calls": 60,
+      "rebuild_ns": 3843500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 249400,
+      "compare_calls": 60,
+      "rebuild_ns": 3871500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 458000,
+      "compare_calls": 60,
+      "rebuild_ns": 3863000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219300,
+      "compare_calls": 60,
+      "rebuild_ns": 3885800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 254700,
+      "compare_calls": 60,
+      "rebuild_ns": 4528600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242500,
+      "compare_calls": 60,
+      "rebuild_ns": 4123200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220700,
+      "compare_calls": 60,
+      "rebuild_ns": 3975700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 233600,
+      "compare_calls": 60,
+      "rebuild_ns": 4110800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217500,
+      "compare_calls": 60,
+      "rebuild_ns": 3909100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226600,
+      "compare_calls": 60,
+      "rebuild_ns": 4045300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 216200,
+      "compare_calls": 60,
+      "rebuild_ns": 3890800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217000,
+      "compare_calls": 60,
+      "rebuild_ns": 3905100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224500,
+      "compare_calls": 60,
+      "rebuild_ns": 3841300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 226500,
+      "compare_calls": 60,
+      "rebuild_ns": 3911300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231600,
+      "compare_calls": 60,
+      "rebuild_ns": 4130700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 224700,
+      "compare_calls": 60,
+      "rebuild_ns": 4016300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235200,
+      "compare_calls": 60,
+      "rebuild_ns": 4001800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227100,
+      "compare_calls": 60,
+      "rebuild_ns": 3934000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227000,
+      "compare_calls": 60,
+      "rebuild_ns": 3995000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 242400,
+      "compare_calls": 60,
+      "rebuild_ns": 3911000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230300,
+      "compare_calls": 60,
+      "rebuild_ns": 4070100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218900,
+      "compare_calls": 60,
+      "rebuild_ns": 3848300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 235200,
+      "compare_calls": 60,
+      "rebuild_ns": 3928800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 230900,
+      "compare_calls": 60,
+      "rebuild_ns": 3941600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 250200,
+      "compare_calls": 60,
+      "rebuild_ns": 3827800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 229500,
+      "compare_calls": 60,
+      "rebuild_ns": 3947000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218800,
+      "compare_calls": 60,
+      "rebuild_ns": 3825600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 341900,
+      "compare_calls": 60,
+      "rebuild_ns": 4239300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 220000,
+      "compare_calls": 60,
+      "rebuild_ns": 3809300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 223900,
+      "compare_calls": 60,
+      "rebuild_ns": 3812600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 215100,
+      "compare_calls": 60,
+      "rebuild_ns": 3784400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214300,
+      "compare_calls": 60,
+      "rebuild_ns": 3786100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214300,
+      "compare_calls": 60,
+      "rebuild_ns": 3826100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 212000,
+      "compare_calls": 60,
+      "rebuild_ns": 3824200,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 227400,
+      "compare_calls": 60,
+      "rebuild_ns": 3809300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214200,
+      "compare_calls": 60,
+      "rebuild_ns": 3766800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 213300,
+      "compare_calls": 60,
+      "rebuild_ns": 3755100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 228100,
+      "compare_calls": 60,
+      "rebuild_ns": 3777800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231600,
+      "compare_calls": 60,
+      "rebuild_ns": 3840800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222800,
+      "compare_calls": 60,
+      "rebuild_ns": 3868600,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 232100,
+      "compare_calls": 60,
+      "rebuild_ns": 3791800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217800,
+      "compare_calls": 60,
+      "rebuild_ns": 3829700,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 219400,
+      "compare_calls": 60,
+      "rebuild_ns": 3829900,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218600,
+      "compare_calls": 60,
+      "rebuild_ns": 3800000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 218000,
+      "compare_calls": 60,
+      "rebuild_ns": 3823000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 237200,
+      "compare_calls": 60,
+      "rebuild_ns": 4144500,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 214100,
+      "compare_calls": 60,
+      "rebuild_ns": 3829300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 243900,
+      "compare_calls": 60,
+      "rebuild_ns": 4097300,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 231100,
+      "compare_calls": 60,
+      "rebuild_ns": 3982100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 217700,
+      "compare_calls": 60,
+      "rebuild_ns": 3824100,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 222300,
+      "compare_calls": 60,
+      "rebuild_ns": 3822000,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 247700,
+      "compare_calls": 60,
+      "rebuild_ns": 3971400,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 336200,
+      "compare_calls": 60,
+      "rebuild_ns": 4779800,
+      "rebuilds": 16
+    },
+    {
+      "compare_ns": 277900,
+      "compare_calls": 60,
+      "rebuild_ns": 4336700,
+      "rebuilds": 16
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "events": [
+    {
+      "animation": "AnimationGroup",
+      "line": 94,
+      "permanent": true,
+      "stack_ns": 5800,
+      "simulation_ns": 7438300,
+      "playback": null,
+      "excluded_artists": 0
+    },
+    {
+      "animation": "Rotate",
+      "line": 213,
+      "permanent": true,
+      "stack_ns": 4800,
+      "simulation_ns": 32934800,
+      "playback": null,
+      "excluded_artists": 0
+    }
+  ],
+  "max_error": 8.881784197001252e-16,
+  "reattach_error": 0.0,
+  "calls": 9,
+  "frames": 9,
+  "remaining_suspensions": 0
+}

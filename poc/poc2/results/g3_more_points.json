@@ -1,0 +1,7 @@
+{
+  "exception": "operands could not be broadcast together with shapes (36,3) (196,3) ",
+  "calls": 1,
+  "frames": 0,
+  "native_calls": 11,
+  "native_frames": 9
+}
