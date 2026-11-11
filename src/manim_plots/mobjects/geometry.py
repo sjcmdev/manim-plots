@@ -20,9 +20,10 @@ from manim_plots.mobjects.artists import (
     ParametricPlot,
     ScatterPlot,
     _CurvePlot,
+    _is_binding,
     _MarkerLeaf,
 )
-from manim_plots.mobjects.helpers import HelperGroup, _Binding, _parameter
+from manim_plots.mobjects.helpers import HelperGroup, _Binding, _number, _parameter
 from manim_plots.mobjects.leaves import _ArtistOptions, _VMStyle
 
 
@@ -54,6 +55,9 @@ def _data_point(value: object, name: str) -> object:
         raise TypeError(f"{name} must be a data triple, callable or Mobject") from exc
     if len(entries) != 3:
         raise ValueError(f"{name} must have three coordinates")
+    for i, entry in enumerate(entries):
+        if not _is_binding(entry):
+            _number(entry, f"{name}[{i}]")
     return tuple(_parameter(entry, f"{name}[{i}]") for i, entry in enumerate(entries))
 
 
@@ -73,6 +77,9 @@ def _read(binding: _Binding, name: str) -> FloatArray:
         value = np.asarray(binding.parameters[name].value, dtype=float)
     else:
         value = np.array([binding.number(f"{name}{i}") for i in range(3)])
+    if value.shape == (3,) and not np.isfinite(value).all():
+        index = int(np.flatnonzero(~np.isfinite(value))[0])
+        raise ValueError(f"{name}[{index}] must be finite")
     if value.shape != (3,) or not np.isfinite(value).all():
         raise ValueError(f"{name} must be a finite data triple")
     return value

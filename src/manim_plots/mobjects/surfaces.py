@@ -23,7 +23,7 @@ from numpy.typing import ArrayLike
 
 import manim_plots as mp
 from manim_plots.core import FloatArray
-from manim_plots.core.nodes import CompiledMap
+from manim_plots.core.nodes import CompiledMap, _finite
 from manim_plots.core.params import Parameter
 from manim_plots.core.payload import Payload
 from manim_plots.core.scales import Scale
@@ -35,6 +35,7 @@ from manim_plots.mobjects.artists import (
     _clip_box,
     _clip_has_margin,
     _CurvePlot,
+    _is_binding,
     _parameterize,
     _SampleWarnings,
     _validate_clip,
@@ -42,7 +43,7 @@ from manim_plots.mobjects.artists import (
 from manim_plots.mobjects.colormaps import ColorMapping, resolve_colorscale
 from manim_plots.mobjects.context import animation_context
 from manim_plots.mobjects.geometry import PlanePlot, _ensure_binding
-from manim_plots.mobjects.helpers import _Binding
+from manim_plots.mobjects.helpers import _Binding, _number
 from manim_plots.mobjects.leaves import _ClipInput
 
 
@@ -234,6 +235,11 @@ class SurfacePlot(VGroup):
         _axis: int = 2,
         **kwargs: object,
     ) -> None:
+        self._sample_warnings = _SampleWarnings()
+        self._warning_source = ArraySource(np.empty((0, 3)), dim=3)
+        for name, interval in (("u_range", u_range), ("v_range", v_range)):
+            if interval is not None:
+                _finite(np.asarray(interval, float), name)
         self._system = system
         self._kind, self._vertices = _kind, _vertices
         self._triangles = (
@@ -241,6 +247,10 @@ class SurfacePlot(VGroup):
         )
         self._axis = _axis
         options = cast(dict[str, Any], kwargs)
+        self._warn_empty = options.pop("_warn_empty", True)
+        self._invalid_samples = options.pop(
+            "_invalid_samples", self.__dict__.get("_invalid_samples", False)
+        )
         if _kind in {"height", "parametric"}:
             self._function, self._parameters = _parameterize_surface(function, options)
         elif _kind == "revolution":
@@ -523,6 +533,17 @@ class SurfacePlot(VGroup):
             self._corner_data.shape
         )
         finite = np.isfinite(native).all(axis=(1, 2))
+        if (
+            (not len(finite) and self._warn_empty)
+            or not finite.all()
+            or self._invalid_samples
+        ):
+            self._sample_warnings.warn(
+                self._system,
+                self._warning_source,
+                "surface contains invalid or empty samples",
+                tuple(p.version for p in self._parameters.values()),
+            )
         below = (native < bounds.lower - 1e-12) & enabled
         above = (native > bounds.upper + 1e-12) & enabled
         inside = ~(below | above).any(axis=(1, 2))
@@ -785,6 +806,8 @@ class WireframePlot(VGroup):
         function, parameters = _parameterize_surface(function, options)
         _cycle_style(system, cast(Any, options))
         nu, nv = (resolution, resolution) if isinstance(resolution, int) else resolution
+        if nu <= 0 or nv <= 0:
+            raise ValueError("resolution must be positive")
 
         def us() -> FloatArray:
             r = u_range if u_range is not None else system.x.range.value
@@ -1088,11 +1111,17 @@ class ContourPlot(VGroup):
         raise KeyError(level)
 
 
-def _slice_input(name: str, values: tuple[object, ...]) -> tuple[int, object]:
+def _slice_input(
+    name: str, values: tuple[object, ...], labels: str = "xyz"
+) -> tuple[int, object]:
+    # A label "p" marks a plane slot: an object, not a coordinate to check.
     chosen = [(i, value) for i, value in enumerate(values) if value is not None]
     if len(chosen) != 1:
         raise ValueError(f"{name} requires exactly one coordinate")
-    return chosen[0]
+    axis, value = chosen[0]
+    if labels[axis] != "p" and not _is_binding(value):
+        _number(value, labels[axis])
+    return axis, value
 
 
 def _surface_revision(surface: SurfacePlot) -> str:

@@ -98,6 +98,7 @@ def test_hm2_pcolormesh_corner_grids_and_nearest():
     np.testing.assert_allclose(centre(ax, near.cells.at((1, 2))), (2, 2), atol=1e-9)
 
 
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_hm3_colours_mapping_and_nan():
     ax = axes()
     img = ax.imshow(Z)

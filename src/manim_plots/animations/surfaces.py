@@ -14,7 +14,7 @@ from manim_plots.core.sources import ArraySource, ParametricSource
 from manim_plots.mobjects.artists import LinePlot, _CurvePlot
 from manim_plots.mobjects.leaves import Leaf
 
-from ._base import MappedPresentation, flags
+from ._base import MappedPresentation, check_direction, check_lag, flags
 from ._spatial import _halfspace, _Spatial
 from .curves import _index_spans
 
@@ -42,6 +42,10 @@ class GrowSurface(MappedPresentation):
             raise ValueError("zdir must be x, y or z")
         self.surface = surface
         self._axis = "xyz".index(zdir)
+        if offset is not None and not isinstance(
+            offset, (int, float, np.integer, np.floating)
+        ):
+            raise TypeError("offset must be a real number")
         self._offset = (
             min(surface._system._ranges[self._axis].range.value)
             if offset is None
@@ -128,6 +132,7 @@ class GrowStems(_Spatial):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         self.stems = stems
         super().__init__(
             stems, lag_ratio=lag_ratio, reverse=reverse, remover=remover, **kwargs
@@ -190,6 +195,7 @@ class RevealWireframe(_Spatial):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         if any(f not in ("u", "v") for f in families):
             raise ValueError("unknown wireframe family")
         self.wireframe, self.families = wireframe, families
@@ -260,6 +266,7 @@ class RevealWaterfall(_Spatial):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
         self.waterfall = waterfall
         super().__init__(
             waterfall, lag_ratio=lag_ratio, reverse=reverse, remover=remover, **kwargs
@@ -324,6 +331,7 @@ class SweepSurface(_Spatial):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_direction(direction)
         allowed = ("x", "y", "z") if surface._kind == "triangles" else ("u", "v")
         if axis not in allowed:
             raise ValueError("unsupported surface axis")

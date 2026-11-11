@@ -258,6 +258,7 @@ def test_sv2_reverse_removal_reintroduction_and_canonical_finish():
     assert max(bounds(ax, f)[1, 2] for f in leaves(block)) == pytest.approx(2)
 
 
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_sv3_remover_override_empty_and_invalid_options():
     ax, block = voxel_fixture()
 

@@ -530,6 +530,8 @@ class PercentFormatter:
             raise ValueError("xmax must be finite and positive")
         if not isinstance(symbol, str):
             raise TypeError("symbol must be str")
+        if decimals is not None and decimals < 0:
+            raise ValueError("decimals must be nonnegative")
         self.xmax = xmax
         self.symbol = symbol
         self._decimal = DecimalFormatter(decimals, group_with_commas=False)

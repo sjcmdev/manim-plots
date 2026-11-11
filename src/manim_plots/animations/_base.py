@@ -14,6 +14,24 @@ def flags(reverse: bool, remover: bool | None, kwargs: dict[str, Any]) -> None:
     kwargs["remover"] = reverse if remover is None else remover
 
 
+def check_lag(value: float) -> None:
+    """Check that a stagger interval is finite and nonnegative."""
+    if not np.isfinite(value) or value < 0:
+        raise ValueError("lag_ratio must be finite and nonnegative")
+
+
+def check_order(order: object) -> None:
+    """Check the shared type contract for ordering rules."""
+    if not isinstance(order, str) and not callable(order):
+        raise TypeError("order must be a string or callable")
+
+
+def check_direction(direction: object) -> None:
+    """Check the shared numeric direction contract."""
+    if not isinstance(direction, (int, float, np.integer, np.floating)):
+        raise TypeError("direction must be a number")
+
+
 def window(alpha: float, index: int, count: int, lag: float) -> float:
     """Return GrowBars' clipped per-part window before easing."""
     return float(np.clip(alpha * (1 + (count - 1) * lag) - index * lag, 0, 1))

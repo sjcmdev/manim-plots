@@ -50,6 +50,8 @@ from manim_plots.mobjects.artists import (
     _CurvePlot,
     _cycle_style,
     _dash_pattern,
+    _is_binding,
+    _SampleWarnings,
     _unclipped_box,
 )
 from manim_plots.mobjects.leaves import (
@@ -90,8 +92,7 @@ def _number(value: object, name: str) -> float:
 
 
 def _parameter(value: object, name: str) -> Parameter[Any]:
-    reader = getattr(value, "get_value", None)
-    if callable(reader) or callable(value):
+    if _is_binding(value):
         parameter: Parameter[Any] = Parameter(None, name=name)
         parameter.bind(value)
         parameter.poll(0)
@@ -854,6 +855,9 @@ def _fill_between(
     for graph in graphs:
         _graph(system, graph)
 
+    sample_warnings = _SampleWarnings()
+    warning_source = ArraySource(np.empty(0), np.empty(0))
+
     def values(y: object, name: str) -> FloatArray:
         if isinstance(y, _CurvePlot):
             result = y.source.at(xs)[:, 1]
@@ -864,13 +868,28 @@ def _fill_between(
         if result.ndim == 0:
             result = np.full(len(xs), result)
         if result.shape != xs.shape:
-            raise ValueError(f"{name} must be scalar or have the same length as x")
+            raise ValueError(
+                f"{name} length {result.size} must match x length {len(xs)} "
+                "(or be scalar)"
+            )
         return result
 
     def derive(base: _Binding) -> None:
         binding = cast(_RegionBinding, base)
         a, b = values(y1, "y1"), values(y2, "y2")
-        valid = mask & np.isfinite(a) & np.isfinite(b)
+        columns = [1, 0] if transpose else [0, 1]
+        valid = (
+            mask
+            & system._data.valid(np.column_stack((xs, a))[:, columns])
+            & system._data.valid(np.column_stack((xs, b))[:, columns])
+        )
+        if not len(xs) or np.any(mask & ~valid):
+            sample_warnings.warn(
+                system,
+                warning_source,
+                "region contains invalid or empty samples",
+                (binding.version,),
+            )
         edges = np.diff(np.r_[False, valid, False].astype(int))
         pairs = []
         for start, stop in zip(
@@ -1281,6 +1300,8 @@ def _drop(
     if isinstance(point, Mobject):
         point = point.get_center
     dynamic = callable(point)
+    if not dynamic and np.asarray(point).shape != (3,):
+        raise ValueError("point must have three scene coordinates")
     data = point if dynamic else system.p2c(cast(ArrayLike, point))
 
     def derive(binding: _Binding) -> None:
@@ -1656,6 +1677,11 @@ def _span(
     fraction_max: object,
     **style: object,
 ) -> FilledRegion:
+    minimum_name, maximum_name = ("xmin", "xmax") if index == 0 else ("ymin", "ymax")
+    for value, name in ((minimum, minimum_name), (maximum, maximum_name)):
+        if not _is_binding(value):
+            _number(value, name)
+
     def derive(base: _Binding) -> None:
         binding = cast(_RegionBinding, base)
         other = system.get_axis(1 - index)
@@ -1760,6 +1786,11 @@ def _annotate_2d(
     if len(xy) != 2 or (xytext is not None and len(xytext) != 2):
         raise ValueError("xy and xytext must have two coordinates")
     buff = _number(buff, "buff")
+    for name, point in (("xy", xy), ("xytext", xytext)):
+        if point is not None:
+            for i, value in enumerate(point):
+                if not _is_binding(value):
+                    _number(value, f"{name}[{i}]")
     text = (
         s
         if isinstance(s, Mobject)
@@ -1909,6 +1940,7 @@ def _end_label(
     **text_style: object,
 ) -> Mobject:
     _graph(system, graph)
+    buff = _number(buff, "buff")
     text_style.setdefault("color", graph.get_stroke_color())
     text = (
         label

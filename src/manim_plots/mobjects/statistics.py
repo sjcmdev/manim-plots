@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable, Sequence
 from typing import Any, Self, cast
 
@@ -9,28 +10,38 @@ import numpy as np
 from manim import LEFT, ORIGIN, RIGHT, Mobject, Sector, Text, VGroup, config
 from manim.typing import PathFuncType
 
-from manim_plots.core import FloatArray
+from manim_plots.core import FloatArray, ManimPlotsWarning
+from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import (
     COLOR_CYCLE,
     LinePlot,
     ScatterPlot,
     _cycle_style,
+    _SampleWarnings,
 )
 from manim_plots.mobjects.heatmaps import _label_color
-from manim_plots.mobjects.helpers import FilledRegion
+from manim_plots.mobjects.helpers import FilledRegion, _Binding, _RegionBinding
 from manim_plots.mobjects.system import CartesianAxes
 
 
 def _fractions(x: object, normalize: bool) -> FloatArray:
     values = np.asarray(x, dtype=float)
-    if (
-        values.ndim != 1
-        or not len(values)
-        or not np.isfinite(values).all()
-        or np.any(values < 0)
-    ):
-        raise ValueError("pie values must be a nonempty finite nonnegative vector")
+    if values.ndim != 1:
+        raise ValueError("x must be a one-dimensional vector")
+    negative = np.flatnonzero(values < 0)
+    if len(negative):
+        raise ValueError(f"x[{negative[0]}] must be nonnegative")
+    invalid = not np.isfinite(values).all()
+    if not len(values) or invalid:
+        warnings.warn(
+            "pie contains invalid or empty samples", ManimPlotsWarning, stacklevel=3
+        )
+        values = np.where(np.isfinite(values), values, 0)
+        if not len(values):
+            return values
     total = float(values.sum())
+    if invalid and total == 0:
+        return values
     if normalize:
         if not np.isfinite(total) or total <= 0:
             raise ValueError("pie values must have a positive sum")
@@ -104,6 +115,7 @@ class PieChart(VGroup):
         text_config: dict[str, Any] | None = None,
     ) -> None:
         self.fractions = _fractions(x, normalize)
+        self._valid_weights = np.isfinite(np.asarray(x, dtype=float))
         self.normalize, self.radius = normalize, radius
         self.startangle, self.counterclock = startangle, counterclock
         self._center = np.asarray(center, dtype=float)
@@ -197,7 +209,8 @@ class PieChart(VGroup):
             wedge._explode_distance = self.explode[i] * self.radius
             wedge.start_angle, wedge.angle, wedge.arc_center = angle, sweep, center
             wedge.clear_points()
-            wedge.generate_points()
+            if self._valid_weights[i]:
+                wedge.generate_points()
             if self.texts is not None:
                 self.texts[i].move_to(
                     center + self.labeldistance * self.radius * direction,
@@ -225,6 +238,7 @@ class PieChart(VGroup):
         if fractions.shape != self.fractions.shape:
             raise ValueError("set_data must retain the wedge count")
         self.fractions = fractions
+        self._valid_weights = np.isfinite(np.asarray(x, dtype=float))
         self._rebuild()
         return self
 
@@ -236,10 +250,8 @@ def _samples(x: object) -> list[FloatArray]:
         if entries and np.isscalar(entries[0])
         else [np.asarray(v, dtype=float) for v in entries]
     )
-    if not samples or any(
-        v.ndim != 1 or not len(v) or not np.isfinite(v).all() for v in samples
-    ):
-        raise ValueError("datasets must be nonempty finite vectors")
+    if any(v.ndim != 1 for v in samples):
+        raise ValueError("x dataset must contain one-dimensional vectors")
     return samples
 
 
@@ -253,6 +265,8 @@ def _layout(
         if positions is None
         else np.asarray(positions, dtype=float)
     )
+    if pos.shape != (n,):
+        raise ValueError(f"positions length {pos.size} must match dataset count {n}")
     width = np.broadcast_to(np.asarray(widths, dtype=float), (n,))
     if (
         pos.shape != (n,)
@@ -298,7 +312,39 @@ def _box_stats(sample: FloatArray, whis: object) -> dict[str, Any]:
     )
 
 
-class BoxPlot(VGroup):
+class _StatPlot(VGroup):
+    def _configure(self, system: CartesianAxes, invalid: bool) -> None:
+        sink = _SampleWarnings()
+        source = ArraySource(np.empty((0, 2)))
+
+        def derive(binding: _Binding) -> None:
+            if invalid:
+                sink.warn(system, source, "statistics contain invalid or empty samples")
+
+        self._binding = _Binding(system, derive, {})
+        self._binding.ensure()
+
+    def get_family(self, recurse: bool = True) -> list[Mobject]:
+        binding = self.__dict__.get("_binding")
+        if binding is not None:
+            binding.ensure()
+        return super().get_family(recurse)
+
+
+def _valid_sample(
+    system: CartesianAxes, sample: FloatArray, position: float, orientation: str
+) -> bool:
+    return bool(
+        len(sample)
+        and system._data.valid(
+            _coordinates(
+                np.column_stack((np.full(len(sample), position), sample)), orientation
+            )
+        ).all()
+    )
+
+
+class BoxPlot(_StatPlot):
     """Build bound boxes, whiskers, caps and markers from sample statistics.
 
     Parameters
@@ -328,7 +374,14 @@ class BoxPlot(VGroup):
 
         samples = _samples(x)
         pos, width = _layout(len(samples), positions, widths, orientation)
-        self.stats = [_box_stats(sample, whis) for sample in samples]
+        valid = [
+            _valid_sample(system, sample, p, orientation)
+            for sample, p in zip(samples, pos, strict=True)
+        ]
+        self.stats = [
+            _box_stats(sample, whis) if good else {}
+            for sample, good in zip(samples, valid, strict=True)
+        ]
         if tick_labels is not None:
             if len(tick_labels) != len(samples):
                 raise ValueError("tick_labels must match datasets")
@@ -346,7 +399,13 @@ class BoxPlot(VGroup):
         _cycle_style(system, median_style)
         color = cast(Any, own.get("color", own.get("stroke_color")))
         super().__init__()
+        self._configure(system, not samples or not all(valid))
         for p, w, s in zip(pos, width, self.stats, strict=True):
+            if not s:
+                self.boxes.append(
+                    FilledRegion(_RegionBinding(system, lambda _: None, {}, []), "area")
+                )
+                continue
 
             def line(points: object, **options: object) -> LinePlot:
                 return system.line(
@@ -422,7 +481,7 @@ def _kde(
     return grid, density
 
 
-class ViolinPlot(VGroup):
+class ViolinPlot(_StatPlot):
     """Build bound violin polygons using NumPy Gaussian density estimates.
 
     Parameters
@@ -452,7 +511,14 @@ class ViolinPlot(VGroup):
             raise ValueError("points must be an integer at least two")
         samples = _samples(dataset)
         pos, width = _layout(len(samples), positions, widths, orientation)
-        densities = [_kde(sample, points, bw_method) for sample in samples]
+        valid = [
+            _valid_sample(system, sample, p, orientation)
+            for sample, p in zip(samples, pos, strict=True)
+        ]
+        densities = [
+            _kde(sample, points, bw_method) if good else (np.empty(0), np.empty(0))
+            for sample, good in zip(samples, valid, strict=True)
+        ]
         self.bodies: list[FilledRegion] = []
         self.cbars: list[LinePlot] = []
         self.cmins: list[LinePlot] = []
@@ -463,9 +529,15 @@ class ViolinPlot(VGroup):
         _cycle_style(system, cast(Any, own))
         color = cast(Any, own.get("color", own.get("stroke_color")))
         super().__init__()
+        self._configure(system, not samples or not all(valid))
         for sample, p, w, (grid, density) in zip(
             samples, pos, width, densities, strict=True
         ):
+            if not len(grid):
+                self.bodies.append(
+                    FilledRegion(_RegionBinding(system, lambda _: None, {}, []), "area")
+                )
+                continue
             half = 0.5 * w * density / density.max()
             fill = (
                 system.fill_between

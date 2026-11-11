@@ -860,6 +860,7 @@ def test_sp4_lag_window_and_opacity_channels_are_independent():
 
 
 @pytest.mark.parametrize("kind", ["triangles", "holes", "reversed"])
+@pytest.mark.filterwarnings("ignore::manim_plots.ManimPlotsWarning")  # task 23
 def test_sf3_growth_keeps_topology_holes_and_face_styles(kind):
     pkg = package()
     ax = mp.ThreeDAxes(x_range=(-1, 3), y_range=(-1, 3), z_range=(0, 8))

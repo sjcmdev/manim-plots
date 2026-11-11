@@ -12,6 +12,7 @@ from numpy.typing import ArrayLike
 
 import manim_plots as mp
 from manim_plots.core import FloatArray
+from manim_plots.core.nodes import _finite
 from manim_plots.core.scales import Scale
 from manim_plots.core.sources import ArraySource
 from manim_plots.mobjects.artists import LinePlot, _CurvePlot, _cycle_style
@@ -245,7 +246,7 @@ class BarPlot3D(_DepthOrderedPlot):
         arrays = np.broadcast_arrays(
             *(np.asarray(a, float) for a in (x, y, z, dx, dy, dz))
         )
-        if not all(np.isfinite(a).all() for a in arrays):
+        if not all(np.isfinite(a).all() for a in arrays[:5]):
             raise ValueError("bar coordinates and sizes must be finite")
         xyz = np.stack(arrays[:3], -1).reshape(-1, 3)
         sizes = np.stack(arrays[3:], -1).reshape(-1, 3)
@@ -606,16 +607,34 @@ class VoxelPlot(_DepthOrderedPlot):
                 np.broadcast_arrays(*(np.asarray(a, float) for a in args[:3]))
             )
         )
+        for name, column in zip("xyz", coordinates, strict=True):
+            _finite(column, name)
         if coordinates.shape != (3, *shape) or not np.isfinite(coordinates).all():
             raise ValueError("corner arrays must match filled.shape + 1 and be finite")
+        offsets = np.unique(_BOX_FACES.reshape(-1, 3), axis=0)
+        indices_all = np.indices(filled.shape).reshape(3, -1).T
+        nodes = indices_all[:, None, :] + offsets
+        corners_all = coordinates[
+            tuple([slice(None), *nodes.transpose(2, 0, 1)])
+        ].transpose(1, 2, 0)
+        valid = (
+            system._data.valid(corners_all.reshape(-1, 3))
+            .reshape(-1, 8)
+            .all(axis=1)
+            .reshape(filled.shape)
+        )
+        invalid_samples = bool(np.any(filled & ~valid))
+        filled = filled & valid
         options = style.copy()
         self.color_mapping: ColorMapping | None = None
         if c is not None:
             if facecolors is not None:
                 raise ValueError("c and facecolors are mutually exclusive")
             values = np.asarray(c, float)
-            if values.shape != filled.shape or not np.isfinite(values[filled]).all():
-                raise ValueError("c must match filled and be finite in filled voxels")
+            if values.shape != filled.shape:
+                raise ValueError("c must match filled")
+            invalid_samples |= bool(np.any(filled & ~np.isfinite(values)))
+            filled = filled & np.isfinite(values)
             self.color_mapping = _mapping(
                 values[filled],
                 "viridis" if colorscale is None else colorscale,
@@ -672,6 +691,7 @@ class VoxelPlot(_DepthOrderedPlot):
         ].transpose(1, 2, 0)
         surface = _BarSurface.__new__(_BarSurface)
         surface._bar_corners = corners
+        surface._invalid_samples = invalid_samples
         options.setdefault("stroke_width", 0 if edgecolors is None else 1)
         if edgecolors is not None:
             options["stroke_color"] = edgecolors

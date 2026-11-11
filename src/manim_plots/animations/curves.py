@@ -18,7 +18,7 @@ from manim_plots.core.shape import _restrict, resample_pair
 from manim_plots.core.sources import ArraySource, FunctionSource, ParametricSource
 from manim_plots.mobjects.artists import LinePlot, ScatterPlot, _CurvePlot, _MarkerLeaf
 
-from ._base import MappedPresentation, flags, window
+from ._base import MappedPresentation, check_lag, check_order, flags, window
 
 
 class AppendData(Animation):
@@ -47,9 +47,9 @@ class AppendData(Animation):
             raise ValueError("artist must be bound to axes")
         self.artist, self.autoscale = artist, autoscale
         self._involved_system = artist._system if autoscale else None
-        self._new = ArraySource(x, y, dim=len(artist._system._ranges)).data
-        if not np.isfinite(self._new).all():
-            raise ValueError("appended coordinates must be finite")
+        self._new = ArraySource(
+            x, y, dim=len(artist._system._ranges), names=("x", "y")
+        ).data
         super().__init__(artist, **cast(dict[str, Any], kwargs))
 
     def begin(self) -> None:
@@ -60,10 +60,16 @@ class AppendData(Animation):
         assert isinstance(self.artist.source, ArraySource)
         self._old = self.artist.source.data.copy()
         self._full_data = np.concatenate((self._old, self._new))
+        self.artist._sample_warnings._source = ArraySource(
+            self._full_data, dim=self._full_data.shape[1]
+        )
         if isinstance(self.artist, ScatterPlot):
             assert self.artist._system is not None
             extra = ScatterPlot(
-                self._full_data,
+                np.tile(
+                    [np.mean(axis.range.value) for axis in self.artist._system._ranges],
+                    (len(self._full_data), 1),
+                ),
                 self.artist._system,
                 marker=self.artist._marker_template,
                 clip=False,
@@ -81,6 +87,11 @@ class AppendData(Animation):
                 for leaf in marker.get_family()
                 if isinstance(leaf, _MarkerLeaf)
             }
+        if isinstance(self.artist, ScatterPlot):
+            for marker in self._markers:
+                for leaf in marker.get_family():
+                    if isinstance(leaf, _MarkerLeaf):
+                        leaf._sample_warnings = self.artist._sample_warnings
         super().begin()
 
     def interpolate_mobject(self, alpha: float) -> None:
@@ -91,6 +102,8 @@ class AppendData(Animation):
         alpha
             Native progress before the rate function.
         """
+        if not len(self._new):
+            return
         amount = float(np.clip(self.rate_func(alpha), 0, 1)) * len(self._new)
         count, fraction = int(amount), amount % 1
         data = self._full_data[: len(self._old) + count].copy()
@@ -130,6 +143,8 @@ class AppendData(Animation):
                                 if leaf._index == len(self._old) + count
                                 else 1.0
                             )
+                            if not leaf._visible:
+                                factor = 0.0
                             fill, stroke, background = self._marker_styles[leaf]
                             leaf.set_fill(opacity=fill * factor)
                             leaf.set_stroke(opacity=stroke * factor)
@@ -150,6 +165,7 @@ class AppendData(Animation):
                 for leaf in marker.get_family():
                     if isinstance(leaf, _MarkerLeaf):
                         leaf.refresh()
+        self.artist._sample_warnings._source = None
 
 
 def _path(artist: _CurvePlot) -> Payload:
@@ -361,6 +377,8 @@ class ShowPoints(MappedPresentation):
         remover: bool | None = None,
         **kwargs: object,
     ) -> None:
+        check_lag(lag_ratio)
+        check_order(order)
         if not isinstance(scatter, ScatterPlot):
             raise TypeError("scatter must be a ScatterPlot")
         if not callable(order) and order not in {"data", "x", "y", "value"}:

@@ -29,7 +29,7 @@ def marching_cubes(
     Parameters
     ----------
     volume, level
-        Finite three-dimensional samples and the level to extract.
+        Three-dimensional samples and the level to extract; invalid cubes are omitted.
     spacing, origin
         Grid steps and the data coordinates of the first sample.
 
@@ -40,8 +40,8 @@ def marching_cubes(
     """
     values = np.asarray(volume, float)
     step, start = np.asarray(spacing, float), np.asarray(origin, float)
-    if values.ndim != 3 or min(values.shape) < 2 or not np.isfinite(values).all():
-        raise ValueError("volume must be finite with at least two samples per axis")
+    if values.ndim != 3 or min(values.shape) < 2:
+        raise ValueError("volume must have at least two samples per axis")
     if (
         step.shape != (3,)
         or start.shape != (3,)
@@ -83,7 +83,7 @@ def marching_cubes(
     nodes = cubes[:, None, :] + offsets
     samples = values[tuple(nodes.transpose(2, 0, 1))]
     cases = ((samples < level) * (1 << np.arange(8))).sum(axis=1)
-    active = (cases != 0) & (cases != 255)
+    active = (cases != 0) & (cases != 255) & np.isfinite(samples).all(axis=1)
     nodes, samples, cases = nodes[active], samples[active], cases[active]
     crossed = (_MC_EDGES[cases, None] & (1 << np.arange(12))) != 0
     ci, ei = np.nonzero(crossed)
